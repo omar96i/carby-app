@@ -16,13 +16,13 @@ const PaymentWebView = ({ route, navigation }) => {
 
     const renderLoading = () => (
         <View style={styles.loadingContainer}>
-            <ActivityIndicator size="large" color="#9BFE03" />
+            <ActivityIndicator size="large" color="#fa6205" />
         </View>
     );
 
     return (
         <SafeAreaView style={styles.container}>
-            <StatusBar barStyle="light-content" />
+            <StatusBar barStyle="dark-content" />
 
             {/* ----- INICIO DEL HEADER PERSONALIZADO ----- */}
             <View style={styles.customHeader}>
@@ -47,18 +47,18 @@ const PaymentWebView = ({ route, navigation }) => {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#242424',
+        backgroundColor: '#FFFFFF',
     },
     // --- ESTILOS NUEVOS PARA EL HEADER ---
     customHeader: {
         height: 120,
-        backgroundColor: '#242424',
+        backgroundColor: '#FFFFFF',
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
         paddingHorizontal: 15,
         borderBottomWidth: 1,
-        borderBottomColor: '#3A3A3A',
+        borderBottomColor: '#D8D8D8',
     },
     headerTitle: {
         color: '#F5F5F5',
@@ -66,7 +66,7 @@ const styles = StyleSheet.create({
         fontWeight: '600',
     },
     closeButtonText: {
-        color: '#9BFE03',
+        color: '#fa6205',
         fontSize: 17,
         fontWeight: '500',
     },
@@ -82,7 +82,7 @@ const styles = StyleSheet.create({
         bottom: 0,
         justifyContent: 'center',
         alignItems: 'center',
-        backgroundColor: '#242424',
+        backgroundColor: '#FFFFFF',
     },
 });
 

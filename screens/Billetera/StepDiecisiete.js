@@ -196,7 +196,7 @@ export default function StepDiecisiete() {
     return (
       <View style={styles.infoItem}>
         <View style={styles.infoIconContainer}>
-          <FontAwesome name={icon} size={20} color="#1E7D22" />
+          <FontAwesome name={icon} size={20} color="#fa6205" />
         </View>
         <View style={styles.infoContent}>
           <Text style={styles.infoLabel}>{label}</Text>
@@ -207,7 +207,7 @@ export default function StepDiecisiete() {
             style={styles.editButton}
             onPress={() => handleEditField(fieldKey)}
           >
-            <FontAwesome name="pencil" size={18} color="#1E7D22" />
+            <FontAwesome name="pencil" size={18} color="#fa6205" />
           </TouchableOpacity>
         )}
       </View>
@@ -217,7 +217,7 @@ export default function StepDiecisiete() {
   if (loading && !refreshing) {
     return (
       <SafeAreaView style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#1E7D22" />
+        <ActivityIndicator size="large" color="#fa6205" />
         <Text style={styles.loadingText}>Cargando información del usuario...</Text>
       </SafeAreaView>
     );
@@ -331,7 +331,7 @@ export default function StepDiecisiete() {
                 <FontAwesome 
                   name={editableFields[editingField].icon} 
                   size={20} 
-                  color="#1E7D22"
+                  color="#fa6205"
                   style={styles.inputIcon}
                 />
                 <TextInput
@@ -351,7 +351,7 @@ export default function StepDiecisiete() {
               disabled={updateLoading}
             >
               {updateLoading ? (
-                <ActivityIndicator size="small" color="#fff" />
+                <ActivityIndicator size="small" color="#1C1C1E" />
               ) : (
                 <Text style={styles.updateButtonText}>Guardar Cambios</Text>
               )}
@@ -396,13 +396,13 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   badge: {
-    backgroundColor: '#1E7D22',
+    backgroundColor: '#fa6205',
     paddingHorizontal: 12,
     paddingVertical: 4,
     borderRadius: 20,
   },
   badgeText: {
-    color: 'white',
+    color: '#1C1C1E',
     fontWeight: 'bold',
     textTransform: 'capitalize',
   },
@@ -416,7 +416,7 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: 'bold',
     marginBottom: 12,
-    color: '#1E7D22',
+    color: '#fa6205',
     borderBottomWidth: 1,
     borderBottomColor: '#e0e0e0',
     paddingBottom: 8,
@@ -430,7 +430,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#e7f3e8',
+    backgroundColor: '#fff5ee',
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 12,
@@ -476,13 +476,13 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   retryButton: {
-    backgroundColor: '#1E7D22',
+    backgroundColor: '#fa6205',
     paddingVertical: 12,
     paddingHorizontal: 24,
     borderRadius: 8,
   },
   retryText: {
-    color: '#fff',
+    color: '#1C1C1E',
     fontSize: 16,
     fontWeight: '500',
   },
@@ -517,7 +517,7 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: 'bold',
     marginBottom: 20,
-    color: '#1E7D22',
+    color: '#fa6205',
   },
   inputContainer: {
     flexDirection: 'row',
@@ -538,7 +538,7 @@ const styles = StyleSheet.create({
     color: '#333',
   },
   updateButton: {
-    backgroundColor: '#1E7D22',
+    backgroundColor: '#fa6205',
     paddingVertical: 12,
     paddingHorizontal: 24,
     borderRadius: 8,
@@ -546,7 +546,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   updateButtonText: {
-    color: '#fff',
+    color: '#1C1C1E',
     fontSize: 16,
     fontWeight: '500',
   },

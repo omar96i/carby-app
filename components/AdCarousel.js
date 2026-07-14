@@ -144,7 +144,7 @@ const AdCarousel = () => {
       <View style={styles.slide}>
         {isLoading && (
           <View style={styles.loadingContainer}>
-            <ActivityIndicator color="#9BFE03" size="large" />
+            <ActivityIndicator color="#fa6205" size="large" />
           </View>
         )}
         
@@ -177,7 +177,7 @@ const AdCarousel = () => {
   if (loading) {
     return (
       <View style={styles.emptyBanner}>
-        <ActivityIndicator size="large" color="#9BFE03" />
+        <ActivityIndicator size="large" color="#fa6205" />
         <Text style={styles.title}>Cargando promociones...</Text>
       </View>
     );
@@ -187,7 +187,7 @@ const AdCarousel = () => {
   if (error || !ads || ads.length === 0) {
     return (
       <View style={styles.emptyBanner}>
-        <Ionicons name="hand-right-outline" size={32} color="#9BFE03" />
+        <Ionicons name="hand-right-outline" size={32} color="#fa6205" />
         <Text style={styles.title}>{error || "Aquí aparecerán las promociones"}</Text>
         <Text style={styles.subtitle}>¡PRÓXIMAMENTE!</Text>
       </View>
@@ -235,7 +235,7 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     height: 200,
     width: width * 0.9, // Use explicit width value based on screen width
-    backgroundColor: '#2c2c2c', // Fallback background color
+    backgroundColor: '#F0F0F0', // Fallback background color
     // Add shadow
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
@@ -257,7 +257,7 @@ const styles = StyleSheet.create({
     bottom: 0,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#2c2c2c',
+    backgroundColor: '#F0F0F0',
     zIndex: 1,
     borderRadius: 15,
   },
@@ -267,7 +267,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     borderRadius: 15,
-    backgroundColor: '#2c2c2c',
+    backgroundColor: '#F0F0F0',
     padding: 15,
     marginVertical: 20,
     alignSelf: 'center',
@@ -279,13 +279,13 @@ const styles = StyleSheet.create({
     elevation: 5,
   },
   title: {
-    color: "#fff",
+    color: '#1C1C1E',
     fontSize: 14,
     textAlign: "center",
     marginVertical: 10,
   },
   subtitle: {
-    color: "#9BFE03",
+    color: "#fa6205",
     fontSize: 16,
     textAlign: "center",
     marginTop: 12,
@@ -300,7 +300,7 @@ const styles = StyleSheet.create({
     width: 10,
     height: 10,
     borderRadius: 5,
-    backgroundColor: '#9BFE03'
+    backgroundColor: '#fa6205'
   },
   paginationInactiveDot: {
     backgroundColor: '#777'

@@ -45,7 +45,7 @@ export default function ChatComercioRider({ route, navigation }) {
     navigation.setOptions({
       title: `Chat - ${conductorNombre}`,
       headerStyle: {
-        backgroundColor: '#25D366',
+        backgroundColor: '#fa6205',
       },
       headerTintColor: '#fff',
       headerTitleStyle: {
@@ -372,7 +372,7 @@ export default function ChatComercioRider({ route, navigation }) {
             style={styles.botonVolver}
             onPress={() => navigation.goBack()}
           >
-            <FontAwesome name="arrow-left" size={20} color="#fff" />
+            <FontAwesome name="arrow-left" size={20} color="#1C1C1E" />
           </TouchableOpacity>
 
           <View style={styles.infoPedido}>
@@ -421,7 +421,7 @@ export default function ChatComercioRider({ route, navigation }) {
             <FontAwesome
               name={enviando ? "clock-o" : "send"}
               size={20}
-              color="#fff"
+              color="#1C1C1E"
             />
           </TouchableOpacity>
         </View>
@@ -438,7 +438,7 @@ const styles = StyleSheet.create({
   headerContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#25D366',
+    backgroundColor: '#fa6205',
     paddingVertical: 40,
     paddingHorizontal: 15,
 
@@ -458,12 +458,12 @@ const styles = StyleSheet.create({
     width: 40,
   },
   textoPedido: {
-    color: '#fff',
+    color: '#1C1C1E',
     fontSize: 16,
     fontWeight: 'bold',
   },
   textoRider: {
-    color: '#fff',
+    color: '#1C1C1E',
     fontSize: 14,
     opacity: 0.9,
   },
@@ -499,7 +499,7 @@ const styles = StyleSheet.create({
     maxWidth: '100%',
   },
   burbujaMia: {
-    backgroundColor: '#25D366',
+    backgroundColor: '#fa6205',
   },
   burbujaOtra: {
     backgroundColor: '#fff',
@@ -511,7 +511,7 @@ const styles = StyleSheet.create({
     lineHeight: 20,
   },
   textoMio: {
-    color: '#fff',
+    color: '#1C1C1E',
   },
   textoOtro: {
     color: '#333',
@@ -552,7 +552,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   botonEnviar: {
-    backgroundColor: '#25D366',
+    backgroundColor: '#fa6205',
     width: 44,
     height: 44,
     borderRadius: 22,

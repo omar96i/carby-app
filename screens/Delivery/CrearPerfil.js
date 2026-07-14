@@ -507,7 +507,7 @@ export default function CrearPerfil() {
   if (!fontsLoaded) {
     return (
       <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#9BFE03" />
+        <ActivityIndicator size="large" color="#fa6205" />
       </View>
     );
   }
@@ -519,7 +519,7 @@ export default function CrearPerfil() {
           style={styles.backButton}
           onPress={() => navigation.goBack()}
         >
-          <Ionicons name="arrow-back" size={24} color="#fff" />
+          <Ionicons name="arrow-back" size={24} color="#1C1C1E" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Gestión de Perfiles</Text>
         <View style={styles.placeholder} />
@@ -568,7 +568,7 @@ export default function CrearPerfil() {
                 <Text style={styles.sectionTitle}>Mis Perfiles</Text>
                 {isLoading ? (
                   <View style={styles.loadingProfilesContainer}>
-                    <ActivityIndicator size="small" color="#9BFE03" />
+                    <ActivityIndicator size="small" color="#fa6205" />
                     <Text style={styles.loadingText}>Cargando perfiles...</Text>
                   </View>
                 ) : (
@@ -605,7 +605,7 @@ export default function CrearPerfil() {
                           <Ionicons
                             name="create-outline"
                             size={22}
-                            color="#9BFE03"
+                            color="#fa6205"
                           />
                         </TouchableOpacity>
                         <TouchableOpacity
@@ -621,7 +621,7 @@ export default function CrearPerfil() {
                         <TouchableOpacity
                           onPress={() => openHorarioModal(profile.id)}
                           style={{
-                            backgroundColor: "#9BFE03",
+                            backgroundColor: "#fa6205",
                             borderRadius: 20,
                             paddingHorizontal: 12,
                             paddingVertical: 6,
@@ -714,13 +714,13 @@ export default function CrearPerfil() {
                       style={styles.selectedImage}
                     />
                     <View style={styles.changeImageOverlay}>
-                      <Ionicons name="camera" size={24} color="#fff" />
+                      <Ionicons name="camera" size={24} color="#1C1C1E" />
                       <Text style={styles.changeImageText}>Cambiar imagen</Text>
                     </View>
                   </View>
                 ) : (
                   <View style={styles.imagePlaceholder}>
-                    <Ionicons name="camera" size={40} color="#9BFE03" />
+                    <Ionicons name="camera" size={40} color="#fa6205" />
                     <Text style={styles.imagePlaceholderText}>
                       Seleccionar imagen
                     </Text>
@@ -806,10 +806,10 @@ export default function CrearPerfil() {
                 onPress={() => setEditModalVisible(false)}
                 style={[
                   styles.createButton,
-                  { backgroundColor: "#444", marginRight: 10 },
+                  { backgroundColor: "#DDD", marginRight: 10 },
                 ]}
               >
-                <Text style={[styles.createButtonText, { color: "#fff" }]}>
+                <Text style={[styles.createButtonText, { color: "#1C1C1E" }]}>
                   Cancelar
                 </Text>
               </TouchableOpacity>
@@ -867,7 +867,7 @@ export default function CrearPerfil() {
                       <View style={{ flex: 1 }}>
                         <Text style={styles.horarioText}>
                           <Text
-                            style={{ color: "#9BFE03", fontWeight: "bold" }}
+                            style={{ color: "#fa6205", fontWeight: "bold" }}
                           >
                             {diasSemana[h.dia_semana]?.label || "Día"}:
                           </Text>
@@ -882,7 +882,7 @@ export default function CrearPerfil() {
                           <Ionicons
                             name="create-outline"
                             size={20}
-                            color="#9BFE03"
+                            color="#fa6205"
                           />
                         </TouchableOpacity>
                         <TouchableOpacity
@@ -903,7 +903,7 @@ export default function CrearPerfil() {
               <Text style={styles.inputLabel}>Día de la semana</Text>
               <View
                 style={{
-                  backgroundColor: "#2c2c2c",
+                  backgroundColor: "#F0F0F0",
                   borderRadius: 10,
                   marginBottom: 15,
                 }}
@@ -914,7 +914,7 @@ export default function CrearPerfil() {
                     style={{
                       padding: 10,
                       backgroundColor:
-                        diaSemana === d.value ? "#9BFE03" : "transparent",
+                        diaSemana === d.value ? "#fa6205" : "transparent",
                       borderRadius: 10,
                     }}
                     onPress={() => setDiaSemana(d.value)}
@@ -935,7 +935,7 @@ export default function CrearPerfil() {
                 style={[styles.textInput, { marginBottom: 10 }]}
                 onPress={() => setShowInicioPicker(true)}
               >
-                <Text style={{ color: "#fff" }}>{formatHora(horaInicio)}</Text>
+                <Text style={{ color: "#1C1C1E" }}>{formatHora(horaInicio)}</Text>
               </TouchableOpacity>{" "}
               {showInicioPicker && (
                 <DateTimePicker
@@ -972,7 +972,7 @@ export default function CrearPerfil() {
                     style={[
                       styles.createButton,
                       {
-                        backgroundColor: "#444",
+                        backgroundColor: "#DDD",
                         marginRight: 10,
                         paddingVertical: 8,
                       },
@@ -981,7 +981,7 @@ export default function CrearPerfil() {
                     <Text
                       style={[
                         styles.createButtonText,
-                        { color: "#fff", fontSize: 14 },
+                        { color: "#1C1C1E", fontSize: 14 },
                       ]}
                     >
                       Cancelar
@@ -1002,7 +1002,7 @@ export default function CrearPerfil() {
                 style={[styles.textInput, { marginBottom: 10 }]}
                 onPress={() => setShowFinPicker(true)}
               >
-                <Text style={{ color: "#fff" }}>{formatHora(horaFin)}</Text>
+                <Text style={{ color: "#1C1C1E" }}>{formatHora(horaFin)}</Text>
               </TouchableOpacity>{" "}
               {showFinPicker && (
                 <DateTimePicker
@@ -1039,7 +1039,7 @@ export default function CrearPerfil() {
                     style={[
                       styles.createButton,
                       {
-                        backgroundColor: "#444",
+                        backgroundColor: "#DDD",
                         marginRight: 10,
                         paddingVertical: 8,
                       },
@@ -1048,7 +1048,7 @@ export default function CrearPerfil() {
                     <Text
                       style={[
                         styles.createButtonText,
-                        { color: "#fff", fontSize: 14 },
+                        { color: "#1C1C1E", fontSize: 14 },
                       ]}
                     >
                       Cancelar
@@ -1075,10 +1075,10 @@ export default function CrearPerfil() {
                   onPress={() => setHorarioModalVisible(false)}
                   style={[
                     styles.createButton,
-                    { backgroundColor: "#444", marginRight: 10 },
+                    { backgroundColor: "#DDD", marginRight: 10 },
                   ]}
                 >
-                  <Text style={[styles.createButtonText, { color: "#fff" }]}>
+                  <Text style={[styles.createButtonText, { color: "#1C1C1E" }]}>
                     Cancelar
                   </Text>
                 </TouchableOpacity>
@@ -1121,19 +1121,19 @@ export default function CrearPerfil() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#1c1c1c",
+    backgroundColor: "#F2F2F7",
   },
   loadingContainer: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "#1c1c1c",
+    backgroundColor: "#F2F2F7",
   },
   header: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    backgroundColor: "#2c2c2c",
+    backgroundColor: "#F0F0F0",
     paddingHorizontal: 20,
     paddingVertical: 15,
     paddingTop: 50,
@@ -1142,7 +1142,7 @@ const styles = StyleSheet.create({
     padding: 5,
   },
   headerTitle: {
-    color: "#fff",
+    color: "#1C1C1E",
     fontSize: 18,
     fontFamily: "Montserrat_700Bold",
   },
@@ -1152,7 +1152,7 @@ const styles = StyleSheet.create({
   // Tab styles
   tabContainer: {
     flexDirection: "row",
-    backgroundColor: "#2c2c2c",
+    backgroundColor: "#F0F0F0",
     marginHorizontal: 20,
     marginVertical: 10,
     borderRadius: 12,
@@ -1167,7 +1167,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   activeTab: {
-    backgroundColor: "#9BFE03",
+    backgroundColor: "#fa6205",
   },
   tabText: {
     color: "#999",
@@ -1189,7 +1189,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
   },
   emptyProfilesTitle: {
-    color: "#fff",
+    color: "#1C1C1E",
     fontSize: 18,
     fontFamily: "Montserrat_700Bold",
     marginTop: 20,
@@ -1204,7 +1204,7 @@ const styles = StyleSheet.create({
     lineHeight: 20,
   },
   createFirstProfileButton: {
-    backgroundColor: "#9BFE03",
+    backgroundColor: "#fa6205",
     borderRadius: 25,
     paddingVertical: 12,
     paddingHorizontal: 20,
@@ -1226,7 +1226,7 @@ const styles = StyleSheet.create({
     padding: 20,
   },
   sectionTitle: {
-    color: "#9BFE03",
+    color: "#fa6205",
     fontSize: 20,
     fontFamily: "Montserrat_700Bold",
     marginBottom: 20,
@@ -1235,20 +1235,20 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   inputLabel: {
-    color: "#fff",
+    color: "#1C1C1E",
     fontSize: 16,
     fontFamily: "Montserrat_700Bold",
     marginBottom: 8,
   },
   textInput: {
-    backgroundColor: "#2c2c2c",
+    backgroundColor: "#F0F0F0",
     borderRadius: 10,
     padding: 15,
-    color: "#fff",
+    color: "#1C1C1E",
     fontFamily: "Montserrat_400Regular",
     fontSize: 16,
     borderWidth: 1,
-    borderColor: "#444",
+    borderColor: "#DDD",
   },
   textArea: {
     height: 60,
@@ -1283,23 +1283,23 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   changeImageText: {
-    color: "#fff",
+    color: "#1C1C1E",
     fontSize: 12,
     fontFamily: "Montserrat_400Regular",
     marginTop: 5,
   },
   imagePlaceholder: {
-    backgroundColor: "#2c2c2c",
+    backgroundColor: "#F0F0F0",
     borderRadius: 10,
     padding: 30,
     alignItems: "center",
     justifyContent: "center",
     borderWidth: 2,
-    borderColor: "#444",
+    borderColor: "#DDD",
     borderStyle: "dashed",
   },
   imagePlaceholderText: {
-    color: "#9BFE03",
+    color: "#fa6205",
     fontSize: 16,
     fontFamily: "Montserrat_700Bold",
     marginTop: 10,
@@ -1311,7 +1311,7 @@ const styles = StyleSheet.create({
     marginTop: 5,
   },
   createButton: {
-    backgroundColor: "#9BFE03",
+    backgroundColor: "#fa6205",
     borderRadius: 25,
     padding: 15,
     flexDirection: "row",
@@ -1340,13 +1340,13 @@ const styles = StyleSheet.create({
     padding: 20,
   },
   loadingText: {
-    color: "#fff",
+    color: "#1C1C1E",
     fontSize: 14,
     fontFamily: "Montserrat_400Regular",
     marginLeft: 10,
   },
   profileCard: {
-    backgroundColor: "#2c2c2c",
+    backgroundColor: "#F0F0F0",
     borderRadius: 10,
     padding: 15,
     marginBottom: 10,
@@ -1363,7 +1363,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   profileName: {
-    color: "#fff",
+    color: "#1C1C1E",
     fontSize: 16,
     fontFamily: "Montserrat_700Bold",
     marginBottom: 5,
@@ -1374,7 +1374,7 @@ const styles = StyleSheet.create({
     fontFamily: "Montserrat_400Regular",
   },
   horarioItem: {
-    backgroundColor: "#2c2c2c",
+    backgroundColor: "#F0F0F0",
     borderRadius: 10,
     padding: 15,
     marginBottom: 10,
@@ -1383,7 +1383,7 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
   },
   horarioText: {
-    color: "#fff",
+    color: "#1C1C1E",
     fontSize: 14,
     fontFamily: "Montserrat_400Regular",
   },
@@ -1397,7 +1397,7 @@ const styles = StyleSheet.create({
   },
   // Styles for enhanced time picker
   timePickerContainer: {
-    backgroundColor: "#2c2c2c",
+    backgroundColor: "#F0F0F0",
     borderRadius: 10,
     padding: 10,
     marginVertical: 10,
@@ -1408,12 +1408,12 @@ const styles = StyleSheet.create({
     alignItems: "center",
     paddingHorizontal: 15,
     paddingVertical: 12,
-    backgroundColor: "#444",
+    backgroundColor: "#DDD",
     borderRadius: 8,
     marginBottom: 10,
   },
   timePickerButtonText: {
-    color: "#fff",
+    color: "#1C1C1E",
     fontSize: 16,
     fontFamily: "Montserrat_400Regular",
   },

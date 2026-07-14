@@ -132,7 +132,7 @@ const ServiciosProducto = () => {
               <Image source={{ uri: foto.uri }} style={styles.productImage} />
             ) : (
               <View style={styles.placeholderContainer}>
-                <Ionicons name="camera" size={50} color="#9BFE03" />
+                <Ionicons name="camera" size={50} color="#fa6205" />
                 <Text style={styles.placeholderText}>Toca para seleccionar imagen</Text>
               </View>
             )}
@@ -189,17 +189,17 @@ const ServiciosProducto = () => {
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#1c1c1c' },
-  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', backgroundColor: '#a4ff00', padding: 15, marginTop: 60 },
+  container: { flex: 1, backgroundColor: '#F2F2F7' },
+  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', backgroundColor: '#fa6205', padding: 15, marginTop: 60 },
   headerText: { fontSize: 16, fontWeight: 'bold', color: 'black', fontFamily: 'Montserrat_700Bold' },
   imagePickerContainer: { width: '100%', height: 250, marginVertical: 20 },
   productImage: { width: '100%', height: '100%', resizeMode: 'cover' },
-  placeholderContainer: { width: '100%', height: '100%', backgroundColor: '#2a2a2a', justifyContent: 'center', alignItems: 'center', borderWidth: 1, borderStyle: 'dashed', borderColor: '#9BFE03' },
-  placeholderText: { marginTop: 10, color: '#fff', fontFamily: 'Montserrat_400Regular' },
+  placeholderContainer: { width: '100%', height: '100%', backgroundColor: '#ECECEC', justifyContent: 'center', alignItems: 'center', borderWidth: 1, borderStyle: 'dashed', borderColor: '#fa6205' },
+  placeholderText: { marginTop: 10, color: '#1C1C1E', fontFamily: 'Montserrat_400Regular' },
   formContainer: { padding: 15 },
-  inputLabel: { fontSize: 16, color: 'white', fontFamily: 'Montserrat_700Bold', marginBottom: 5, marginTop: 15 },
-  input: { backgroundColor: '#2a2a2a', borderRadius: 8, padding: 12, fontSize: 16, color: 'white', fontFamily: 'Montserrat_400Regular' },
-  myButton: { backgroundColor: '#39FF14', paddingVertical: 14, paddingHorizontal: 60, borderRadius: 15, alignItems: 'center', justifyContent: 'center', alignSelf: 'center', elevation: 5, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.25, shadowRadius: 3.84, marginVertical: 20, marginBottom: 30 },
+  inputLabel: { fontSize: 16, color: '#1C1C1E', fontFamily: 'Montserrat_700Bold', marginBottom: 5, marginTop: 15 },
+  input: { backgroundColor: '#ECECEC', borderRadius: 8, padding: 12, fontSize: 16, color: '#1C1C1E', fontFamily: 'Montserrat_400Regular' },
+  myButton: { backgroundColor: '#fa6205', paddingVertical: 14, paddingHorizontal: 60, borderRadius: 15, alignItems: 'center', justifyContent: 'center', alignSelf: 'center', elevation: 5, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.25, shadowRadius: 3.84, marginVertical: 20, marginBottom: 30 },
   buttonText: { color: '#000', fontSize: 20, fontWeight: 'bold', fontFamily: 'Montserrat_700Bold' },
 });
 

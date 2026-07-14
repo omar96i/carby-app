@@ -419,7 +419,7 @@ export default function ChatRiderComercio({ route }) {
   if (!fontsLoaded) {
     return (
       <View style={styles.loaderContainer}>
-        <ActivityIndicator size="large" color="#A0FF00" />
+        <ActivityIndicator size="large" color="#fa6205" />
       </View>
     );
   }
@@ -432,7 +432,7 @@ export default function ChatRiderComercio({ route }) {
           style={styles.backButton}
           onPress={() => navigation.goBack()}
         >
-          <FontAwesome name="arrow-left" size={20} color="#fff" />
+          <FontAwesome name="arrow-left" size={20} color="#1C1C1E" />
         </TouchableOpacity>
 
         <View style={styles.headerInfo}>
@@ -453,7 +453,7 @@ export default function ChatRiderComercio({ route }) {
       >
         {cargando && mensajes.length === 0 ? (
           <View style={styles.loaderContainer}>
-            <ActivityIndicator size="large" color="#A0FF00" />
+            <ActivityIndicator size="large" color="#fa6205" />
             <Text style={styles.loaderText}>Cargando conversación...</Text>
           </View>
         ) : error ? (
@@ -505,9 +505,9 @@ export default function ChatRiderComercio({ route }) {
             disabled={!mensaje.trim() || enviando}
           >
             {enviando ? (
-              <ActivityIndicator size="small" color="#FFF" />
+              <ActivityIndicator size="small" color="#1C1C1E" />
             ) : (
-              <FontAwesome name="send" size={20} color="#FFF" />
+              <FontAwesome name="send" size={20} color="#1C1C1E" />
             )}
           </TouchableOpacity>
         </View>
@@ -551,12 +551,12 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   headerTitle: {
-    color: '#fff',
+    color: '#1C1C1E',
     fontSize: 16,
     fontFamily: 'Montserrat_700Bold',
   },
   headerSubtitle: {
-    color: '#A0FF00',
+    color: '#fa6205',
     fontSize: 12,
     fontFamily: 'Montserrat_400Regular',
   },
@@ -584,7 +584,7 @@ const styles = StyleSheet.create({
     minWidth: 100,
   },
   burbujaEnviada: {
-    backgroundColor: '#A0FF00', // Verde para mensajes del rider
+    backgroundColor: '#fa6205', // Verde para mensajes del rider
   },
   burbujaRecibida: {
     backgroundColor: '#fff', // Blanco para mensajes del comercio
@@ -632,7 +632,7 @@ const styles = StyleSheet.create({
     maxHeight: 100,
   },
   sendButton: {
-    backgroundColor: '#A0FF00',
+    backgroundColor: '#fa6205',
     width: 40,
     height: 40,
     borderRadius: 20,
@@ -680,7 +680,7 @@ const styles = StyleSheet.create({
     marginBottom: 15,
   },
   retryButton: {
-    backgroundColor: '#A0FF00',
+    backgroundColor: '#fa6205',
     paddingHorizontal: 20,
     paddingVertical: 10,
     borderRadius: 20,

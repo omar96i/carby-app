@@ -367,8 +367,8 @@ const MetodosPago = () => {
     return (
       <SafeAreaView style={styles.safeContainer}>
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#9BFE03" />
-          <Text style={{color: '#FFF', marginTop: 10}}>Cargando...</Text>
+          <ActivityIndicator size="large" color="#fa6205" />
+          <Text style={{color: '#1C1C1E', marginTop: 10}}>Cargando...</Text>
         </View>
       </SafeAreaView>
     );
@@ -382,7 +382,7 @@ const MetodosPago = () => {
           style={styles.backButton}
           onPress={() => navigation.goBack()}
         >
-          <FontAwesome name="arrow-left" size={24} color="white" />
+          <FontAwesome name="arrow-left" size={24} color="#1C1C1E" />
         </TouchableOpacity>
 
         <Text style={styles.title}>Métodos de Pago</Text>
@@ -395,7 +395,7 @@ const MetodosPago = () => {
           <View style={styles.switchRow}>
             <Text style={styles.switchLabel}>Habilitar pago por QR</Text>
             <Switch
-              trackColor={{ false: "#767577", true: "#94D82D" }}
+              trackColor={{ false: "#767577", true: "#fa6205" }}
               thumbColor={qrEstado ? "#FFF" : "#f4f3f4"}
               ios_backgroundColor="#3e3e3e"
               onValueChange={setQrEstado}
@@ -411,7 +411,7 @@ const MetodosPago = () => {
                 style={styles.imagePickerButton}
                 onPress={pickQrImage}
               >
-                <FontAwesome name="camera" size={20} color="#FFF" />
+                <FontAwesome name="camera" size={20} color="#1C1C1E" />
                 <Text style={styles.imagePickerText}>Seleccionar imagen QR</Text>
               </TouchableOpacity>
               
@@ -436,7 +436,7 @@ const MetodosPago = () => {
             <View style={styles.switchRow}>
               <Text style={styles.switchLabel}>Habilitar Mercado Pago</Text>
               <Switch
-                trackColor={{ false: "#767577", true: "#94D82D" }}
+                trackColor={{ false: "#767577", true: "#fa6205" }}
                 thumbColor={mercadoPagoEstado ? "#FFF" : "#f4f3f4"}
                 ios_backgroundColor="#3e3e3e"
                 onValueChange={setMercadoPagoEstado}
@@ -476,10 +476,10 @@ const MetodosPago = () => {
           disabled={isSaving}
         >
           {isSaving ? (
-            <ActivityIndicator size="small" color="#FFF" />
+            <ActivityIndicator size="small" color="#1C1C1E" />
           ) : (
             <View>
-              <FontAwesome name="save" size={20} color="#FFF" style={styles.saveIcon} />
+              <FontAwesome name="save" size={20} color="#1C1C1E" style={styles.saveIcon} />
               <Text style={styles.mainSaveButtonText}>Guardar métodos de pago</Text>
             </View>
           )}
@@ -499,7 +499,7 @@ const MetodosPago = () => {
 const styles = StyleSheet.create({
   safeContainer: {
     flex: 1,
-    backgroundColor: "#242424",
+    backgroundColor: "#FFFFFF",
     paddingTop: Platform.OS === "android" ? 50 : 40,
   },
   container: {
@@ -521,7 +521,7 @@ const styles = StyleSheet.create({
   title: {
     fontFamily: "Montserrat_700Bold",
     fontSize: 24,
-    color: "#FFFFFF",
+    color: "#1C1C1E",
     textAlign: 'center',
     marginTop: 40,
     marginBottom: 5,
@@ -542,7 +542,7 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontFamily: "Montserrat_700Bold",
     fontSize: 18,
-    color: "#9BFE03",
+    color: "#fa6205",
     marginBottom: 15,
   },
   switchRow: {
@@ -554,7 +554,7 @@ const styles = StyleSheet.create({
   switchLabel: {
     fontFamily: "Montserrat_400Regular",
     fontSize: 16,
-    color: "#FFFFFF",
+    color: "#1C1C1E",
   },
   qrContainer: {
     marginTop: 10,
@@ -565,7 +565,7 @@ const styles = StyleSheet.create({
   fieldLabel: {
     fontFamily: "Montserrat_400Regular",
     fontSize: 14,
-    color: "#FFFFFF",
+    color: "#1C1C1E",
     marginBottom: 5,
   },
   input: {
@@ -590,7 +590,7 @@ const styles = StyleSheet.create({
   imagePickerText: {
     fontFamily: "Montserrat_400Regular",
     fontSize: 14,
-    color: "#FFFFFF",
+    color: "#1C1C1E",
     marginLeft: 10,
   },
   imagePreviewContainer: {
@@ -605,7 +605,7 @@ const styles = StyleSheet.create({
   },
   // Nuevo estilo para el botón único de guardar
   mainSaveButton: {
-    backgroundColor: "#9BFE03",
+    backgroundColor: "#fa6205",
     padding: 15,
     borderRadius: 10,
     alignItems: 'center',

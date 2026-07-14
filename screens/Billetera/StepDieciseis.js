@@ -19,7 +19,7 @@ export default function StepDieciseis() {
 
                 {/* Botón Atrás */}
                 <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-                    <FontAwesome name="arrow-left" size={24} color="#fff" />
+                    <FontAwesome name="arrow-left" size={24} color="#1C1C1E" />
                 </TouchableOpacity>
                 <Text style={styles.sectionTitle}>Tu Billetera</Text>
 
@@ -73,7 +73,7 @@ const styles = StyleSheet.create({
     sectionTitle: {
         fontFamily: "Inter_700Bold",
         fontSize: 24,
-        color: "#fff",
+        color: "#1C1C1E",
         marginBottom: 10,
         paddingLeft: 20,
         marginTop: 30, // Agregado para bajar el texto
@@ -81,7 +81,7 @@ const styles = StyleSheet.create({
     sectionTitle2: {
         fontFamily: "Inter_700Bold",
         fontSize: 24,
-        color: "#fff",
+        color: "#1C1C1E",
         marginBottom: 10,
         paddingLeft: 20,
         marginTop: 50, // Agregado para bajar el texto
@@ -94,7 +94,7 @@ const styles = StyleSheet.create({
         borderRadius: 10,
     },
     greenRectangle: {
-        backgroundColor: '#39FF14', // Color verde
+        backgroundColor: '#fa6205', // Color verde
         width: '65.5%',              // Ancho del rectángulo verde (igual al negro)
         height: '26%',              // Altura de la mitad del rectángulo negro
         position: 'absolute',       // Posiciona el rectángulo verde encima
@@ -133,7 +133,7 @@ const styles = StyleSheet.create({
         right: -10,
     },
     button2: {
-        backgroundColor: '#39FF14',
+        backgroundColor: '#fa6205',
         padding: 10,
         borderRadius: 30,
         alignItems: 'center',
@@ -155,7 +155,7 @@ const styles = StyleSheet.create({
     },
     label1: {
         fontSize: 16,
-        color: "#fff",
+        color: "#1C1C1E",
         fontFamily: "Inter_400Regular",
         marginTop: 35,
 
@@ -175,7 +175,7 @@ const styles = StyleSheet.create({
         
         flexDirection: "row",
         borderWidth: 1,
-        borderColor: "#39FF14",  // Mantener solo un borderColor
+        borderColor: "#fa6205",  // Mantener solo un borderColor
         borderRadius: 20, // Se mantiene el valor más grande
         padding: 15,
         alignItems: "center",
@@ -189,14 +189,14 @@ const styles = StyleSheet.create({
     },
     label3: {
         fontSize: 16,
-        color: "#fff",
+        color: "#1C1C1E",
         fontFamily: "Inter_700Bold",
         marginTop: -3,
 
     },
     label4: {
         fontSize: 16,
-        color: "#fff",
+        color: "#1C1C1E",
         fontFamily: "Inter_700Bold",
         marginTop: -3,
 

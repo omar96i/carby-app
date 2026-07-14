@@ -32,7 +32,7 @@ const packageColors = [
   "#FF7043",
   "#42A5F5",
   "#7E57C2",
-  "#26A69A",
+  "#fa6205",
   "#FFA726",
   "#EC407A",
 ];
@@ -498,20 +498,20 @@ const WalletRider = () => {
   if (!fontsLoaded) {
     return (
       <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#9BFE03" />
+        <ActivityIndicator size="large" color="#fa6205" />
       </View>
     );
   }
   const getStatusColor = (status) => {
     switch (status) {
       case "activo":
-        return "#9BFE03"; // verde
+        return "#fa6205"; // verde
       case "pendiente":
         return "#FFA726"; // naranja
       case "rechazado":
         return "#F44336"; // rojo
       case "aprobado":
-        return "#2ECC71"; // verde oscuro
+        return "#fa6205"; // verde oscuro
       default:
         return "#999"; // gris por defecto
     }
@@ -543,7 +543,7 @@ const WalletRider = () => {
           onPress={() => navigation.goBack()}
           style={styles.backButton}
         >
-          <Ionicons name="arrow-back" size={25} color="#2B2B2B" />
+          <Ionicons name="arrow-back" size={25} color="#333333" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Billetera de Rider</Text>
         <View style={styles.placeholder}></View>
@@ -618,14 +618,14 @@ const WalletRider = () => {
             getUserTypeAndCheckFreePackage(); // Agregar esta línea
           }}
         >
-          <Ionicons name="sync" size={16} color="#fff" />
+          <Ionicons name="sync" size={16} color="#1C1C1E" />
           <Text style={styles.refreshButtonText}>Consultar suscripciones</Text>
         </TouchableOpacity>
 
         <Text style={styles.sectionTitle}>Paquetes Disponibles</Text>
         {loadingPackages ? (
           <View style={styles.loadingPackagesContainer}>
-            <ActivityIndicator size="large" color="#9BFE03" />
+            <ActivityIndicator size="large" color="#fa6205" />
             <Text style={styles.loadingPackagesText}>Cargando paquetes...</Text>
           </View>
         ) : packages.length > 0 ? (
@@ -641,7 +641,7 @@ const WalletRider = () => {
                   style={[styles.priceBadge, { backgroundColor: pkg.color }]}
                 >
                   <Text style={styles.priceText}>
-                    {BASE_URL.toString().includes("co.yariders") ? "$" : "S/"} {formatPrice(pkg.price)}
+                    {"$"} {formatPrice(pkg.price)}
                   </Text>
                 </View>
               </View>
@@ -676,7 +676,7 @@ const WalletRider = () => {
           style={styles.refreshButton}
           onPress={fetchSubscriptions}
         >
-          <Ionicons name="refresh" size={16} color="#fff" />
+          <Ionicons name="refresh" size={16} color="#1C1C1E" />
           <Text style={styles.refreshButtonText}>Actualizar paquetes</Text>
         </TouchableOpacity>
 
@@ -706,7 +706,7 @@ const WalletRider = () => {
                   {selectedPackage.title}
                 </Text>
                 <Text style={styles.packageSummaryPrice}>
-                  S/ {formatPrice(selectedPackage.price)}
+                  $  {formatPrice(selectedPackage.price)}
                 </Text>
                 <Text style={styles.packageSummarySales}>
                   {selectedPackage.deliveries} Entregas
@@ -793,7 +793,7 @@ const WalletRider = () => {
 
             <View style={styles.giftContainer}>
               <View style={styles.giftIconContainer}>
-                <Ionicons name="gift" size={60} color="#9BFE03" />
+                <Ionicons name="gift" size={60} color="#fa6205" />
               </View>
               <Text style={styles.freeModalTitle}>
                 🎁 ¡Regalo de Bienvenida!
@@ -808,35 +808,35 @@ const WalletRider = () => {
               <Text style={styles.benefitsTitle}>Lo que obtienes:</Text>
 
               <View style={styles.benefitItem}>
-                <Ionicons name="checkmark-circle" size={20} color="#2ECC71" />
+                <Ionicons name="checkmark-circle" size={20} color="#fa6205" />
                 <Text style={styles.benefitText}>
                   {freePackageAvailable?.nombre || "Paquete gratuito"}
                 </Text>
               </View>
 
               <View style={styles.benefitItem}>
-                <Ionicons name="checkmark-circle" size={20} color="#2ECC71" />
+                <Ionicons name="checkmark-circle" size={20} color="#fa6205" />
                 <Text style={styles.benefitText}>
                   {freePackageAvailable?.cantidad || 0} entregas incluidas
                 </Text>
               </View>
 
               <View style={styles.benefitItem}>
-                <Ionicons name="checkmark-circle" size={20} color="#2ECC71" />
+                <Ionicons name="checkmark-circle" size={20} color="#fa6205" />
                 <Text style={styles.benefitText}>
                   Comienza a hacer entregas inmediatamente
                 </Text>
               </View>
 
               <View style={styles.benefitItem}>
-                <Ionicons name="checkmark-circle" size={20} color="#2ECC71" />
+                <Ionicons name="checkmark-circle" size={20} color="#fa6205" />
                 <Text style={styles.benefitText}>
                   Solo disponible una vez por rider
                 </Text>
               </View>
 
               <View style={styles.benefitItem}>
-                <Ionicons name="checkmark-circle" size={20} color="#2ECC71" />
+                <Ionicons name="checkmark-circle" size={20} color="#fa6205" />
                 <Text style={styles.benefitText}>
                   Personalizado para tu tipo: {riderType}
                 </Text>
@@ -859,7 +859,7 @@ const WalletRider = () => {
 const styles = StyleSheet.create({
   safeContainer: {
     flex: 1,
-    backgroundColor: "#242424",
+    backgroundColor: "#FFFFFF",
     paddingTop: Platform.OS === "android" ? 40 : 0,
   },
   processingContainer: {
@@ -886,13 +886,13 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "#242424",
+    backgroundColor: "#FFFFFF",
   },
   headerBar: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    backgroundColor: "#9BFE03",
+    backgroundColor: "#fa6205",
     padding: 15,
     marginTop: 30,
   },
@@ -902,7 +902,7 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 22,
     fontFamily: "Montserrat_700Bold",
-    color: "#2B2B2B",
+    color: "#333333",
   },
   placeholder: {
     width: 35,
@@ -914,7 +914,7 @@ const styles = StyleSheet.create({
     padding: 16,
   },
   balanceCard: {
-    backgroundColor: "#333",
+    backgroundColor: "#FFFFFF",
     borderRadius: 15,
     padding: 20,
     marginBottom: 20,
@@ -923,19 +923,19 @@ const styles = StyleSheet.create({
   balanceTitle: {
     fontFamily: "Montserrat_600SemiBold",
     fontSize: 16,
-    color: "#9BFE03",
+    color: "#fa6205",
     marginBottom: 8,
   },
   balanceAmount: {
     fontFamily: "Montserrat_700Bold",
     fontSize: 32,
-    color: "white",
+    color: "#1C1C1E",
     marginBottom: 16,
   },
   balanceSubtitle: {
     fontFamily: "Montserrat_400Regular",
     fontSize: 14,
-    color: "#ccc",
+    color: "#666",
     textAlign: "center",
   },
   // New styles for organized layout
@@ -956,20 +956,20 @@ const styles = StyleSheet.create({
   statLabel: {
     fontFamily: "Montserrat_400Regular",
     fontSize: 12,
-    color: "#9BFE03",
+    color: "#fa6205",
     marginBottom: 4,
     textAlign: "center",
   },
   statValue: {
     fontFamily: "Montserrat_700Bold",
     fontSize: 18,
-    color: "white",
+    color: "#1C1C1E",
     textAlign: "center",
   },
   detailsContainer: {
     width: "100%",
     borderTopWidth: 1,
-    borderTopColor: "#444",
+    borderTopColor: "#DDD",
     paddingTop: 12,
   },
   detailRow: {
@@ -981,17 +981,17 @@ const styles = StyleSheet.create({
   detailLabel: {
     fontFamily: "Montserrat_400Regular",
     fontSize: 14,
-    color: "#ccc",
+    color: "#666",
   },
   detailValue: {
     fontFamily: "Montserrat_600SemiBold",
     fontSize: 14,
-    color: "#9BFE03",
+    color: "#fa6205",
   },
   sectionTitle: {
     fontFamily: "Montserrat_700Bold",
     fontSize: 20,
-    color: "white",
+    color: "#1C1C1E",
     marginBottom: 15,
   },
   loadingPackagesContainer: {
@@ -1003,11 +1003,11 @@ const styles = StyleSheet.create({
   loadingPackagesText: {
     fontFamily: "Montserrat_400Regular",
     fontSize: 16,
-    color: "#ccc",
+    color: "#666",
     marginTop: 10,
   },
   noPackagesContainer: {
-    backgroundColor: "#333",
+    backgroundColor: "#FFFFFF",
     borderRadius: 12,
     padding: 20,
     marginBottom: 16,
@@ -1016,11 +1016,11 @@ const styles = StyleSheet.create({
   noPackagesText: {
     fontFamily: "Montserrat_400Regular",
     fontSize: 16,
-    color: "#ccc",
+    color: "#666",
     textAlign: "center",
   },
   packageCard: {
-    backgroundColor: "#333",
+    backgroundColor: "#FFFFFF",
     borderRadius: 12,
     padding: 16,
     marginBottom: 16,
@@ -1033,7 +1033,7 @@ const styles = StyleSheet.create({
   packageTitle: {
     fontFamily: "Montserrat_700Bold",
     fontSize: 18,
-    color: "white",
+    color: "#1C1C1E",
   },
   priceContainer: {
     flexDirection: "row",
@@ -1048,18 +1048,18 @@ const styles = StyleSheet.create({
   priceText: {
     fontFamily: "Montserrat_700Bold",
     fontSize: 16,
-    color: "white",
+    color: "#1C1C1E",
   },
   deliveriesText: {
     fontFamily: "Montserrat_700Bold",
     fontSize: 24,
-    color: "#9BFE03",
+    color: "#fa6205",
     marginBottom: 8,
   },
   packageDescription: {
     fontFamily: "Montserrat_400Regular",
     fontSize: 14,
-    color: "#ccc",
+    color: "#666",
     marginBottom: 15,
   },
   buyButtonContainer: {
@@ -1073,7 +1073,7 @@ const styles = StyleSheet.create({
   buyButtonText: {
     fontFamily: "Montserrat_600SemiBold",
     fontSize: 14,
-    color: "white",
+    color: "#1C1C1E",
   },
   infoText: {
     fontFamily: "Montserrat_400Regular",
@@ -1085,7 +1085,7 @@ const styles = StyleSheet.create({
   },
   refreshButton: {
     flexDirection: "row",
-    backgroundColor: "#444",
+    backgroundColor: "#DDD",
     paddingVertical: 10,
     paddingHorizontal: 15,
     borderRadius: 20,
@@ -1096,7 +1096,7 @@ const styles = StyleSheet.create({
   refreshButtonText: {
     fontFamily: "Montserrat_400Regular",
     fontSize: 14,
-    color: "#fff",
+    color: "#1C1C1E",
     marginLeft: 8,
   },
   // Estilos para el botón de suscripción gratuita para riders
@@ -1129,13 +1129,13 @@ const styles = StyleSheet.create({
   freeSubscriptionTitle: {
     fontFamily: "Montserrat_700Bold",
     fontSize: 16,
-    color: "#fff",
+    color: "#1C1C1E",
     marginBottom: 2,
   },
   freeSubscriptionSubtitle: {
     fontFamily: "Montserrat_400Regular",
     fontSize: 13,
-    color: "#fff",
+    color: "#1C1C1E",
     opacity: 0.9,
   },
   // Estilos para el modal de suscripción gratuita
@@ -1156,7 +1156,7 @@ const styles = StyleSheet.create({
     width: 80,
     height: 80,
     borderRadius: 40,
-    backgroundColor: "rgba(155, 254, 3, 0.1)",
+    backgroundColor: "rgba(250, 98, 5, 0.1)",
     alignItems: "center",
     justifyContent: "center",
     marginBottom: 15,
@@ -1212,7 +1212,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   claimButton: {
-    backgroundColor: "#9BFE03",
+    backgroundColor: "#fa6205",
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
@@ -1288,7 +1288,7 @@ const styles = StyleSheet.create({
   packageSummaryPrice: {
     fontFamily: "Montserrat_700Bold",
     fontSize: 24,
-    color: "#2ECC71",
+    color: "#fa6205",
     marginBottom: 5,
   },
   packageSummarySales: {
@@ -1321,7 +1321,7 @@ const styles = StyleSheet.create({
   mercadoPagoButtonText: {
     fontFamily: "Montserrat_600SemiBold",
     fontSize: 16,
-    color: "white",
+    color: "#1C1C1E",
   },
   loadingPayment: {
     alignItems: "center",
@@ -1351,7 +1351,7 @@ const styles = StyleSheet.create({
   successText: {
     fontFamily: "Montserrat_700Bold",
     fontSize: 24,
-    color: "#2ECC71",
+    color: "#fa6205",
     marginTop: 10,
     marginBottom: 5,
   },
@@ -1363,7 +1363,7 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   doneButton: {
-    backgroundColor: "#2ECC71",
+    backgroundColor: "#fa6205",
     paddingHorizontal: 40,
     paddingVertical: 12,
     borderRadius: 25,
@@ -1371,24 +1371,24 @@ const styles = StyleSheet.create({
   doneButtonText: {
     fontFamily: "Montserrat_600SemiBold",
     fontSize: 16,
-    color: "white",
+    color: "#1C1C1E",
   },
   // Estilos para suscripciones activas
   activeSubscriptionsContainer: {
     marginBottom: 20,
   },
   activeSubscriptionCard: {
-    backgroundColor: "#333",
+    backgroundColor: "#FFFFFF",
     borderRadius: 12,
     padding: 16,
     marginBottom: 12,
     borderLeftWidth: 5,
-    borderLeftColor: "#9BFE03",
+    borderLeftColor: "#fa6205",
   },
   activeSubscriptionName: {
     fontFamily: "Montserrat_700Bold",
     fontSize: 16,
-    color: "white",
+    color: "#1C1C1E",
     marginBottom: 8,
   },
   activeSubscriptionDetails: {
@@ -1398,7 +1398,7 @@ const styles = StyleSheet.create({
   activeSubscriptionInfo: {
     fontFamily: "Montserrat_400Regular",
     fontSize: 14,
-    color: "#ccc",
+    color: "#666",
   },
   loadingFreePackageContainer: {
     flexDirection: "row",

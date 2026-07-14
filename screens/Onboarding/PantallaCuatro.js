@@ -80,7 +80,7 @@ const styles = StyleSheet.create({
     fontSize: 18.5, // Tamaño del texto
     fontWeight: "Montserrat_400Regular", // Negrita
     letterSpacing: 0.4, // Espaciado entre letras
-    color: "#fff", // Color blanco
+    color: "#1C1C1E", // Color blanco
     textAlign: "center", // Alineación centrada
   },
   separator: {

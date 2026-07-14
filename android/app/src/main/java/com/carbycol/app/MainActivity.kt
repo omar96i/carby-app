@@ -1,4 +1,4 @@
-package com.deloreanstudios.yaridersapp
+package com.carbycol.app
 import expo.modules.splashscreen.SplashScreenManager
 
 import android.os.Build

@@ -330,7 +330,7 @@ const MapComponent = () => {
     if (!location) {
       return (
         <View style={[styles.map, styles.centerContent]}>
-          <ActivityIndicator size="large" color="#288018" />
+          <ActivityIndicator size="large" color="#fa6205" />
           <Text style={styles.loadingText}>Obteniendo tu ubicación...</Text>
         </View>
       );
@@ -400,7 +400,7 @@ const MapComponent = () => {
             style={styles.refreshButton}
             onPress={handleRefreshLocation}
           >
-            <FontAwesome name="refresh" size={20} color="white" />
+            <FontAwesome name="refresh" size={20} color="#1C1C1E" />
           </TouchableOpacity>
         </>
       );
@@ -423,7 +423,7 @@ const MapComponent = () => {
   if (loading) {
     return (
       <View style={[styles.mapContainer, styles.centerContent]}>
-        <ActivityIndicator size="large" color="#288018" />
+        <ActivityIndicator size="large" color="#fa6205" />
         <Text style={styles.loadingText}>Obteniendo tu ubicación...</Text>
       </View>
     );
@@ -486,25 +486,25 @@ const styles = StyleSheet.create({
   },
   loadingText: {
     marginTop: 10,
-    color: "#288018",
+    color: "#fa6205",
     fontSize: 16
   },
   retryButton: {
-    backgroundColor: "#288018",
+    backgroundColor: "#fa6205",
     paddingVertical: 10,
     paddingHorizontal: 20,
     borderRadius: 25,
     marginTop: 15
   },
   retryText: {
-    color: "white",
+    color: "#1C1C1E",
     fontSize: 16
   },
   refreshButton: {
     position: 'absolute',
     top: 10,
     left: 10,
-    backgroundColor: '#288018',
+    backgroundColor: '#fa6205',
     width: 40,
     height: 40,
     borderRadius: 20,

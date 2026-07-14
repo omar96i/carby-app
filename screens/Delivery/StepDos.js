@@ -62,7 +62,7 @@ console.log("data", handleContinue);
         {/* Indicador de pasos con iconos */}
         <View style={styles.stepsContainer}>
           <View style={styles.stepItem}>
-            <IconMC name="checkcircle" size={50} color="#197200" style={{ marginTop: 15 }} />
+            <IconMC name="checkcircle" size={50} color="#fa6205" style={{ marginTop: 15 }} />
 
             {/* Linea de progreso*/}
             <View
@@ -100,7 +100,7 @@ console.log("data", handleContinue);
         <View style={styles.locationBox}>
           <View style={styles.locationItem}>
             <View style={styles.locationRow}>
-              <Icon name="map-marker" size={22} color="#009900" />
+              <Icon name="map-marker" size={22} color="#fa6205" />
               <Text style={styles.pointTitle}> Punto A</Text>
              
             </View>
@@ -121,7 +121,7 @@ console.log("data", handleContinue);
 
           <View style={styles.locationItem}>
             <View style={styles.locationRow}>
-              <Icon name="map-marker" size={22} color="#009900" />
+              <Icon name="map-marker" size={22} color="#fa6205" />
               <Text style={styles.pointTitle}> Punto B</Text>
              
             </View>
@@ -180,7 +180,7 @@ const styles = StyleSheet.create({
   priceValue: {
     fontSize: 22,
     fontWeight: "bold",
-    color: "#197200",
+    color: "#fa6205",
   },
   container: {
     flex: 1,
@@ -278,7 +278,7 @@ const styles = StyleSheet.create({
     top: 0, // Reduce este valor para subir la línea
     borderLeftWidth: 2,
     borderStyle: "dashed",
-    borderColor: "#B2D8B2",
+    borderColor: "#fde2cc",
   },
   footer: {
     flexDirection: "row",
@@ -295,10 +295,10 @@ const styles = StyleSheet.create({
   priceValue: {
     fontSize: 22,
     fontWeight: "bold",
-    color: "#197200",
+    color: "#fa6205",
   },
   continueButton: {
-    backgroundColor: "#197200",
+    backgroundColor: "#fa6205",
     padding: 15,
     borderRadius: 50,
     alignItems: "center",
@@ -307,7 +307,7 @@ const styles = StyleSheet.create({
     marginTop: 40,
   },
   continueText: {
-    color: "#fff",
+    color: "#1C1C1E",
     fontSize: 14,
     fontFamily: "Inter_400Regular",
   },
@@ -330,13 +330,13 @@ const styles = StyleSheet.create({
     color: "#888",
   },
   input: {
-    backgroundColor: "#E3E7DD",
+    backgroundColor: "#fdf0e6",
     padding: 10,
     borderRadius: 8,
     marginBottom: 10,
   },
   input2: {
-    backgroundColor: "#E3E7DD",
+    backgroundColor: "#fdf0e6",
     padding: 10,
     borderRadius: 8,
     marginBottom: 0,

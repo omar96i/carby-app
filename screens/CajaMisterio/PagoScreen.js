@@ -15,11 +15,11 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // Definimos la paleta de colores para fácil acceso
 const COLORS = {
-    background: '#242424',
-    accent: '#9BFE03',
+    background: '#FFFFFF',
+    accent: '#fa6205',
     text: '#F5F5F5',
     placeholder: '#6E6E6E',
-    inputBackground: '#3A3A3A',
+    inputBackground: '#D8D8D8',
 };
 
 // Componente principal de la pantalla de pago
@@ -52,7 +52,7 @@ const PagoScreen = ({ navigation }) => {
 
     return (
         <SafeAreaView style={styles.container}>
-            <StatusBar barStyle="light-content" />
+            <StatusBar barStyle="dark-content" />
             <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
                 <View style={styles.innerContainer}>
 
@@ -73,7 +73,7 @@ const PagoScreen = ({ navigation }) => {
                                 onPress={() => setAmount(String(preset))}
                             >
                                 {/* ----- TEXTO CAMBIADO ----- */}
-                                <Text style={styles.presetButtonText}>S/{preset}</Text>
+                                <Text style={styles.presetButtonText}>$ {preset}</Text>
                             </TouchableOpacity>
                         ))}
                     </View>
@@ -81,7 +81,7 @@ const PagoScreen = ({ navigation }) => {
                     {/* Campo de texto rediseñado */}
                     <View style={[styles.inputContainer, isFocused && styles.inputContainerFocused]}>
                         {/* ----- TEXTO CAMBIADO ----- */}
-                        <Text style={styles.currencySymbol}>S/</Text>
+                        <Text style={styles.currencySymbol}>$ </Text>
                         <TextInput
                             style={styles.input}
                             placeholder="0.00"

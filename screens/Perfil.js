@@ -451,7 +451,7 @@ export default function Perfil() {
   if (!fontsLoaded) {
     return (
       <SafeAreaView style={styles.safeContainer}>
-        <Text style={{ textAlign: "center", marginTop: 20, color: "#FFFFFF" }}>
+        <Text style={{ textAlign: "center", marginTop: 20, color: "#1C1C1E" }}>
           Cargando...
         </Text>
       </SafeAreaView>
@@ -504,7 +504,7 @@ export default function Perfil() {
             onPress={() => navigation.goBack()}
             style={styles.backButton}
           >
-            <FontAwesome name="arrow-left" size={24} color="white" />
+            <FontAwesome name="arrow-left" size={24} color="#1C1C1E" />
           </TouchableOpacity>
 
           {/* Foto de perfil */}
@@ -529,7 +529,7 @@ export default function Perfil() {
                   },
                 ]}
               >
-                <Icon3 name="user" size={80} color="#94D82D" />
+                <Icon3 name="user" size={80} color="#fa6205" />
               </View>
             )}
 
@@ -544,7 +544,7 @@ export default function Perfil() {
             {userInfo?.data?.nombre_completo || "Usuario"}
           </Text>
           <Text style={styles.sectionTitle2}>
-            <IconMCC name="location" size={20} color="#fff" />
+            <IconMCC name="location" size={20} color="#1C1C1E" />
             {userInfo?.data?.ciudad || "Ciudad"}
           </Text>
 
@@ -579,7 +579,7 @@ export default function Perfil() {
                 <Text style={styles.modalTitle}>Premios por Referidos</Text>
                 <Text style={styles.modalText}>
                   Comparte tu código de referido:
-                  <Text style={{ fontWeight: "bold", color: "#94D82D" }}>
+                  <Text style={{ fontWeight: "bold", color: "#fa6205" }}>
                     {codigoReferido}
                   </Text>
                 </Text>
@@ -587,7 +587,7 @@ export default function Perfil() {
                   style={styles.shareButton}
                   onPress={compartirCodigoReferido}
                 >
-                  <Icon3 name="share-2" size={18} color="#FFF" />
+                  <Icon3 name="share-2" size={18} color="#1C1C1E" />
                   <Text style={styles.shareButtonText}>Compartir código</Text>
                 </TouchableOpacity>
 
@@ -691,7 +691,7 @@ export default function Perfil() {
               <Icon3
                 name="map-pin"
                 size={25}
-                color="#121212"
+                color="#F2F2F7"
                 style={styles.icon2}
               />
               <Text style={styles.label}>
@@ -713,7 +713,7 @@ export default function Perfil() {
                 <Icon3
                   name="help-circle"
                   size={25}
-                  color="#121212"
+                  color="#F2F2F7"
                   style={styles.icon2}
                 />
                 <Text style={styles.label}>Soporte</Text>
@@ -781,7 +781,7 @@ export default function Perfil() {
                 ]}
               >
                 {termsChecked && (
-                  <Icon3 name="check" size={16} color="#121212" />
+                  <Icon3 name="check" size={16} color="#F2F2F7" />
                 )}
               </View>
             </TouchableOpacity>
@@ -809,7 +809,7 @@ export default function Perfil() {
                 ]}
               >
                 {privacyChecked && (
-                  <Icon3 name="check" size={16} color="#121212" />
+                  <Icon3 name="check" size={16} color="#F2F2F7" />
                 )}
               </View>
             </TouchableOpacity>
@@ -823,7 +823,7 @@ export default function Perfil() {
 const styles = StyleSheet.create({
   safeContainer: {
     flex: 1,
-    backgroundColor: "#242424",
+    backgroundColor: "#FFFFFF",
     paddingTop: Platform.OS === "android" ? 50 : 40,
   },
   container: {
@@ -841,7 +841,7 @@ const styles = StyleSheet.create({
     height: 160,
     borderRadius: 80,
     borderWidth: 3,
-    borderColor: "#94D82D",
+    borderColor: "#fa6205",
     backgroundColor: "#555",
   },
   editIcon: {
@@ -853,14 +853,14 @@ const styles = StyleSheet.create({
   sectionTitle3: {
     fontFamily: "Montserrat_700Bold",
     fontSize: 20,
-    color: "#FFFFFF",
+    color: "#1C1C1E",
     textAlign: "center",
     marginTop: 10,
   },
   sectionTitle2: {
     fontFamily: "Montserrat_300Light",
     fontSize: 14,
-    color: "#CCCCCC",
+    color: "#666",
     textAlign: "center",
     marginTop: 5,
   },
@@ -869,7 +869,7 @@ const styles = StyleSheet.create({
     fontFamily: "Inter_700Bold",
     marginBottom: 20,
     textAlign: "center",
-    color: "#1E7D22",
+    color: "#fa6205",
   },
   // Estilos para los botones de acciones
   buttonsContainer: {
@@ -879,7 +879,7 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   button1: {
-    backgroundColor: "#E9FAC8",
+    backgroundColor: "#fff5ee",
     padding: 15,
     borderRadius: 20,
     alignItems: "center",
@@ -901,7 +901,7 @@ const styles = StyleSheet.create({
   },
   // Estilos para la tarjeta de opciones
   card1: {
-    backgroundColor: "#9BFE03",
+    backgroundColor: "#fa6205",
     borderRadius: 25,
     padding: 15,
     marginVertical: 25,
@@ -924,7 +924,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     //alignItems: "center",
     //justifyContent: "center",
-    backgroundColor: "#9BFE03",
+    backgroundColor: "#fa6205",
     paddingVertical: 12,
     paddingHorizontal: 20,
     borderRadius: 15,
@@ -1008,7 +1008,7 @@ const styles = StyleSheet.create({
     fontFamily: "Montserrat_300Light",
   },
   continueButtonText: {
-    color: "white",
+    color: "#1C1C1E",
     fontSize: 16,
     fontFamily: "Montserrat_300Light",
   },
@@ -1024,7 +1024,7 @@ const styles = StyleSheet.create({
     padding: 15,
     marginBottom: 10,
     borderLeftWidth: 5,
-    borderLeftColor: "#94D82D",
+    borderLeftColor: "#fa6205",
   },
   premioNombre: {
     fontSize: 16,
@@ -1070,7 +1070,7 @@ const styles = StyleSheet.create({
     textAlign: "center",
   },
   closeButton: {
-    backgroundColor: "#94D82D",
+    backgroundColor: "#fa6205",
     padding: 12,
     borderRadius: 10,
     width: "100%",
@@ -1078,13 +1078,13 @@ const styles = StyleSheet.create({
     marginTop: 15,
   },
   closeButtonText: {
-    color: "#FFF",
+    color: "#1C1C1E",
     fontSize: 16,
     fontFamily: "Montserrat_700Bold",
   },
   // Botón para compartir código de referido
   shareButton: {
-    backgroundColor: "#94D82D",
+    backgroundColor: "#fa6205",
     padding: 10,
     borderRadius: 10,
     flexDirection: "row",
@@ -1095,7 +1095,7 @@ const styles = StyleSheet.create({
     width: "100%",
   },
   shareButtonText: {
-    color: "#FFF",
+    color: "#1C1C1E",
     fontSize: 14,
     fontFamily: "Montserrat_700Bold",
     marginLeft: 10,
@@ -1116,7 +1116,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   linkText: {
-    color: "white",
+    color: "#1C1C1E",
     textDecorationLine: "underline",
     fontSize: 16,
     fontFamily: "Montserrat_400Regular",
@@ -1128,13 +1128,13 @@ const styles = StyleSheet.create({
     width: 24,
     height: 24,
     borderWidth: 2,
-    borderColor: "#94D82D",
+    borderColor: "#fa6205",
     borderRadius: 4,
     backgroundColor: "transparent",
     alignItems: "center",
     justifyContent: "center",
   },
   checkboxChecked: {
-    backgroundColor: "#94D82D",
+    backgroundColor: "#fa6205",
   },
 });

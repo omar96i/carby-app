@@ -301,7 +301,7 @@ YaRiders disponibles"
               {loading ? (
                 <ActivityIndicator
                   size="large"
-                  color="#1E7D22"
+                  color="#fa6205"
                   style={styles.loader}
                 />
               ) : tripsData && tripsData.length > 0 ? (
@@ -362,7 +362,7 @@ const styles = StyleSheet.create({
     fontSize: 22,
     fontFamily: "Inter_400Regular",
     marginBottom: -5,
-    color: "#fff",
+    color: "#1C1C1E",
   },
   boldText: {
     fontFamily: "Inter_700Bold",
@@ -370,13 +370,13 @@ const styles = StyleSheet.create({
   },
   subtext: {
     fontSize: 16,
-    color: "#fff",
+    color: "#1C1C1E",
     fontFamily: "Inter_400Regular",
     
   },
   subtext2: {
     fontSize: 16,
-    color: "#fff",
+    color: "#1C1C1E",
     fontFamily: "Inter_400Regular",
     marginLeft: 10,
     marginBottom: 20,
@@ -395,7 +395,7 @@ const styles = StyleSheet.create({
   tripsSectionTitle: {
     fontSize: 18,
     fontFamily: "Inter_700Bold",
-    color: "#fff",
+    color: "#1C1C1E",
     marginBottom: 20,
     marginLeft: 10,
   },

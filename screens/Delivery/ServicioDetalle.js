@@ -1153,12 +1153,12 @@ const ServicioDetalle = ({ route, navigation }) => {
         style={styles.backButton}
         onPress={() => navigation.goBack()}
       >
-        <Ionicons name="arrow-back" size={28} color="white" />
+        <Ionicons name="arrow-back" size={28} color="#1C1C1E" />
       </TouchableOpacity>
       {/* Vista del Servicio principal */}
       <View
         style={{
-          backgroundColor: "#232323",
+          backgroundColor: "#F5F5F5",
           borderRadius: 14,
           padding: 16,
           marginBottom: 18,
@@ -1179,14 +1179,14 @@ const ServicioDetalle = ({ route, navigation }) => {
             height: 180,
             borderRadius: 12,
             marginBottom: 12,
-            backgroundColor: "#232323",
+            backgroundColor: "#F5F5F5",
           }}
           resizeMode="cover"
         />
         <Text
           style={{
             fontSize: 22,
-            color: "#fff",
+            color: "#1C1C1E",
             fontWeight: "bold",
             marginBottom: 4,
           }}
@@ -1196,12 +1196,12 @@ const ServicioDetalle = ({ route, navigation }) => {
         <Text
           style={{
             fontSize: 18,
-            color: "#9BFE03",
+            color: "#fa6205",
             fontWeight: "bold",
             marginBottom: 4,
           }}
         >
-          S/{servicio.precio || "0"}
+          $ {servicio.precio || "0"}
         </Text>
         <Text style={{ fontSize: 15, color: "#ccc", marginBottom: 4 }}>
           {servicio.descripcion}
@@ -1227,13 +1227,13 @@ const ServicioDetalle = ({ route, navigation }) => {
               marginHorizontal: 8,
             }}
           >
-            <Text style={{ color: "#fff", fontSize: 20, fontWeight: "bold" }}>
+            <Text style={{ color: "#1C1C1E", fontSize: 20, fontWeight: "bold" }}>
               -
             </Text>
           </TouchableOpacity>
           <Text
             style={{
-              color: "#fff",
+              color: "#1C1C1E",
               fontSize: 18,
               fontWeight: "bold",
               minWidth: 32,
@@ -1245,14 +1245,14 @@ const ServicioDetalle = ({ route, navigation }) => {
           <TouchableOpacity
             onPress={increaseQuantity}
             style={{
-              backgroundColor: "#4dff4d",
+              backgroundColor: "#fa6205",
               borderRadius: 8,
               padding: 8,
               marginHorizontal: 8,
             }}
           >
             <Text
-              style={{ color: "#232323", fontSize: 20, fontWeight: "bold" }}
+              style={{ color: "#F5F5F5", fontSize: 20, fontWeight: "bold" }}
             >
               +
             </Text>
@@ -1261,11 +1261,11 @@ const ServicioDetalle = ({ route, navigation }) => {
       </View>
       {/* Adicionales */}
       {loadingAdicionales ? (
-        <ActivityIndicator color="#9BFE03" style={{ marginVertical: 20 }} />
+        <ActivityIndicator color="#fa6205" style={{ marginVertical: 20 }} />
       ) : adicionales.length > 0 ? (
         <View
           style={{
-            backgroundColor: "#232323",
+            backgroundColor: "#F5F5F5",
             borderRadius: 14,
             padding: 14,
             marginBottom: 18,
@@ -1273,7 +1273,7 @@ const ServicioDetalle = ({ route, navigation }) => {
         >
           <Text
             style={{
-              color: "#9BFE03",
+              color: "#fa6205",
               fontSize: 18,
               fontWeight: "bold",
               marginBottom: 10,
@@ -1291,12 +1291,12 @@ const ServicioDetalle = ({ route, navigation }) => {
                 style={{
                   flexDirection: "row",
                   alignItems: "center",
-                  backgroundColor: isSelected ? "#1c1c1c" : "transparent",
+                  backgroundColor: isSelected ? "#F2F2F7" : "transparent",
                   borderRadius: 8,
                   padding: 10,
                   marginBottom: 8,
                   borderWidth: isSelected ? 2 : 0,
-                  borderColor: isSelected ? "#9BFE03" : "transparent",
+                  borderColor: isSelected ? "#fa6205" : "transparent",
                 }}
               >
                 <TouchableOpacity
@@ -1307,19 +1307,19 @@ const ServicioDetalle = ({ route, navigation }) => {
                   }}
                   onPress={() => handleToggleAdicional(adicional)}
                 >
-                  <Text style={{ color: "#fff", fontSize: 16 }}>
+                  <Text style={{ color: "#1C1C1E", fontSize: 16 }}>
                     {adicional.nombre}
                   </Text>
                   <Text
-                    style={{ color: "#9BFE03", fontSize: 16, marginLeft: 10 }}
+                    style={{ color: "#fa6205", fontSize: 16, marginLeft: 10 }}
                   >
-                    S/{adicional.precio || "0"}
+                    $ {adicional.precio || "0"}
                   </Text>
                   {isSelected && (
                     <Ionicons
                       name="checkmark-circle"
                       size={22}
-                      color="#9BFE03"
+                      color="#fa6205"
                       style={{ marginLeft: 8 }}
                     />
                   )}
@@ -1344,7 +1344,7 @@ const ServicioDetalle = ({ route, navigation }) => {
                     >
                       <Text
                         style={{
-                          color: "#fff",
+                          color: "#1C1C1E",
                           fontSize: 16,
                           fontWeight: "bold",
                         }}
@@ -1354,7 +1354,7 @@ const ServicioDetalle = ({ route, navigation }) => {
                     </TouchableOpacity>
                     <Text
                       style={{
-                        color: "#fff",
+                        color: "#1C1C1E",
                         fontSize: 16,
                         minWidth: 24,
                         textAlign: "center",
@@ -1365,7 +1365,7 @@ const ServicioDetalle = ({ route, navigation }) => {
                     <TouchableOpacity
                       onPress={() => updateAdicionalQuantity(adicional.id, 1)}
                       style={{
-                        backgroundColor: "#4dff4d",
+                        backgroundColor: "#fa6205",
                         borderRadius: 8,
                         padding: 6,
                         marginHorizontal: 4,
@@ -1373,7 +1373,7 @@ const ServicioDetalle = ({ route, navigation }) => {
                     >
                       <Text
                         style={{
-                          color: "#232323",
+                          color: "#F5F5F5",
                           fontSize: 16,
                           fontWeight: "bold",
                         }}
@@ -1391,26 +1391,26 @@ const ServicioDetalle = ({ route, navigation }) => {
       {/* Total price */}
       <View
         style={{
-          backgroundColor: "#232323",
+          backgroundColor: "#F5F5F5",
           borderRadius: 10,
           padding: 12,
           alignItems: "center",
           marginBottom: 16,
         }}
       >
-        <Text style={{ color: "#9BFE03", fontSize: 20, fontWeight: "bold" }}>
-          Total: S/{totalPrice.toLocaleString()}
+        <Text style={{ color: "#fa6205", fontSize: 20, fontWeight: "bold" }}>
+          Total: $ {totalPrice.toLocaleString()}
         </Text>
         {selectedAdicionales.length > 0 && (
           <Text style={{ color: "#aaa", fontSize: 13, marginTop: 2 }}>
-            Incluye adicionales: +S/{adicionalesPrice.toLocaleString()}
+            Incluye adicionales: +$ {adicionalesPrice.toLocaleString()}
           </Text>
         )}
       </View>
       {/* Captura de datos de reserva */}
       <View
         style={{
-          backgroundColor: "#232323",
+          backgroundColor: "#F5F5F5",
           borderRadius: 14,
           padding: 16,
           marginBottom: 18,
@@ -1420,7 +1420,7 @@ const ServicioDetalle = ({ route, navigation }) => {
         {/* Selección de perfil - PRIMERO */}
         <Text
           style={{
-            color: "#fff",
+            color: "#1C1C1E",
             fontSize: 16,
             fontWeight: "bold",
             marginBottom: 12,
@@ -1431,7 +1431,7 @@ const ServicioDetalle = ({ route, navigation }) => {
         {profiles.length === 0 ? (
           <View
             style={{
-              backgroundColor: "#1c1c1c",
+              backgroundColor: "#F2F2F7",
               borderRadius: 8,
               padding: 16,
               marginBottom: 12,
@@ -1453,7 +1453,7 @@ const ServicioDetalle = ({ route, navigation }) => {
                 key={perfil.id}
                 style={{
                   backgroundColor:
-                    selectedProfile?.id === perfil.id ? "#9BFE03" : "#1c1c1c",
+                    selectedProfile?.id === perfil.id ? "#fa6205" : "#F2F2F7",
                   borderRadius: 12,
                   padding: 12,
                   marginRight: 12,
@@ -1463,7 +1463,7 @@ const ServicioDetalle = ({ route, navigation }) => {
                   borderWidth: selectedProfile?.id === perfil.id ? 2 : 0,
                   borderColor:
                     selectedProfile?.id === perfil.id
-                      ? "#9BFE03"
+                      ? "#fa6205"
                       : "transparent",
                 }}
                 onPress={() => handleSelectProfile(perfil)}
@@ -1480,14 +1480,14 @@ const ServicioDetalle = ({ route, navigation }) => {
                     height: 60,
                     borderRadius: 30,
                     marginBottom: 8,
-                    backgroundColor: "#232323",
+                    backgroundColor: "#F5F5F5",
                   }}
                   resizeMode="cover"
                 />
                 <Text
                   style={{
                     color:
-                      selectedProfile?.id === perfil.id ? "#232323" : "#fff",
+                      selectedProfile?.id === perfil.id ? "#F5F5F5" : "#fff",
                     fontWeight: "bold",
                     fontSize: 13,
                     textAlign: "center",
@@ -1502,12 +1502,12 @@ const ServicioDetalle = ({ route, navigation }) => {
                       position: "absolute",
                       top: 8,
                       right: 8,
-                      backgroundColor: "#232323",
+                      backgroundColor: "#F5F5F5",
                       borderRadius: 10,
                       padding: 2,
                     }}
                   >
-                    <Ionicons name="checkmark" size={16} color="#9BFE03" />
+                    <Ionicons name="checkmark" size={16} color="#fa6205" />
                   </View>
                 )}
               </TouchableOpacity>
@@ -1520,14 +1520,14 @@ const ServicioDetalle = ({ route, navigation }) => {
           <View style={{ marginBottom: 12 }}>
             {loadingDisponibilidad ? (
               <ActivityIndicator
-                color="#9BFE03"
+                color="#fa6205"
                 style={{ marginVertical: 10 }}
               />
             ) : disponibilidadPerfil && disponibilidadPerfil.length > 0 ? (
               <View>
                 <Text
                   style={{
-                    color: "#9BFE03",
+                    color: "#fa6205",
                     fontSize: 14,
                     fontWeight: "bold",
                     marginBottom: 4,
@@ -1576,7 +1576,7 @@ const ServicioDetalle = ({ route, navigation }) => {
           <View>
             <Text
               style={{
-                color: "#fff",
+                color: "#1C1C1E",
                 fontSize: 16,
                 fontWeight: "bold",
                 marginBottom: 6,
@@ -1616,7 +1616,7 @@ const ServicioDetalle = ({ route, navigation }) => {
                     key={idx}
                     style={{
                       backgroundColor: isSelected
-                        ? "#9BFE03"
+                        ? "#fa6205"
                         : tieneDisponibilidad
                         ? "#fff"
                         : "#666",
@@ -1637,9 +1637,9 @@ const ServicioDetalle = ({ route, navigation }) => {
                     <Text
                       style={{
                         color: isSelected
-                          ? "#232323"
+                          ? "#F5F5F5"
                           : tieneDisponibilidad
-                          ? "#232323"
+                          ? "#F5F5F5"
                           : "#aaa",
                         fontSize: 12,
                         fontWeight: "bold",
@@ -1650,9 +1650,9 @@ const ServicioDetalle = ({ route, navigation }) => {
                     <Text
                       style={{
                         color: isSelected
-                          ? "#232323"
+                          ? "#F5F5F5"
                           : tieneDisponibilidad
-                          ? "#232323"
+                          ? "#F5F5F5"
                           : "#aaa",
                         fontSize: 11,
                       }}
@@ -1667,12 +1667,12 @@ const ServicioDetalle = ({ route, navigation }) => {
             {/* Selector de hora basado en disponibilidad */}
             {fecha ? (
               <>
-                <Text style={{ color: "#fff", fontSize: 13, marginBottom: 6 }}>
+                <Text style={{ color: "#1C1C1E", fontSize: 13, marginBottom: 6 }}>
                   Horarios disponibles:
                 </Text>
                 {loadingAgenda ? (
                   <ActivityIndicator
-                    color="#9BFE03"
+                    color="#fa6205"
                     style={{ marginVertical: 10 }}
                   />
                 ) : horariosDisponibles.length > 0 ? (
@@ -1688,7 +1688,7 @@ const ServicioDetalle = ({ route, navigation }) => {
                         return (                          <TouchableOpacity
                             key={idx}
                             style={{
-                              backgroundColor: isSelected ? "#9BFE03" : "#fff",
+                              backgroundColor: isSelected ? "#fa6205" : "#fff",
                               borderRadius: 8,
                               padding: 8,
                               marginRight: 8,
@@ -1706,7 +1706,7 @@ const ServicioDetalle = ({ route, navigation }) => {
                           >
                             <Text
                               style={{
-                                color: isSelected ? "#232323" : "#232323",
+                                color: isSelected ? "#F5F5F5" : "#F5F5F5",
                                 fontSize: 14,
                                 fontWeight: "bold",
                               }}
@@ -1745,7 +1745,7 @@ const ServicioDetalle = ({ route, navigation }) => {
         {/* Tipo de reserva */}
         <Text
           style={{
-            color: "#fff",
+            color: "#1C1C1E",
             fontSize: 16,
             fontWeight: "bold",
             marginBottom: 6,
@@ -1757,7 +1757,7 @@ const ServicioDetalle = ({ route, navigation }) => {
           <TouchableOpacity
             onPress={() => setTipoReserva("local")}
             style={{
-              backgroundColor: tipoReserva === "local" ? "#9BFE03" : "#fff",
+              backgroundColor: tipoReserva === "local" ? "#fa6205" : "#fff",
               borderRadius: 8,
               padding: 8,
               flex: 1,
@@ -1766,7 +1766,7 @@ const ServicioDetalle = ({ route, navigation }) => {
           >
             <Text
               style={{
-                color: tipoReserva === "local" ? "#232323" : "#232323",
+                color: tipoReserva === "local" ? "#F5F5F5" : "#F5F5F5",
                 fontWeight: "bold",
               }}
             >
@@ -1776,7 +1776,7 @@ const ServicioDetalle = ({ route, navigation }) => {
           <TouchableOpacity
             onPress={() => setTipoReserva("domicilio")}
             style={{
-              backgroundColor: tipoReserva === "domicilio" ? "#9BFE03" : "#fff",
+              backgroundColor: tipoReserva === "domicilio" ? "#fa6205" : "#fff",
               borderRadius: 8,
               padding: 8,
               flex: 1,
@@ -1785,7 +1785,7 @@ const ServicioDetalle = ({ route, navigation }) => {
           >
             <Text
               style={{
-                color: tipoReserva === "domicilio" ? "#232323" : "#232323",
+                color: tipoReserva === "domicilio" ? "#F5F5F5" : "#F5F5F5",
                 fontWeight: "bold",
               }}
             >
@@ -1798,7 +1798,7 @@ const ServicioDetalle = ({ route, navigation }) => {
           <View>
             <Text
               style={{
-                color: "#fff",
+                color: "#1C1C1E",
                 fontSize: 16,
                 fontWeight: "bold",
                 marginBottom: 6,
@@ -1817,22 +1817,22 @@ const ServicioDetalle = ({ route, navigation }) => {
                 onPress={openMapModal}
                 style={{ marginRight: 8 }}
               >
-                <Ionicons name="location" size={24} color="#4CD964" />
+                <Ionicons name="location" size={24} color="#fa6205" />
               </TouchableOpacity>
               <View style={{ flex: 1 }}>
-                <Text style={{ color: "#fff", marginBottom: 4, fontSize: 13 }}>
+                <Text style={{ color: "#1C1C1E", marginBottom: 4, fontSize: 13 }}>
                   Buscar dirección o usa el mapa
                 </Text>
                 <View style={{ flexDirection: "row", alignItems: "center" }}>
                   <TextInput
                     style={{
-                      backgroundColor: "#232323",
-                      color: "#fff",
+                      backgroundColor: "#F5F5F5",
+                      color: "#1C1C1E",
                       borderRadius: 8,
                       padding: 8,
                       flex: 1,
                       borderWidth: 1,
-                      borderColor: "#444",
+                      borderColor: "#DDD",
                     }}
                     placeholder="Buscar dirección..."
                     placeholderTextColor="rgba(255,255,255,0.5)"
@@ -1846,9 +1846,9 @@ const ServicioDetalle = ({ route, navigation }) => {
                     disabled={isLoadingCurrentLocation}
                   >
                     {isLoadingCurrentLocation ? (
-                      <ActivityIndicator size="small" color="#4CD964" />
+                      <ActivityIndicator size="small" color="#fa6205" />
                     ) : (
-                      <Ionicons name="locate" size={20} color="#4CD964" />
+                      <Ionicons name="locate" size={20} color="#fa6205" />
                     )}
                   </TouchableOpacity>
                 </View>
@@ -1860,7 +1860,7 @@ const ServicioDetalle = ({ route, navigation }) => {
                 {showPickupSuggestions && (
                   <View
                     style={{
-                      backgroundColor: "#232323",
+                      backgroundColor: "#F5F5F5",
                       borderRadius: 8,
                       marginTop: 4,
                       maxHeight: 120,
@@ -1869,7 +1869,7 @@ const ServicioDetalle = ({ route, navigation }) => {
                     {isSearchingPickup ? (
                       <ActivityIndicator
                         size="small"
-                        color="#4CD964"
+                        color="#fa6205"
                         style={{ margin: 8 }}
                       />
                     ) : (
@@ -1886,10 +1886,10 @@ const ServicioDetalle = ({ route, navigation }) => {
                           <Ionicons
                             name="location"
                             size={16}
-                            color="#4CD964"
+                            color="#fa6205"
                             style={{ marginRight: 8 }}
                           />
-                          <Text style={{ color: "#fff" }}>
+                          <Text style={{ color: "#1C1C1E" }}>
                             {item.description}
                           </Text>
                         </TouchableOpacity>
@@ -1904,7 +1904,7 @@ const ServicioDetalle = ({ route, navigation }) => {
         {/* Método de pago */}
         <Text
           style={{
-            color: "#fff",
+            color: "#1C1C1E",
             fontSize: 16,
             fontWeight: "bold",
             marginBottom: 6,
@@ -1913,7 +1913,7 @@ const ServicioDetalle = ({ route, navigation }) => {
           Método de pago
         </Text>
         {loadingPaymentMethods ? (
-          <ActivityIndicator color="#9BFE03" style={{ marginVertical: 10 }} />
+          <ActivityIndicator color="#fa6205" style={{ marginVertical: 10 }} />
         ) : (
           <View>
             <View style={{ flexDirection: "row", gap: 8, marginBottom: 12 }}>
@@ -1922,7 +1922,7 @@ const ServicioDetalle = ({ route, navigation }) => {
                 onPress={() => setMetodoPago("efectivo")}
                 style={{
                   backgroundColor:
-                    metodoPago === "efectivo" ? "#9BFE03" : "#fff",
+                    metodoPago === "efectivo" ? "#fa6205" : "#fff",
                   borderRadius: 8,
                   padding: 8,
                   flex: availablePaymentMethods.length === 1 ? 1 : 1,
@@ -1931,7 +1931,7 @@ const ServicioDetalle = ({ route, navigation }) => {
               >
                 <Text
                   style={{
-                    color: metodoPago === "efectivo" ? "#232323" : "#232323",
+                    color: metodoPago === "efectivo" ? "#F5F5F5" : "#F5F5F5",
                     fontWeight: "bold",
                   }}
                 >
@@ -1944,7 +1944,7 @@ const ServicioDetalle = ({ route, navigation }) => {
                 <TouchableOpacity
                   onPress={() => setMetodoPago("qr")}
                   style={{
-                    backgroundColor: metodoPago === "qr" ? "#9BFE03" : "#fff",
+                    backgroundColor: metodoPago === "qr" ? "#fa6205" : "#fff",
                     borderRadius: 8,
                     padding: 8,
                     flex: 1,
@@ -1953,7 +1953,7 @@ const ServicioDetalle = ({ route, navigation }) => {
                 >
                   <Text
                     style={{
-                      color: metodoPago === "qr" ? "#232323" : "#232323",
+                      color: metodoPago === "qr" ? "#F5F5F5" : "#F5F5F5",
                       fontWeight: "bold",
                     }}
                   >
@@ -1969,7 +1969,7 @@ const ServicioDetalle = ({ route, navigation }) => {
               qrImageUrl && (
                 <View
                   style={{
-                    backgroundColor: "#1c1c1c",
+                    backgroundColor: "#F2F2F7",
                     borderRadius: 8,
                     padding: 12,
                     marginBottom: 12,
@@ -1978,7 +1978,7 @@ const ServicioDetalle = ({ route, navigation }) => {
                 >
                   <Text
                     style={{
-                      color: "#9BFE03",
+                      color: "#fa6205",
                       fontWeight: "bold",
                       marginBottom: 8,
                     }}
@@ -2038,7 +2038,7 @@ const ServicioDetalle = ({ route, navigation }) => {
               alignItems: "center",
             }}
           >
-            <Text style={{ color: "#232323" }}>
+            <Text style={{ color: "#F5F5F5" }}>
               {archivoEvidencia
                 ? "Evidencia de pago seleccionada"
                 : "Seleccionar comprobante de pago QR"}
@@ -2069,7 +2069,7 @@ const ServicioDetalle = ({ route, navigation }) => {
               Selecciona punto de destino
             </Text>
             <TouchableOpacity onPress={() => setMapModalVisible(false)}>
-              <Ionicons name="close" size={24} color="white" />
+              <Ionicons name="close" size={24} color="#1C1C1E" />
             </TouchableOpacity>
           </View>
           {/* Buscador de direcciones */}
@@ -2078,7 +2078,7 @@ const ServicioDetalle = ({ route, navigation }) => {
               <Ionicons
                 name="search"
                 size={20}
-                color="#4CD964"
+                color="#fa6205"
                 style={styles.mapSearchIcon}
               />
               <TextInput
@@ -2106,7 +2106,7 @@ const ServicioDetalle = ({ route, navigation }) => {
                 {isSearchingMap ? (
                   <ActivityIndicator
                     size="small"
-                    color="#4CD964"
+                    color="#fa6205"
                     style={{ padding: 10 }}
                   />
                 ) : (
@@ -2120,7 +2120,7 @@ const ServicioDetalle = ({ route, navigation }) => {
                         <Ionicons
                           name="location"
                           size={18}
-                          color="#4CD964"
+                          color="#fa6205"
                           style={styles.mapSearchResultIcon}
                         />
                         <Text
@@ -2151,7 +2151,7 @@ const ServicioDetalle = ({ route, navigation }) => {
               showsPointsOfInterest={false}
               toolbarEnabled={false}
               loadingEnabled={true}
-              loadingIndicatorColor="#4CD964"
+              loadingIndicatorColor="#fa6205"
               loadingBackgroundColor="#222"
               onPress={(e) => {
                 const now = new Date().getTime();
@@ -2174,7 +2174,7 @@ const ServicioDetalle = ({ route, navigation }) => {
                     latitude: selectedLocation.latitude,
                     longitude: selectedLocation.longitude,
                   }}
-                  pinColor="#4CD964"
+                  pinColor="#fa6205"
                 />
               )}
             </MapView>
@@ -2183,7 +2183,7 @@ const ServicioDetalle = ({ route, navigation }) => {
               style={styles.centerLocationButton}
               onPress={centerMapOnUserLocation}
             >
-              <Ionicons name="locate" size={28} color="#4CD964" />
+              <Ionicons name="locate" size={28} color="#fa6205" />
             </TouchableOpacity>
             {/* Botón para seleccionar ubicación central */}
             <TouchableOpacity
@@ -2199,7 +2199,7 @@ const ServicioDetalle = ({ route, navigation }) => {
                 );
               }}
             >
-              <Ionicons name="flag" size={28} color="#4CD964" />
+              <Ionicons name="flag" size={28} color="#fa6205" />
             </TouchableOpacity>
 
             {/* Indicador central opcional */}
@@ -2228,14 +2228,14 @@ const ServicioDetalle = ({ route, navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#1c1c1c",
+    backgroundColor: "#F2F2F7",
     padding: 16,
   },
   centered: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "#1c1c1c",
+    backgroundColor: "#F2F2F7",
   },
   backButton: {
     marginBottom: 10,
@@ -2247,17 +2247,17 @@ const styles = StyleSheet.create({
     height: 200,
     borderRadius: 12,
     marginBottom: 18,
-    backgroundColor: "#232323",
+    backgroundColor: "#F5F5F5",
   },
   title: {
     fontSize: 24,
-    color: "#fff",
+    color: "#1C1C1E",
     fontFamily: "Montserrat_700Bold",
     marginBottom: 8,
   },
   price: {
     fontSize: 20,
-    color: "#9BFE03",
+    color: "#fa6205",
     fontFamily: "Montserrat_700Bold",
     marginBottom: 8,
   },
@@ -2277,7 +2277,7 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   adicionalesTitle: {
-    color: "#9BFE03",
+    color: "#fa6205",
     fontSize: 18,
     fontFamily: "Montserrat_700Bold",
     marginBottom: 10,
@@ -2285,35 +2285,35 @@ const styles = StyleSheet.create({
   adicionalItem: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#232323",
+    backgroundColor: "#F5F5F5",
     borderRadius: 8,
     padding: 12,
     marginBottom: 8,
   },
   adicionalItemSelected: {
-    borderColor: "#9BFE03",
+    borderColor: "#fa6205",
     borderWidth: 2,
   },
   adicionalName: {
-    color: "#fff",
+    color: "#1C1C1E",
     fontSize: 16,
     flex: 1,
     fontFamily: "Montserrat_400Regular",
   },
   adicionalPrice: {
-    color: "#9BFE03",
+    color: "#fa6205",
     fontSize: 16,
     fontFamily: "Montserrat_700Bold",
   },
   addButton: {
-    backgroundColor: "#9BFE03",
+    backgroundColor: "#fa6205",
     borderRadius: 10,
     paddingVertical: 15,
     alignItems: "center",
     marginTop: 10,
   },
   addButtonText: {
-    color: "#232323",
+    color: "#F5F5F5",
     fontSize: 18,
     fontFamily: "Montserrat_700Bold",
   },
@@ -2342,7 +2342,7 @@ const styles = StyleSheet.create({
     width: 30,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#4dff4d",
+    backgroundColor: "#fa6205",
     paddingVertical: 10,
   },
   quantityDisplay: {
@@ -2354,7 +2354,7 @@ const styles = StyleSheet.create({
   controlText: {
     fontSize: 18,
     fontWeight: "bold",
-    color: "white",
+    color: "#1C1C1E",
     fontFamily: "Montserrat_700Bold",
   },
   quantity: {
@@ -2382,7 +2382,7 @@ const styles = StyleSheet.create({
     height: 28,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#4dff4d",
+    backgroundColor: "#fa6205",
   },
   adicionalQuantityDisplay: {
     width: 32,
@@ -2394,7 +2394,7 @@ const styles = StyleSheet.create({
   adicionalControlText: {
     fontSize: 14,
     fontWeight: "bold",
-    color: "white",
+    color: "#1C1C1E",
     fontFamily: "Montserrat_700Bold",
   },
   adicionalQuantity: {
@@ -2441,12 +2441,12 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   mapModalTitle: {
-    color: "#9BFE03",
+    color: "#fa6205",
     fontSize: 18,
     fontWeight: "bold",
   },
   mapSearchContainer: {
-    backgroundColor: "#1c1c1c",
+    backgroundColor: "#F2F2F7",
     borderRadius: 8,
     padding: 12,
     marginBottom: 12,
@@ -2454,18 +2454,18 @@ const styles = StyleSheet.create({
   mapSearchInputContainer: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#232323",
+    backgroundColor: "#F5F5F5",
     borderRadius: 8,
     padding: 8,
     borderWidth: 1,
-    borderColor: "#444",
+    borderColor: "#DDD",
   },
   mapSearchIcon: {
     marginRight: 8,
   },
   mapSearchInput: {
     flex: 1,
-    color: "#fff",
+    color: "#1C1C1E",
     fontSize: 16,
     fontFamily: "Montserrat_400Regular",
   },
@@ -2477,7 +2477,7 @@ const styles = StyleSheet.create({
     marginTop: 8,
     borderRadius: 8,
     overflow: "hidden",
-    backgroundColor: "#232323",
+    backgroundColor: "#F5F5F5",
   },
   mapSearchResultsScroll: {
     maxHeight: 150,
@@ -2491,7 +2491,7 @@ const styles = StyleSheet.create({
     marginRight: 8,
   },
   mapSearchResultText: {
-    color: "#fff",
+    color: "#1C1C1E",
     fontSize: 14,
     fontFamily: "Montserrat_400Regular",
   },
@@ -2544,7 +2544,7 @@ const styles = StyleSheet.create({
     pointerEvents: "none",
   },
   mapInstructions: {
-    color: "#fff",
+    color: "#1C1C1E",
     fontSize: 14,
     textAlign: "center",
     fontFamily: "Montserrat_400Regular",
@@ -2565,14 +2565,14 @@ const styles = StyleSheet.create({
     width: 20,
     height: 20,
     borderRadius: 10,
-    backgroundColor: "#4CD964",
+    backgroundColor: "#fa6205",
   },
   mapButtonContainer: {
     marginTop: 12,
     alignItems: "center",
   },
   mapButton: {
-    backgroundColor: "#9BFE03",
+    backgroundColor: "#fa6205",
     borderRadius: 8,
     paddingVertical: 12,
     paddingHorizontal: 24,
@@ -2584,7 +2584,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#666",
   },
   mapButtonText: {
-    color: "#232323",
+    color: "#F5F5F5",
     fontSize: 16,
     fontWeight: "bold",
     fontFamily: "Montserrat_700Bold",

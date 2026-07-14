@@ -126,7 +126,7 @@ const styles = StyleSheet.create({
         paddingLeft: 10,
     },
     card1: {
-        backgroundColor: "#1E7D22",
+        backgroundColor: "#fa6205",
         borderRadius: 25,
         padding: 15,
         marginBottom: 20,
@@ -138,7 +138,7 @@ const styles = StyleSheet.create({
     },
     label: {
         fontSize: 12,
-        color: "#fff",
+        color: "#1C1C1E",
         fontFamily: "Inter_500Medium",
         marginBottom: 5,
     },
@@ -155,7 +155,7 @@ const styles = StyleSheet.create({
     },
     value: {
         fontSize: 12,
-        color: "#fff",
+        color: "#1C1C1E",
         fontFamily: "Inter_500Medium",
     },
     container1: {
@@ -175,7 +175,7 @@ const styles = StyleSheet.create({
     title2: {
         fontFamily: "Inter_700Bold",
         fontSize: 24,
-        color: "#197200",
+        color: "#fa6205",
         marginBottom: 10,
     },
     label2: {
@@ -210,7 +210,7 @@ const styles = StyleSheet.create({
         color: "gray",
     },
     button: {
-        backgroundColor: "#197200",
+        backgroundColor: "#fa6205",
         paddingVertical: 12,
         borderRadius: 30,
         alignItems: "center",
@@ -219,7 +219,7 @@ const styles = StyleSheet.create({
     },
     buttonText: {
         fontFamily: "Inter_400Regular",
-        color: "#fff",
+        color: "#1C1C1E",
         fontSize: 16,
     },
 });

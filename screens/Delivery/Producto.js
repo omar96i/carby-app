@@ -150,7 +150,7 @@ const Producto = () => {
   // --- RENDERIZADO UI ---
   return (
     <View style={styles.container}>
-      <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
+      <StatusBar barStyle="dark-content" translucent backgroundColor="transparent" />
       
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{paddingBottom: 100}}>
         
@@ -167,7 +167,7 @@ const Producto = () => {
           {/* Overlay gradiente para el botón de atrás */}
           <View style={styles.headerOverlay}>
              <TouchableOpacity style={styles.backButtonCircle} onPress={() => navigation.goBack()}>
-                <Ionicons name="arrow-back" size={24} color="#fff" />
+                <Ionicons name="arrow-back" size={24} color="#1C1C1E" />
              </TouchableOpacity>
           </View>
         </View>
@@ -184,7 +184,7 @@ const Producto = () => {
                     </Text>
                 </View>
                 <View style={styles.priceTag}>
-                    <Text style={styles.priceTagText}>S/{pricePerUnit.toLocaleString()}</Text>
+                    <Text style={styles.priceTagText}>$ {pricePerUnit.toLocaleString()}</Text>
                 </View>
             </View>
 
@@ -200,7 +200,7 @@ const Producto = () => {
                     </TouchableOpacity>
                     <Text style={styles.qtyText}>{quantity}</Text>
                     <TouchableOpacity onPress={increaseQuantity} style={styles.qtyBtn}>
-                        <Ionicons name="add" size={22} color="#fff" />
+                        <Ionicons name="add" size={22} color="#1C1C1E" />
                     </TouchableOpacity>
                 </View>
             </View>
@@ -232,7 +232,7 @@ const Producto = () => {
 
                                     <View style={{marginLeft: 10, flex:1}}>
                                         <Text style={styles.adicionalName}>{adicional.nombre}</Text>
-                                        <Text style={styles.adicionalPrice}>+S/{parseFloat(adicional.precio).toLocaleString()}</Text>
+                                        <Text style={styles.adicionalPrice}>+$ {parseFloat(adicional.precio).toLocaleString()}</Text>
                                     </View>
                                 </View>
 
@@ -267,7 +267,7 @@ const Producto = () => {
          <View style={styles.footerContent}>
             <View>
                 <Text style={styles.footerLabel}>Total a pagar</Text>
-                <Text style={styles.footerTotal}>S/{totalPrice.toLocaleString()}</Text>
+                <Text style={styles.footerTotal}>$ {totalPrice.toLocaleString()}</Text>
                 {selectedAdicionales.length > 0 && (
                     <Text style={styles.footerSubtext}>Incl. extras</Text>
                 )}
@@ -275,7 +275,7 @@ const Producto = () => {
             <TouchableOpacity style={styles.addToCartBtn} onPress={addToCart}>
                 <Text style={styles.addToCartText}>Agregar {quantity > 1 ? `(${quantity})` : ''}</Text>
                 <View style={styles.cartIconCircle}>
-                    <Ionicons name="cart" size={18} color="#A3FF00" />
+                    <Ionicons name="cart" size={18} color="#fa6205" />
                 </View>
             </TouchableOpacity>
          </View>
@@ -308,7 +308,7 @@ const Producto = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#1c1c1c",
+    backgroundColor: "#F2F2F7",
   },
   
   // --- HEADER & IMAGEN ---
@@ -341,7 +341,7 @@ const styles = StyleSheet.create({
   // --- CONTENT SHEET ---
   contentSheet: {
     marginTop: -30, // Pull up over image
-    backgroundColor: '#1c1c1c',
+    backgroundColor: '#F2F2F7',
     borderTopLeftRadius: 30,
     borderTopRightRadius: 30,
     paddingHorizontal: 20,
@@ -355,7 +355,7 @@ const styles = StyleSheet.create({
   },
   productName: {
     fontSize: 24,
-    color: '#fff',
+    color: '#1C1C1E',
     fontFamily: 'Montserrat_700Bold',
     marginBottom: 8,
     lineHeight: 28,
@@ -376,7 +376,7 @@ const styles = StyleSheet.create({
     marginLeft: 10,
   },
   priceTagText: {
-    color: '#A3FF00',
+    color: '#fa6205',
     fontFamily: 'Montserrat_700Bold',
     fontSize: 16,
   },
@@ -395,7 +395,7 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     fontSize: 18,
-    color: '#fff',
+    color: '#1C1C1E',
     fontFamily: 'Montserrat_700Bold',
   },
   sectionSubtitle: {
@@ -423,7 +423,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   qtyText: {
-    color: '#fff',
+    color: '#1C1C1E',
     fontSize: 20,
     fontFamily: 'Montserrat_700Bold',
   },
@@ -436,7 +436,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: '#252525',
+    backgroundColor: '#F0F0F0',
     marginBottom: 10,
     borderRadius: 12,
     padding: 12,
@@ -444,7 +444,7 @@ const styles = StyleSheet.create({
     borderColor: '#333',
   },
   adicionalCardSelected: {
-    borderColor: '#A3FF00',
+    borderColor: '#fa6205',
     backgroundColor: 'rgba(164, 255, 0, 0.05)',
   },
   adicionalLeft: {
@@ -463,8 +463,8 @@ const styles = StyleSheet.create({
     marginRight: 10,
   },
   checkboxSelected: {
-    backgroundColor: '#A3FF00',
-    borderColor: '#A3FF00',
+    backgroundColor: '#fa6205',
+    borderColor: '#fa6205',
   },
   adicionalImage: {
     width: 40,
@@ -474,19 +474,19 @@ const styles = StyleSheet.create({
     backgroundColor: '#333',
   },
   adicionalName: {
-    color: '#fff',
+    color: '#1C1C1E',
     fontFamily: 'Montserrat_600SemiBold',
     fontSize: 14,
   },
   adicionalPrice: {
-    color: '#A3FF00',
+    color: '#fa6205',
     fontFamily: 'Montserrat_400Regular',
     fontSize: 12,
   },
   adicionalQtyWrapper: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#A3FF00',
+    backgroundColor: '#fa6205',
     borderRadius: 15,
     paddingHorizontal: 2,
     paddingVertical: 2,
@@ -511,7 +511,7 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
     right: 0,
-    backgroundColor: '#252525',
+    backgroundColor: '#F0F0F0',
     paddingHorizontal: 20,
     paddingTop: 15,
     paddingBottom: Platform.OS === 'ios' ? 30 : 20,
@@ -534,23 +534,23 @@ const styles = StyleSheet.create({
     fontFamily: 'Montserrat_400Regular',
   },
   footerTotal: {
-    color: '#fff',
+    color: '#1C1C1E',
     fontSize: 24,
     fontFamily: 'Montserrat_700Bold',
   },
   footerSubtext: {
-    color: '#A3FF00',
+    color: '#fa6205',
     fontSize: 11,
     fontFamily: 'Montserrat_400Regular',
   },
   addToCartBtn: {
-    backgroundColor: '#A3FF00',
+    backgroundColor: '#fa6205',
     flexDirection: 'row',
     alignItems: 'center',
     paddingVertical: 12,
     paddingHorizontal: 25,
     borderRadius: 30,
-    shadowColor: "#A3FF00",
+    shadowColor: "#fa6205",
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 8,
@@ -572,15 +572,15 @@ const styles = StyleSheet.create({
 
   // --- MODAL ---
   modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.8)', justifyContent: 'center', alignItems: 'center' },
-  modalContainer: { width: '80%', backgroundColor: '#2a2a2a', borderRadius: 20, padding: 25, alignItems: 'center' },
-  successIconCircle: { width: 70, height: 70, borderRadius: 35, backgroundColor: '#A3FF00', justifyContent: 'center', alignItems: 'center', marginBottom: 15 },
-  modalTitle: { color: '#fff', fontFamily: 'Montserrat_700Bold', fontSize: 20, marginBottom: 10 },
+  modalContainer: { width: '80%', backgroundColor: '#ECECEC', borderRadius: 20, padding: 25, alignItems: 'center' },
+  successIconCircle: { width: 70, height: 70, borderRadius: 35, backgroundColor: '#fa6205', justifyContent: 'center', alignItems: 'center', marginBottom: 15 },
+  modalTitle: { color: '#1C1C1E', fontFamily: 'Montserrat_700Bold', fontSize: 20, marginBottom: 10 },
   modalText: { color: '#ccc', fontFamily: 'Montserrat_400Regular', textAlign: 'center', marginBottom: 20 },
   modalActions: { width: '100%' },
-  btnPrimary: { backgroundColor: '#A3FF00', padding: 15, borderRadius: 30, alignItems: 'center', marginBottom: 10 },
+  btnPrimary: { backgroundColor: '#fa6205', padding: 15, borderRadius: 30, alignItems: 'center', marginBottom: 10 },
   btnPrimaryText: { fontFamily: 'Montserrat_700Bold', color: '#000' },
   btnSecondary: { padding: 10, alignItems: 'center', marginBottom: 5 },
-  btnSecondaryText: { fontFamily: 'Montserrat_600SemiBold', color: '#fff' },
+  btnSecondaryText: { fontFamily: 'Montserrat_600SemiBold', color: '#1C1C1E' },
 });
 
 export default Producto;

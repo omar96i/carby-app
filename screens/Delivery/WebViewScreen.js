@@ -23,7 +23,7 @@ export default function WebViewScreen() {
       
       {isLoading && (
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#009900" />
+          <ActivityIndicator size="large" color="#fa6205" />
           <Text style={styles.loadingText}>Cargando pasarela de pago...</Text>
         </View>
       )}

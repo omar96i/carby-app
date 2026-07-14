@@ -152,7 +152,7 @@ export default function StepCuatro() {
     });
 
     if (!fontsLoaded) {
-        return <ActivityIndicator size="large" color="#197200" />;
+        return <ActivityIndicator size="large" color="#fa6205" />;
     }
 
     return (
@@ -169,13 +169,13 @@ export default function StepCuatro() {
 
                 <View style={styles.stepsContainer}>
                     <View style={styles.stepItem}>
-                        <IconMC name="checkcircle" size={50} color="#197200" style={{ marginTop: 15 }} />
+                        <IconMC name="checkcircle" size={50} color="#fa6205" style={{ marginTop: 15 }} />
                         <View style={styles.progressLine} />
                         <Text style={styles.step}>Paso 1{"\n"}Detalles básicos</Text>
                     </View>
                     <View style={styles.stepDivider} />
                     <View style={styles.stepItem}>
-                        <IconMC name="checkcircle" size={50} color="#197200" style={{ marginTop: 15 }} />
+                        <IconMC name="checkcircle" size={50} color="#fa6205" style={{ marginTop: 15 }} />
                         <View style={styles.progressLineFull} />
                         <Text style={styles.step}>Paso 2{"\n"}Información</Text>
                     </View>
@@ -207,7 +207,7 @@ export default function StepCuatro() {
                         </View>
                     </View>
                     <View style={styles.container}>
-                        <ActivityIndicator size={60} color="#197200" />
+                        <ActivityIndicator size={60} color="#fa6205" />
                         <Text style={styles.title}>Asignando domiciliario</Text>
                         <Text style={styles.subtitle}>
                             A continuación, te asignaremos alguien para realizar tu mandado.{"\n"}
@@ -302,7 +302,7 @@ const styles = StyleSheet.create({
         left: 15,
     },
     card: {
-        backgroundColor: "#1E7D22",
+        backgroundColor: "#fa6205",
         borderRadius: 10,
         padding: 15,
         marginBottom: 20,
@@ -314,14 +314,14 @@ const styles = StyleSheet.create({
     },
     label: {
         fontSize: 12,
-        color: "#fff",
+        color: "#1C1C1E",
         fontFamily: "Inter_400Regular",
         flex: 1,
         flexWrap: 'wrap',
     },
     value: {
         fontSize: 12,
-        color: "#fff",
+        color: "#1C1C1E",
         fontFamily: "Inter_400Regular",
         flex: 2,
         flexWrap: 'wrap',
@@ -345,14 +345,14 @@ const styles = StyleSheet.create({
         fontFamily: "Inter_700Bold",
         fontSize: 22,
         fontWeight: "bold",
-        color: "#117C2D",
+        color: "#fa6205",
         textAlign: "center",
         marginBottom: 10,
     },
     subtitle5: {
         fontSize: 15,
         fontFamily: "Inter_400Regular",
-        color: "#2A2A2A",
+        color: "#ECECEC",
         textAlign: "center",
         marginBottom: 20
     },
@@ -366,7 +366,7 @@ const styles = StyleSheet.create({
     },
     buttonText5: {
         fontFamily: "Inter_400Regular",
-        color: "white",
+        color: "#1C1C1E",
         fontSize: 16,
     },
     modalContent: {

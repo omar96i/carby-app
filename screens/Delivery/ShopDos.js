@@ -871,7 +871,7 @@ const ShopDos = () => {
   if (!fontsLoaded) {
     return (
       <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#9BFE03" />
+        <ActivityIndicator size="large" color="#fa6205" />
         <Text style={styles.loadingText}>Cargando fuentes...</Text>
       </View>
     );
@@ -888,7 +888,7 @@ const ShopDos = () => {
         <View style={styles.modalContainer}>
           <View style={styles.paymentModalContent}>
             <View style={styles.paymentModalHeader}>
-              <Ionicons name="card-outline" size={50} color="#9BFE03" />
+              <Ionicons name="card-outline" size={50} color="#fa6205" />
               <Text style={styles.paymentModalTitle}>
                 Configura tus métodos de pago
               </Text>
@@ -954,7 +954,7 @@ const ShopDos = () => {
             <ScrollView style={styles.ratingsListContainer}>
               {isLoadingRatings ? (
                 <View style={styles.loadingRatingsContainer}>
-                  <ActivityIndicator size="large" color="#9BFE03" />
+                  <ActivityIndicator size="large" color="#fa6205" />
                   <Text style={styles.loadingText}>
                     Cargando calificaciones...
                   </Text>
@@ -982,7 +982,7 @@ const ShopDos = () => {
                     )}
                     <View style={styles.orderInfo}>
                       <Text style={styles.orderInfoText}>
-                        Pedido #{rating.id} • S/
+                        Pedido #{rating.id} • $ 
                         {parseFloat(rating.costo_total).toFixed(2)} •
                         {rating.metodo_pago}
                       </Text>
@@ -991,7 +991,7 @@ const ShopDos = () => {
                 ))
               ) : (
                 <View style={styles.noRatingsContainer}>
-                  <Ionicons name="star-outline" size={50} color="#9BFE03" />
+                  <Ionicons name="star-outline" size={50} color="#fa6205" />
                   <Text style={styles.noRatingsText}>
                     Aún no tienes calificaciones
                   </Text>
@@ -1025,7 +1025,7 @@ const ShopDos = () => {
 
             {mapLoading ? (
               <View style={styles.mapLoadingContainer}>
-                <ActivityIndicator size="large" color="#9BFE03" />
+                <ActivityIndicator size="large" color="#fa6205" />
                 <Text style={styles.mapLoadingText}>
                   Obteniendo ubicación...
                 </Text>
@@ -1061,7 +1061,7 @@ const ShopDos = () => {
                   </View>
                 ) : (
                   <View style={styles.noLocationContainer}>
-                    <Ionicons name="location-off" size={50} color="#9BFE03" />
+                    <Ionicons name="location-off" size={50} color="#fa6205" />
                     <Text style={styles.noLocationText}>
                       No se pudo obtener la ubicación
                     </Text>
@@ -1076,7 +1076,7 @@ const ShopDos = () => {
               disabled={!mapLocation || isLocationLoading}
             >
               {isLocationLoading ? (
-                <ActivityIndicator size="small" color="#fff" />
+                <ActivityIndicator size="small" color="#1C1C1E" />
               ) : (
                 <Text style={styles.saveLocationModalButtonText}>
                   Guardar esta ubicación
@@ -1122,7 +1122,7 @@ const ShopDos = () => {
               disabled={isProcessing}
             >
               {isProcessing ? (
-                <ActivityIndicator size="small" color="#fff" />
+                <ActivityIndicator size="small" color="#1C1C1E" />
               ) : (
                 <Text style={styles.saveButtonText}>Guardar Cambios</Text>
               )}
@@ -1173,7 +1173,7 @@ const ShopDos = () => {
                 disabled={isProcessing}
               >
                 {isProcessing ? (
-                  <ActivityIndicator size="small" color="#fff" />
+                  <ActivityIndicator size="small" color="#1C1C1E" />
                 ) : (
                   <Text style={styles.deleteButtonText}>Eliminar</Text>
                 )}
@@ -1187,7 +1187,7 @@ const ShopDos = () => {
           <Ionicons
             name="location-outline"
             size={25}
-            color="#2B2B2B"
+            color="#333333"
             style={styles.icon}
           />
         </TouchableOpacity>
@@ -1220,7 +1220,7 @@ const ShopDos = () => {
         </View>
         <View style={styles.viewAllRatings}>
           <Text style={styles.viewAllRatingsText}>Ver todas</Text>
-          <Ionicons name="chevron-forward" size={20} color="#9BFE03" />
+          <Ionicons name="chevron-forward" size={20} color="#fa6205" />
         </View>
       </TouchableOpacity>
       {userData && (
@@ -1229,7 +1229,7 @@ const ShopDos = () => {
             alignItems: "center",
             justifyContent: "center",
             padding: 16,
-            backgroundColor: "#2c2c2c",
+            backgroundColor: "#F0F0F0",
             borderRadius: 12,
             shadowColor: "#000",
             shadowOffset: { width: 0, height: 2 },
@@ -1240,14 +1240,14 @@ const ShopDos = () => {
             marginHorizontal: 10
           }}
         >
-          <Text style={{ fontSize: 16, fontWeight: "bold", color: "#FFF", marginBottom: 8 }}>
+          <Text style={{ fontSize: 16, fontWeight: "bold", color: "#1C1C1E", marginBottom: 8 }}>
             {userData.tienda_estado ? "Tu negocio está activo" : "Tu negocio está inactivo"}
           </Text>
 
           <Switch
             trackColor={{
               false: "#ccc",
-              true: "#9BFE03",
+              true: "#fa6205",
             }}
             thumbColor={!!userData.tienda_estado ? "#ffffff" : "#f4f3f4"}
             ios_backgroundColor="#3e3e3e"
@@ -1256,7 +1256,7 @@ const ShopDos = () => {
             disabled={loading}
           />
 
-          <Text style={{ fontSize: 12, color: "#FFF", marginTop: 8 }}>
+          <Text style={{ fontSize: 12, color: "#1C1C1E", marginTop: 8 }}>
             Toca el interruptor para {userData.tienda_estado ? "desactivar" : "activar"} tu tienda
           </Text>
         </View>
@@ -1288,10 +1288,10 @@ const ShopDos = () => {
           disabled={isLocationLoading}
         >
           {isLocationLoading ? (
-            <ActivityIndicator size="small" color="#fff" />
+            <ActivityIndicator size="small" color="#1C1C1E" />
           ) : (
             <View style={{ flexDirection: "row", alignItems: "center" }}>
-              <Ionicons name="location" size={20} color="#fff" />
+              <Ionicons name="location" size={20} color="#1C1C1E" />
               <Text style={styles.saveLocationText}>Guardar ubicación</Text>
             </View>
           )}
@@ -1312,7 +1312,7 @@ const ShopDos = () => {
       <CategoriesScreen />
       {isLoading ? (
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#9BFE03" />
+          <ActivityIndicator size="large" color="#fa6205" />
           <Text style={styles.loadingText}>Cargando categorías...</Text>
         </View>
       ) : (
@@ -1338,7 +1338,7 @@ const ShopDos = () => {
                           style={styles.categoryActionButton}
                           onPress={() => showEditCategoryModal(category)}
                         >
-                          <Ionicons name="pencil" size={16} color="#9BFE03" />
+                          <Ionicons name="pencil" size={16} color="#fa6205" />
                         </TouchableOpacity>
                         <TouchableOpacity
                           style={[
@@ -1431,7 +1431,7 @@ const ShopDos = () => {
                                 </View>
                               )}
                               <Text style={styles.itemName}>{service.nombre}</Text>
-                              <Text style={styles.itemPrice}>{BASE_URL.toString().includes("co.yariders") ? "$" : "S/"}{service.precio}</Text>
+                              <Text style={styles.itemPrice}>{"$"}{service.precio}</Text>
 
                               <View style={styles.itemActions}>
                                 <TouchableOpacity
@@ -1440,7 +1440,7 @@ const ShopDos = () => {
                                     navigation.navigate("EditarServicio", { serviceId: service.id })
                                   }
                                 >
-                                  <Ionicons name="pencil" size={16} color="#9BFE03" />
+                                  <Ionicons name="pencil" size={16} color="#fa6205" />
                                 </TouchableOpacity>
 
                                 <TouchableOpacity
@@ -1481,7 +1481,7 @@ const ShopDos = () => {
                   <View style={styles.servicesSection}>
                     {isLoadingProducts ? (
                       <View style={styles.loadingProductContainer}>
-                        <ActivityIndicator size="small" color="#9BFE03" />
+                        <ActivityIndicator size="small" color="#fa6205" />
                         <Text style={styles.loadingProductText}>Cargando...</Text>
                       </View>
                     ) : categoryProducts.length > 0 ? (
@@ -1506,7 +1506,7 @@ const ShopDos = () => {
                                 </View>
                               )}
                               <Text style={styles.itemName}>{product.nombre}</Text>
-                              <Text style={styles.itemPrice}>{BASE_URL.toString().includes("co.yariders") ? "$" : "S/"}{product.precio}</Text>
+                              <Text style={styles.itemPrice}>{"$"}{product.precio}</Text>
                               <View style={styles.itemActions}>
                                 <TouchableOpacity
                                   style={styles.editButton}
@@ -1516,14 +1516,14 @@ const ShopDos = () => {
                                     })
                                   }
                                 >
-                                  <Ionicons name="pencil" size={16} color="#9BFE03" />
+                                  <Ionicons name="pencil" size={16} color="#fa6205" />
                                 </TouchableOpacity>
 
                                 <View style={styles.switchContainer}>
                                   <Switch
                                     trackColor={{
                                       false: "#767577",
-                                      true: "#9BFE03",
+                                      true: "#fa6205",
                                     }}
                                     thumbColor={!!product.activo ? "#ffffff" : "#f4f3f4"} // <- importante
                                     ios_backgroundColor="#3e3e3e"
@@ -1620,7 +1620,7 @@ const styles = StyleSheet.create({
     fontFamily: "Montserrat_400Regular",
   },
   ratingsSection: {
-    backgroundColor: "#2c2c2c",
+    backgroundColor: "#F0F0F0",
     borderRadius: 15,
     padding: 15,
     margin: 10,
@@ -1632,7 +1632,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   ratingTitle: {
-    color: "#fff",
+    color: "#1C1C1E",
     fontSize: 16,
     fontFamily: "Montserrat_700Bold",
     marginBottom: 5,
@@ -1642,7 +1642,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   ratingNumber: {
-    color: "#9BFE03",
+    color: "#fa6205",
     fontSize: 24,
     fontFamily: "Montserrat_700Bold",
     marginRight: 10,
@@ -1658,13 +1658,13 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   viewAllRatingsText: {
-    color: "#9BFE03",
+    color: "#fa6205",
     fontSize: 14,
     fontFamily: "Montserrat_700Bold",
   },
   // Estilos para el modal de calificaciones
   ratingsModalContent: {
-    backgroundColor: "#2c2c2c",
+    backgroundColor: "#F0F0F0",
     borderRadius: 15,
     padding: 20,
     width: "100%",
@@ -1673,7 +1673,7 @@ const styles = StyleSheet.create({
 
   // Estilos para el modal de métodos de pago
   paymentModalContent: {
-    backgroundColor: "#2c2c2c",
+    backgroundColor: "#F0F0F0",
     borderRadius: 15,
     padding: 25,
     width: "100%",
@@ -1685,14 +1685,14 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   paymentModalTitle: {
-    color: "#9BFE03",
+    color: "#fa6205",
     fontSize: 20,
     fontFamily: "Montserrat_700Bold",
     textAlign: "center",
     marginTop: 15,
   },
   paymentModalMessage: {
-    color: "#fff",
+    color: "#1C1C1E",
     fontSize: 16,
     fontFamily: "Montserrat_400Regular",
     textAlign: "center",
@@ -1704,7 +1704,7 @@ const styles = StyleSheet.create({
     gap: 15,
   },
   configurePaymentButton: {
-    backgroundColor: "#9BFE03",
+    backgroundColor: "#fa6205",
     paddingVertical: 15,
     paddingHorizontal: 20,
     borderRadius: 25,
@@ -1722,10 +1722,10 @@ const styles = StyleSheet.create({
     borderRadius: 25,
     alignItems: "center",
     borderWidth: 1,
-    borderColor: "#9BFE03",
+    borderColor: "#fa6205",
   },
   laterButtonText: {
-    color: "#9BFE03",
+    color: "#fa6205",
     fontSize: 16,
     fontFamily: "Montserrat_400Regular",
   },
@@ -1740,7 +1740,7 @@ const styles = StyleSheet.create({
     borderRadius: 10,
   },
   averageRatingNumber: {
-    color: "#fff",
+    color: "#1C1C1E",
     fontSize: 42,
     fontFamily: "Montserrat_700Bold",
     marginBottom: 10,
@@ -1770,7 +1770,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   userName: {
-    color: "#fff",
+    color: "#1C1C1E",
     fontSize: 16,
     fontFamily: "Montserrat_700Bold",
   },
@@ -1805,7 +1805,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   noRatingsText: {
-    color: "#fff",
+    color: "#1C1C1E",
     fontSize: 18,
     fontFamily: "Montserrat_700Bold",
     marginTop: 15,
@@ -1829,11 +1829,11 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   categoryActionButton: {
-    backgroundColor: "#2a2a2a",
+    backgroundColor: "#ECECEC",
     padding: 8,
     borderRadius: 5,
     borderWidth: 1,
-    borderColor: "#9BFE03",
+    borderColor: "#fa6205",
     marginRight: 10,
   },
   deleteActionButton: {
@@ -1843,23 +1843,23 @@ const styles = StyleSheet.create({
     marginVertical: 15,
   },
   inputLabel: {
-    color: "#9BFE03",
+    color: "#fa6205",
     fontSize: 14,
     fontFamily: "Montserrat_700Bold",
     marginBottom: 8,
   },
   textInput: {
-    backgroundColor: "#2a2a2a",
+    backgroundColor: "#ECECEC",
     borderRadius: 8,
     padding: 12,
-    color: "#fff",
+    color: "#1C1C1E",
     fontFamily: "Montserrat_400Regular",
     fontSize: 16,
     borderWidth: 1,
-    borderColor: "#444",
+    borderColor: "#DDD",
   },
   saveButton: {
-    backgroundColor: "#9BFE03",
+    backgroundColor: "#fa6205",
     padding: 15,
     borderRadius: 25,
     alignItems: "center",
@@ -1876,16 +1876,16 @@ const styles = StyleSheet.create({
     marginTop: 20,
   },
   cancelButton: {
-    backgroundColor: "#2a2a2a",
+    backgroundColor: "#ECECEC",
     padding: 15,
     borderRadius: 25,
     alignItems: "center",
     width: "48%",
     borderWidth: 1,
-    borderColor: "#444",
+    borderColor: "#DDD",
   },
   cancelButtonText: {
-    color: "#fff",
+    color: "#1C1C1E",
     fontSize: 16,
     fontFamily: "Montserrat_700Bold",
   },
@@ -1897,12 +1897,12 @@ const styles = StyleSheet.create({
     width: "48%",
   },
   deleteButtonText: {
-    color: "#fff",
+    color: "#1C1C1E",
     fontSize: 16,
     fontFamily: "Montserrat_700Bold",
   },
   deleteWarningText: {
-    color: "#fff",
+    color: "#1C1C1E",
     fontSize: 16,
     fontFamily: "Montserrat_400Regular",
     textAlign: "center",
@@ -1924,7 +1924,7 @@ const styles = StyleSheet.create({
     marginTop: 10,
   },
   refreshButton: {
-    backgroundColor: "#9BFE03",
+    backgroundColor: "#fa6205",
     padding: 12,
     borderRadius: '100%',
     width: "12%",
@@ -1933,7 +1933,7 @@ const styles = StyleSheet.create({
     elevation: 3,
   },
   saveLocationButton: {
-    backgroundColor: "#9BFE03",
+    backgroundColor: "#fa6205",
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
@@ -1956,7 +1956,7 @@ const styles = StyleSheet.create({
     marginBottom: 15,
   },
   createProfileButton: {
-    backgroundColor: "#9BFE03",
+    backgroundColor: "#fa6205",
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
@@ -1985,7 +1985,7 @@ const styles = StyleSheet.create({
     padding: 20,
   },
   modalContent: {
-    backgroundColor: "#2c2c2c",
+    backgroundColor: "#F0F0F0",
     borderRadius: 15,
     padding: 20,
     width: "100%",
@@ -1998,12 +1998,12 @@ const styles = StyleSheet.create({
     marginBottom: 15,
   },
   modalTitle: {
-    color: "#9BFE03",
+    color: "#fa6205",
     fontSize: 18,
     fontFamily: "Montserrat_700Bold",
   },
   closeButton: {
-    backgroundColor: "#9BFE03",
+    backgroundColor: "#fa6205",
     borderRadius: 20,
     padding: 5,
   },
@@ -2019,25 +2019,25 @@ const styles = StyleSheet.create({
     height: "100%",
   },
   locationInfoContainer: {
-    backgroundColor: "#1c1c1c",
+    backgroundColor: "#F2F2F7",
     padding: 15,
     borderRadius: 10,
     marginTop: 10,
   },
   locationInfoTitle: {
-    color: "#9BFE03",
+    color: "#fa6205",
     fontSize: 16,
     fontFamily: "Montserrat_700Bold",
     marginBottom: 5,
   },
   locationInfoText: {
-    color: "#fff",
+    color: "#1C1C1E",
     fontSize: 14,
     fontFamily: "Montserrat_400Regular",
     marginBottom: 3,
   },
   saveLocationModalButton: {
-    backgroundColor: "#9BFE03",
+    backgroundColor: "#fa6205",
     padding: 15,
     borderRadius: 25,
     alignItems: "center",
@@ -2054,7 +2054,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   mapLoadingText: {
-    color: "#fff",
+    color: "#1C1C1E",
     marginTop: 10,
     fontSize: 16,
     fontFamily: "Montserrat_400Regular",
@@ -2065,7 +2065,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   noLocationText: {
-    color: "#fff",
+    color: "#1C1C1E",
     marginTop: 15,
     fontSize: 16,
     fontFamily: "Montserrat_400Regular",
@@ -2074,7 +2074,7 @@ const styles = StyleSheet.create({
 
   // Estilos existentes
   loadingText: {
-    color: "#fff",
+    color: "#1C1C1E",
     marginTop: 10,
     fontSize: 16,
     fontFamily: "Montserrat_400Regular",
@@ -2092,7 +2092,7 @@ const styles = StyleSheet.create({
     width: 60,
   },
   createProductButton: {
-    backgroundColor: "#9BFE03",
+    backgroundColor: "#fa6205",
     flexDirection: "row",
     alignItems: "center",
     paddingVertical: 8,
@@ -2105,7 +2105,7 @@ const styles = StyleSheet.create({
     fontFamily: "Montserrat_700Bold",
   },
   noProductsContainer: {
-    backgroundColor: "#2c2c2c",
+    backgroundColor: "#F0F0F0",
     padding: 15,
     borderRadius: 10,
     width: "100%",
@@ -2125,7 +2125,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   noCategoriesText: {
-    color: "#fff",
+    color: "#1C1C1E",
     fontSize: 18,
     fontFamily: "Montserrat_700Bold",
     marginBottom: 10,
@@ -2139,13 +2139,13 @@ const styles = StyleSheet.create({
   },
   container: {
     flex: 1,
-    backgroundColor: "#1c1c1c",
+    backgroundColor: "#F2F2F7",
   },
   headerBar: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    backgroundColor: "#9BFE03",
+    backgroundColor: "#fa6205",
     padding: 15,
     marginTop: 60,
   },
@@ -2155,14 +2155,14 @@ const styles = StyleSheet.create({
   },
   categoryTypeText: {
     fontSize: 12,
-    color: "#2B2B2B",
+    color: "#333333",
     fontFamily: "Montserrat_400Regular",
     marginTop: 2,
     opacity: 0.8,
   },
   locationText: {
     fontSize: 25,
-    color: "#2B2B2B",
+    color: "#333333",
     fontFamily: "Montserrat_400Regular",
   },
   avatar: {
@@ -2184,7 +2184,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    backgroundColor: "#a4ff00",
+    backgroundColor: "#fa6205",
     padding: 10,
     marginTop: 60,
   },
@@ -2202,13 +2202,13 @@ const styles = StyleSheet.create({
     padding: 10,
   },
   sectionTitle: {
-    color: "#fff",
+    color: "#1C1C1E",
     fontSize: 18,
     marginBottom: 10,
     fontFamily: "Montserrat_700Bold",
   },
   locationTextUno: {
-    color: "#2B2B2B",
+    color: "#333333",
     fontSize: 20,
     fontFamily: "Montserrat_400Regular",
   },
@@ -2222,7 +2222,7 @@ const styles = StyleSheet.create({
   },
   item: {
     width: 180,
-    backgroundColor: "#2c2c2c",
+    backgroundColor: "#F0F0F0",
     borderRadius: 10,
     padding: 10,
     marginRight: 10,
@@ -2235,19 +2235,19 @@ const styles = StyleSheet.create({
     borderRadius: 10,
   },
   itemPrice: {
-    color: "#a4ff00",
+    color: "#fa6205",
     fontSize: 16,
     marginTop: 5,
     fontFamily: "Montserrat_700Bold",
   },
   itemName: {
-    color: "#fff",
+    color: "#1C1C1E",
     fontSize: 14,
     marginTop: 5,
     fontFamily: "Montserrat_400Regular",
   },
   addButton: {
-    backgroundColor: "#a4ff00",
+    backgroundColor: "#fa6205",
     borderRadius: 5,
     padding: 5,
     marginTop: 5,
@@ -2259,7 +2259,7 @@ const styles = StyleSheet.create({
     fontFamily: "Montserrat_700Bold",
   },
   myButton: {
-    backgroundColor: "#39FF14",
+    backgroundColor: "#fa6205",
     paddingVertical: 14,
     paddingHorizontal: 60,
     borderRadius: 15,
@@ -2284,7 +2284,7 @@ const styles = StyleSheet.create({
     padding: 8,
     marginTop: 5,
     borderWidth: 1,
-    borderColor: "#a4ff00",
+    borderColor: "#fa6205",
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
@@ -2305,7 +2305,7 @@ const styles = StyleSheet.create({
     transform: [{ translateX: -4 }, { translateY: -3 }],
   },
   loadingProductContainer: {
-    backgroundColor: "#2c2c2c",
+    backgroundColor: "#F0F0F0",
     padding: 15,
     borderRadius: 10,
     width: 150,
@@ -2332,14 +2332,14 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   editButton: {
-    backgroundColor: "#2a2a2a",
+    backgroundColor: "#ECECEC",
     padding: 8,
     borderRadius: 5,
     borderWidth: 1,
-    borderColor: "#9BFE03",
+    borderColor: "#fa6205",
   },
   deleteButton: {
-    backgroundColor: "#2a2a2a",
+    backgroundColor: "#ECECEC",
     padding: 8,
     borderRadius: 5,
     borderWidth: 1,
@@ -2354,12 +2354,12 @@ const styles = StyleSheet.create({
   },
   servicesSection: {
     marginBottom: 20,
-    backgroundColor: "#2c2c2c",
+    backgroundColor: "#F0F0F0",
     borderRadius: 10,
     padding: 5,
   },
   servicesSectionTitle: {
-    color: "#fff",
+    color: "#1C1C1E",
     fontSize: 12,
     fontFamily: "Montserrat_700Bold",
     marginBottom: 10,
@@ -2373,13 +2373,13 @@ const styles = StyleSheet.create({
     width: 120,
   },
   serviceItemName: {
-    color: "#fff",
+    color: "#1C1C1E",
     fontSize: 14,
     marginTop: 5,
     fontFamily: "Montserrat_400Regular",
   },
   serviceItemPrice: {
-    color: "#a4ff00",
+    color: "#fa6205",
     fontSize: 16,
     marginTop: 5,
     fontFamily: "Montserrat_700Bold",

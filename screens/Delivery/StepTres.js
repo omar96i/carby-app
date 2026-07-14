@@ -208,7 +208,7 @@ const handlePayment = () => {
         {/* Indicador de pasos con iconos */}
         <View style={styles.stepsContainer}>
           <View style={styles.stepItem}>
-            <IconMC name="checkcircle" size={50} color="#197200" style={{ marginTop: 15 }} />
+            <IconMC name="checkcircle" size={50} color="#fa6205" style={{ marginTop: 15 }} />
 
             {/* Linea de progreso*/}
             <View
@@ -228,7 +228,7 @@ const handlePayment = () => {
           <View style={styles.stepDivider} />
 
           <View style={styles.stepItem}>
-            <IconMC name="checkcircle" size={50} color="#197200" style={{ marginTop: 15 }} />
+            <IconMC name="checkcircle" size={50} color="#fa6205" style={{ marginTop: 15 }} />
 
             {/* Linea de progreso*/}
             <View
@@ -258,7 +258,7 @@ const handlePayment = () => {
         <View style={styles.locationBox}>
           <View style={styles.locationItem}>
             <View style={styles.locationRow}>
-              <Icon name="map-marker" size={22} color="#009900" />
+              <Icon name="map-marker" size={22} color="#fa6205" />
               <Text style={styles.pointTitle}> Punto A</Text>
              
             </View>
@@ -279,7 +279,7 @@ const handlePayment = () => {
 
           <View style={styles.locationItem}>
             <View style={styles.locationRow}>
-              <Icon name="map-marker" size={22} color="#009900" />
+              <Icon name="map-marker" size={22} color="#fa6205" />
               <Text style={styles.pointTitle}> Punto B</Text>
             
             </View>

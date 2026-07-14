@@ -1,4 +1,4 @@
-package com.deloreanstudios.yaridersapp
+package com.carbycol.app
 
 import android.app.Application
 import android.content.res.Configuration

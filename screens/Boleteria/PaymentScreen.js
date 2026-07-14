@@ -218,11 +218,11 @@ const PaymentScreen = ({ route, navigation }) => {
                             </View>
                             <View style={styles.summaryRow}>
                                 <Text style={styles.summaryLabel}>Precio Unitario:</Text>
-                                <Text style={styles.summaryValue}>S/ {parseFloat(compra.precioUnitario).toFixed(2)}</Text>
+                                <Text style={styles.summaryValue}>$ {parseFloat(compra.precioUnitario).toFixed(2)}</Text>
                             </View>
                             <View style={[styles.summaryRow, styles.totalRow]}>
                                 <Text style={[styles.summaryLabel, styles.totalLabel]}>Total a Pagar:</Text>
-                                <Text style={[styles.summaryValue, styles.totalValue]}>S/ {compra.montoTotal.toFixed(2)}</Text>
+                                <Text style={[styles.summaryValue, styles.totalValue]}>$ {compra.montoTotal.toFixed(2)}</Text>
                             </View>
                         </View>
                         <TouchableOpacity style={styles.button} onPress={handlePayment}>
@@ -245,7 +245,7 @@ const styles = StyleSheet.create({
     safeArea: { flex: 1, backgroundColor: '#f8f7fa' },
     container: { flexGrow: 1, justifyContent: 'center', padding: 20 },
     button: { backgroundColor: '#8d24b6', padding: 15, borderRadius: 12, alignItems: 'center', marginTop: 20 },
-    buttonText: { color: '#ffffff', fontSize: 16, fontWeight: '600' },
+    buttonText: { color: '#1C1C1E', fontSize: 16, fontWeight: '600' },
     title: { fontSize: 28, fontWeight: '700', color: '#333', textAlign: 'center', marginBottom: 30 },
     // Estilos para WebView Header (sin cambios)
     headerWebView: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 15, paddingVertical: 10, backgroundColor: '#fff', borderBottomWidth: 1, borderBottomColor: '#eee' },

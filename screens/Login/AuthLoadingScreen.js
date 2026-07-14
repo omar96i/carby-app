@@ -40,8 +40,9 @@ export default function AuthLoadingScreen() {
 
         if (!expoPushToken) {
           console.warn("⚠️ Token de notificación no disponible tras espera.");
-          return;
         }
+
+        checkAuthStatus();
       }
 
       console.log("🔔 Token listo, continuando flujo.");
@@ -131,7 +132,7 @@ export default function AuthLoadingScreen() {
 
   return (
     <View style={styles.container}>
-      <ActivityIndicator style={{ paddingBottom: 100 }} size="large" color="#a7ff00" />
+      <ActivityIndicator style={{ paddingBottom: 100 }} size="large" color="#fa6205" />
       <Text style={styles.loadingText}>
         {global.splashScreenActive ? "Cargando aplicación..." : "Verificando sesión..."}
       </Text>
@@ -144,10 +145,10 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "#1A1A1A",
+    backgroundColor: "#F0F0F0",
   },
   loadingText: {
-    color: "white",
+    color: "#1C1C1E",
     fontSize: 16,
     marginTop: 10,
   }

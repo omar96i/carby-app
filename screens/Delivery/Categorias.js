@@ -30,7 +30,7 @@ const Categorias = () => {
   if (!fontsLoaded) {
     return (
       <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#9BFE03" />
+        <ActivityIndicator size="large" color="#fa6205" />
       </View>
     );
   }
@@ -89,7 +89,7 @@ const Categorias = () => {
             key={index}
             name="star"
             size={14}
-            color={hasRating ? (index < Math.round(rating) ? '#FFD700' : '#444444') : '#444444'}
+            color={hasRating ? (index < Math.round(rating) ? '#FFD700' : '#DDDDDD') : '#DDDDDD'}
             style={styles.starIcon}
           />
         ))}
@@ -184,14 +184,14 @@ const Categorias = () => {
     <View style={styles.container}>
       <View style={styles.headerContainer}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-          <Ionicons name="arrow-back" size={24} color="#FFF" />
+          <Ionicons name="arrow-back" size={24} color="#1C1C1E" />
         </TouchableOpacity>
         <Text style={styles.title}>{categoryName}</Text>
         <View style={{ width: 24 }} />
       </View>
 
       {loading ? (
-        <ActivityIndicator size="large" color="#9BFE03" />
+        <ActivityIndicator size="large" color="#fa6205" />
       ) : combinedData && combinedData.length > 0 ? (
         <FlatList
           data={combinedData} // Usamos la data combinada
@@ -213,13 +213,13 @@ const Categorias = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#121212',
+    backgroundColor: '#F2F2F7',
   },
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#121212',
+    backgroundColor: '#F2F2F7',
   },
   headerContainer: {
     flexDirection: 'row',
@@ -234,7 +234,7 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 22,
-    color: '#9BFE03',
+    color: '#fa6205',
     fontFamily: 'Montserrat_700Bold',
     textTransform: 'uppercase',
     letterSpacing: 1,
@@ -245,7 +245,7 @@ const styles = StyleSheet.create({
   },
   card: {
     flexDirection: 'row',
-    backgroundColor: '#1E1E1E',
+    backgroundColor: '#FFFFFF',
     borderRadius: 16,
     marginBottom: 12,
     padding: 12,
@@ -269,7 +269,7 @@ const styles = StyleSheet.create({
     height: 70,
     borderRadius: 12,
     marginRight: 15,
-    backgroundColor: '#2C2C2C',
+    backgroundColor: '#F0F0F0',
   },
   info: {
     flex: 1,
@@ -282,7 +282,7 @@ const styles = StyleSheet.create({
   },
   name: {
     fontSize: 16,
-    color: '#FFFFFF',
+    color: '#1C1C1E',
     fontFamily: 'Montserrat_700Bold',
     marginBottom: 4,
   },
@@ -303,11 +303,11 @@ const styles = StyleSheet.create({
   ratingText: {
     marginLeft: 6,
     fontSize: 12,
-    color: '#CCC',
+    color: '#333',
     fontFamily: 'Montserrat_600SemiBold',
   },
   button: {
-    backgroundColor: '#9BFE03',
+    backgroundColor: '#fa6205',
     borderRadius: 20,
     paddingVertical: 8,
     paddingHorizontal: 12,

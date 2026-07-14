@@ -215,12 +215,12 @@ const CajaMisterioScreen = () => {
     };
 
     if (loading) {
-        return <View style={[styles.container, styles.centered]}><ActivityIndicator size="large" color="#9BFE03" /></View>;
+        return <View style={[styles.container, styles.centered]}><ActivityIndicator size="large" color="#fa6205" /></View>;
     }
 
     return (
         <SafeAreaView style={styles.container}>
-            <StatusBar barStyle="light-content" />
+            <StatusBar barStyle="dark-content" />
             <FlatList
                 data={mysteryBoxes}
                 ListHeaderComponent={() => (
@@ -231,7 +231,7 @@ const CajaMisterioScreen = () => {
                             onAddPointsPress={() => navigation.navigate('Recharge')}
                         />
                         <View style={styles.header}>
-                            <Text style={styles.title}>Fidelización Clientes Yariders</Text>
+                            <Text style={styles.title}>Fidelización Clientes Carbycol</Text>
                             <Text style={styles.subtitle}>
                                 Ganas puntos con tus compras y carreras para canjear por premios increíbles. ¡Sigue así!
                             </Text>
@@ -264,7 +264,7 @@ const CajaMisterioScreen = () => {
                                 </TouchableOpacity>
                             ) : (
                                 <TouchableOpacity style={styles.joinButton} onPress={() => handleSubscribe(selectedBox)} disabled={subscribing}>
-                                    {subscribing ? <ActivityIndicator color="#242424" /> : <Text style={styles.joinButtonText}>Suscribirme por {parseFloat(selectedBox.valor).toFixed(2)} Puntos</Text>}
+                                    {subscribing ? <ActivityIndicator color="#1C1C1E" /> : <Text style={styles.joinButtonText}>Suscribirme por {parseFloat(selectedBox.valor).toFixed(2)} Puntos</Text>}
                                 </TouchableOpacity>
                             )}
 
@@ -325,10 +325,10 @@ const CajaMisterioScreen = () => {
 
 // --- ESTILOS COMPLETOS ---
 const styles = StyleSheet.create({
-    container: { flex: 1, backgroundColor: '#242424' },
+    container: { flex: 1, backgroundColor: '#FFFFFF' },
     centered: { justifyContent: 'center', alignItems: 'center' },
     header: { paddingHorizontal: 20, paddingBottom: 10 },
-    title: { fontSize: 28, fontWeight: 'bold', textAlign: 'center', marginBottom: 12, color: '#9BFE03' },
+    title: { fontSize: 28, fontWeight: 'bold', textAlign: 'center', marginBottom: 12, color: '#fa6205' },
     subtitle: { fontSize: 16, textAlign: 'center', color: '#B0B0B0', lineHeight: 24 },
     listContainer: { paddingHorizontal: 20 },
     card: {
@@ -340,7 +340,7 @@ const styles = StyleSheet.create({
         borderColor: 'transparent',
     },
     subscribedCardBorder: {
-        borderColor: '#9BFE03',
+        borderColor: '#fa6205',
     },
     cardBackground: { width: '100%', height: '100%' },
     solidOverlay: {
@@ -359,12 +359,12 @@ const styles = StyleSheet.create({
         paddingVertical: 8,
         alignItems: 'center',
     },
-    dateBannerText: { color: '#FFFFFF', fontSize: 14, fontWeight: '600' },
+    dateBannerText: { color: '#1C1C1E', fontSize: 14, fontWeight: '600' },
     subscribedBanner: {
         position: 'absolute',
         left: -45,
         top: 170,
-        backgroundColor: '#9BFE03',
+        backgroundColor: '#fa6205',
         paddingHorizontal: 10,
         paddingVertical: 8,
         transform: [{ rotate: '-90deg' }],
@@ -373,33 +373,33 @@ const styles = StyleSheet.create({
         borderTopRightRadius: 8,
     },
     subscribedBannerText: {
-        color: '#242424',
+        color: '#1C1C1E',
         fontWeight: 'bold',
         fontSize: 14,
         textTransform: 'uppercase',
         letterSpacing: 1.5,
     },
     cardForegroundImage: { width: 180, height: 180, marginBottom: 20 },
-    cardTitle: { fontSize: 24, fontWeight: 'bold', color: '#FFFFFF', textAlign: 'center' },
-    cardValue: { fontSize: 18, color: '#9BFE03', marginTop: 8, fontWeight: '600' },
+    cardTitle: { fontSize: 24, fontWeight: 'bold', color: '#1C1C1E', textAlign: 'center' },
+    cardValue: { fontSize: 18, color: '#fa6205', marginTop: 8, fontWeight: '600' },
     cardActionText: { fontSize: 14, color: '#B0B0B0', marginTop: 15, fontStyle: 'italic', textAlign: 'center' },
     modalContainer: { flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(0,0,0,0.7)' },
     modalContent: { backgroundColor: '#2E2E2E', borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: 20, height: '75%' },
-    modalTitle: { fontSize: 22, fontWeight: 'bold', marginBottom: 15, textAlign: 'center', color: '#9BFE03' },
+    modalTitle: { fontSize: 22, fontWeight: 'bold', marginBottom: 15, textAlign: 'center', color: '#fa6205' },
     closeButton: { position: 'absolute', top: 15, right: 15, backgroundColor: '#404040', borderRadius: 15, width: 30, height: 30, justifyContent: 'center', alignItems: 'center', zIndex: 1 },
-    closeButtonText: { fontSize: 20, color: '#FFFFFF', lineHeight: 30 },
+    closeButtonText: { fontSize: 20, color: '#1C1C1E', lineHeight: 30 },
     joinButton: {
-        backgroundColor: '#9BFE03',
+        backgroundColor: '#fa6205',
         borderRadius: 10,
         paddingVertical: 15,
         alignItems: 'center',
         marginBottom: 20,
     },
-    joinButtonText: { color: '#242424', fontSize: 16, fontWeight: 'bold' },
-    prizeItem: { flexDirection: 'row', alignItems: 'center', marginBottom: 15, padding: 10, backgroundColor: '#3a3a3a', borderRadius: 10 },
+    joinButtonText: { color: '#1C1C1E', fontSize: 16, fontWeight: 'bold' },
+    prizeItem: { flexDirection: 'row', alignItems: 'center', marginBottom: 15, padding: 10, backgroundColor: '#D8D8D8', borderRadius: 10 },
     prizeImage: { width: 60, height: 60, borderRadius: 8, marginRight: 15 },
     prizeInfo: { flex: 1 },
-    prizeName: { fontSize: 16, fontWeight: '600', color: '#FFFFFF' },
+    prizeName: { fontSize: 16, fontWeight: '600', color: '#1C1C1E' },
     prizeProbability: { fontSize: 14, color: '#B0B0B0', marginTop: 4 },
     sponsorSection: {
         marginTop: 'auto',
@@ -424,7 +424,7 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        backgroundColor: '#3a3a3a',
+        backgroundColor: '#D8D8D8',
         paddingVertical: 15,
         paddingHorizontal: 20,
         marginTop: 40,
@@ -436,7 +436,7 @@ const styles = StyleSheet.create({
         fontSize: 14,
     },
     pointsValue: {
-        color: '#9BFE03',
+        color: '#fa6205',
         fontSize: 22,
         fontWeight: 'bold',
     },
@@ -445,7 +445,7 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
     addPointsButton: {
-        backgroundColor: '#9BFE03',
+        backgroundColor: '#fa6205',
         width: 30,
         height: 30,
         borderRadius: 15,
@@ -454,13 +454,13 @@ const styles = StyleSheet.create({
         marginRight: 15,
     },
     addPointsButtonText: {
-        color: '#242424',
+        color: '#1C1C1E',
         fontWeight: 'bold',
         fontSize: 22,
         lineHeight: 22, // Ajuste para centrar mejor el +
     },
     infoButton: {
-        backgroundColor: '#242424',
+        backgroundColor: '#FFFFFF',
         width: 30,
         height: 30,
         borderRadius: 15,
@@ -468,7 +468,7 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
     infoButtonText: {
-        color: '#9BFE03',
+        color: '#fa6205',
         fontWeight: 'bold',
         fontSize: 18,
     },
@@ -486,13 +486,13 @@ const styles = StyleSheet.create({
         width: '100%',
     },
     tooltipTitle: {
-        color: '#9BFE03',
+        color: '#fa6205',
         fontSize: 18,
         fontWeight: 'bold',
         marginBottom: 10,
     },
     tooltipText: {
-        color: '#FFFFFF',
+        color: '#1C1C1E',
         fontSize: 16,
         lineHeight: 24,
     },

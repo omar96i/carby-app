@@ -363,12 +363,12 @@ const ActiveRequestCard = ({ tripData, onAccept, onReject, disabled }) => {
     if (formattedPrice) return formattedPrice;
 
     // 1. Detectar país
-    const isColombia = BASE_URL.toString().includes("co.yariders");
+    const isColombia = true;
 
     // 2. Definir variables según el país
-    const symbol = isColombia ? "$" : "S/";
-    const locale = isColombia ? "es-CO" : "es-PE";
-    const decimals = isColombia ? 0 : 2; // Colombia 0 decimales, Perú 2 decimales
+    const symbol = "$";
+    const locale = "es-CO";
+    const decimals = 0; // Colombia 0 decimales, Perú 2 decimales
 
     // 3. Formatear y retornar
     // Usamos Number() para asegurar que amount sea numérico
@@ -424,7 +424,7 @@ const ActiveRequestCard = ({ tripData, onAccept, onReject, disabled }) => {
           <Text style={styles.label}>Origen</Text>
           {addressesLoading ? (
             <View style={styles.loadingContainer}>
-              <ActivityIndicator size="small" color="#1E7D22" />
+              <ActivityIndicator size="small" color="#fa6205" />
               <Text style={styles.loadingText}>Obteniendo dirección...</Text>
             </View>
           ) : (
@@ -438,7 +438,7 @@ const ActiveRequestCard = ({ tripData, onAccept, onReject, disabled }) => {
           <Text style={styles.label}>Destino</Text>
           {addressesLoading ? (
             <View style={styles.loadingContainer}>
-              <ActivityIndicator size="small" color="#1E7D22" />
+              <ActivityIndicator size="small" color="#fa6205" />
               <Text style={styles.loadingText}>Obteniendo dirección...</Text>
             </View>
           ) : (
@@ -481,8 +481,8 @@ const ActiveRequestCard = ({ tripData, onAccept, onReject, disabled }) => {
             <Text style={styles.value}>
               {(() => {
                 let textoMostrar = metodoDepagoFinal;
-                const isColombia = BASE_URL.toString().includes("co.yariders");
-                if (isColombia && textoMostrar && textoMostrar.trim() === "Yape o Plin") {
+                const isColombia = true;
+                if (isColombia && textoMostrar && textoMostrar.trim() === "Nequi o Bancolombia") {
                   textoMostrar = "Nequi o Bancolombia";
                 }
                 return textoMostrar.toUpperCase();
@@ -573,7 +573,7 @@ const styles = StyleSheet.create({
   },
   loadingText: {
     fontSize: 12,
-    color: '#1E7D22',
+    color: '#fa6205',
     marginLeft: 5,
   },
   observacionesContainer: {
@@ -610,7 +610,7 @@ const styles = StyleSheet.create({
     marginHorizontal: 5,
   },
   acceptButton: {
-    backgroundColor: "#1E7D22",
+    backgroundColor: "#fa6205",
   },
   rejectButton: {
     backgroundColor: "#E53935",
@@ -619,7 +619,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#999",
   },
   buttonText: {
-    color: "#fff",
+    color: '#1C1C1E',
     fontSize: 15,
     fontWeight: "bold",
   },

@@ -31,7 +31,7 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
     modal: {
-        backgroundColor: '#1A1A1A',
+        backgroundColor: '#F0F0F0',
         width: '80%',
         borderRadius: 10,
         padding: 20,
@@ -42,17 +42,17 @@ const styles = StyleSheet.create({
         fontSize: 18,
         fontWeight: 'bold',
         marginBottom: 10,
-        color: 'white'
+        color: '#1C1C1E'
     },
     mensaje: {
         fontSize: 16,
         textAlign: 'center',
         marginBottom: 20,
-        color: 'white'
+        color: '#1C1C1E'
 
     },
     boton: {
-        backgroundColor: '#A3FF00',
+        backgroundColor: '#fa6205',
         paddingHorizontal: 20,
         paddingVertical: 10,
         borderRadius: 8,

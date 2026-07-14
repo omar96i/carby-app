@@ -1096,12 +1096,12 @@ export default function HomeScreen() {
           style={styles.locationButton}
         >
           {updatingLocation ? (
-            <ActivityIndicator size="small" color="#2B2B2B" />
+            <ActivityIndicator size="small" color="#333333" />
           ) : (
             <Ionicons
               name="location-outline"
               size={25}
-              color="#2B2B2B"
+              color="#333333"
               style={styles.icon}
             />
           )}
@@ -1123,7 +1123,7 @@ export default function HomeScreen() {
 
       {!fontsLoaded || loading ? (
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#9BFE03" />
+          <ActivityIndicator size="large" color="#fa6205" />
         </View>
       ) : (
         <ScrollView showsVerticalScrollIndicator={false}>
@@ -1138,36 +1138,19 @@ export default function HomeScreen() {
                 </Text>
                 <StarRating rating={userRating} />
               </View>
-              <Image
-                source={require("../assets/images/yar.png")}
-                style={styles.logo}
-                onLoadEnd={() => setAreCategoriesLoaded(true)}
-              />
             </View>
 
             <View style={styles.mainButtons}>
-              {/* --- Botón 1 --- */}
-              <TouchableOpacity style={[styles.buttonBase, styles.buttonSide]} onPress={() => navigation.navigate('CajaMisterioScreen')}>
-                <Image
-                  source={require("../assets/images/boton-icono-misterio.jpeg")}
-                  style={styles.buttonImg}
-                />
-              </TouchableOpacity>
-
-              {/* --- Botón 2 --- */}
-              <TouchableOpacity style={[styles.buttonBase, styles.buttonCenter]} onPress={handleBannerPress}>
+              {/* --- Botón de transporte --- */}
+              <TouchableOpacity style={styles.transportButton} onPress={handleBannerPress}>
                 <Image
                   source={require("../assets/images/nuevo-icono.jpeg")}
-                  style={styles.buttonImg2}
+                  style={styles.transportIcon}
                 />
-              </TouchableOpacity>
-
-              {/* --- Botón 3 --- */}
-              <TouchableOpacity style={[styles.buttonBase, styles.buttonSide]} onPress={() => navigation.navigate('BoleteriaScreen')}>
-                <Image
-                  source={require("../assets/images/icono-fondo-azul.jpeg")}
-                  style={styles.buttonImg}
-                />
+                <View style={styles.transportTextContainer}>
+                  <Text style={styles.transportTitle}>Pide tu transporte aquí</Text>
+                  <Text style={styles.transportSubtitle}>Delivery, mototaxi, taxi y más</Text>
+                </View>
               </TouchableOpacity>
             </View>
 
@@ -1183,7 +1166,7 @@ export default function HomeScreen() {
                     style={styles.closeButton}
                     onPress={() => setIsDemoModalVisible(false)}
                   >
-                    <Ionicons name="close" size={24} color="#fff" />
+                    <Ionicons name="close" size={24} color="#1C1C1E" />
                   </TouchableOpacity>
 
                   <ScrollView
@@ -1202,7 +1185,7 @@ export default function HomeScreen() {
 
                     <View style={styles.transportTypeContainer}>
                       <View style={styles.transportCard}>
-                        <Ionicons name="car" size={40} color="#9BFE03" />
+                        <Ionicons name="car" size={40} color="#fa6205" />
                         <Text style={styles.transportTitle}>Taxi</Text>
                         <Text style={styles.transportDesc}>
                           Servicio de transporte en automóvil para tus
@@ -1211,7 +1194,7 @@ export default function HomeScreen() {
                       </View>
 
                       <View style={styles.transportCard}>
-                        <Ionicons name="bicycle" size={40} color="#9BFE03" />
+                        <Ionicons name="bicycle" size={40} color="#fa6205" />
                         <Text style={styles.transportTitle}>Moto</Text>
                         <Text style={styles.transportDesc}>
                           Desplazamiento rápido en motocicleta para tus envíos o
@@ -1220,7 +1203,7 @@ export default function HomeScreen() {
                       </View>
 
                       <View style={styles.transportCard}>
-                        <Fontisto name="motorcycle" size={40} color="#9BFE03" />
+                        <Fontisto name="motorcycle" size={40} color="#fa6205" />
                         <Text style={styles.transportTitle}>Mototaxi</Text>
                         <Text style={styles.transportDesc}>
                           Servicio económico ideal para distancias cortas en
@@ -1234,7 +1217,7 @@ export default function HomeScreen() {
                         <Ionicons
                           name="checkmark-circle"
                           size={22}
-                          color="#9BFE03"
+                          color="#fa6205"
                         />
                         <Text style={styles.featureText}>
                           Solicita tu transporte desde cualquier ubicación
@@ -1244,7 +1227,7 @@ export default function HomeScreen() {
                         <Ionicons
                           name="checkmark-circle"
                           size={22}
-                          color="#9BFE03"
+                          color="#fa6205"
                         />
                         <Text style={styles.featureText}>
                           Envía documentos y paquetes pequeños de forma segura
@@ -1254,7 +1237,7 @@ export default function HomeScreen() {
                         <Ionicons
                           name="checkmark-circle"
                           size={22}
-                          color="#9BFE03"
+                          color="#fa6205"
                         />
                         <Text style={styles.featureText}>
                           Seguimiento en tiempo real de tu pedido
@@ -1264,7 +1247,7 @@ export default function HomeScreen() {
                         <Ionicons
                           name="checkmark-circle"
                           size={22}
-                          color="#9BFE03"
+                          color="#fa6205"
                         />
                         <Text style={styles.featureText}>
                           Conductores verificados y confiables
@@ -1385,7 +1368,7 @@ export default function HomeScreen() {
 
             {loadingCoordinates ? (
               <View style={styles.loadingContainer}>
-                <ActivityIndicator size="large" color="#9BFE03" />
+                <ActivityIndicator size="large" color="#fa6205" />
                 <Text style={styles.loadingText}>Obteniendo ubicación...</Text>
               </View>
             ) : (
@@ -1417,16 +1400,16 @@ export default function HomeScreen() {
                       disabled={loadingCoordinates}
                     >
                       {loadingCoordinates ? (
-                        <ActivityIndicator size="small" color="#2B2B2B" />
+                        <ActivityIndicator size="small" color="#333333" />
                       ) : (
-                        <Ionicons name="locate" size={24} color="#2B2B2B" />
+                        <Ionicons name="locate" size={24} color="#333333" />
                       )}
                     </TouchableOpacity>
                   </View>
                 )}
 
                 <View style={styles.locationInfoContainer}>
-                  <Ionicons name="location" size={24} color="#9BFE03" />
+                  <Ionicons name="location" size={24} color="#fa6205" />
                   <Text style={styles.locationAddressModal}>
                     {locationAddress}
                   </Text>
@@ -1446,7 +1429,7 @@ export default function HomeScreen() {
                     disabled={updatingLocation}
                   >
                     {updatingLocation ? (
-                      <ActivityIndicator size="small" color="#2B2B2B" />
+                      <ActivityIndicator size="small" color="#333333" />
                     ) : (
                       <Text style={styles.saveButtonText}>
                         Guardar ubicación
@@ -1466,7 +1449,7 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   safeContainer: {
     flex: 1,
-    backgroundColor: "#242424",
+    backgroundColor: "#FFFFFF",
     paddingTop: Platform.OS === "android" ? 20 : 0,
   },
   errorContainer: {
@@ -1486,10 +1469,10 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.6,
     shadowRadius: 20,
     elevation: 10,
-    backgroundColor: "#2c2c2c",
+    backgroundColor: "#F0F0F0",
     padding: 30,
     borderWidth: 2,
-    borderColor: "#444",
+    borderColor: "#DDD",
     borderStyle: "dashed",
   },
   bannerOverlay: {
@@ -1504,7 +1487,7 @@ const styles = StyleSheet.create({
     // Puedes animar este icono con una librería como react-native-animatable si quieres
   },
   bannerTitle: {
-    color: "#fff",
+    color: '#1C1C1E',
     fontSize: 14,
     fontFamily: "Montserrat_400Regular",
     textAlign: "center",
@@ -1514,7 +1497,7 @@ const styles = StyleSheet.create({
     textShadowRadius: 2,
   },
   bannerSubtitle: {
-    color: "#9BFE03",
+    color: "#fa6205",
     fontSize: 16,
     fontFamily: "Montserrat_700Bold",
     textAlign: "center",
@@ -1531,20 +1514,20 @@ const styles = StyleSheet.create({
     textAlign: "center",
   },
   errorDetail: {
-    color: "#FFF",
+    color: '#1C1C1E',
     fontSize: 14,
     fontFamily: "Montserrat_400Regular",
     marginBottom: 20,
     textAlign: "center",
   },
   retryButton: {
-    backgroundColor: "#9BFE03",
+    backgroundColor: "#fa6205",
     paddingVertical: 12,
     paddingHorizontal: 24,
     borderRadius: 8,
   },
   retryButtonText: {
-    color: "#242424",
+    color: "#1C1C1E",
     fontFamily: "Montserrat_600SemiBold",
     fontSize: 16,
   },
@@ -1590,7 +1573,7 @@ const styles = StyleSheet.create({
   demoModalTitle: {
     fontSize: 22,
     fontFamily: "Montserrat_700Bold",
-    color: "#9BFE03",
+    color: "#fa6205",
     marginBottom: 20,
     textAlign: "center",
   },
@@ -1601,7 +1584,7 @@ const styles = StyleSheet.create({
     marginBottom: 15,
   },
   transportCard: {
-    backgroundColor: "#444",
+    backgroundColor: "#DDD",
     borderRadius: 10,
     padding: 15,
     alignItems: "center",
@@ -1611,7 +1594,7 @@ const styles = StyleSheet.create({
   transportTitle: {
     fontSize: 16,
     fontFamily: "Montserrat_700Bold",
-    color: "#fff",
+    color: '#1C1C1E',
     marginTop: 10,
     marginBottom: 5,
   },
@@ -1634,7 +1617,7 @@ const styles = StyleSheet.create({
   featureText: {
     fontSize: 14,
     fontFamily: "Montserrat_400Regular",
-    color: "#fff",
+    color: '#1C1C1E',
     marginLeft: 10,
     flex: 1,
   },
@@ -1646,7 +1629,7 @@ const styles = StyleSheet.create({
     marginVertical: 15,
   },
   registerButton: {
-    backgroundColor: "#9BFE03",
+    backgroundColor: "#fa6205",
     borderRadius: 10,
     paddingVertical: 12,
     paddingHorizontal: 25,
@@ -1655,7 +1638,7 @@ const styles = StyleSheet.create({
     marginTop: 10,
   },
   registerButtonText: {
-    color: "#242424",
+    color: "#1C1C1E",
     fontFamily: "Montserrat_700Bold",
     fontSize: 16,
   },
@@ -1670,7 +1653,7 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "#242424",
+    backgroundColor: "#FFFFFF",
   },
   noDataText: {
     color: "#aaa",
@@ -1682,7 +1665,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    backgroundColor: "#9BFE03",
+    backgroundColor: "#fa6205",
     padding: 15,
     marginTop: 30,
   },
@@ -1695,7 +1678,7 @@ const styles = StyleSheet.create({
   },
   locationText: {
     fontSize: 16,
-    color: "#2B2B2B",
+    color: "#333333",
     fontFamily: "Montserrat_400Regular",
     flex: 1,
     marginLeft: 5,
@@ -1722,58 +1705,53 @@ const styles = StyleSheet.create({
   greeting: {
     fontSize: 18,
     fontFamily: "Montserrat_400Regular",
-    color: "#fff",
+    color: '#1C1C1E',
   },
   boldText: {
     fontFamily: "Montserrat_700Bold",
     fontSize: 20,
-    color: "#fff",
+    color: '#1C1C1E',
   },
   logo: {
     width: "60%",
     height: 60,
     resizeMode: "contain",
+    borderRadius: 16,
   },
   mainButtons: {
     width: '100%',
-    marginVertical: 5,
-    marginBottom: 10,
-    flexDirection: 'row', // <-- Clave: alinea los elementos en una fila
-    justifyContent: 'space-between', // <-- Clave: distribuye el espacio entre los botones
-  },
-  mainButtons: {
-    width: '100%',
-    flexDirection: 'row',
-    justifyContent: 'space-between', // Mantenemos el espacio entre ellos
-    alignItems: 'center', // Ayuda a alinear si tienen diferentes alturas
     marginBottom: 10,
     marginTop: 10
   },
-  // ESTILO BASE PARA TODOS LOS BOTONES
-  buttonBase: {
-    height: 110, // Altura base para los botones pequeños
-    borderRadius: 15,
-    overflow: 'hidden',
-  },
-  // ESTILO PARA LOS BOTONES DE LOS LADOS
-  buttonSide: {
-    width: '24%', // <-- Ancho para los botones laterales
-    height: 120,
-  },
-  // ESTILO PARA EL BOTÓN DEL CENTRO
-  buttonCenter: {
-    width: '50%', // <-- Ancho mayor para el botón central
-    height: 120,  // <-- Opcional: una altura mayor para que destaque más
-  },
-  // ESTILO PARA TODAS LAS IMÁGENES
-  buttonImg: {
+  transportButton: {
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1.5,
+    borderColor: '#fa6205',
+    borderRadius: 16,
+    padding: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
     width: '100%',
-    height: 120,
   },
-  buttonImg2: {
-    width: '100%',
-    height: 120,
-    resizeMode: 'contain'
+  transportIcon: {
+    width: 55,
+    height: 55,
+    borderRadius: 12,
+    marginRight: 15,
+  },
+  transportTextContainer: {
+    flex: 1,
+  },
+  transportTitle: {
+    color: '#1C1C1E',
+    fontSize: 16,
+    fontFamily: 'Montserrat_700Bold',
+  },
+  transportSubtitle: {
+    color: '#555',
+    fontSize: 12,
+    fontFamily: 'Montserrat_400Regular',
+    marginTop: 4,
   },
   sectionHeader: {
     flexDirection: "row",
@@ -1784,12 +1762,12 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 16,
     fontFamily: "Montserrat_700Bold",
-    color: "#9BFE03",
+    color: "#fa6205",
   },
   sectionTitleDos: {
     fontSize: 14,
     fontFamily: "Montserrat_regular",
-    color: "#9BFE03",
+    color: "#fa6205",
   },
   card: {
     borderRadius: 10,
@@ -1808,7 +1786,7 @@ const styles = StyleSheet.create({
   cardTitle: {
     fontSize: 15,
     fontFamily: "Montserrat_400Regular",
-    color: "#ffff",
+    color: "#1C1C1E",
     textAlign: "center",
   },
   cardSubtitle: {
@@ -1844,7 +1822,7 @@ const styles = StyleSheet.create({
   modalTitle: {
     fontSize: 22,
     fontFamily: "Montserrat_700Bold",
-    color: "#9BFE03",
+    color: "#fa6205",
     marginBottom: 15,
     textAlign: "center",
   },
@@ -1864,7 +1842,7 @@ const styles = StyleSheet.create({
     position: "absolute",
     bottom: 15,
     right: 15,
-    backgroundColor: "#9BFE03",
+    backgroundColor: "#fa6205",
     width: 44,
     height: 44,
     borderRadius: 22,
@@ -1884,14 +1862,14 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginVertical: 10,
     width: "100%",
-    backgroundColor: "#444",
+    backgroundColor: "#DDD",
     padding: 12,
     borderRadius: 10,
   },
   locationAddressModal: {
     fontSize: 14,
     fontFamily: "Montserrat_400Regular",
-    color: "#FFFFFF",
+    color: "#1C1C1E",
     marginLeft: 10,
     flex: 1,
   },
@@ -1902,7 +1880,7 @@ const styles = StyleSheet.create({
     marginTop: 15,
   },
   cancelButton: {
-    backgroundColor: "#444",
+    backgroundColor: "#DDD",
     paddingVertical: 12,
     paddingHorizontal: 20,
     borderRadius: 10,
@@ -1911,12 +1889,12 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   cancelButtonText: {
-    color: "#FFFFFF",
+    color: "#1C1C1E",
     fontFamily: "Montserrat_600SemiBold",
     fontSize: 16,
   },
   saveButton: {
-    backgroundColor: "#9BFE03",
+    backgroundColor: "#fa6205",
     paddingVertical: 12,
     paddingHorizontal: 20,
     borderRadius: 10,
@@ -1924,12 +1902,12 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   saveButtonText: {
-    color: "#2B2B2B",
+    color: "#333333",
     fontFamily: "Montserrat_700Bold",
     fontSize: 16,
   },
   loadingText: {
-    color: "#FFFFFF",
+    color: "#1C1C1E",
     fontFamily: "Montserrat_400Regular",
     fontSize: 16,
     marginTop: 10,
@@ -1939,7 +1917,7 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   carouselItem: {
-    backgroundColor: "#2c2c2c",
+    backgroundColor: "#F0F0F0",
     borderRadius: 10,
     padding: 10,
     marginHorizontal: 5,
@@ -1954,14 +1932,14 @@ const styles = StyleSheet.create({
     resizeMode: "cover",
   },
   carouselTitle: {
-    color: "#fff",
+    color: '#1C1C1E',
     fontSize: 16,
     fontFamily: "Montserrat_700Bold",
     marginTop: 5,
     textAlign: "center",
   },
   carouselSubtitle: {
-    color: "#9BFE03",
+    color: "#fa6205",
     fontSize: 14,
     fontFamily: "Montserrat_400Regular",
     textAlign: "center",
@@ -1999,7 +1977,7 @@ const styles = StyleSheet.create({
   paymentPolicyMessage: {
     fontSize: 16,
     fontFamily: "Montserrat_400Regular",
-    color: "#fff",
+    color: '#1C1C1E',
     textAlign: "center",
     lineHeight: 24,
     marginBottom: 25,
@@ -2013,37 +1991,8 @@ const styles = StyleSheet.create({
     minWidth: 120,
   },
   paymentPolicyButtonText: {
-    color: "#242424",
+    color: "#1C1C1E",
     fontFamily: "Montserrat_700Bold",
     fontSize: 16,
   },
-  boleteriaFloatingButton: {
-    // El contenedor ahora es solo para la posición y la sombra.
-    // No necesita color de fondo.
-    position: 'absolute',
-    bottom: 140, // Un poco más de espacio desde abajo
-    right: 10,  // Un poco más de espacio desde la derecha
-    width: 70,  // Un tamaño un poco más grande para mayor impacto
-    height: 70,
-    borderRadius: 35, // Para que la sombra sea circular
-    zIndex: 100,
-
-    // --- SOMBRA PROFUNDA PARA RESALTAR ---
-    shadowColor: '#000', // Sombra negra para máximo contraste
-    shadowOffset: {
-      width: 0,
-      height: 8, // Una sombra más larga hacia abajo
-    },
-    shadowOpacity: 0.3, // Una opacidad notable
-    shadowRadius: 10,   // Un desenfoque suave y amplio
-    elevation: 15,      // Sombra fuerte para Android
-  },
-  boleteriaIcon: {
-    // La imagen debe llenar completamente su contenedor
-    width: '100%',
-    height: '100%',
-    resizeMode: "contain",
-    borderRadius: 12
-    // El borderRadius de la imagen en sí debe manejarse en el asset si es necesario
-  }
 });

@@ -101,7 +101,7 @@ export default StyleSheet.create({
           top: 0, // Reduce este valor para subir la línea
           borderLeftWidth: 2,
           borderStyle: "dashed",
-          borderColor: "#B2D8B2",
+          borderColor: "#fde2cc",
         },
         footer: {
           flexDirection: "row",
@@ -118,10 +118,10 @@ export default StyleSheet.create({
         priceValue: {
           fontSize: 22,
           fontWeight: "bold",
-          color: "#197200",
+          color: "#fa6205",
         },
         continueButton: {
-          backgroundColor: "#197200",
+          backgroundColor: "#fa6205",
           padding: 15,
           borderRadius: 50,
           alignItems: "center",
@@ -130,7 +130,7 @@ export default StyleSheet.create({
           marginTop: 40,
         },
         continueText: {
-          color: "#fff",
+          color: "#1C1C1E",
           fontSize: 14,
           fontFamily: "Inter_400Regular",
         },
@@ -143,13 +143,13 @@ export default StyleSheet.create({
           color: "#007C21",
         },
         input: {
-          backgroundColor: '#E3E7DD',
+          backgroundColor: '#fdf0e6',
           padding: 10,
           borderRadius: 8,
           marginBottom: 10,
         },
         input2: {
-          backgroundColor: '#E3E7DD',
+          backgroundColor: '#fdf0e6',
           padding: 10,
           borderRadius: 8,
           marginBottom: 0,
@@ -174,7 +174,7 @@ export default StyleSheet.create({
           left: 15,
         },
         card: {
-          backgroundColor: "#1E7D22",
+          backgroundColor: "#fa6205",
           borderRadius: 10,
           padding: 15,
           marginBottom: 20,
@@ -186,12 +186,12 @@ export default StyleSheet.create({
         },
         label: {
           fontSize: 12,
-          color: "#fff",
+          color: "#1C1C1E",
           fontFamily: "Inter_400Regular",
         },
         value: {
           fontSize: 12,
-          color: "#fff",
+          color: "#1C1C1E",
           fontFamily: "Inter_400Regular",
         },
         paymentContainer: {
@@ -231,7 +231,7 @@ export default StyleSheet.create({
         subtitle: {
           fontSize: 15,
           fontFamily: "Inter_400Regular",
-          color: "#2A2A2A",
+          color: "#ECECEC",
           textAlign: "center",
           marginBottom: 20,
         },
@@ -246,7 +246,7 @@ export default StyleSheet.create({
         },
         buttonText: {
           fontFamily: "Inter_400Regular",
-          color: "white",
+          color: "#1C1C1E",
           fontSize: 16,
           textAlign: "center", // Centra el texto
         },

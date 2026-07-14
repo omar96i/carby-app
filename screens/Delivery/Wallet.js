@@ -33,11 +33,11 @@ const { width } = Dimensions.get("window");
 // Colores para los paquetes
 const packageColors = [
   "#4AA3DF",
-  "#2ECC71",
+  "#fa6205",
   "#9B59B6",
   "#E67E22",
   "#F39C12",
-  "#16A085",
+  "#fa6205",
 ];
 
 const Wallet = () => {
@@ -636,7 +636,7 @@ const Wallet = () => {
   const getStatusColor = (status) => {
     switch (status) {
       case "aprobado":
-        return "#2ECC71"; // Verde
+        return "#fa6205"; // Verde
       case "pendiente":
         return "#F39C12"; // Amarillo
       case "rechazado":
@@ -761,7 +761,7 @@ const Wallet = () => {
   if (!fontsLoaded) {
     return (
       <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#9BFE03" />
+        <ActivityIndicator size="large" color="#fa6205" />
       </View>
     );
   }
@@ -774,7 +774,7 @@ const Wallet = () => {
           onPress={() => navigation.goBack()}
           style={styles.backButton}
         >
-          <Ionicons name="arrow-back" size={25} color="#2B2B2B" />
+          <Ionicons name="arrow-back" size={25} color="#333333" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Mi Billetera</Text>
         <View style={styles.placeholder}></View>
@@ -788,13 +788,13 @@ const Wallet = () => {
           getUserTypeAndCheckFreePackage(); // Agregar esta línea
         }}
       >
-        <Ionicons name="refresh" size={16} color="#fff" />
+        <Ionicons name="refresh" size={16} color="#1C1C1E" />
         <Text style={styles.refreshButtonText}>Actualizar datos</Text>
       </TouchableOpacity>
       {/* Loading indicator para verificación de paquete gratuito */}
       {loadingFreePackageCheck && (
         <View style={styles.loadingFreePackageContainer}>
-          <ActivityIndicator size="small" color="#9BFE03" />
+          <ActivityIndicator size="small" color="#fa6205" />
           <Text style={styles.loadingFreePackageText}>Verificando paquete gratuito...</Text>
         </View>
       )}
@@ -818,7 +818,7 @@ const Wallet = () => {
             <FontAwesome5
               name="gift"
               size={20}
-              color="#fff"
+              color="#1C1C1E"
               style={styles.giftIcon}
             />
             <View style={styles.freeSubscriptionTextContainer}>
@@ -829,7 +829,7 @@ const Wallet = () => {
                 {freePackageAvailable?.nombre || "Paquete gratuito disponible"}
               </Text>
             </View>
-            <Ionicons name="arrow-forward" size={20} color="#fff" />
+            <Ionicons name="arrow-forward" size={20} color="#1C1C1E" />
           </View>
         </TouchableOpacity>
       )}
@@ -852,7 +852,7 @@ const Wallet = () => {
 
         {loadingSubscriptions ? (
           <View style={styles.loadingSubscriptionsContainer}>
-            <ActivityIndicator size="large" color="#9BFE03" />
+            <ActivityIndicator size="large" color="#fa6205" />
             <Text style={styles.loadingSubscriptionsText}>
               Cargando suscripciones...
             </Text>
@@ -891,7 +891,7 @@ const Wallet = () => {
                   <FontAwesome5
                     name="shopping-cart"
                     size={14}
-                    color="#94D82D"
+                    color="#fa6205"
                     style={styles.detailIcon}
                   />
                   <Text style={styles.detailText}>
@@ -903,11 +903,11 @@ const Wallet = () => {
                   <FontAwesome5
                     name="money-bill-wave"
                     size={14}
-                    color="#94D82D"
+                    color="#fa6205"
                     style={styles.detailIcon}
                   />
                   <Text style={styles.detailText}>
-                    S/ {formatPrice(subscription.suscripcion?.precio || 0)}
+                    $  {formatPrice(subscription.suscripcion?.precio || 0)}
                   </Text>
                 </View>
 
@@ -915,7 +915,7 @@ const Wallet = () => {
                   <FontAwesome5
                     name="calendar-alt"
                     size={14}
-                    color="#94D82D"
+                    color="#fa6205"
                     style={styles.detailIcon}
                   />
                   <Text style={styles.detailText}>
@@ -941,7 +941,7 @@ const Wallet = () => {
 
         {loadingPackages ? (
           <View style={styles.loadingPackagesContainer}>
-            <ActivityIndicator size="large" color="#9BFE03" />
+            <ActivityIndicator size="large" color="#fa6205" />
             <Text style={styles.loadingPackagesText}>Cargando paquetes...</Text>
           </View>
         ) : packages.length > 0 ? (
@@ -961,7 +961,7 @@ const Wallet = () => {
                   style={[styles.priceBadge, { backgroundColor: pkg.color }]}
                 >
                   <Text style={styles.priceText}>
-                    S/ {formatPrice(pkg.price)}
+                    $  {formatPrice(pkg.price)}
                   </Text>
                 </View>
               </View>
@@ -1016,7 +1016,7 @@ const Wallet = () => {
                   {selectedPackage.title}
                 </Text>
                 <Text style={styles.packageSummaryPrice}>
-                  S/ {formatPrice(selectedPackage.price)}
+                  $  {formatPrice(selectedPackage.price)}
                 </Text>
                 <Text style={styles.packageSummarySales}>
                   {selectedPackage.sales} Ventas
@@ -1041,7 +1041,7 @@ const Wallet = () => {
                   <MaterialIcons
                     name="arrow-forward"
                     size={20}
-                    color="white"
+                    color="#1C1C1E"
                     style={{ marginLeft: 8 }}
                   />
                 </TouchableOpacity>
@@ -1050,14 +1050,14 @@ const Wallet = () => {
 
             {loading && (
               <View style={styles.loadingPayment}>
-                <ActivityIndicator size="large" color="#9BFE03" />
+                <ActivityIndicator size="large" color="#fa6205" />
                 <Text style={styles.loadingText}>Procesando pago...</Text>
               </View>
             )}
 
             {paymentComplete && (
               <View style={styles.successContainer}>
-                <Ionicons name="checkmark-circle" size={80} color="#2ECC71" />
+                <Ionicons name="checkmark-circle" size={80} color="#fa6205" />
                 <Text style={styles.successText}>¡Pago Iniciado!</Text>
                 <Text style={styles.successSubtext}>
                   Tu suscripción será activada una vez que completes el pago en
@@ -1092,7 +1092,7 @@ const Wallet = () => {
 
             <View style={styles.giftContainer}>
               <View style={styles.giftIconContainer}>
-                <FontAwesome5 name="gift" size={60} color="#9BFE03" />
+                <FontAwesome5 name="gift" size={60} color="#fa6205" />
               </View>
               <Text style={styles.freeModalTitle}>
                  ¡Regalo de Bienvenida!
@@ -1107,35 +1107,35 @@ const Wallet = () => {
               <Text style={styles.benefitsTitle}>Lo que obtienes:</Text>
 
               <View style={styles.benefitItem}>
-                <Ionicons name="checkmark-circle" size={20} color="#2ECC71" />
+                <Ionicons name="checkmark-circle" size={20} color="#fa6205" />
                 <Text style={styles.benefitText}>
                   {freePackageAvailable?.nombre || "Paquete gratuito"}
                 </Text>
               </View>
 
               <View style={styles.benefitItem}>
-                <Ionicons name="checkmark-circle" size={20} color="#2ECC71" />
+                <Ionicons name="checkmark-circle" size={20} color="#fa6205" />
                 <Text style={styles.benefitText}>
                   {freePackageAvailable?.cantidad || 0} ventas incluidas
                 </Text>
               </View>
 
               <View style={styles.benefitItem}>
-                <Ionicons name="checkmark-circle" size={20} color="#2ECC71" />
+                <Ionicons name="checkmark-circle" size={20} color="#fa6205" />
                 <Text style={styles.benefitText}>
                   Comienza a vender inmediatamente
                 </Text>
               </View>
 
               <View style={styles.benefitItem}>
-                <Ionicons name="checkmark-circle" size={20} color="#2ECC71" />
+                <Ionicons name="checkmark-circle" size={20} color="#fa6205" />
                 <Text style={styles.benefitText}>
                   Solo disponible una vez por comercio
                 </Text>
               </View>
 
               <View style={styles.benefitItem}>
-                <Ionicons name="checkmark-circle" size={20} color="#2ECC71" />
+                <Ionicons name="checkmark-circle" size={20} color="#fa6205" />
                 <Text style={styles.benefitText}>
                   Personalizado para tu tipo: {userType}
                 </Text>
@@ -1158,14 +1158,14 @@ const Wallet = () => {
                 <FontAwesome5
                   name="gift"
                   size={16}
-                  color="#fff"
+                  color="#1C1C1E"
                   style={{ marginRight: 8 }}
                 />
                 <Text style={styles.claimButtonText}>Reclamar Mi Regalo</Text>
               </TouchableOpacity>
             ) : (
               <View style={styles.loadingClaimContainer}>
-                <ActivityIndicator size="large" color="#9BFE03" />
+                <ActivityIndicator size="large" color="#fa6205" />
                 <Text style={styles.loadingClaimText}>
                   Procesando tu regalo...
                 </Text>
@@ -1181,20 +1181,20 @@ const Wallet = () => {
 const styles = StyleSheet.create({
   safeContainer: {
     flex: 1,
-    backgroundColor: "#242424",
+    backgroundColor: "#FFFFFF",
     paddingTop: Platform.OS === "android" ? 40 : 0,
   },
   loadingContainer: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "#242424",
+    backgroundColor: "#FFFFFF",
   },
   headerBar: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    backgroundColor: "#9BFE03",
+    backgroundColor: "#fa6205",
     padding: 15,
     marginTop: 30,
   },
@@ -1204,7 +1204,7 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 22,
     fontFamily: "Montserrat_700Bold",
-    color: "#2B2B2B",
+    color: "#333333",
   },
   placeholder: {
     width: 35,
@@ -1225,13 +1225,13 @@ const styles = StyleSheet.create({
   balanceTitle: {
     fontFamily: "Montserrat_600SemiBold",
     fontSize: 16,
-    color: "#9BFE03",
+    color: "#fa6205",
     marginBottom: 8,
   },
   balanceAmount: {
     fontFamily: "Montserrat_700Bold",
     fontSize: 32,
-    color: "white",
+    color: "#1C1C1E",
     marginBottom: 8,
   },
   balanceSubtitle: {
@@ -1257,13 +1257,13 @@ const styles = StyleSheet.create({
   statLabel: {
     fontFamily: "Montserrat_400Regular",
     fontSize: 12,
-    color: "#9BFE03",
+    color: "#fa6205",
     marginBottom: 5,
   },
   statValue: {
     fontFamily: "Montserrat_700Bold",
     fontSize: 20,
-    color: "white",
+    color: "#1C1C1E",
   },
   detailsContainer: {
     backgroundColor: "rgba(155, 254, 3, 0.1)",
@@ -1286,12 +1286,12 @@ const styles = StyleSheet.create({
   detailValue: {
     fontFamily: "Montserrat_600SemiBold",
     fontSize: 12,
-    color: "#9BFE03",
+    color: "#fa6205",
   },
   sectionTitle: {
     fontFamily: "Montserrat_700Bold",
     fontSize: 20,
-    color: "white",
+    color: "#1C1C1E",
     marginBottom: 15,
   },
   // Nuevos estilos para las suscripciones activas
@@ -1344,7 +1344,7 @@ const styles = StyleSheet.create({
   subscriptionName: {
     fontFamily: "Montserrat_600SemiBold",
     fontSize: 16,
-    color: "white",
+    color: "#1C1C1E",
     width: "70%",
   },
   statusBadge: {
@@ -1355,7 +1355,7 @@ const styles = StyleSheet.create({
   statusText: {
     fontFamily: "Montserrat_600SemiBold",
     fontSize: 12,
-    color: "white",
+    color: "#1C1C1E",
   },
   subscriptionDetails: {
     marginBottom: 12,
@@ -1430,7 +1430,7 @@ const styles = StyleSheet.create({
   packageTitle: {
     fontFamily: "Montserrat_700Bold",
     fontSize: 18,
-    color: "white",
+    color: "#1C1C1E",
   },
   priceContainer: {
     flexDirection: "row",
@@ -1445,12 +1445,12 @@ const styles = StyleSheet.create({
   priceText: {
     fontFamily: "Montserrat_700Bold",
     fontSize: 16,
-    color: "white",
+    color: "#1C1C1E",
   },
   salesText: {
     fontFamily: "Montserrat_700Bold",
     fontSize: 24,
-    color: "#9BFE03",
+    color: "#fa6205",
     marginBottom: 8,
   },
   packageDescription: {
@@ -1470,7 +1470,7 @@ const styles = StyleSheet.create({
   buyButtonText: {
     fontFamily: "Montserrat_600SemiBold",
     fontSize: 14,
-    color: "white",
+    color: "#1C1C1E",
   },
   infoText: {
     fontFamily: "Montserrat_400Regular",
@@ -1482,7 +1482,7 @@ const styles = StyleSheet.create({
   },
   refreshButton: {
     flexDirection: "row",
-    backgroundColor: "#444",
+    backgroundColor: "#DDD",
     paddingVertical: 10,
     paddingHorizontal: 15,
     borderRadius: 20,
@@ -1494,12 +1494,12 @@ const styles = StyleSheet.create({
   refreshButtonText: {
     fontFamily: "Montserrat_400Regular",
     fontSize: 14,
-    color: "#fff",
+    color: "#1C1C1E",
     marginLeft: 8,
   },
   // Estilos para el botón de suscripción gratuita
   freeSubscriptionButton: {
-    backgroundColor: "linear-gradient(45deg, #FF6B6B, #4ECDC4)",
+    backgroundColor: "linear-gradient(45deg, #FF6B6B, #fa6205)",
     backgroundColor: "#FF6B6B", // Fallback para gradiente
     borderRadius: 15,
     marginHorizontal: 16,
@@ -1528,13 +1528,13 @@ const styles = StyleSheet.create({
   freeSubscriptionTitle: {
     fontFamily: "Montserrat_700Bold",
     fontSize: 16,
-    color: "#fff",
+    color: "#1C1C1E",
     marginBottom: 2,
   },
   freeSubscriptionSubtitle: {
     fontFamily: "Montserrat_400Regular",
     fontSize: 13,
-    color: "#fff",
+    color: "#1C1C1E",
     opacity: 0.9,
   },
   // Estilos para el modal de suscripción gratuita
@@ -1611,7 +1611,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   claimButton: {
-    backgroundColor: "#9BFE03",
+    backgroundColor: "#fa6205",
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
@@ -1687,7 +1687,7 @@ const styles = StyleSheet.create({
   packageSummaryPrice: {
     fontFamily: "Montserrat_700Bold",
     fontSize: 24,
-    color: "#2ECC71",
+    color: "#fa6205",
     marginBottom: 5,
   },
   packageSummarySales: {
@@ -1759,7 +1759,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
   },
   submitButton: {
-    backgroundColor: "#9BFE03",
+    backgroundColor: "#fa6205",
     paddingHorizontal: 30,
     paddingVertical: 12,
     borderRadius: 25,
@@ -1794,7 +1794,7 @@ const styles = StyleSheet.create({
   },
   progressBar: {
     height: "100%",
-    backgroundColor: "#9BFE03",
+    backgroundColor: "#fa6205",
   },
   progressText: {
     fontFamily: "Montserrat_400Regular",
@@ -1810,7 +1810,7 @@ const styles = StyleSheet.create({
   successText: {
     fontFamily: "Montserrat_700Bold",
     fontSize: 24,
-    color: "#2ECC71",
+    color: "#fa6205",
     marginTop: 10,
     marginBottom: 5,
   },
@@ -1822,7 +1822,7 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   doneButton: {
-    backgroundColor: "#2ECC71",
+    backgroundColor: "#fa6205",
     paddingHorizontal: 40,
     paddingVertical: 12,
     borderRadius: 25,
@@ -1830,11 +1830,11 @@ const styles = StyleSheet.create({
   doneButtonText: {
     fontFamily: "Montserrat_600SemiBold",
     fontSize: 16,
-    color: "white",
+    color: "#1C1C1E",
   },
   // Nuevos estilos para el botón de pago
   payNowButton: {
-    backgroundColor: "#2ECC71",
+    backgroundColor: "#fa6205",
     paddingHorizontal: 25,
     paddingVertical: 15,
     borderRadius: 25,
@@ -1846,7 +1846,7 @@ const styles = StyleSheet.create({
   payNowButtonText: {
     fontFamily: "Montserrat_600SemiBold",
     fontSize: 16,
-    color: "white",
+    color: "#1C1C1E",
   },
   loadingFreePackageContainer: {
     flexDirection: "row",

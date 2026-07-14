@@ -31,8 +31,8 @@ const ToggleSwitch = ({ isOn, setIsOn, title, onDataReceived, disabled = false }
       <Text style={styles.title}>{title}</Text>
       <View style={styles.switchContainer}>
         <Switch
-          trackColor={{ false: "#767577", true: "#1E7D22" }}
-          thumbColor={isOn ? "#39FF14" : "#f4f3f4"}
+          trackColor={{ false: "#767577", true: "#fa6205" }}
+          thumbColor={isOn ? "#fa6205" : "#f4f3f4"}
           ios_backgroundColor="#3e3e3e"
           onValueChange={toggleSwitch}
           value={isOn}
@@ -57,7 +57,7 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 16,
-    color: '#fff',
+    color: '#1C1C1E',
     width: '70%',
     flexShrink: 1,
     fontFamily: 'Montserrat_600SemiBold', // Usando la fuente semibold para el título

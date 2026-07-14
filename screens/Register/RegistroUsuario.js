@@ -21,18 +21,11 @@ import { useFonts, Montserrat_400Regular, Montserrat_700Bold } from "@expo-googl
 // import { BASE_URL } from "../../constants/url"; // <--- YA NO LA USAREMOS DIRECTAMENTE AQUÍ
 import AlertaModal from '../../components/ErrorModal';
 
-// 1. DEFINIR LAS URLS POR PAÍS
-const COUNTRY_CONFIG = {
-  PE: {
-    label: "Perú 🇵🇪",
-    url: "https://back.yariders.com/api/",
-    currency: "PEN"
-  },
-  CO: {
-    label: "Colombia 🇨🇴",
-    url: "https://co.yariders.com/api/",
-    currency: "COP"
-  }
+// 1. CONFIGURACIÓN POR PAÍS (solo info visual, misma API)
+const API_URL = "https://back.carbycol.com/api/";
+const COUNTRY_INFO = {
+  PE: { label: "Perú 🇵🇪", currency: "PEN" },
+  CO: { label: "Colombia 🇨🇴", currency: "COP" }
 };
 
 export default function RegisterFormScreen() {
@@ -42,7 +35,7 @@ export default function RegisterFormScreen() {
   const [step, setStep] = useState(1);
   
   // 2. NUEVO ESTADO PARA EL PAÍS
-  const [pais, setPais] = useState(""); // Valores: 'PE' o 'CO'
+  const [pais, setPais] = useState("CO"); // Valores: 'PE' o 'CO'
 
   const [nombreCompleto, setNombreCompleto] = useState("");
   const [tipoDocumento, setTipoDocumento] = useState("");
@@ -105,7 +98,7 @@ export default function RegisterFormScreen() {
     if (password !== repeatPassword) return mostrarError("Las contraseñas no coinciden.");
 
     // 4. SELECCIONAR LA URL BASADA EN EL PAÍS
-    const currentBaseUrl = COUNTRY_CONFIG[pais]?.url;
+    const currentBaseUrl = API_URL;
 
     if (!currentBaseUrl) {
       mostrarError("Error configurando la región. Intente nuevamente.");
@@ -138,7 +131,22 @@ export default function RegisterFormScreen() {
         body: JSON.stringify(userData),
       });
 
-      const result = await response.json();
+      // Debug: log de la respuesta cruda
+      const textResponse = await response.text();
+      console.log("=== RESPUESTA CRUDA DEL SERVIDOR ===");
+      console.log("Status:", response.status);
+      console.log("Headers:", JSON.stringify(response.headers, null, 2));
+      console.log("Body:", textResponse.substring(0, 500));
+      console.log("==================================");
+
+      let result;
+      try {
+        result = JSON.parse(textResponse);
+      } catch (parseError) {
+        console.error("JSON parse error:", parseError.message);
+        console.error("Respuesta no es JSON válido. Body completo:", textResponse);
+        throw new Error(`El servidor respondió con HTML/error (status ${response.status})`);
+      }
       setIsLoading(false);
 
       if (!response.ok) {
@@ -151,7 +159,7 @@ export default function RegisterFormScreen() {
         return;
       }
 
-      Alert.alert("¡Éxito!", `Usuario creado correctamente en ${COUNTRY_CONFIG[pais].label}`, [
+      Alert.alert("¡Éxito!", `Usuario creado correctamente en ${COUNTRY_INFO[pais].label}`, [
         { text: "OK", onPress: () => navigation.navigate("Login") },
       ]);
 
@@ -186,7 +194,7 @@ export default function RegisterFormScreen() {
   // --- RENDER ---
   return (
     <KeyboardAvoidingView
-      style={{ flex: 1, backgroundColor: "#1C1C1E" }}
+      style={{ flex: 1, backgroundColor: "#F2F2F7" }}
       behavior={Platform.OS === "ios" ? "padding" : "height"}
     >
       <View style={styles.container}>
@@ -194,10 +202,10 @@ export default function RegisterFormScreen() {
         {/* HEADER */}
         <View style={styles.headerArea}>
           <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButtonHeader}>
-            <MaterialCommunityIcons name="arrow-left" size={24} color="#fff" />
+            <MaterialCommunityIcons name="arrow-left" size={24} color="#1C1C1E" />
           </TouchableOpacity>
 
-          <Image source={require("../../assets/images/yar.png")} style={styles.logoSmall} />
+          <Image source={require("../../assets/images/nuevo-icono.jpeg")} style={styles.logoSmall} />
 
           <View style={styles.progressBarContainer}>
             <View style={[styles.progressBarFill, { width: getProgressWidth() }]} />
@@ -223,17 +231,17 @@ export default function RegisterFormScreen() {
                   onPress={() => openIosPicker('pais')}
                 >
                   <Text style={[styles.inputText, !pais && { color: "#777" }]}>
-                    {pais ? COUNTRY_CONFIG[pais].label : "Selecciona tu país"}
+                    {pais ? COUNTRY_INFO[pais].label : "Selecciona tu país"}
                   </Text>
-                  <MaterialCommunityIcons name="chevron-down" size={20} color="#9DFD05" />
+                  <MaterialCommunityIcons name="chevron-down" size={20} color="#fa6205" />
                 </TouchableOpacity>
               ) : (
                 <View style={styles.pickerContainerDark}>
                    <Picker
                     selectedValue={pais}
                     onValueChange={(itemValue) => setPais(itemValue)}
-                    style={{ color: '#FFF' }}
-                    dropdownIconColor="#9DFD05"
+                    style={{ color: '#1C1C1E' }}
+                    dropdownIconColor="#fa6205"
                   >
                     <Picker.Item label="Selecciona tu país..." value="" color="#777"/>
                     <Picker.Item label="Perú 🇵🇪" value="PE" />
@@ -260,15 +268,15 @@ export default function RegisterFormScreen() {
                   <Text style={[styles.inputText, !tipoDocumento && { color: "#777" }]}>
                     {tipoDocumento || "Selecciona una opción"}
                   </Text>
-                  <MaterialCommunityIcons name="chevron-down" size={20} color="#9DFD05" />
+                  <MaterialCommunityIcons name="chevron-down" size={20} color="#fa6205" />
                 </TouchableOpacity>
               ) : (
                 <View style={styles.pickerContainerDark}>
                   <Picker
                     selectedValue={tipoDocumento}
                     onValueChange={setTipoDocumento}
-                    style={{ color: '#FFF' }}
-                    dropdownIconColor="#9DFD05"
+                    style={{ color: '#1C1C1E' }}
+                    dropdownIconColor="#fa6205"
                   >
                     <Picker.Item label="Selecciona..." value="" color="#777"/>
                     {/* Nota: Podrías filtrar documentos según el país aquí si quisieras */}
@@ -303,7 +311,7 @@ export default function RegisterFormScreen() {
 
               <TouchableOpacity style={styles.buttonPrimary} onPress={handleNextStep}>
                 <Text style={styles.buttonTextPrimary}>Siguiente</Text>
-                <MaterialCommunityIcons name="arrow-right" size={20} color="#1C1C1E" style={{ marginLeft: 8 }} />
+                <MaterialCommunityIcons name="arrow-right" size={20} color="#F2F2F7" style={{ marginLeft: 8 }} />
               </TouchableOpacity>
             </View>
           )}
@@ -365,7 +373,7 @@ export default function RegisterFormScreen() {
         <Modal transparent={true} visible={isLoading} animationType="fade">
             <View style={styles.loadingOverlay}>
                 <View style={styles.loadingContainer}>
-                    <ActivityIndicator size="large" color="#9DFD05" />
+                    <ActivityIndicator size="large" color="#fa6205" />
                     <Text style={styles.loadingText}>Creando cuenta...</Text>
                     <Text style={styles.loadingSubText}>Conectando con servidor {pais === 'CO' ? 'Colombia' : 'Perú'}</Text>
                 </View>
@@ -401,7 +409,7 @@ export default function RegisterFormScreen() {
                       {/* Mostrar check si está seleccionado */}
                       {((pickerTarget === 'pais' && pais === item.value) || 
                         (pickerTarget === 'documento' && tipoDocumento === item.value)) && 
-                        <MaterialCommunityIcons name="check" size={20} color="#9DFD05" />
+                        <MaterialCommunityIcons name="check" size={20} color="#fa6205" />
                       }
                     </TouchableOpacity>
                   )}
@@ -418,50 +426,50 @@ export default function RegisterFormScreen() {
 
 // ... TUS MISMOS ESTILOS AQUÍ ...
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#1C1C1E" },
+  container: { flex: 1, backgroundColor: "#F2F2F7" },
   scrollContent: { paddingHorizontal: 24, paddingBottom: 50 },
   headerArea: { paddingTop: 60, paddingHorizontal: 24, marginBottom: 20 },
   backButtonHeader: { marginBottom: 15, alignSelf: 'flex-start' },
-  logoSmall: { width: 120, height: 40, resizeMode: "contain", alignSelf: "center", marginBottom: 20 },
+  logoSmall: { width: 80, height: 80, resizeMode: "contain", alignSelf: "center", marginBottom: 20, borderRadius: 16 },
   
   // Progreso
   progressBarContainer: { height: 4, backgroundColor: "#333", borderRadius: 2, marginBottom: 8, width: '100%' },
-  progressBarFill: { height: "100%", backgroundColor: "#9DFD05", borderRadius: 2 },
+  progressBarFill: { height: "100%", backgroundColor: "#fa6205", borderRadius: 2 },
   stepText: { color: "#777", fontSize: 12, fontFamily: "Montserrat_400Regular", textAlign: "right" },
 
   // Textos
-  title: { fontSize: 26, fontFamily: "Montserrat_700Bold", color: "#FFF", marginBottom: 8 },
+  title: { fontSize: 26, fontFamily: "Montserrat_700Bold", color: '#1C1C1E', marginBottom: 8 },
   subtitle: { fontSize: 15, fontFamily: "Montserrat_400Regular", color: "#A0A0A0", marginBottom: 30 },
   label: { fontSize: 14, fontFamily: "Montserrat_700Bold", color: "#DDD", marginBottom: 8, marginLeft: 4 },
   helperText: { fontSize: 12, color: "#777", marginBottom: 15, marginLeft: 4, marginTop: -10 },
 
   // Inputs Dark
   inputDark: {
-    backgroundColor: "#2C2C2E",
+    backgroundColor: "#FFFFFF",
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: "#444",
+    borderColor: "#DDD",
     paddingHorizontal: 16,
     paddingVertical: 14,
     fontSize: 16,
     fontFamily: "Montserrat_400Regular",
-    color: "#FFF",
+    color: '#1C1C1E',
     marginBottom: 20,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center'
   },
-  inputText: { fontSize: 16, fontFamily: "Montserrat_400Regular", color: "#FFF" },
+  inputText: { fontSize: 16, fontFamily: "Montserrat_400Regular", color: '#1C1C1E' },
   pickerContainerDark: {
-    backgroundColor: "#2C2C2E",
+    backgroundColor: "#FFFFFF",
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: "#444",
+    borderColor: "#DDD",
     marginBottom: 20,
     overflow: 'hidden'
   },
   buttonPrimary: {
-    backgroundColor: "#9DFD05",
+    backgroundColor: "#fa6205",
     borderRadius: 12,
     paddingVertical: 16,
     alignItems: "center",
@@ -470,20 +478,20 @@ const styles = StyleSheet.create({
     marginTop: 10,
     marginBottom: 15,
   },
-  buttonTextPrimary: { color: "#1C1C1E", fontFamily: "Montserrat_700Bold", fontSize: 16 },
+  buttonTextPrimary: { color: "#F2F2F7", fontFamily: "Montserrat_700Bold", fontSize: 16 },
   buttonSecondary: { paddingVertical: 15, alignItems: "center", marginBottom: 20 },
-  buttonTextSecondary: { color: "#FFF", fontFamily: "Montserrat_700Bold", fontSize: 15, textDecorationLine: 'underline' },
+  buttonTextSecondary: { color: '#1C1C1E', fontFamily: "Montserrat_700Bold", fontSize: 15, textDecorationLine: 'underline' },
   modalOverlay: { flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(0,0,0,0.5)' },
-  modalContent: { backgroundColor: '#2C2C2E', borderTopLeftRadius: 20, borderTopRightRadius: 20, maxHeight: '50%' },
+  modalContent: { backgroundColor: '#FFFFFF', borderTopLeftRadius: 20, borderTopRightRadius: 20, maxHeight: '50%' },
   modalHeader: { flexDirection: 'row', justifyContent: 'space-between', padding: 16, borderBottomWidth: 1, borderBottomColor: '#444' },
-  modalTitle: { color: '#FFF', fontSize: 18, fontFamily: "Montserrat_700Bold" },
-  modalCloseText: { color: '#9DFD05', fontSize: 16, fontFamily: "Montserrat_700Bold" },
+  modalTitle: { color: '#1C1C1E', fontSize: 18, fontFamily: "Montserrat_700Bold" },
+  modalCloseText: { color: '#fa6205', fontSize: 16, fontFamily: "Montserrat_700Bold" },
   modalItem: { padding: 16, borderBottomWidth: 1, borderBottomColor: '#333', flexDirection: 'row', justifyContent: 'space-between' },
-  modalItemText: { color: '#FFF', fontSize: 16, fontFamily: "Montserrat_400Regular" },
+  modalItemText: { color: '#1C1C1E', fontSize: 16, fontFamily: "Montserrat_400Regular" },
 
   // ESTILOS LOADING
   loadingOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.85)', justifyContent: 'center', alignItems: 'center' },
-  loadingContainer: { backgroundColor: '#2C2C2E', padding: 25, borderRadius: 20, alignItems: 'center', width: '80%' },
-  loadingText: { color: '#FFF', fontSize: 18, fontFamily: "Montserrat_700Bold", marginTop: 20, marginBottom: 5 },
+  loadingContainer: { backgroundColor: '#FFFFFF', padding: 25, borderRadius: 20, alignItems: 'center', width: '80%' },
+  loadingText: { color: '#1C1C1E', fontSize: 18, fontFamily: "Montserrat_700Bold", marginTop: 20, marginBottom: 5 },
   loadingSubText: { color: '#AAA', fontSize: 14, fontFamily: "Montserrat_400Regular" }
 });

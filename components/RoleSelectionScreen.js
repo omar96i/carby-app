@@ -8,7 +8,7 @@ const RoleSelectionScreen = ({ onSelectUser, onSelectProvider }) => {
     return (
         <View style={styles.container}>
             <Image
-                source={require("../assets/images/yar.png")}
+                source={require("../assets/images/nuevo-icono.jpeg")}
                 style={styles.logo}
             />
             <Text style={styles.subtitle}>Selecciona cómo deseas ingresar</Text>
@@ -18,7 +18,7 @@ const RoleSelectionScreen = ({ onSelectUser, onSelectProvider }) => {
                 style={styles.roleButton}
                 onPress={onSelectUser}
             >
-                <FontAwesome5 name="user-alt" size={32} color="#9DFD05" style={styles.icon} />
+                <FontAwesome5 name="user-alt" size={32} color="#fa6205" style={styles.icon} />
                 <View style={styles.textContainer}>
                     <Text style={styles.roleTitle}>CLIENTE</Text>
                     <Text style={styles.roleDescription}>Ingresa para pedir comida, delivery o movilidad.</Text>
@@ -29,9 +29,9 @@ const RoleSelectionScreen = ({ onSelectUser, onSelectProvider }) => {
                 style={styles.roleButton}
                 onPress={onSelectProvider}
             >
-                <FontAwesome5 name="concierge-bell" size={32} color="#9DFD05" style={styles.icon} />
+                <FontAwesome5 name="concierge-bell" size={32} color="#fa6205" style={styles.icon} />
                 <View style={styles.textContainer}>
-                    <Text style={styles.roleTitle}>TRABAJAR CON YARIDERS</Text>
+                    <Text style={styles.roleTitle}>TRABAJAR CON CARBYCOL</Text>
                     <Text style={styles.roleDescription}>Ingresa si eres comercio, repartidor, mototaxi o taxi.</Text>
                 </View>
             </TouchableOpacity>
@@ -42,7 +42,7 @@ const RoleSelectionScreen = ({ onSelectUser, onSelectProvider }) => {
                 <TouchableOpacity style={styles.registerButton} onPress={() => navigation.navigate("Register")}>
                     <Text style={styles.registerLink}>REGÍSTRATE AQUÍ</Text>
                     {/* Icono añadido para más énfasis */}
-                    <FontAwesome5 name="arrow-right" size={14} color="#9DFD05" style={styles.registerIcon} />
+                    <FontAwesome5 name="arrow-right" size={14} color="#fa6205" style={styles.registerIcon} />
                 </TouchableOpacity>
             </View>
         </View>
@@ -53,28 +53,30 @@ const RoleSelectionScreen = ({ onSelectUser, onSelectProvider }) => {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#1C1C1E',
+        backgroundColor: '#F2F2F7',
         alignItems: 'center',
+        justifyContent: 'center',
         paddingHorizontal: 20,
-        paddingTop: 20,
     },
     logo: {
-        width: 200,
-        height: 200,
+        width: 100,
+        height: 100,
         resizeMode: 'contain',
+        borderRadius: 20,
+        marginBottom: 10,
     },
     subtitle: {
         fontSize: 16,
-        color: '#A0A0A0',
+        color: '#555',
         textAlign: 'center',
         marginBottom: 40,
     },
     roleButton: {
         flexDirection: 'row',
         alignItems: 'center',
-        backgroundColor: '#2C2C2E',
+        backgroundColor: '#FFFFFF',
         borderWidth: 1.5,
-        borderColor: '#444444',
+        borderColor: '#DDDDDD',
         borderRadius: 12,
         padding: 20,
         width: '100%',
@@ -89,12 +91,12 @@ const styles = StyleSheet.create({
     roleTitle: {
         fontSize: 18,
         fontWeight: 'bold',
-        color: '#FFFFFF',
+        color: '#1C1C1E',
         letterSpacing: 0.5,
     },
     roleDescription: {
         fontSize: 14,
-        color: '#A0A0A0',
+        color: '#555',
         marginTop: 4,
     },
     registerContainer: {
@@ -102,7 +104,7 @@ const styles = StyleSheet.create({
         alignItems: 'center', // Alinea verticalmente el texto y el botón
     },
     registerText: {
-        color: '#A0A0A0',
+        color: '#555',
         fontSize: 14,
     },
     // NUEVO: Estilo para el botón de registro para alinear el texto y el icono
@@ -111,7 +113,7 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
     registerLink: {
-        color: '#9DFD05',
+        color: '#fa6205',
         fontWeight: 'bold',
         fontSize: 18, // <-- Aumentado para mayor legibilidad
         textDecorationLine: 'underline', // <-- Subrayado para indicar que es un enlace

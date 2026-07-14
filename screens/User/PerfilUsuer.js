@@ -319,7 +319,7 @@ export default function PerfilUsuario() {
     await AsyncStorage.setItem("privacyChecked", JSON.stringify(newState));
   };
 
-  if (!fontsLoaded) return <View style={styles.loadingContainer}><Text style={{color:'#A0FF00'}}>Cargando...</Text></View>;
+  if (!fontsLoaded) return <View style={styles.loadingContainer}><Text style={{color:'#fa6205'}}>Cargando...</Text></View>;
 
   // --- RENDERIZADO CON NUEVO DISEÑO (DARK MODE MODERNO) ---
   return (
@@ -328,7 +328,7 @@ export default function PerfilUsuario() {
       {/* 1. Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.iconButton}>
-          <FontAwesome name="arrow-left" size={20} color="#FFF" />
+          <FontAwesome name="arrow-left" size={20} color="#1C1C1E" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Mi Perfil</Text>
         <View style={{width: 30}} /> 
@@ -343,7 +343,7 @@ export default function PerfilUsuario() {
               <Image source={{ uri: imageUrl }} style={styles.avatar} onError={() => setImageError(true)} />
             ) : (
               <View style={styles.avatarPlaceholder}>
-                <Icon3 name="user" size={45} color="#121212" />
+                <Icon3 name="user" size={45} color="#F2F2F7" />
               </View>
             )}
             <TouchableOpacity style={styles.editButton} onPress={pickImage}>
@@ -354,7 +354,7 @@ export default function PerfilUsuario() {
           <Text style={styles.userName}>{userInfo?.data?.nombre_completo || "Usuario"}</Text>
           
           <View style={styles.locationBadge}>
-            <IconMCC name="location" size={18} color="#A0FF00" />
+            <IconMCC name="location" size={18} color="#fa6205" />
             <Text style={styles.locationText}>{userInfo?.data?.ciudad || "Ciudad"}</Text>
           </View>
         </View>
@@ -367,15 +367,15 @@ export default function PerfilUsuario() {
             
             <TouchableOpacity style={styles.menuItem} onPress={() => navigation.navigate("StepDiecisiete")}>
                 <View style={styles.menuItemLeft}>
-                    <Icon3 name="user" size={20} color="#CCC" />
+                    <Icon3 name="user" size={20} color="#888" />
                     <Text style={styles.menuItemText}>Datos Personales</Text>
                 </View>
-                <Icon3 name="chevron-right" size={20} color="#444" />
+                <Icon3 name="chevron-right" size={20} color="#888" />
             </TouchableOpacity>
 
             <View style={styles.menuItem}>
                 <View style={styles.menuItemLeft}>
-                    <Icon3 name="map-pin" size={20} color="#CCC" />
+                    <Icon3 name="map-pin" size={20} color="#888" />
                     <View style={{flex: 1}}>
                         <Text style={styles.menuItemText}>Dirección</Text>
                         <Text style={styles.menuItemSubText} numberOfLines={1}>
@@ -392,18 +392,18 @@ export default function PerfilUsuario() {
 
             <TouchableOpacity style={styles.menuItem} onPress={() => setSupportModalVisible(true)}>
                 <View style={styles.menuItemLeft}>
-                    <Icon3 name="help-circle" size={20} color="#CCC" />
+                    <Icon3 name="help-circle" size={20} color="#888" />
                     <Text style={styles.menuItemText}>Soporte</Text>
                 </View>
-                <Icon3 name="chevron-right" size={20} color="#444" />
+                <Icon3 name="chevron-right" size={20} color="#888" />
             </TouchableOpacity>
 
             <TouchableOpacity style={[styles.menuItem, {borderBottomWidth: 0}]} onPress={() => setModalVisible(true)}>
                 <View style={styles.menuItemLeft}>
-                    <Icon3 name="settings" size={20} color="#CCC" />
+                    <Icon3 name="settings" size={20} color="#888" />
                     <Text style={styles.menuItemText}>Desactivar Cuenta</Text>
                 </View>
-                <Icon3 name="chevron-right" size={20} color="#444" />
+                <Icon3 name="chevron-right" size={20} color="#888" />
             </TouchableOpacity>
         </View>
 
@@ -463,7 +463,7 @@ export default function PerfilUsuario() {
       <Modal animationType="fade" transparent={true} visible={supportModalVisible} onRequestClose={() => setSupportModalVisible(false)}>
         <View style={styles.modalOverlay}>
           <View style={styles.modalCard}>
-            <Icon3 name="headphones" size={40} color="#A0FF00" style={{alignSelf: 'center', marginBottom: 15}} />
+            <Icon3 name="headphones" size={40} color="#fa6205" style={{alignSelf: 'center', marginBottom: 15}} />
             <Text style={styles.modalTitle}>Soporte</Text>
             <Text style={styles.modalBody}>
                 Para consultas o reclamos, visita nuestro sitio web:
@@ -485,7 +485,7 @@ export default function PerfilUsuario() {
             <View style={styles.modalHeaderRow}>
                 <Text style={styles.modalTitleLarge}>Programa de Referidos</Text>
                 <TouchableOpacity onPress={() => setPremiosModalVisible(false)}>
-                    <Icon3 name="x" size={24} color="#FFF" />
+                    <Icon3 name="x" size={24} color="#1C1C1E" />
                 </TouchableOpacity>
             </View>
 
@@ -509,7 +509,7 @@ export default function PerfilUsuario() {
                             <Text style={styles.rewardName}>{p.suscripcion?.nombre || "Premio"}</Text>
                             <Text style={styles.rewardMeta}>Meta: {p.cantidad} referidos</Text>
                         </View>
-                        <Icon3 name="gift" size={20} color="#A0FF00" />
+                        <Icon3 name="gift" size={20} color="#fa6205" />
                     </View>
                  )) : <Text style={styles.loadingText}>No hay premios activos.</Text>
                 }
@@ -526,12 +526,12 @@ const styles = StyleSheet.create({
   // --- ESTRUCTURA ---
   safeContainer: {
     flex: 1,
-    backgroundColor: "#121212", // Negro moderno
+    backgroundColor: "#F2F2F7", // Negro moderno
     paddingTop: Platform.OS === "android" ? 40 : 0,
   },
   loadingContainer: {
     flex: 1,
-    backgroundColor: "#121212",
+    backgroundColor: "#F2F2F7",
     justifyContent: "center",
     alignItems: "center"
   },
@@ -546,12 +546,12 @@ const styles = StyleSheet.create({
     alignItems: "center",
     paddingHorizontal: 20,
     paddingVertical: 15,
-    backgroundColor: "#121212",
+    backgroundColor: "#F2F2F7",
   },
   headerTitle: {
     fontSize: 18,
     fontFamily: "Montserrat_700Bold",
-    color: "#FFF",
+    color: '#1C1C1E',
     letterSpacing: 0.5,
   },
   iconButton: {
@@ -567,7 +567,7 @@ const styles = StyleSheet.create({
   avatarWrapper: {
     position: "relative",
     marginBottom: 15,
-    shadowColor: "#A0FF00",
+    shadowColor: "#fa6205",
     shadowOffset: { width: 0, height: 0 },
     shadowOpacity: 0.4,
     shadowRadius: 10,
@@ -578,13 +578,13 @@ const styles = StyleSheet.create({
     height: 120,
     borderRadius: 60,
     borderWidth: 2,
-    borderColor: "#A0FF00",
+    borderColor: "#fa6205",
   },
   avatarPlaceholder: {
     width: 120,
     height: 120,
     borderRadius: 60,
-    backgroundColor: "#A0FF00",
+    backgroundColor: "#fa6205",
     justifyContent: "center",
     alignItems: "center",
   },
@@ -596,25 +596,25 @@ const styles = StyleSheet.create({
     padding: 8,
     borderRadius: 20,
     borderWidth: 2,
-    borderColor: "#121212",
+    borderColor: "#F2F2F7",
   },
   userName: {
     fontSize: 24,
     fontFamily: "Montserrat_700Bold",
-    color: "#FFF",
+    color: '#1C1C1E',
     marginBottom: 5,
   },
   locationBadge: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#1E1E1E",
+    backgroundColor: "#FFFFFF",
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 20,
     marginTop: 5,
   },
   locationText: {
-    color: "#BBB",
+    color: "#666",
     fontFamily: "Montserrat_500Medium",
     fontSize: 14,
     marginLeft: 5,
@@ -628,26 +628,26 @@ const styles = StyleSheet.create({
     marginBottom: 30,
   },
   statCard: {
-    backgroundColor: "#1E1E1E",
+    backgroundColor: "#FFFFFF",
     width: (width - 50) / 2, // 2 columnas
     padding: 16,
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: "#333",
+    borderColor: "#DDD",
     position: 'relative',
   },
   statIconBg: {
-    width: 40, height: 40, borderRadius: 12, backgroundColor: "rgba(160, 255, 0, 0.1)",
+    width: 40, height: 40, borderRadius: 12, backgroundColor: "rgba(250, 98, 5, 0.1)",
     justifyContent: 'center', alignItems: 'center', marginBottom: 10
   },
   statValue: {
-    fontSize: 18, fontFamily: "Montserrat_700Bold", color: "#FFF"
+    fontSize: 18, fontFamily: "Montserrat_700Bold", color: '#1C1C1E'
   },
   statLabel: {
     fontSize: 12, fontFamily: "Montserrat_400Regular", color: "#888", marginTop: 2
   },
   notificationDot: {
-    position: 'absolute', top: 12, right: 12, width: 8, height: 8, borderRadius: 4, backgroundColor: '#A0FF00'
+    position: 'absolute', top: 12, right: 12, width: 8, height: 8, borderRadius: 4, backgroundColor: '#fa6205'
   },
 
   // --- MENU LIST ---
@@ -662,17 +662,17 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    backgroundColor: "#1E1E1E",
+    backgroundColor: "#FFFFFF",
     paddingVertical: 16,
     paddingHorizontal: 16,
     borderBottomWidth: 1,
-    borderBottomColor: "#2A2A2A",
+    borderBottomColor: "#ECECEC",
   },
   menuItemLeft: {
     flexDirection: "row", alignItems: "center", flex: 1
   },
   menuItemText: {
-    color: "#EEE", fontSize: 15, fontFamily: "Montserrat_500Medium", marginLeft: 15
+    color: "#1C1C1E", fontSize: 15, fontFamily: "Montserrat_500Medium", marginLeft: 15
   },
   menuItemSubText: {
     color: "#888", fontSize: 13, fontFamily: "Montserrat_400Regular", marginLeft: 15, marginTop: 2
@@ -687,17 +687,17 @@ const styles = StyleSheet.create({
     flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 15
   },
   linkText: {
-    color: "#BBB", textDecorationLine: "underline", fontSize: 14, fontFamily: "Montserrat_400Regular"
+    color: "#fa6205", textDecorationLine: "underline", fontSize: 14, fontFamily: "Montserrat_400Regular"
   },
   checkbox: {
     width: 20, height: 20, borderWidth: 2, borderColor: "#555", borderRadius: 6, alignItems: 'center', justifyContent: 'center'
   },
   checkboxActive: {
-    backgroundColor: "#A0FF00", borderColor: "#A0FF00"
+    backgroundColor: "#fa6205", borderColor: "#fa6205"
   },
   logoutButton: {
     flexDirection: 'row', justifyContent: 'center', alignItems: 'center',
-    width: "100%", paddingVertical: 15, borderRadius: 12, borderWidth: 1, borderColor: "#333",
+    width: "100%", paddingVertical: 15, borderRadius: 12, borderWidth: 1, borderColor: "#DDD",
     marginTop: 20
   },
   logoutText: {
@@ -709,19 +709,19 @@ const styles = StyleSheet.create({
     flex: 1, backgroundColor: "rgba(0,0,0,0.85)", justifyContent: "center", alignItems: "center", padding: 20
   },
   modalCard: {
-    width: "100%", backgroundColor: "#1E1E1E", borderRadius: 20, padding: 24, borderWidth: 1, borderColor: "#333"
+    width: "100%", backgroundColor: "#FFFFFF", borderRadius: 20, padding: 24, borderWidth: 1, borderColor: "#DDD"
   },
   modalCardLarge: {
-    width: "100%", maxHeight: '80%', backgroundColor: "#1E1E1E", borderRadius: 20, padding: 20, borderWidth: 1, borderColor: "#333"
+    width: "100%", maxHeight: '80%', backgroundColor: "#FFFFFF", borderRadius: 20, padding: 20, borderWidth: 1, borderColor: "#DDD"
   },
   modalTitle: {
-    fontSize: 20, fontFamily: "Montserrat_700Bold", color: "#FFF", textAlign: "center", marginBottom: 10
+    fontSize: 20, fontFamily: "Montserrat_700Bold", color: '#1C1C1E', textAlign: "center", marginBottom: 10
   },
   modalTitleLarge: {
-    fontSize: 22, fontFamily: "Montserrat_700Bold", color: "#FFF"
+    fontSize: 22, fontFamily: "Montserrat_700Bold", color: '#1C1C1E'
   },
   modalBody: {
-    fontSize: 14, fontFamily: "Montserrat_400Regular", color: "#CCC", textAlign: "center", marginBottom: 20, lineHeight: 22
+    fontSize: 14, fontFamily: "Montserrat_400Regular", color: "#555", textAlign: "center", marginBottom: 20, lineHeight: 22
   },
   modalHeaderRow: {
     flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20
@@ -732,13 +732,13 @@ const styles = StyleSheet.create({
   btnOutline: {
     flex: 1, paddingVertical: 12, borderWidth: 1, borderColor: "#555", borderRadius: 10, alignItems: "center"
   },
-  btnOutlineText: { color: "#FFF", fontFamily: "Montserrat_600SemiBold" },
+  btnOutlineText: { color: '#1C1C1E', fontFamily: "Montserrat_600SemiBold" },
   btnDestructive: {
     flex: 1, paddingVertical: 12, backgroundColor: "#FF4757", borderRadius: 10, alignItems: "center"
   },
-  btnDestructiveText: { color: "#FFF", fontFamily: "Montserrat_600SemiBold" },
+  btnDestructiveText: { color: '#1C1C1E', fontFamily: "Montserrat_600SemiBold" },
   btnPrimary: {
-    backgroundColor: "#A0FF00", paddingVertical: 12, borderRadius: 12, alignItems: "center", width: "100%", paddingHorizontal: 20
+    backgroundColor: "#fa6205", paddingVertical: 12, borderRadius: 12, alignItems: "center", width: "100%", paddingHorizontal: 20
   },
   btnPrimaryText: {
     color: "#000", fontFamily: "Montserrat_700Bold", fontSize: 16
@@ -746,18 +746,18 @@ const styles = StyleSheet.create({
 
   // Referidos
   codeContainer: {
-    backgroundColor: "#252525", padding: 20, borderRadius: 16, alignItems: "center", marginBottom: 20
+    backgroundColor: "#FFFFFF", padding: 20, borderRadius: 16, alignItems: "center", marginBottom: 20
   },
   codeLabel: { color: "#888", fontSize: 12, fontFamily: "Montserrat_500Medium", marginBottom: 5 },
-  codeValue: { color: "#A0FF00", fontSize: 28, fontFamily: "Montserrat_700Bold", marginBottom: 15, letterSpacing: 2 },
+  codeValue: { color: "#fa6205", fontSize: 28, fontFamily: "Montserrat_700Bold", marginBottom: 15, letterSpacing: 2 },
   sectionHeaderModal: { color: "#666", fontFamily: "Montserrat_700Bold", fontSize: 12, marginBottom: 10 },
   
   rewardItem: {
-    flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', backgroundColor: '#2A2A2A', padding: 12, borderRadius: 12, marginBottom: 10
+    flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', backgroundColor: '#ECECEC', padding: 12, borderRadius: 12, marginBottom: 10
   },
-  rewardName: { color: '#FFF', fontFamily: "Montserrat_600SemiBold", fontSize: 14 },
+  rewardName: { color: '#1C1C1E', fontFamily: "Montserrat_600SemiBold", fontSize: 14 },
   rewardMeta: { color: '#888', fontSize: 12 },
   
-  loadingText: { color: "#AAA", textAlign: "center", marginVertical: 20 },
-  linkUrl: { color: "#A0FF00", textDecorationLine: "underline", textAlign: 'center', fontSize: 16, fontFamily: "Montserrat_700Bold" }
+  loadingText: { color: "#666", textAlign: "center", marginVertical: 20 },
+  linkUrl: { color: "#fa6205", textDecorationLine: "underline", textAlign: 'center', fontSize: 16, fontFamily: "Montserrat_700Bold" }
 });

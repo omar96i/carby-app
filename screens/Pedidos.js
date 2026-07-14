@@ -1894,7 +1894,7 @@ export default function Pedidos({ route }) {
   if (!fontsLoaded) {
     return (
       <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#A0FF00" />
+        <ActivityIndicator size="large" color="#fa6205" />
       </View>
     );
   }
@@ -2514,12 +2514,12 @@ export default function Pedidos({ route }) {
 
       const costoTotal = parseFloat(pedidoItem.costo_total || 0);
       const pagoDriver = costoTotal - totalProductosYAdicionales;
-      const moneda = BASE_URL.toString().includes("co.yariders") ? "$" : "S/";
+      const moneda = "$";
 
       return (
         <View style={styles.infoRow}>
           <Text style={[styles.infoLabel, { fontWeight: 'bold' }]}>Pago al conductor:</Text>
-          <Text style={[styles.infoValue, { fontWeight: 'bold', color: '#197200' }]}>
+          <Text style={[styles.infoValue, { fontWeight: 'bold', color: '#fa6205' }]}>
             {moneda}{pagoDriver.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
           </Text>
         </View>
@@ -2535,7 +2535,7 @@ export default function Pedidos({ route }) {
             <TouchableOpacity onPress={() => navigateToDetails(item)}>
               <View style={styles.cardHeader}>
                 <Text style={styles.price}>
-                  {BASE_URL.toString().includes("co.yariders") ? "$" : "S/"}
+                  {"$"}
                   {parseFloat(item.costo_total || 0).toLocaleString()}
                 </Text>
                 <View style={styles.statusContainer}>
@@ -2601,7 +2601,7 @@ export default function Pedidos({ route }) {
                                 )}
                             </View>
                             <Text style={styles.productPrice}>
-                              S/
+                              $ 
                               {parseFloat(
                                 producto.producto?.precio ||
                                 producto.precio_unitario ||
@@ -2636,7 +2636,7 @@ export default function Pedidos({ route }) {
                                         x{adicional.cantidad}
                                       </Text>
                                       <Text style={styles.adicionalPrice}>
-                                        +S/
+                                        +$ 
                                         {(
                                           parseFloat(
                                             adicional.producto_adicional
@@ -2650,7 +2650,7 @@ export default function Pedidos({ route }) {
                                 {/* Mostrar total de adicionales para este producto */}
                                 <View style={styles.adicionalesTotal}>
                                   <Text style={styles.adicionalesTotalText}>
-                                    Subtotal adicionales: S/
+                                    Subtotal adicionales: $ 
                                     {producto.pedido_list_adicionals
                                       .reduce((total, adicional) => {
                                         const precio = parseFloat(
@@ -2689,7 +2689,7 @@ export default function Pedidos({ route }) {
                 </View>
 
                 <View style={styles.locationRow}>
-                  <FontAwesome name="map-marker" size={16} color="#197200" />
+                  <FontAwesome name="map-marker" size={16} color="#fa6205" />
                   <View style={styles.locationDetails}>
                     <Text style={styles.locationLabel}>Destino</Text>
                     <Text style={styles.locationText} numberOfLines={1}>
@@ -2714,7 +2714,7 @@ export default function Pedidos({ route }) {
             <View>
               <View style={styles.cardHeader}>
                 <Text style={styles.price}>
-                  {BASE_URL.toString().includes("co.yariders") ? "$" : "S/"}
+                  {"$"}
                   {parseFloat(item.costo_total || 0).toLocaleString()}
                 </Text>
                 <View style={styles.statusContainer}>
@@ -2801,7 +2801,7 @@ export default function Pedidos({ route }) {
                                 )}
                             </View>
                             <Text style={styles.productPrice}>
-                              {BASE_URL.toString().includes("co.yariders") ? "$" : "S/"}
+                              {"$"}
                               {parseFloat(
                                 producto.producto?.precio ||
                                 producto.precio_unitario ||
@@ -2836,7 +2836,7 @@ export default function Pedidos({ route }) {
                                         x{adicional.cantidad}
                                       </Text>
                                       <Text style={styles.adicionalPrice}>
-                                        +{BASE_URL.toString().includes("co.yariders") ? "$" : "S/"}
+                                        +{"$"}
                                         {(
                                           parseFloat(
                                             adicional.producto_adicional
@@ -2850,7 +2850,7 @@ export default function Pedidos({ route }) {
                                 {/* Mostrar total de adicionales para este producto */}
                                 <View style={styles.adicionalesTotal}>
                                   <Text style={styles.adicionalesTotalText}>
-                                    Subtotal adicionales: {BASE_URL.toString().includes("co.yariders") ? "$" : "S/"}
+                                    Subtotal adicionales: {"$"}
                                     {producto.pedido_list_adicionals
                                       .reduce((total, adicional) => {
                                         const precio = parseFloat(
@@ -2889,7 +2889,7 @@ export default function Pedidos({ route }) {
                 </View>
 
                 <View style={styles.locationRow}>
-                  <FontAwesome name="map-marker" size={16} color="#197200" />
+                  <FontAwesome name="map-marker" size={16} color="#fa6205" />
                   <View style={styles.locationDetails}>
                     <Text style={styles.locationLabel}>Destino</Text>
                     <Text style={styles.locationText} numberOfLines={1}>
@@ -2989,7 +2989,7 @@ export default function Pedidos({ route }) {
             <TouchableOpacity onPress={() => navigateToDetails()}>
               <View style={styles.cardHeader}>
                 <Text style={styles.price}>
-                  {BASE_URL.toString().includes("co.yariders") ? "$" : "S/"}{parseFloat(item.costo_total || 0).toLocaleString()}
+                  {"$"}{parseFloat(item.costo_total || 0).toLocaleString()}
                 </Text>
                 <View style={styles.statusContainer}>
                   <Text style={[styles.statusChip, styles.statusPago]}>
@@ -3050,7 +3050,7 @@ export default function Pedidos({ route }) {
                       style={styles.chatRiderButton}
                       onPress={() => abrirChatComercioRider(item)}
                     >
-                      <FontAwesome name="comments" size={16} color="white" style={{ marginRight: 8 }} />
+                      <FontAwesome name="comments" size={16} color="#1C1C1E" style={{ marginRight: 8 }} />
                       <Text style={styles.chatRiderButtonText}>Chat para Rider</Text>
                     </TouchableOpacity>
                   </View>
@@ -3098,7 +3098,7 @@ export default function Pedidos({ route }) {
                                 )}
                             </View>
                             <Text style={styles.productPrice}>
-                              {BASE_URL.toString().includes("co.yariders") ? "$" : "S/"}
+                              {"$"}
                               {parseFloat(
                                 producto.producto?.precio ||
                                 producto.precio_unitario ||
@@ -3133,7 +3133,7 @@ export default function Pedidos({ route }) {
                                         x{adicional.cantidad}
                                       </Text>
                                       <Text style={styles.adicionalPrice}>
-                                        +{BASE_URL.toString().includes("co.yariders") ? "$" : "S/"}
+                                        +{"$"}
                                         {(
                                           parseFloat(
                                             adicional.producto_adicional
@@ -3147,7 +3147,7 @@ export default function Pedidos({ route }) {
                                 {/* Mostrar total de adicionales para este producto */}
                                 <View style={styles.adicionalesTotal}>
                                   <Text style={styles.adicionalesTotalText}>
-                                    Subtotal adicionales: S/
+                                    Subtotal adicionales: $ 
                                     {producto.pedido_list_adicionals
                                       .reduce((total, adicional) => {
                                         const precio = parseFloat(
@@ -3186,7 +3186,7 @@ export default function Pedidos({ route }) {
                 </View>
 
                 <View style={styles.locationRow}>
-                  <FontAwesome name="map-marker" size={16} color="#197200" />
+                  <FontAwesome name="map-marker" size={16} color="#fa6205" />
 
                   <View style={styles.locationDetails}>
                     <Text style={styles.locationLabel}>Destino</Text>
@@ -3232,7 +3232,7 @@ export default function Pedidos({ route }) {
             <View>
               <View style={styles.cardHeader}>
                 <Text style={styles.price}>
-                  S/{parseFloat(item.costo_total || 0).toLocaleString()}
+                  $ {parseFloat(item.costo_total || 0).toLocaleString()}
                 </Text>
                 <View style={styles.statusContainer}>
                   <Text style={[styles.statusChip, styles.statusPago]}>
@@ -3293,7 +3293,7 @@ export default function Pedidos({ route }) {
                       style={styles.chatRiderButton}
                       onPress={() => abrirChatComercioRider(item)}
                     >
-                      <FontAwesome name="comments" size={16} color="#25D366" style={{ marginRight: 8 }} />
+                      <FontAwesome name="comments" size={16} color="#fa6205" style={{ marginRight: 8 }} />
                       <Text style={styles.chatRiderButtonText}>Chat para Rider</Text>
                     </TouchableOpacity>
                   </View>
@@ -3341,7 +3341,7 @@ export default function Pedidos({ route }) {
                                 )}
                             </View>
                             <Text style={styles.productPrice}>
-                              {BASE_URL.toString().includes("co.yariders") ? "$" : "S/"}
+                              {"$"}
                               {parseFloat(
                                 producto.producto?.precio ||
                                 producto.precio_unitario ||
@@ -3376,7 +3376,7 @@ export default function Pedidos({ route }) {
                                         x{adicional.cantidad}
                                       </Text>
                                       <Text style={styles.adicionalPrice}>
-                                        +{BASE_URL.toString().includes("co.yariders") ? "$" : "S/"}
+                                        +{"$"}
                                         {(
                                           parseFloat(
                                             adicional.producto_adicional
@@ -3390,7 +3390,7 @@ export default function Pedidos({ route }) {
                                 {/* Mostrar total de adicionales para este producto */}
                                 <View style={styles.adicionalesTotal}>
                                   <Text style={styles.adicionalesTotalText}>
-                                    Subtotal adicionales: {BASE_URL.toString().includes("co.yariders") ? "$" : "S/"}
+                                    Subtotal adicionales: {"$"}
                                     {producto.pedido_list_adicionals
                                       .reduce((total, adicional) => {
                                         const precio = parseFloat(
@@ -3429,7 +3429,7 @@ export default function Pedidos({ route }) {
                 </View>
 
                 <View style={styles.locationRow}>
-                  <FontAwesome name="map-marker" size={16} color="#197200" />
+                  <FontAwesome name="map-marker" size={16} color="#fa6205" />
                   <View style={styles.locationDetails}>
                     <Text style={styles.locationLabel}>Destino</Text>
                     <Text style={styles.locationText} numberOfLines={1}>
@@ -3526,13 +3526,13 @@ export default function Pedidos({ route }) {
               style={styles.evidenceButton}
               onPress={() => mostrarModalEvidencia(item)}
             >
-              <FontAwesome name="file-image-o" size={16} color="white" />
+              <FontAwesome name="file-image-o" size={16} color="#1C1C1E" />
               <Text style={styles.evidenceButtonText}>Ver evidencia de pago</Text>
             </TouchableOpacity>
 
             {item.estado_pago !== 'completado' && (
               <TouchableOpacity
-                style={[styles.evidenceButton, { backgroundColor: '#4CAF50', marginTop: 8 }]}
+                style={[styles.evidenceButton, { backgroundColor: '#fa6205', marginTop: 8 }]}
                 onPress={() => {
                   Alert.alert(
                     'Aprobar pago',
@@ -3549,7 +3549,7 @@ export default function Pedidos({ route }) {
                   );
                 }}
               >
-                <FontAwesome name="check-circle" size={16} color="white" />
+                <FontAwesome name="check-circle" size={16} color="#1C1C1E" />
                 <Text style={styles.evidenceButtonText}>Aprobar pago</Text>
               </TouchableOpacity>
             )}
@@ -3582,7 +3582,7 @@ export default function Pedidos({ route }) {
               style={styles.chatButton}
               onPress={() => abrirChatRiderComercio(item)}
             >
-              <FontAwesome name="comments" size={16} color="white" />
+              <FontAwesome name="comments" size={16} color="#1C1C1E" />
               <Text style={styles.chatButtonText}>Chat con comercio</Text>
             </TouchableOpacity>
           </View>
@@ -3728,7 +3728,7 @@ export default function Pedidos({ route }) {
           )}
           <View style={styles.footerRow}>
             <Text style={styles.price}>
-              {BASE_URL.toString().includes("co.yariders") ? "$" : "S/"}{parseFloat(item.costo_total || 0).toLocaleString()}
+              {"$"}{parseFloat(item.costo_total || 0).toLocaleString()}
             </Text>
           </View>
           {/* Mostrar items de la reserva si existen */}
@@ -3764,7 +3764,7 @@ export default function Pedidos({ route }) {
                       )}
                     </View>
                     <Text style={styles.productPrice}>
-                      {BASE_URL.toString().includes("co.yariders") ? "$" : "S/"}
+                      {"$"}
                       {parseFloat(
                         reservaItem.user_servicio?.precio ||
                         reservaItem.precio ||
@@ -3815,7 +3815,7 @@ export default function Pedidos({ route }) {
                                 )}
                               </View>
                               <Text style={styles.additionalPrice}>
-                                +{BASE_URL.toString().includes("co.yariders") ? "$" : "S/"}
+                                +{"$"}
                                 {parseFloat(
                                   adicional.user_servicio_adicional?.precio || 0
                                 ).toFixed(2)}
@@ -4087,7 +4087,7 @@ export default function Pedidos({ route }) {
                       onPress={() => setCalificacionModalVisible(false)}
                       style={styles.closeButton}
                     >
-                      <FontAwesome name="close" size={20} color="#FFF" />
+                      <FontAwesome name="close" size={20} color="#1C1C1E" />
                     </TouchableOpacity>
                   </View>
 
@@ -4217,7 +4217,7 @@ export default function Pedidos({ route }) {
                 onPress={() => setMostrarModalPerfil(false)}
                 style={styles.closeButton}
               >
-                <FontAwesome name="times" size={20} color="white" />
+                <FontAwesome name="times" size={20} color="#1C1C1E" />
               </TouchableOpacity>
             </View>
 
@@ -4249,7 +4249,7 @@ export default function Pedidos({ route }) {
                   Todos los perfiles
                 </Text>
                 {!filtroPerfilSeleccionado && (
-                  <FontAwesome name="check" size={16} color="#A0FF00" />
+                  <FontAwesome name="check" size={16} color="#fa6205" />
                 )}
               </TouchableOpacity>
 
@@ -4298,7 +4298,7 @@ export default function Pedidos({ route }) {
                     {perfil}
                   </Text>
                   {filtroPerfilSeleccionado === perfil && (
-                    <FontAwesome name="check" size={16} color="#A0FF00" />
+                    <FontAwesome name="check" size={16} color="#fa6205" />
                   )}
                 </TouchableOpacity>
               ))}
@@ -4373,7 +4373,7 @@ export default function Pedidos({ route }) {
                 >
                   <Text
                     style={{
-                      color: "#A4FF00",
+                      color: "#fa6205",
                       fontWeight: "bold",
                       fontSize: 16,
                     }}
@@ -4439,7 +4439,7 @@ export default function Pedidos({ route }) {
                 >
                   <Text
                     style={{
-                      color: "#A4FF00",
+                      color: "#fa6205",
                       fontWeight: "bold",
                       fontSize: 16,
                     }}
@@ -4545,7 +4545,7 @@ export default function Pedidos({ route }) {
             <FontAwesome
               name={mostrarFiltros ? "filter" : "filter"}
               size={16}
-              color="#A0FF00"
+              color="#fa6205"
             />
             <Text style={styles.filterToggleText}>
               {mostrarFiltros ? "Ocultar Filtros" : "Mostrar Filtros"}
@@ -4623,7 +4623,7 @@ export default function Pedidos({ route }) {
                       setFiltroFechaFin(null);
                     }}
                   >
-                    <FontAwesome name="times" size={14} color="#fff" />
+                    <FontAwesome name="times" size={14} color="#1C1C1E" />
                     <Text style={styles.clearFiltersText}>Limpiar Filtros</Text>
                   </TouchableOpacity>
                 )}
@@ -4633,7 +4633,7 @@ export default function Pedidos({ route }) {
       )}
       {(isLoading || isLoadingReservas) && !refreshing ? (
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#A0FF00" />
+          <ActivityIndicator size="large" color="#fa6205" />
           <Text style={styles.loadingText}>
             {activeTab === "reservas"
               ? "Cargando reservas..."
@@ -4691,7 +4691,7 @@ export default function Pedidos({ route }) {
             <RefreshControl
               refreshing={refreshing}
               onRefresh={onRefresh}
-              colors={["#A0FF00"]}
+              colors={["#fa6205"]}
             />
           }
           ListEmptyComponent={
@@ -4729,7 +4729,7 @@ export default function Pedidos({ route }) {
 const styles = StyleSheet.create({
   safeContainer: {
     flex: 1,
-    backgroundColor: "#1C1C1E",
+    backgroundColor: "#F2F2F7",
     paddingTop: 50,
   },
   modalOverlay: {
@@ -4741,7 +4741,7 @@ const styles = StyleSheet.create({
   },
   calificacionModal: {
     width: "100%",
-    backgroundColor: "#2a2a2a",
+    backgroundColor: "#ECECEC",
     borderRadius: 15,
     padding: 20,
     alignItems: "center",
@@ -4809,13 +4809,13 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   ratingButtonText: {
-    color: "#FFF",
+    color: "#1C1C1E",
     fontFamily: "Montserrat_700Bold",
     fontSize: 16,
   },
   // Estilos para el botón de chat
   chatButton: {
-    backgroundColor: "#25D366", // Color verde WhatsApp
+    backgroundColor: "#fa6205", // Color verde WhatsApp
     paddingHorizontal: 20,
     paddingVertical: 12,
     borderRadius: 8,
@@ -4825,14 +4825,14 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   chatButtonText: {
-    color: "#FFF",
+    color: "#1C1C1E",
     fontFamily: "Montserrat_700Bold",
     fontSize: 16,
     marginLeft: 8,
   },
   // Estilos para el botón de evidencia
   evidenceButton: {
-    backgroundColor: "#28a745",
+    backgroundColor: "#fa6205",
     paddingHorizontal: 20,
     paddingVertical: 12,
     borderRadius: 8,
@@ -4842,7 +4842,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   evidenceButtonText: {
-    color: "#FFF",
+    color: "#1C1C1E",
     fontFamily: "Montserrat_700Bold",
     fontSize: 16,
     marginLeft: 8,
@@ -4851,7 +4851,7 @@ const styles = StyleSheet.create({
   evidenceModalContainer: {
     width: "95%",
     maxHeight: "85%",
-    backgroundColor: "#2a2a2a",
+    backgroundColor: "#ECECEC",
     borderRadius: 15,
     padding: 0,
     shadowColor: "#000",
@@ -4869,10 +4869,10 @@ const styles = StyleSheet.create({
     alignItems: "center",
     padding: 20,
     borderBottomWidth: 1,
-    borderBottomColor: "#444",
+    borderBottomColor: "#DDD",
   },
   evidenceModalTitle: {
-    color: "#FFF",
+    color: "#1C1C1E",
     fontFamily: "Montserrat_700Bold",
     fontSize: 18,
   },
@@ -4889,7 +4889,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   evidenceLabel: {
-    color: "#FFF",
+    color: "#1C1C1E",
     fontFamily: "Montserrat_400Regular",
     fontSize: 16,
     marginBottom: 15,
@@ -4901,7 +4901,7 @@ const styles = StyleSheet.create({
     height: 420,
     borderRadius: 10,
     marginBottom: 15,
-    backgroundColor: "#1a1a1a",
+    backgroundColor: "#F0F0F0",
   },
   evidenceInfo: {
     color: "#ccc",
@@ -4933,12 +4933,12 @@ const styles = StyleSheet.create({
     marginBottom: 15,
     paddingBottom: 10,
     borderBottomWidth: 1,
-    borderBottomColor: "#444",
+    borderBottomColor: "#DDD",
   },
   modalTitle: {
     fontSize: 18,
     fontFamily: "Montserrat_700Bold",
-    color: "white",
+    color: "#1C1C1E",
     flex: 1,
   },
   closeButton: {
@@ -4946,7 +4946,7 @@ const styles = StyleSheet.create({
   },
   calificacionSubtitle: {
     fontSize: 16,
-    color: "#FFF",
+    color: "#1C1C1E",
     fontFamily: "Montserrat_400Regular",
     marginBottom: 15,
     textAlign: "center",
@@ -4961,7 +4961,7 @@ const styles = StyleSheet.create({
   },
   comentarioLabel: {
     fontSize: 14,
-    color: "#FFF",
+    color: "#1C1C1E",
     fontFamily: "Montserrat_400Regular",
     alignSelf: "flex-start",
     marginTop: 10,
@@ -4969,8 +4969,8 @@ const styles = StyleSheet.create({
   },
   comentarioInput: {
     width: "100%",
-    backgroundColor: "#3a3a3a",
-    color: "#FFF",
+    backgroundColor: "#D8D8D8",
+    color: "#1C1C1E",
     borderRadius: 8,
     padding: 10,
     fontFamily: "Montserrat_400Regular",
@@ -4979,7 +4979,7 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   enviarButton: {
-    backgroundColor: "#A0FF00",
+    backgroundColor: "#fa6205",
     paddingHorizontal: 20,
     paddingVertical: 12,
     borderRadius: 8,
@@ -4997,7 +4997,7 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 24,
     fontFamily: "Montserrat_700Bold",
-    color: "#A0FF00",
+    color: "#fa6205",
     textAlign: "center",
     marginBottom: 20,
   },
@@ -5024,7 +5024,7 @@ const styles = StyleSheet.create({
     marginBottom: 15,
     borderRadius: 10,
     overflow: "hidden",
-    backgroundColor: "#2C2C2E",
+    backgroundColor: "#FFFFFF",
   },
   tabButton: {
     flex: 1,
@@ -5033,15 +5033,15 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   activeTab: {
-    backgroundColor: "#A0FF00",
+    backgroundColor: "#fa6205",
   },
   tabText: {
     fontFamily: "Montserrat_700Bold",
     fontSize: 16,
-    color: "#FFFFFF",
+    color: "#1C1C1E",
   },
   activeTabText: {
-    color: "#1C1C1E",
+    color: "#F2F2F7",
   },
   cardHeader: {
     flexDirection: "row",
@@ -5061,7 +5061,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   acceptButton: {
-    backgroundColor: "#A0FF00",
+    backgroundColor: "#fa6205",
     paddingHorizontal: 20,
     paddingVertical: 12,
     borderRadius: 8,
@@ -5083,7 +5083,7 @@ const styles = StyleSheet.create({
     borderBottomColor: "#eee",
   },
   productQuantity: {
-    backgroundColor: "#A0FF00",
+    backgroundColor: "#fa6205",
     width: 24,
     height: 24,
     borderRadius: 12,
@@ -5133,7 +5133,7 @@ const styles = StyleSheet.create({
     fontSize: 12,
   },
   statusPago: {
-    backgroundColor: "#A0FF00",
+    backgroundColor: "#fa6205",
     color: "#333",
   },
   statusPendiente: {
@@ -5141,16 +5141,16 @@ const styles = StyleSheet.create({
     color: "#333",
   },
   statusActivo: {
-    backgroundColor: "#4CD964",
-    color: "#fff",
+    backgroundColor: "#fa6205",
+    color: "#1C1C1E",
   },
   statusCompletado: {
     backgroundColor: "#007AFF",
-    color: "#fff",
+    color: "#1C1C1E",
   },
   statusOtro: {
     backgroundColor: "#999",
-    color: "#fff",
+    color: "#1C1C1E",
   },
   tripNumber: {
     fontSize: 12,
@@ -5237,7 +5237,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   loadingText: {
-    color: "#fff",
+    color: "#1C1C1E",
     marginTop: 10,
     fontFamily: "Montserrat_400Regular",
   },
@@ -5254,7 +5254,7 @@ const styles = StyleSheet.create({
     fontFamily: "Montserrat_400Regular",
   },
   retryButton: {
-    backgroundColor: "#A0FF00",
+    backgroundColor: "#fa6205",
     paddingHorizontal: 20,
     paddingVertical: 10,
     borderRadius: 5,
@@ -5271,7 +5271,7 @@ const styles = StyleSheet.create({
     marginTop: 50,
   },
   emptyText: {
-    color: "#fff",
+    color: "#1C1C1E",
     fontFamily: "Montserrat_400Regular",
     fontSize: 16,
     textAlign: "center",
@@ -5285,7 +5285,7 @@ const styles = StyleSheet.create({
     borderRadius: 5,
   },
   debugText: {
-    color: "#fff",
+    color: "#1C1C1E",
     fontFamily: "Montserrat_400Regular",
     fontSize: 10,
   },
@@ -5295,7 +5295,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     padding: 12,
     borderLeftWidth: 3,
-    borderLeftColor: "#A0FF00",
+    borderLeftColor: "#fa6205",
   },
 
   adicionalesContainer: {
@@ -5363,7 +5363,7 @@ const styles = StyleSheet.create({
     fontFamily: "Montserrat_700Bold",
     fontSize: 11,
     color: "#666",
-    backgroundColor: "#e8f5e8",
+    backgroundColor: "#fff5ee",
     paddingHorizontal: 6,
     paddingVertical: 2,
     borderRadius: 4,
@@ -5478,7 +5478,7 @@ const styles = StyleSheet.create({
   additionalPrice: {
     fontSize: 12,
     fontFamily: "Montserrat_700Bold",
-    color: "#4CAF50",
+    color: "#fa6205",
     marginLeft: "auto",
   },
   productTime: {
@@ -5519,7 +5519,7 @@ const styles = StyleSheet.create({
     width: 8,
     height: 8,
     borderRadius: 4,
-    backgroundColor: "#A0FF00",
+    backgroundColor: "#fa6205",
   },
   filtersContent: {
     paddingHorizontal: 15,
@@ -5592,14 +5592,14 @@ const styles = StyleSheet.create({
   clearFiltersText: {
     fontSize: 13,
     fontFamily: "Montserrat_700Bold",
-    color: "#fff",
+    color: "#1C1C1E",
     marginLeft: 6,
   },
   // Estilos para el modal de selección de perfil
   profileSelectorModal: {
     width: "90%",
     maxHeight: "70%",
-    backgroundColor: "#2a2a2a",
+    backgroundColor: "#ECECEC",
     borderRadius: 15,
     padding: 0,
     shadowColor: "#000",
@@ -5623,7 +5623,7 @@ const styles = StyleSheet.create({
     paddingVertical: 15,
     paddingHorizontal: 16,
     borderBottomWidth: 1,
-    borderBottomColor: "#3a3a3a",
+    borderBottomColor: "#D8D8D8",
     backgroundColor: "transparent",
   },
   profileOptionSelected: {
@@ -5634,12 +5634,12 @@ const styles = StyleSheet.create({
   profileOptionText: {
     fontSize: 16,
     fontFamily: "Montserrat_400Regular",
-    color: "#fff",
+    color: "#1C1C1E",
     flex: 1,
   },
   profileOptionTextSelected: {
     fontFamily: "Montserrat_700Bold",
-    color: "#A0FF00",
+    color: "#fa6205",
   },
   emptyProfilesContainer: {
     paddingVertical: 30,
@@ -5671,7 +5671,7 @@ const styles = StyleSheet.create({
   verDetallesTexto: {
     fontSize: 18,
     fontWeight: '900',
-    color: '#FFF', // azul suave
+    color: '#1C1C1E', // azul suave
     fontFamily: 'Montserrat_500Medium',
     paddingHorizontal: 30,
     paddingVertical: 10,
@@ -5682,7 +5682,7 @@ const styles = StyleSheet.create({
   },
   // Estilos para el botón de chat con rider
   chatRiderButton: {
-    backgroundColor: "#25D366",
+    backgroundColor: "#fa6205",
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
@@ -5692,7 +5692,7 @@ const styles = StyleSheet.create({
     marginTop: 5,
   },
   chatRiderButtonText: {
-    color: "#FFFFFF",
+    color: "#1C1C1E",
     fontSize: 14,
     fontFamily: "Montserrat_700Bold",
   },

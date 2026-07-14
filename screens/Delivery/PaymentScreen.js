@@ -1520,7 +1520,7 @@ const PaymentScreen = () => {
 
   return (
     <SafeAreaView style={styles.safeContainer}>
-      <StatusBar barStyle="light-content" />
+      <StatusBar barStyle="dark-content" />
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : "height"}
         style={styles.container}
@@ -1564,11 +1564,11 @@ const PaymentScreen = () => {
                         x{item.quantity}
                       </Text>
                       <Text style={styles.productBasePrice}>
-                        Base: {BASE_URL.toString().includes("co.yariders") ? "$" : "S/"}{item.basePrice.toLocaleString()}
+                        Base: {"$"}{item.basePrice.toLocaleString()}
                       </Text>
                     </View>
                     <Text style={styles.productPrice}>
-                      {BASE_URL.toString().includes("co.yariders") ? "$" : "S/"}{item.itemTotal.toLocaleString()}
+                      {"$"}{item.itemTotal.toLocaleString()}
                     </Text>
                   </View>
 
@@ -1593,7 +1593,7 @@ const PaymentScreen = () => {
                             x{adicional.quantity}
                           </Text>
                           <Text style={styles.adicionalPrice}>
-                            +{BASE_URL.toString().includes("co.yariders") ? "$" : "S/"}
+                            +{"$"}
                             {(
                               parseFloat(adicional.precio) *
                               adicional.quantity
@@ -1604,7 +1604,7 @@ const PaymentScreen = () => {
                       {/* Mostrar total de adicionales para este producto */}
                       <View style={styles.adicionalesTotal}>
                         <Text style={styles.adicionalesTotalText}>
-                          Total adicionales: {BASE_URL.toString().includes("co.yariders") ? "$" : "S/"}
+                          Total adicionales: {"$"}
                           {item.adicionalesTotal.toLocaleString()}
                         </Text>
                       </View>
@@ -1639,7 +1639,7 @@ const PaymentScreen = () => {
                   </Text>
                   <View style={styles.actionsContainer}>
                     <TouchableOpacity style={styles.actionButton} onPress={() => openLocationPicker()}>
-                      <Ionicons name="map-outline" size={18} color="#4CD964" />
+                      <Ionicons name="map-outline" size={18} color="#fa6205" />
                       <Text style={styles.actionButtonText}>Seleccionar en mapa</Text>
                     </TouchableOpacity>
                   </View>
@@ -1650,7 +1650,7 @@ const PaymentScreen = () => {
                   {isSearching ? (
                     <ActivityIndicator
                       size="small"
-                      color="#4CD964"
+                      color="#fa6205"
                       style={styles.loadingIndicator}
                     />
                   ) : (
@@ -1667,7 +1667,7 @@ const PaymentScreen = () => {
                           <Ionicons
                             name="location"
                             size={16}
-                            color="#4CD964"
+                            color="#fa6205"
                             style={styles.suggestionIcon}
                           />
                           <Text
@@ -1714,19 +1714,19 @@ const PaymentScreen = () => {
                 {loadingDeliveryFee && (
                   <ActivityIndicator
                     size="small"
-                    color="#4CD964"
+                    color="#fa6205"
                     style={{ marginRight: 5 }}
                   />
                 )}
                 <Text style={styles.priceValue}>
-                  {BASE_URL.toString().includes("co.yariders") ? "$" : "S/"}{deliveryFee.toLocaleString()}
+                  {"$"}{deliveryFee.toLocaleString()}
                 </Text>
               </View>
             </View>
             <View style={styles.priceRow}>
               <Text style={styles.priceLabel}>Valor compra</Text>
               <Text style={styles.priceValue}>
-                {BASE_URL.toString().includes("co.yariders") ? "$" : "S/"}{totalAmount.toLocaleString()}
+                {"$"}{totalAmount.toLocaleString()}
               </Text>
             </View>
           </View>
@@ -1736,7 +1736,7 @@ const PaymentScreen = () => {
 
             {loadingPaymentMethods ? (
               <View style={styles.loadingContainer}>
-                <ActivityIndicator size="small" color="#4CD964" />
+                <ActivityIndicator size="small" color="#fa6205" />
                 <Text style={styles.loadingText}>
                   Cargando métodos de pago...
                 </Text>
@@ -1754,7 +1754,7 @@ const PaymentScreen = () => {
                         <Ionicons
                           name="wallet-outline"
                           size={24}
-                          color="white"
+                          color="#1C1C1E"
                         />
                       </View>
                       <Text style={styles.paymentMethodLabel}>Efectivo</Text>
@@ -1782,7 +1782,7 @@ const PaymentScreen = () => {
                       <Ionicons
                         name="qr-code-outline"
                         size={24}
-                        color="white"
+                        color="#1C1C1E"
                       />
                     </View>
                     <Text style={styles.paymentMethodLabel}>
@@ -1813,7 +1813,7 @@ const PaymentScreen = () => {
                         <Ionicons
                           name="card-outline"
                           size={24}
-                          color="white"
+                          color="#1C1C1E"
                         />
                       </View>
                       <Text style={styles.paymentMethodLabel}>
@@ -1855,7 +1855,7 @@ const PaymentScreen = () => {
                 Seleccionar ubicación de entrega
               </Text>
               <TouchableOpacity onPress={() => setMapModalVisible(false)}>
-                <IconMC name="close" size={24} color="white" />
+                <IconMC name="close" size={24} color="#1C1C1E" />
               </TouchableOpacity>
             </View>
 
@@ -1865,7 +1865,7 @@ const PaymentScreen = () => {
                 <Ionicons
                   name="search"
                   size={20}
-                  color="#4CD964"
+                  color="#fa6205"
                   style={styles.mapSearchIcon}
                 />
                 <TextInput
@@ -1893,7 +1893,7 @@ const PaymentScreen = () => {
                   {isSearchingMap ? (
                     <ActivityIndicator
                       size="small"
-                      color="#4CD964"
+                      color="#fa6205"
                       style={{ padding: 10 }}
                     />
                   ) : (
@@ -1942,7 +1942,7 @@ const PaymentScreen = () => {
                                 <Ionicons
                                   name="location"
                                   size={18}
-                                  color="#4CD964"
+                                  color="#fa6205"
                                   style={styles.mapSearchResultIcon}
                                 />
                                 <Text
@@ -1977,7 +1977,7 @@ const PaymentScreen = () => {
                 showsPointsOfInterest={false}
                 toolbarEnabled={false}
                 loadingEnabled={true}
-                loadingIndicatorColor="#4CD964"
+                loadingIndicatorColor="#fa6205"
                 loadingBackgroundColor="#222"
                 onRegionChangeComplete={(region) => {
                   if (ignoreNextRegionChange) {
@@ -2010,7 +2010,7 @@ const PaymentScreen = () => {
                       latitude: selectedLocation.latitude,
                       longitude: selectedLocation.longitude,
                     }}
-                    pinColor="#4CD964"
+                    pinColor="#fa6205"
                   />
                 )}
               </MapView>
@@ -2020,7 +2020,7 @@ const PaymentScreen = () => {
                 style={styles.centerLocationButton}
                 onPress={centerMapOnUserLocation}
               >
-                <Ionicons name="locate" size={28} color="#4CD964" />
+                <Ionicons name="locate" size={28} color="#fa6205" />
               </TouchableOpacity>
 
               {/* Botón para seleccionar ubicación central */}
@@ -2040,13 +2040,13 @@ const PaymentScreen = () => {
                   );
                 }}
               >
-                <Ionicons name="flag" size={28} color="#4CD964" />
+                <Ionicons name="flag" size={28} color="#fa6205" />
               </TouchableOpacity>
 
               <View style={styles.mapPinOverlay}>
                 <Text style={styles.mapInstructions}>
                   Mueve el mapa y presiona el botón
-                  <Ionicons name="flag" size={16} color="#4CD964" /> para
+                  <Ionicons name="flag" size={16} color="#fa6205" /> para
                   seleccionar la ubicación
                 </Text>
               </View>
@@ -2074,7 +2074,7 @@ const PaymentScreen = () => {
         {/* Bottom Total and Pay Button */}
         <View style={styles.bottomContainer}>
           <Text style={styles.totalAmount}>
-            {BASE_URL.toString().includes("co.yariders") ? "$" : "S/"}{finalTotal.toLocaleString()}
+            {"$"}{finalTotal.toLocaleString()}
           </Text>
           <View style={styles.payButtonContainer}>
             <TouchableOpacity
@@ -2106,7 +2106,7 @@ const PaymentScreen = () => {
               <Ionicons
                 name="checkmark-circle"
                 size={80}
-                color="#4CD964"
+                color="#fa6205"
                 style={styles.successIcon}
               />
               <Text style={styles.modalTitle}>Pago exitoso</Text>
@@ -2135,7 +2135,7 @@ const PaymentScreen = () => {
               <Ionicons
                 name="hourglass-outline"
                 size={80}
-                color="#CCFF00"
+                color="#fa6205"
                 style={styles.successIcon}
               />
               <Text style={styles.modalTitle}>Pedido Creado</Text>
@@ -2149,7 +2149,7 @@ const PaymentScreen = () => {
               </Text>
               <ActivityIndicator
                 size="large"
-                color="#CCFF00"
+                color="#fa6205"
                 style={{ marginTop: 15 }}
               />
 
@@ -2164,7 +2164,7 @@ const PaymentScreen = () => {
                   setPaymentInProgress(false);
                 }}
               >
-                <Text style={[styles.continueButtonText, { color: "white" }]}>
+                <Text style={[styles.continueButtonText, { color: "#1C1C1E" }]}>
                   Cerrar
                 </Text>
               </TouchableOpacity>
@@ -2221,7 +2221,7 @@ const PaymentScreen = () => {
                         <Ionicons
                           name="cloud-upload-outline"
                           size={32}
-                          color="#CCFF00"
+                          color="#fa6205"
                         />
                         <Text style={styles.evidencePlaceholderText}>
                           Seleccionar imagen
@@ -2333,7 +2333,7 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     backgroundColor: "rgba(76, 217, 100, 0.5)",
     borderWidth: 2,
-    borderColor: "#4CD964",
+    borderColor: "#fa6205",
     justifyContent: "center",
     alignItems: "center",
   },
@@ -2341,15 +2341,15 @@ const styles = StyleSheet.create({
     width: 6,
     height: 6,
     borderRadius: 3,
-    backgroundColor: "#4CD964",
+    backgroundColor: "#fa6205",
   },
   mapSearchResultsContainerInline: {
-    backgroundColor: "#2A2A2A",
+    backgroundColor: "#ECECEC",
     borderRadius: 8,
     marginTop: 8,
     maxHeight: 200,
     borderWidth: 1,
-    borderColor: "#444",
+    borderColor: "#DDD",
   },
   mapSearchResultsScrollInline: {
     maxHeight: 200,
@@ -2361,7 +2361,7 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "#1A1A1A",
+    backgroundColor: "#F0F0F0",
   },
   centerLocationButton: {
     position: "absolute",
@@ -2432,12 +2432,12 @@ const styles = StyleSheet.create({
     padding: 5,
   },
   mapSearchResultsContainer: {
-    backgroundColor: "#2A2A2A",
+    backgroundColor: "#ECECEC",
     borderRadius: 8,
     marginTop: 8,
     maxHeight: 200,
     borderWidth: 1,
-    borderColor: "#444",
+    borderColor: "#DDD",
   },
   mapSearchResultsScroll: {
     maxHeight: 200,
@@ -2447,7 +2447,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     padding: 12,
     borderBottomWidth: 1,
-    borderBottomColor: "#444",
+    borderBottomColor: "#DDD",
   },
   mapSearchResultIcon: {
     marginRight: 10,
@@ -2476,7 +2476,7 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(0,0,0,0.7)",
     padding: 8,
     marginHorizontal: 5,
-    color: 'white',
+    color: '#1C1C1E',
     borderRadius: 8,
     fontSize: 14,
     fontFamily: "MontserratRegular",
@@ -2485,7 +2485,7 @@ const styles = StyleSheet.create({
     padding: 15,
   },
   mapButton: {
-    backgroundColor: "#CCFF00",
+    backgroundColor: "#fa6205",
     paddingVertical: 15,
     borderRadius: 30,
     alignItems: "center",
@@ -2608,7 +2608,7 @@ const styles = StyleSheet.create({
   },
   suggestionText: {
     flex: 1,
-    color: "white",
+    color: "#1C1C1E",
     fontFamily: "MontserratRegular",
     fontSize: 14,
   },
@@ -2665,7 +2665,7 @@ const styles = StyleSheet.create({
   },
   paymentMethodsContainer: {
     borderWidth: 1,
-    borderColor: "#4CD964",
+    borderColor: "#fa6205",
     borderStyle: "dashed",
     borderRadius: 20,
     overflow: "hidden",
@@ -2694,10 +2694,10 @@ const styles = StyleSheet.create({
     height: 24,
     borderRadius: 12,
     borderWidth: 2,
-    borderColor: "#4CD964",
+    borderColor: "#fa6205",
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "#4CD964",
+    backgroundColor: "#fa6205",
   },
   radioButtonInner: {
     width: 12,
@@ -2710,7 +2710,7 @@ const styles = StyleSheet.create({
     height: 24,
     borderRadius: 12,
     borderWidth: 2,
-    borderColor: "#4CD964",
+    borderColor: "#fa6205",
   },
   qrImageContainer: {
     marginTop: 15,
@@ -2727,7 +2727,7 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   qrInstructions: {
-    color: "white",
+    color: "#1C1C1E",
     fontFamily: "MontserratRegular",
     textAlign: "center",
     marginTop: 10,
@@ -2741,21 +2741,21 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     paddingHorizontal: 20,
     paddingVertical: 15,
-    backgroundColor: "#1A1A1A",
+    backgroundColor: "#F0F0F0",
     borderTopWidth: 1,
     borderTopColor: "#333",
   },
   totalAmount: {
     fontSize: 24,
     fontFamily: "MontserratBold",
-    color: "white",
+    color: "#1C1C1E",
   },
   payButtonContainer: {
     flexDirection: "row",
     alignItems: "center",
   },
   payButton: {
-    backgroundColor: "#CCFF00",
+    backgroundColor: "#fa6205",
     paddingVertical: 15,
     paddingHorizontal: 30,
     borderRadius: 25,
@@ -2764,7 +2764,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   payButtonDisabled: {
-    backgroundColor: "#9fcc00",
+    backgroundColor: "#fa6205",
     opacity: 0.7,
   },
   payButtonText: {
@@ -2791,20 +2791,20 @@ const styles = StyleSheet.create({
   modalTitle: {
     fontSize: 24,
     fontFamily: "MontserratBold",
-    color: "white",
+    color: "#1C1C1E",
     marginBottom: 15,
     textAlign: "center",
   },
   modalMessage: {
     fontSize: 16,
     fontFamily: "MontserratRegular",
-    color: "white",
+    color: "#1C1C1E",
     textAlign: "center",
     marginBottom: 25,
     lineHeight: 24,
   },
   continueButton: {
-    backgroundColor: "#CCFF00",
+    backgroundColor: "#fa6205",
     paddingVertical: 15,
     paddingHorizontal: 40,
     borderRadius: 25,
@@ -2837,7 +2837,7 @@ const styles = StyleSheet.create({
     marginVertical: 15,
   },
   evidenceLabel: {
-    color: "white",
+    color: "#1C1C1E",
     fontFamily: "MontserratBold",
     fontSize: 16,
     marginBottom: 10,
@@ -2845,7 +2845,7 @@ const styles = StyleSheet.create({
   },
   evidenceButton: {
     borderWidth: 2,
-    borderColor: "#CCFF00",
+    borderColor: "#fa6205",
     borderStyle: "dashed",
     borderRadius: 10,
     height: 140,
@@ -2861,7 +2861,7 @@ const styles = StyleSheet.create({
     padding: 20,
   },
   evidencePlaceholderText: {
-    color: "#CCFF00",
+    color: "#fa6205",
     fontFamily: "MontserratRegular",
     marginTop: 10,
   },
@@ -2878,7 +2878,7 @@ const styles = StyleSheet.create({
     padding: 10,
   },
   cancelButtonText: {
-    color: "#CCFF00",
+    color: "#fa6205",
     fontFamily: "MontserratRegular",
     fontSize: 16,
     textAlign: "center",
@@ -2900,7 +2900,7 @@ const styles = StyleSheet.create({
     marginTop: 10,
     paddingTop: 10,
     borderTopWidth: 1,
-    borderTopColor: "#444",
+    borderTopColor: "#DDD",
   },
   adicionalesTitle: {
     color: "#000",
@@ -2923,7 +2923,7 @@ const styles = StyleSheet.create({
     marginRight: 5,
   },
   adicionalQuantity: {
-    color: "white",
+    color: "#1C1C1E",
     fontFamily: "MontserratBold",
     fontSize: 11,
     minWidth: 25,

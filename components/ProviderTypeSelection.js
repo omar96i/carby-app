@@ -32,7 +32,7 @@ const ProviderTypeSelection = ({ userTypes, onSelectType, onGoBack }) => {
                 <FontAwesome5
                     name={iconName || 'question'}
                     size={32}
-                    color={isSelected ? '#1C1C1E' : "#9DFD05"} // Icono oscuro si está seleccionado
+                    color={isSelected ? '#F2F2F7' : "#fa6205"} // Icono oscuro si está seleccionado
                     solid
                 />
             );
@@ -47,7 +47,7 @@ const ProviderTypeSelection = ({ userTypes, onSelectType, onGoBack }) => {
                 <Text style={styles.backButtonText}>Volver atrás</Text>
             </TouchableOpacity>
 
-            <RNImage source={require("../assets/images/yar.png")} style={styles.logo} />
+            <RNImage source={require("../assets/images/nuevo-icono.jpeg")} style={styles.logo} />
             <Text style={styles.title}>¿Qué tipo de aliado eres?</Text>
 
             {/* Grid */}
@@ -98,7 +98,7 @@ const ProviderTypeSelection = ({ userTypes, onSelectType, onGoBack }) => {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#1C1C1E',
+        backgroundColor: '#F2F2F7',
         alignItems: 'center',
         paddingHorizontal: 20,
         paddingTop: 60,
@@ -112,23 +112,24 @@ const styles = StyleSheet.create({
         zIndex: 10,
     },
     backButtonText: {
-        color: '#A0A0A0',
+        color: '#555',
         fontSize: 16,
         marginLeft: 8,
         fontWeight: '600',
     },
     logo: {
-        width: 140,
-        height: 80, // Ajustado para que no ocupe tanto espacio vertical
+        width: 80,
+        height: 80,
         resizeMode: 'contain',
         marginTop: 40,
         marginBottom: 20,
+        borderRadius: 16,
     },
     title: {
         fontSize: 22,
         fontFamily: 'Montserrat_700Bold', // Asegurando fuente si la tienes cargada globalmente
         fontWeight: 'bold',
-        color: '#FFFFFF',
+        color: '#1C1C1E',
         textAlign: 'center',
         marginBottom: 30,
     },
@@ -140,9 +141,9 @@ const styles = StyleSheet.create({
     },
     gridItem: {
         width: '48%', // 2 columnas perfectas
-        backgroundColor: '#2C2C2E',
+        backgroundColor: '#FFFFFF',
         borderWidth: 1,
-        borderColor: '#444444',
+        borderColor: '#DDDDDD',
         borderRadius: 16,
         paddingVertical: 25,
         paddingHorizontal: 10,
@@ -157,23 +158,23 @@ const styles = StyleSheet.create({
         elevation: 3,
     },
     gridItemActive: {
-        backgroundColor: '#9DFD05',
-        borderColor: '#9DFD05',
+        backgroundColor: '#fa6205',
+        borderColor: '#fa6205',
         transform: [{scale: 1.02}] // Pequeño efecto pop al seleccionar
     },
     gridItemTitle: {
         fontSize: 16,
         fontWeight: 'bold',
-        color: '#FFFFFF',
+        color: '#1C1C1E',
         marginTop: 15,
         textAlign: 'center',
     },
     textActive: {
-        color: '#1C1C1E', // Texto negro sobre fondo verde
+        color: '#F2F2F7', // Texto negro sobre fondo verde
     },
     gridItemDescription: {
         fontSize: 12,
-        color: '#A0A0A0',
+        color: '#555',
         textAlign: 'center',
         marginTop: 6,
         paddingHorizontal: 5,
@@ -188,10 +189,10 @@ const styles = StyleSheet.create({
         width: 45,
         height: 45,
         resizeMode: 'contain',
-        tintColor: "#9DFD05", 
+        tintColor: "#fa6205", 
     },
     customIconActive: {
-        tintColor: '#1C1C1E',
+        tintColor: '#F2F2F7',
     },
     footerText: {
         fontSize: 14,

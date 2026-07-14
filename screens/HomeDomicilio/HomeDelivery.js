@@ -478,8 +478,8 @@ export default function HomeDelivery() {
   };
 
   const formatPrice = (price) => {
-    const isColombia = BASE_URL.toString().includes("co.yariders");
-    return `${isColombia ? "$" : "S/"} ${parseFloat(price || 0).toLocaleString(isColombia ? "es-CO" : "es-PE")}`;
+    const isColombia = true;
+    return `${"$"} ${parseFloat(price || 0).toLocaleString("es-CO")}`;
   };
 
   // --- RENDER ---
@@ -508,11 +508,11 @@ export default function HomeDelivery() {
     outputRange: ["0%", "100%"]
   });
 
-  if (!fontsLoaded) return <ActivityIndicator style={{ flex: 1, backgroundColor: '#121212' }} />;
+  if (!fontsLoaded) return <ActivityIndicator style={{ flex: 1, backgroundColor: '#F2F2F7' }} />;
 
   return (
     <View style={styles.container}>
-      <StatusBar barStyle="light-content" />
+      <StatusBar barStyle="dark-content" />
 
       {/* MAPA */}
       <MapView
@@ -527,7 +527,7 @@ export default function HomeDelivery() {
         {isEnabled && currentTrip && pickupCoords && (
           <>
             <Marker coordinate={{ latitude: pickupCoords.lat, longitude: pickupCoords.lng }} zIndex={10} anchor={{ x: 0.5, y: 0.5 }} tracksViewChanges={tracksViewChanges}>
-              <View style={[styles.dotMarker, { backgroundColor: '#A0FF00', shadowColor: '#A0FF00' }]} />
+              <View style={[styles.dotMarker, { backgroundColor: '#fa6205', shadowColor: '#fa6205' }]} />
             </Marker>
             {destCoords && (
               <Marker coordinate={{ latitude: destCoords.lat, longitude: destCoords.lng }} zIndex={5} anchor={{ x: 0.5, y: 0.5 }} tracksViewChanges={tracksViewChanges}>
@@ -563,7 +563,7 @@ export default function HomeDelivery() {
             <View style={styles.rejectedBadge}>
               <Text style={styles.rejectedBadgeText}>{rejectedTrips.length}</Text>
             </View>
-            <MaterialCommunityIcons name="history" size={24} color="#FFF" />
+            <MaterialCommunityIcons name="history" size={24} color="#1C1C1E" />
             <Text style={styles.rejectedListText}>Descartadas</Text>
           </TouchableOpacity>
         )}
@@ -583,7 +583,7 @@ export default function HomeDelivery() {
       {isEnabled && (
         <View style={styles.bottomSheetContainer}>
           <TouchableOpacity style={styles.powerBtn} onPress={toggleConnection}>
-            <Ionicons name="power" size={20} color="#FFF" />
+            <Ionicons name="power" size={20} color="#1C1C1E" />
           </TouchableOpacity>
 
           {currentTrip ? (
@@ -594,7 +594,7 @@ export default function HomeDelivery() {
               <Animated.View style={[styles.tripCard, { opacity: fadeAnim }]}>
                 {queueCount > 0 && (
                   <View style={styles.queueBar}>
-                    <MaterialCommunityIcons name="layers-triple-outline" size={14} color="#A0FF00" />
+                    <MaterialCommunityIcons name="layers-triple-outline" size={14} color="#fa6205" />
                     <Text style={styles.queueText}>
                       {queueCount === 1 ? "1 carrera más en espera" : `${queueCount} carreras más en espera`}
                       {nextTrip && <Text style={styles.queueNextPrice}> • Sig: {formatPrice(nextTrip.costo)}</Text>}
@@ -615,7 +615,7 @@ export default function HomeDelivery() {
 
                 <View style={styles.pointsContainer}>
                   <View style={styles.pointRow}>
-                    <View style={[styles.dot, { backgroundColor: '#A0FF00' }]} />
+                    <View style={[styles.dot, { backgroundColor: '#fa6205' }]} />
                     <Text style={styles.pointText} numberOfLines={1}>{infoAdicional.origen || "Recogida"}</Text>
                   </View>
                   <View style={styles.line} />
@@ -627,7 +627,7 @@ export default function HomeDelivery() {
 
                 <View style={styles.actionButtons}>
                   <TouchableOpacity style={styles.rejectBtn} onPress={() => handleReject(currentTrip.id)}>
-                    <Ionicons name="close" size={30} color="#FFF" />
+                    <Ionicons name="close" size={30} color="#1C1C1E" />
                   </TouchableOpacity>
 
                   <TouchableOpacity style={styles.acceptBtnContainer} onPress={() => handlePressAccept(currentTrip.id)} activeOpacity={0.8}>
@@ -639,7 +639,7 @@ export default function HomeDelivery() {
             </View>
           ) : (
             <View style={styles.searchingCard}>
-              <ActivityIndicator size="large" color="#A0FF00" />
+              <ActivityIndicator size="large" color="#fa6205" />
               <Text style={styles.searchingText}>Buscando...</Text>
               <Text style={styles.searchingSubText}>Mantente en línea</Text>
             </View>
@@ -650,12 +650,12 @@ export default function HomeDelivery() {
       {/* --- CUSTOM ACCEPT MODAL --- */}
       <Modal animationType="fade" transparent={true} visible={showAcceptModal} onRequestClose={() => { if (acceptStep === 'error' || acceptStep === 'confirm') closeAcceptModal() }}>
         <View style={styles.modalOverlay}>
-          <View style={[styles.modalContent, { borderColor: acceptStep === 'error' ? '#FF4757' : '#A0FF00' }]}>
+          <View style={[styles.modalContent, { borderColor: acceptStep === 'error' ? '#FF4757' : '#fa6205' }]}>
 
             {/* 1. CONFIRMACIÓN */}
             {acceptStep === 'confirm' && (
               <>
-                <MaterialCommunityIcons name="help-circle-outline" size={50} color="#A0FF00" />
+                <MaterialCommunityIcons name="help-circle-outline" size={50} color="#fa6205" />
                 <Text style={styles.modalTitle}>¿Aceptar Carrera?</Text>
                 <Text style={styles.modalText}>El servicio se asignará a tu cuenta inmediatamente.</Text>
                 <View style={styles.modalButtons}>
@@ -672,7 +672,7 @@ export default function HomeDelivery() {
             {/* 2. LOADING */}
             {acceptStep === 'loading' && (
               <>
-                <ActivityIndicator size="large" color="#A0FF00" style={{ marginVertical: 20 }} />
+                <ActivityIndicator size="large" color="#fa6205" style={{ marginVertical: 20 }} />
                 <Text style={styles.modalTitle}>Procesando...</Text>
                 <Text style={styles.modalText}>Validando disponibilidad de la carrera.</Text>
               </>
@@ -681,7 +681,7 @@ export default function HomeDelivery() {
             {/* 3. SUCCESS */}
             {acceptStep === 'success' && (
               <>
-                <MaterialCommunityIcons name="check-circle" size={50} color="#A0FF00" />
+                <MaterialCommunityIcons name="check-circle" size={50} color="#fa6205" />
                 <Text style={styles.modalTitle}>¡Carrera Asignada!</Text>
                 <Text style={styles.modalText}>Prepárate para recoger el pedido.</Text>
               </>
@@ -693,7 +693,7 @@ export default function HomeDelivery() {
                 <MaterialCommunityIcons name="close-circle" size={50} color="#FF4757" />
                 <Text style={[styles.modalTitle, { color: '#FF4757' }]}>No se pudo aceptar</Text>
                 <Text style={styles.modalText}>{acceptErrorMsg}</Text>
-                <TouchableOpacity style={[styles.modalActionBtn, { backgroundColor: '#333', borderWidth: 1, borderColor: '#FF4757', marginTop: 10 }]} onPress={closeAcceptModal}>
+                <TouchableOpacity style={[styles.modalActionBtn, { backgroundColor: "#ECECEC", borderWidth: 1, borderColor: '#FF4757', marginTop: 10 }]} onPress={closeAcceptModal}>
                   <Text style={[styles.modalActionText, { color: '#FF4757' }]}>Cerrar</Text>
                 </TouchableOpacity>
               </>
@@ -727,7 +727,7 @@ export default function HomeDelivery() {
             <View style={styles.rejectedHeader}>
               <Text style={styles.rejectedTitle}>Descartadas Disponibles</Text>
               <TouchableOpacity onPress={() => setShowRejectedListModal(false)}>
-                <Ionicons name="close-circle" size={28} color="#FFF" />
+                <Ionicons name="close-circle" size={28} color="#1C1C1E" />
               </TouchableOpacity>
             </View>
             {rejectedTrips.length === 0 ? (
@@ -743,7 +743,7 @@ export default function HomeDelivery() {
                     <View style={styles.rejectedItem}>
                       <View style={{ flex: 1 }}>
                         <Text style={styles.rejectedPrice}>{formatPrice(item.costo)}</Text>
-                        <View style={styles.miniPointRow}><View style={[styles.miniDot, { backgroundColor: '#A0FF00' }]} /><Text style={styles.miniPointText} numberOfLines={1}>{info.origen}</Text></View>
+                        <View style={styles.miniPointRow}><View style={[styles.miniDot, { backgroundColor: '#fa6205' }]} /><Text style={styles.miniPointText} numberOfLines={1}>{info.origen}</Text></View>
                         <View style={styles.miniPointRow}><View style={[styles.miniDot, { backgroundColor: '#FF4757' }]} /><Text style={styles.miniPointText} numberOfLines={1}>{info.destino}</Text></View>
                       </View>
                       <TouchableOpacity style={styles.recoverBtn} onPress={() => handleRestore(item.id)}>
@@ -761,7 +761,7 @@ export default function HomeDelivery() {
       <Modal animationType="fade" transparent={true} visible={showActiveRideModal} onRequestClose={() => setShowActiveRideModal(false)}>
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
-            <MaterialCommunityIcons name="bike-fast" size={40} color="#A0FF00" />
+            <MaterialCommunityIcons name="bike-fast" size={40} color="#fa6205" />
             <Text style={styles.modalTitle}>Carrera en Curso</Text>
             <Text style={styles.modalText}>Termina tu servicio actual.</Text>
             <TouchableOpacity style={styles.modalActionBtn} onPress={() => setShowActiveRideModal(false)}>
@@ -775,81 +775,81 @@ export default function HomeDelivery() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#121212" },
+  container: { flex: 1, backgroundColor: "#F2F2F7" },
   dotMarker: { width: 24, height: 24, borderRadius: 12, borderWidth: 3, borderColor: '#FFF', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.5, shadowRadius: 4, elevation: 5 },
 
   topContainer: { position: 'absolute', top: Platform.OS === 'ios' ? 50 : 40, left: 20, right: 20, zIndex: 10, flexDirection: 'row', justifyContent: 'space-between' },
-  headerPill: { flexDirection: 'row', backgroundColor: 'rgba(30, 30, 30, 0.95)', padding: 8, paddingRight: 20, borderRadius: 40, alignSelf: 'flex-start', alignItems: 'center', borderWidth: 1, borderColor: '#333', elevation: 5 },
-  avatarContainer: { width: 36, height: 36, borderRadius: 18, backgroundColor: '#222', justifyContent: 'center', alignItems: 'center', marginRight: 10, borderWidth: 1, borderColor: '#A0FF00' },
-  avatarInitial: { color: '#A0FF00', fontFamily: 'Montserrat_700Bold', fontSize: 16 },
-  welcomeText: { color: '#FFF', fontFamily: 'Montserrat_600SemiBold', fontSize: 14 },
+  headerPill: { flexDirection: 'row', backgroundColor: 'rgba(255, 255, 255, 0.95)', padding: 8, paddingRight: 20, borderRadius: 40, alignSelf: 'flex-start', alignItems: 'center', borderWidth: 1, borderColor: '#DDD', elevation: 5 },
+  avatarContainer: { width: 36, height: 36, borderRadius: 18, backgroundColor: "#FFFFFF", justifyContent: 'center', alignItems: 'center', marginRight: 10, borderWidth: 1, borderColor: '#fa6205' },
+  avatarInitial: { color: '#fa6205', fontFamily: 'Montserrat_700Bold', fontSize: 16 },
+  welcomeText: { color: '#1C1C1E', fontFamily: 'Montserrat_600SemiBold', fontSize: 14 },
   ratingRow: { flexDirection: 'row', alignItems: 'center' },
   ratingText: { color: '#FFD700', fontSize: 12, marginLeft: 4, fontFamily: 'Montserrat_500Medium' },
 
-  rejectedListBtn: { backgroundColor: 'rgba(30, 30, 30, 0.95)', paddingHorizontal: 15, height: 54, borderRadius: 27, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: '#555', flexDirection: 'row' },
+  rejectedListBtn: { backgroundColor: 'rgba(255, 255, 255, 0.95)', paddingHorizontal: 15, height: 54, borderRadius: 27, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: '#DDD', flexDirection: 'row' },
   rejectedBadge: { position: 'absolute', top: -5, right: -5, backgroundColor: '#FF4757', width: 20, height: 20, borderRadius: 10, justifyContent: 'center', alignItems: 'center', zIndex: 2 },
-  rejectedBadgeText: { color: '#FFF', fontSize: 10, fontFamily: 'Montserrat_700Bold' },
-  rejectedListText: { color: '#FFF', marginLeft: 8, fontFamily: 'Montserrat_600SemiBold', fontSize: 12 },
+  rejectedBadgeText: { color: '#1C1C1E', fontSize: 10, fontFamily: 'Montserrat_700Bold' },
+  rejectedListText: { color: '#1C1C1E', marginLeft: 8, fontFamily: 'Montserrat_600SemiBold', fontSize: 12 },
 
   offlineContainer: { position: 'absolute', bottom: 50, width: '100%', alignItems: 'center', zIndex: 20 },
-  bigConnectButton: { width: 80, height: 80, borderRadius: 40, backgroundColor: '#A0FF00', justifyContent: 'center', alignItems: 'center', shadowColor: "#A0FF00", shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0.8, shadowRadius: 20, elevation: 10, marginBottom: 15 },
+  bigConnectButton: { width: 80, height: 80, borderRadius: 40, backgroundColor: '#fa6205', justifyContent: 'center', alignItems: 'center', shadowColor: "#fa6205", shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0.8, shadowRadius: 20, elevation: 10, marginBottom: 15 },
   connectText: { color: '#000', fontFamily: 'Montserrat_700Bold', fontSize: 10 },
-  offlineLabel: { color: '#FFF', fontFamily: 'Montserrat_500Medium', backgroundColor: 'rgba(0,0,0,0.6)', paddingHorizontal: 12, paddingVertical: 4, borderRadius: 12 },
+  offlineLabel: { color: '#1C1C1E', fontFamily: 'Montserrat_500Medium', backgroundColor: 'rgba(0,0,0,0.1)', paddingHorizontal: 12, paddingVertical: 4, borderRadius: 12 },
 
   bottomSheetContainer: { position: 'absolute', bottom: 30, left: 20, right: 20, zIndex: 20 },
   powerBtn: { position: 'absolute', top: -50, right: 0, width: 40, height: 40, borderRadius: 20, backgroundColor: '#FF4757', justifyContent: 'center', alignItems: 'center', elevation: 5, shadowColor: "#000", shadowOpacity: 0.3 },
 
-  tripCard: { backgroundColor: '#1E1E1E', borderRadius: 24, padding: 20, borderWidth: 1, borderColor: '#333', shadowColor: "#000", shadowOffset: { width: 0, height: 5 }, shadowOpacity: 0.5, shadowRadius: 10, elevation: 10, zIndex: 10 },
-  stackCardEffect1: { position: 'absolute', top: 8, left: 10, right: 10, height: '100%', backgroundColor: '#2a2a2a', borderRadius: 24, zIndex: 5, borderWidth: 1, borderColor: '#444' },
-  stackCardEffect2: { position: 'absolute', top: 16, left: 20, right: 20, height: '100%', backgroundColor: '#1a1a1a', borderRadius: 24, zIndex: 1, borderWidth: 1, borderColor: '#333' },
+  tripCard: { backgroundColor: '#FFFFFF', borderRadius: 24, padding: 20, borderWidth: 1, borderColor: '#DDD', shadowColor: "#000", shadowOffset: { width: 0, height: 5 }, shadowOpacity: 0.5, shadowRadius: 10, elevation: 10, zIndex: 10 },
+  stackCardEffect1: { position: 'absolute', top: 8, left: 10, right: 10, height: '100%', backgroundColor: '#ECECEC', borderRadius: 24, zIndex: 5, borderWidth: 1, borderColor: '#DDD' },
+  stackCardEffect2: { position: 'absolute', top: 16, left: 20, right: 20, height: '100%', backgroundColor: '#F0F0F0', borderRadius: 24, zIndex: 1, borderWidth: 1, borderColor: '#DDD' },
 
-  queueBar: { flexDirection: 'row', alignItems: 'center', backgroundColor: 'rgba(160, 255, 0, 0.1)', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 8, marginBottom: 15, borderWidth: 1, borderColor: 'rgba(160, 255, 0, 0.3)' },
-  queueText: { color: '#DDD', fontSize: 11, fontFamily: 'Montserrat_500Medium', marginLeft: 6 },
-  queueNextPrice: { color: '#A0FF00', fontFamily: 'Montserrat_700Bold' },
+  queueBar: { flexDirection: 'row', alignItems: 'center', backgroundColor: 'rgba(250, 98, 5, 0.1)', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 8, marginBottom: 15, borderWidth: 1, borderColor: 'rgba(250, 98, 5, 0.3)' },
+  queueText: { color: '#444', fontSize: 11, fontFamily: 'Montserrat_500Medium', marginLeft: 6 },
+  queueNextPrice: { color: '#fa6205', fontFamily: 'Montserrat_700Bold' },
 
   tripHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 15 },
   serviceType: { color: '#888', fontFamily: 'Montserrat_700Bold', fontSize: 12, textTransform: 'uppercase', letterSpacing: 1 },
-  distanceBadge: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#A0FF00', paddingHorizontal: 8, paddingVertical: 2, borderRadius: 6, marginTop: 5, alignSelf: 'flex-start' },
+  distanceBadge: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#fa6205', paddingHorizontal: 8, paddingVertical: 2, borderRadius: 6, marginTop: 5, alignSelf: 'flex-start' },
   distanceBadgeText: { color: '#000', fontFamily: 'Montserrat_700Bold', fontSize: 11, marginLeft: 4 },
-  tripPrice: { color: '#FFF', fontFamily: 'Montserrat_700Bold', fontSize: 26 },
+  tripPrice: { color: '#1C1C1E', fontFamily: 'Montserrat_700Bold', fontSize: 26 },
   pointsContainer: { marginBottom: 20 },
   pointRow: { flexDirection: 'row', alignItems: 'center', marginVertical: 2 },
   dot: { width: 10, height: 10, borderRadius: 5, marginRight: 12 },
-  line: { width: 2, height: 16, backgroundColor: '#333', marginLeft: 4, marginVertical: 2 },
-  pointText: { color: '#DDD', fontFamily: 'Montserrat_500Medium', fontSize: 14, flex: 1 },
+  line: { width: 2, height: 16, backgroundColor: "#ECECEC", marginLeft: 4, marginVertical: 2 },
+  pointText: { color: '#444', fontFamily: 'Montserrat_500Medium', fontSize: 14, flex: 1 },
 
   actionButtons: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  rejectBtn: { width: 50, height: 50, borderRadius: 25, backgroundColor: '#2C2C2C', justifyContent: 'center', alignItems: 'center', borderWidth: 1, borderColor: '#FF4757', marginRight: 15 },
-  acceptBtnContainer: { flex: 1, height: 50, borderRadius: 25, justifyContent: 'center', alignItems: 'center', backgroundColor: '#333', overflow: 'hidden', borderWidth: 1, borderColor: '#A0FF00' },
-  acceptBtnProgress: { position: 'absolute', left: 0, top: 0, bottom: 0, backgroundColor: '#A0FF00' },
+  rejectBtn: { width: 50, height: 50, borderRadius: 25, backgroundColor: '#F0F0F0', justifyContent: 'center', alignItems: 'center', borderWidth: 1, borderColor: '#FF4757', marginRight: 15 },
+  acceptBtnContainer: { flex: 1, height: 50, borderRadius: 25, justifyContent: 'center', alignItems: 'center', backgroundColor: "#ECECEC", overflow: 'hidden', borderWidth: 1, borderColor: '#fa6205' },
+  acceptBtnProgress: { position: 'absolute', left: 0, top: 0, bottom: 0, backgroundColor: '#fa6205' },
   acceptText: { color: '#000', fontFamily: 'Montserrat_700Bold', fontSize: 16, zIndex: 10, textShadowColor: 'rgba(255, 255, 255, 0.5)', textShadowOffset: { width: 0, height: 0 }, textShadowRadius: 3 },
 
-  searchingCard: { backgroundColor: '#1E1E1E', borderRadius: 24, padding: 30, alignItems: 'center', borderWidth: 1, borderColor: '#333' },
-  searchingText: { color: '#FFF', fontFamily: 'Montserrat_600SemiBold', fontSize: 16, marginTop: 15 },
+  searchingCard: { backgroundColor: '#FFFFFF', borderRadius: 24, padding: 30, alignItems: 'center', borderWidth: 1, borderColor: '#DDD' },
+  searchingText: { color: '#1C1C1E', fontFamily: 'Montserrat_600SemiBold', fontSize: 16, marginTop: 15 },
   searchingSubText: { color: '#666', fontFamily: 'Montserrat_400Regular', fontSize: 12, marginTop: 5 },
 
   modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.8)', justifyContent: 'center', alignItems: 'center' },
-  modalContent: { width: '80%', backgroundColor: '#1E1E1E', padding: 25, borderRadius: 20, alignItems: 'center', borderWidth: 1, borderColor: '#A0FF00' },
-  modalTitle: { color: '#FFF', fontSize: 20, fontFamily: 'Montserrat_700Bold', marginTop: 15, marginBottom: 10 },
-  modalText: { color: '#CCC', textAlign: 'center', marginBottom: 20, fontFamily: 'Montserrat_400Regular' },
+  modalContent: { width: '80%', backgroundColor: '#FFFFFF', padding: 25, borderRadius: 20, alignItems: 'center', borderWidth: 1, borderColor: '#fa6205' },
+  modalTitle: { color: '#1C1C1E', fontSize: 20, fontFamily: 'Montserrat_700Bold', marginTop: 15, marginBottom: 10 },
+  modalText: { color: '#333', textAlign: 'center', marginBottom: 20, fontFamily: 'Montserrat_400Regular' },
   modalButtons: { flexDirection: 'row', marginTop: 20, width: '100%', justifyContent: 'space-between' },
   modalButton: { paddingVertical: 10, paddingHorizontal: 20, borderRadius: 20, minWidth: 100, alignItems: 'center' },
-  cancelButton: { backgroundColor: '#333', borderWidth: 1, borderColor: '#555' },
-  cancelButtonText: { color: '#FFF', fontFamily: 'Montserrat_600SemiBold' },
-  subscribeButton: { backgroundColor: '#A0FF00' },
+  cancelButton: { backgroundColor: "#ECECEC", borderWidth: 1, borderColor: '#DDD' },
+  cancelButtonText: { color: '#1C1C1E', fontFamily: 'Montserrat_600SemiBold' },
+  subscribeButton: { backgroundColor: '#fa6205' },
   subscribeButtonText: { color: '#000', fontFamily: 'Montserrat_700Bold' },
-  modalActionBtn: { backgroundColor: '#A0FF00', paddingHorizontal: 30, paddingVertical: 12, borderRadius: 25 },
+  modalActionBtn: { backgroundColor: '#fa6205', paddingHorizontal: 30, paddingVertical: 12, borderRadius: 25 },
   modalActionText: { color: '#000', fontFamily: 'Montserrat_700Bold' },
 
   modalFullOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.9)', justifyContent: 'flex-end' },
-  rejectedListContainer: { backgroundColor: '#1E1E1E', borderTopLeftRadius: 25, borderTopRightRadius: 25, padding: 20, maxHeight: '70%' },
+  rejectedListContainer: { backgroundColor: '#FFFFFF', borderTopLeftRadius: 25, borderTopRightRadius: 25, padding: 20, maxHeight: '70%' },
   rejectedHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 },
-  rejectedTitle: { color: '#FFF', fontFamily: 'Montserrat_700Bold', fontSize: 18 },
+  rejectedTitle: { color: '#1C1C1E', fontFamily: 'Montserrat_700Bold', fontSize: 18 },
   emptyListText: { color: '#777', textAlign: 'center', marginTop: 20, fontFamily: 'Montserrat_500Medium' },
-  rejectedItem: { flexDirection: 'row', backgroundColor: '#2C2C2C', padding: 15, borderRadius: 12, marginBottom: 10, alignItems: 'center', justifyContent: 'space-between', borderWidth: 1, borderColor: '#444' },
-  rejectedPrice: { color: '#A0FF00', fontFamily: 'Montserrat_700Bold', fontSize: 16, marginBottom: 5 },
+  rejectedItem: { flexDirection: 'row', backgroundColor: '#F0F0F0', padding: 15, borderRadius: 12, marginBottom: 10, alignItems: 'center', justifyContent: 'space-between', borderWidth: 1, borderColor: '#DDD' },
+  rejectedPrice: { color: '#fa6205', fontFamily: 'Montserrat_700Bold', fontSize: 16, marginBottom: 5 },
   miniPointRow: { flexDirection: 'row', alignItems: 'center', marginVertical: 2 },
   miniDot: { width: 6, height: 6, borderRadius: 3, marginRight: 6 },
-  miniPointText: { color: '#CCC', fontSize: 12, fontFamily: 'Montserrat_400Regular' },
-  recoverBtn: { backgroundColor: '#A0FF00', width: 40, height: 40, borderRadius: 20, justifyContent: 'center', alignItems: 'center' }
+  miniPointText: { color: '#333', fontSize: 12, fontFamily: 'Montserrat_400Regular' },
+  recoverBtn: { backgroundColor: '#fa6205', width: 40, height: 40, borderRadius: 20, justifyContent: 'center', alignItems: 'center' }
 });

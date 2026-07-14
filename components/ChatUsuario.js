@@ -408,7 +408,7 @@ const ChatUsuario = ({ tripId }) => {
           <View style={styles.chatContainer}>
             {isLoadingHistory ? (
               <View style={styles.loadingContainer}>
-                <ActivityIndicator size="large" color="#1E7D22" />
+                <ActivityIndicator size="large" color="#fa6205" />
                 <Text style={styles.loadingText}>Cargando mensajes anteriores...</Text>
               </View>
             ) : (
@@ -511,7 +511,7 @@ const styles = StyleSheet.create({
   },
   myMessageContainer: {
     alignSelf: 'flex-end', // Mensajes del usuario a la derecha
-    backgroundColor: "#39FF14", // Verde para mensajes del usuario
+    backgroundColor: "#fa6205", // Verde para mensajes del usuario
   },
   otherMessageContainer: {
     alignSelf: 'flex-start', // Mensajes del rider a la izquierda
@@ -581,7 +581,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   sendButton: {
-    backgroundColor: "#39FF14",
+    backgroundColor: "#fa6205",
     padding: 10,
     borderRadius: 30,
     marginLeft: 5,

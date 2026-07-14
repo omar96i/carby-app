@@ -30,11 +30,11 @@ export default function SplashScreen() {
   return (
     <View style={styles.container}>
       <Image 
-        source={require('../assets/images/yar.png')} 
+        source={require('../assets/images/nuevo-icono.jpeg')} 
         style={styles.logo}
         resizeMode="contain"
       />
-      <ActivityIndicator size="large" color="#a7ff00" style={styles.spinner} />
+      <ActivityIndicator size="large" color="#fa6205" style={styles.spinner} />
       <Text style={styles.text}>Cargando...</Text>
     </View>
   );
@@ -43,20 +43,21 @@ export default function SplashScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: 'black',
+    backgroundColor: '#F2F2F7',
     justifyContent: 'center',
     alignItems: 'center'
   },
   logo: {
     width: 250,
     height: 250,
+    borderRadius: 24,
     marginBottom: 40,
   },
   spinner: {
     marginVertical: 20,
   },
   text: {
-    color: 'white',
+    color: '#1C1C1E',
     fontSize: 18,
     marginTop: 10,
   }

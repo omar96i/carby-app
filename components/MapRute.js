@@ -657,7 +657,7 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
   infoValue: {
-    color: '#1E7D22',
+    color: '#fa6205',
     fontWeight: '600',
   },
   zoomControls: {

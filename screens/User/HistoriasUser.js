@@ -106,7 +106,7 @@ const styles = StyleSheet.create({
         marginTop: -30,
     },
     continueButton: {
-        backgroundColor: "#197200",
+        backgroundColor: "#fa6205",
         paddingVertical: 2, // Ajusta el padding vertical para hacer el botón más pequeño
         paddingHorizontal: 20, // Ajusta el padding horizontal para darle más espacio al texto
         borderRadius: 50,
@@ -119,7 +119,7 @@ const styles = StyleSheet.create({
     },
     
     continueText: {
-        color: "#fff",
+        color: "#1C1C1E",
         fontSize: 12,  // Tamaño de fuente más pequeño
         fontFamily: "Inter_700Bold",
         textAlign: 'center',  // Centra el texto dentro del botón

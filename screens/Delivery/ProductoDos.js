@@ -179,7 +179,7 @@ const ProductoDos = () => {
                             />
                         ) : (
                             <View style={styles.placeholderContainer}>
-                                <Ionicons name="camera" size={50} color="#9BFE03" />
+                                <Ionicons name="camera" size={50} color="#fa6205" />
                                 <Text style={styles.placeholderText}>Toca para seleccionar imagen</Text>
                                 <Text style={styles.recommendationText}>
                                     Recomendado: 800x800px (formato cuadrado)
@@ -242,13 +242,13 @@ const ProductoDos = () => {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#1c1c1c',
+        backgroundColor: '#F2F2F7',
     },
     header: {
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
-        backgroundColor: '#a4ff00',
+        backgroundColor: '#fa6205',
         padding: 15,
         marginTop: 60,
     },
@@ -271,16 +271,16 @@ const styles = StyleSheet.create({
     placeholderContainer: {
         width: '100%',
         height: '100%',
-        backgroundColor: '#2a2a2a',
+        backgroundColor: '#ECECEC',
         justifyContent: 'center',
         alignItems: 'center',
         borderWidth: 1,
         borderStyle: 'dashed',
-        borderColor: '#9BFE03',
+        borderColor: '#fa6205',
     },
     placeholderText: {
         marginTop: 10,
-        color: '#fff',
+        color: '#1C1C1E',
         fontFamily: 'Montserrat_400Regular',
     },
     formContainer: {
@@ -288,17 +288,17 @@ const styles = StyleSheet.create({
     },
     inputLabel: {
         fontSize: 16,
-        color: 'white',
+        color: '#1C1C1E',
         fontFamily: 'Montserrat_700Bold',
         marginBottom: 5,
         marginTop: 15,
     },
     input: {
-        backgroundColor: '#2a2a2a',
+        backgroundColor: '#ECECEC',
         borderRadius: 8,
         padding: 12,
         fontSize: 16,
-        color: 'white',
+        color: '#1C1C1E',
         fontFamily: 'Montserrat_400Regular',
     },
     textArea: {
@@ -306,7 +306,7 @@ const styles = StyleSheet.create({
         textAlignVertical: 'top',
     },
     myButton: {
-        backgroundColor: "#39FF14",
+        backgroundColor: "#fa6205",
         paddingVertical: 14,
         paddingHorizontal: 60,
         borderRadius: 15,

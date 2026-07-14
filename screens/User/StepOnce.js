@@ -109,18 +109,18 @@ const styles = StyleSheet.create({
         fontSize: 16,
         fontFamily: "Inter_700Bold",
       
-        color: "#1E7D22",
+        color: "#fa6205",
     },
     moto: {
         fontSize: 14,
         fontWeight: "bold",
-        color: "#1E7D22",
+        color: "#fa6205",
         fontFamily: "Inter_700Bold",
     },
     phone: {
         fontSize: 14,
         fontWeight: "bold",
-        color: "#1E7D22",
+        color: "#fa6205",
     },
     placaContainer: {
         alignItems: "flex-end",
@@ -128,7 +128,7 @@ const styles = StyleSheet.create({
     placa: {
         fontSize: 14,
         fontWeight: "bold",
-        color: "#1E7D22",
+        color: "#fa6205",
     },
     safeContainer: {
         flex: 1,
@@ -175,7 +175,7 @@ const styles = StyleSheet.create({
         paddingLeft: 10,
     },
     card1: {
-        backgroundColor: "#1E7D22",
+        backgroundColor: "#fa6205",
         borderRadius: 25,
         padding: 15,
         marginBottom: 20,
@@ -187,7 +187,7 @@ const styles = StyleSheet.create({
     },
     label: {
         fontSize: 12,
-        color: "#fff",
+        color: "#1C1C1E",
         fontFamily: "Inter_500Medium",
         marginBottom: 5,
     },
@@ -204,7 +204,7 @@ const styles = StyleSheet.create({
     },
     value: {
         fontSize: 12,
-        color: "#fff",
+        color: "#1C1C1E",
         fontFamily: "Inter_500Medium",
     },
     paymentOption: {
@@ -242,7 +242,7 @@ const styles = StyleSheet.create({
         flexDirection: "row",
         alignItems: "center", // Centra los elementos verticalmente
         justifyContent: "center", // Centra los elementos horizontalmente
-        backgroundColor: "#1E7D22", 
+        backgroundColor: "#fa6205", 
         paddingVertical: 10,
         paddingHorizontal: 20,
         borderRadius: 30,
@@ -251,7 +251,7 @@ const styles = StyleSheet.create({
     },
     
     buttonText: {
-        color: "white",
+        color: "#1C1C1E",
         fontSize: 16,
         fontFamily: "Inter_400Regular",
         textAlign: "center", // Asegura que el texto esté centrado

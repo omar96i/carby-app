@@ -27,20 +27,11 @@ import colombiaData from "../../BaseColombia/colombia_departamentos.json";
 
 const { width } = Dimensions.get("window");
 
-// 1. CONFIGURACIÓN DE PAÍSES Y URLs
-const COUNTRY_CONFIG = {
-  PE: {
-    label: "Perú 🇵🇪",
-    url: "https://back.yariders.com/api/",
-    currency: "PEN",
-    phonePlaceholder: "Ej. 912 345 678"
-  },
-  CO: {
-    label: "Colombia 🇨🇴",
-    url: "https://co.yariders.com/api/",
-    currency: "COP",
-    phonePlaceholder: "Ej. 300 123 4567"
-  }
+// 1. CONFIGURACIÓN POR PAÍS (solo info visual, misma API)
+const API_URL = "https://back.carbycol.com/api/";
+const COUNTRY_INFO = {
+  PE: { label: "Perú 🇵🇪", currency: "PEN", phonePlaceholder: "Ej. 912 345 678" },
+  CO: { label: "Colombia 🇨🇴", currency: "COP", phonePlaceholder: "Ej. 300 123 4567" }
 };
 
 export default function RegisterStoreScreen() {
@@ -60,7 +51,7 @@ export default function RegisterStoreScreen() {
   const [modalTitle, setModalTitle] = useState("");
 
   // --- ESTADO: PAÍS ---
-  const [pais, setPais] = useState(""); // 'PE' o 'CO'
+  const [pais, setPais] = useState("CO"); // 'PE' o 'CO'
 
   // --- ESTADOS DE DATOS ---
   const [departamentos, setDepartamentos] = useState([]);
@@ -138,7 +129,7 @@ export default function RegisterStoreScreen() {
     }
 
     // 2. Cargar Categorías
-    const currentUrl = COUNTRY_CONFIG[pais].url;
+    const currentUrl = API_URL;
     fetchCategorias(currentUrl);
 
     // 3. Actualizar formData y limpiar ubicación
@@ -334,12 +325,12 @@ export default function RegisterStoreScreen() {
   const finalizarRegistro = async () => {
     setModalVisible(false);
     
-    if(!pais || !COUNTRY_CONFIG[pais]) {
+    if(!pais || !COUNTRY_INFO[pais]) {
         Alert.alert("Error", "Configuración de país no válida.");
         return;
     }
     
-    const currentBaseUrl = COUNTRY_CONFIG[pais].url;
+    const currentBaseUrl = API_URL;
     setIsLoading(true);
 
     try {
@@ -370,11 +361,25 @@ export default function RegisterStoreScreen() {
         body: formDataToSend,
       });
 
-      const data = await response.json();
+      const textResponse = await response.text();
+      console.log("=== RESPUESTA CRUDA DEL SERVIDOR (Comercio) ===");
+      console.log("Status:", response.status);
+      console.log("Headers:", JSON.stringify(response.headers, null, 2));
+      console.log("Body:", textResponse.substring(0, 500));
+      console.log("================================================");
+
+      let data;
+      try {
+        data = JSON.parse(textResponse);
+      } catch (parseError) {
+        console.error("JSON parse error:", parseError.message);
+        console.error("Respuesta no es JSON. Body completo:", textResponse);
+        throw new Error(`El servidor respondió con HTML/error (status ${response.status})`);
+      }
       setIsLoading(false);
 
       if (response.ok || data?.message?.toLowerCase().includes("creado")) {
-        Alert.alert("¡Registro Exitoso!", `Tu cuenta ha sido creada en ${COUNTRY_CONFIG[pais].label}.`, [
+        Alert.alert("¡Registro Exitoso!", `Tu cuenta ha sido creada en ${COUNTRY_INFO[pais].label}.`, [
           { text: "OK", onPress: () => navigation.navigate("Login") }
         ]);
       } else {
@@ -421,7 +426,7 @@ export default function RegisterStoreScreen() {
   // Paso 1: Aviso Importante + SELECTOR DE PAÍS
   const renderStep1 = () => (
     <View style={styles.warningContainer}>
-      <MaterialCommunityIcons name="storefront-outline" size={80} color="#9DFD05" style={{ marginBottom: 20 }} />
+      <MaterialCommunityIcons name="storefront-outline" size={80} color="#fa6205" style={{ marginBottom: 20 }} />
       <Text style={styles.warningTitle}>Registro de Comercio</Text>
       
       <View style={{ width: '100%', marginBottom: 20 }}>
@@ -434,24 +439,24 @@ export default function RegisterStoreScreen() {
             ], "Selecciona País")}
         >
             <Text style={[styles.inputText, !pais && { color: '#777' }]}>
-                {pais ? COUNTRY_CONFIG[pais].label : "Selecciona..."}
+                {pais ? COUNTRY_INFO[pais].label : "Selecciona..."}
             </Text>
-            <MaterialCommunityIcons name="chevron-down" size={20} color="#9DFD05" />
+            <MaterialCommunityIcons name="chevron-down" size={20} color="#fa6205" />
         </TouchableOpacity>
       </View>
 
       <Text style={styles.warningSub}>Para activar tu tienda necesitamos:</Text>
       <View style={styles.bulletPoints}>
-        {["Foto de tu DNI/RUC (ambos lados)", "Datos del Negocio", "Fotos de tus productos o carta", "Precios actualizados", "Foto o QR de Pago (Yape/Plin/Nequi)"].map((item, index) => (
+        {["Foto de tu DNI/RUC (ambos lados)", "Datos del Negocio", "Fotos de tus productos o carta", "Precios actualizados", "Foto o QR de Pago (Nequi / Bancolombia)"].map((item, index) => (
           <View key={index} style={styles.bulletItem}>
-            <MaterialCommunityIcons name="check-circle-outline" size={20} color="#9DFD05" />
+            <MaterialCommunityIcons name="check-circle-outline" size={20} color="#fa6205" />
             <Text style={styles.bulletText}>{item}</Text>
           </View>
         ))}
       </View>
 
       <View style={styles.infoBox}>
-        <MaterialCommunityIcons name="lightbulb-on-outline" size={24} color="#FFF" />
+        <MaterialCommunityIcons name="lightbulb-on-outline" size={24} color="#1C1C1E" />
         <Text style={styles.infoText}>
           "Si quieres que te facilitemos tu registro de productos, puedes contactarnos enviándonos unas fotos de tu carta y nuestro equipo te apoyará."
         </Text>
@@ -472,27 +477,27 @@ export default function RegisterStoreScreen() {
         <Text style={[styles.inputText, !formData.global_categoria_id && { color: '#777' }]}>
           {getCategoryLabel() || "Selecciona..."}
         </Text>
-        <MaterialCommunityIcons name="chevron-down" size={20} color="#9DFD05" />
+        <MaterialCommunityIcons name="chevron-down" size={20} color="#fa6205" />
       </TouchableOpacity>
-      {categorias.length === 0 && <Text style={{color:'#d9534f', fontSize:12, marginTop:-15, marginBottom:15}}>Cargando categorías de {pais ? COUNTRY_CONFIG[pais].label : '...'}...</Text>}
+      {categorias.length === 0 && <Text style={{color:'#d9534f', fontSize:12, marginTop:-15, marginBottom:15}}>Cargando categorías de {pais ? COUNTRY_INFO[pais].label : '...'}...</Text>}
     </View>
   );
 
   // Paso 3: Ubicación (Adaptado al país)
   const renderStep3 = () => (
     <View>
-      <Text style={styles.title}>Ubicación ({pais ? COUNTRY_CONFIG[pais].label : ''})</Text>
+      <Text style={styles.title}>Ubicación ({pais ? COUNTRY_INFO[pais].label : ''})</Text>
 
       <Text style={styles.label}>Departamento *</Text>
       <TouchableOpacity style={styles.inputDark} onPress={() => openPicker('departamento', departamentos, "Selecciona Departamento")}>
         <Text style={[styles.inputText, !formData.departamento && { color: '#777' }]}>{formData.departamento || "Selecciona..."}</Text>
-        <MaterialCommunityIcons name="chevron-down" size={20} color="#9DFD05" />
+        <MaterialCommunityIcons name="chevron-down" size={20} color="#fa6205" />
       </TouchableOpacity>
 
       <Text style={styles.label}>Provincia/Ciudad *</Text>
       <TouchableOpacity style={[styles.inputDark, !formData.departamento && { opacity: 0.5 }]} disabled={!formData.departamento} onPress={() => openPicker('ciudad', ciudades, "Selecciona Ciudad")}>
         <Text style={[styles.inputText, !formData.ciudad && { color: '#777' }]}>{formData.ciudad || "Selecciona..."}</Text>
-        <MaterialCommunityIcons name="chevron-down" size={20} color="#9DFD05" />
+        <MaterialCommunityIcons name="chevron-down" size={20} color="#fa6205" />
       </TouchableOpacity>
 
       {distritos.length > 0 && (
@@ -503,7 +508,7 @@ export default function RegisterStoreScreen() {
                 onPress={() => openPicker('distrito', distritos, "Selecciona Distrito")}
             >
                 <Text style={[styles.inputText, !formData.distrito && { color: '#777' }]}>{formData.distrito || "Selecciona..."}</Text>
-                <MaterialCommunityIcons name="chevron-down" size={20} color="#9DFD05" />
+                <MaterialCommunityIcons name="chevron-down" size={20} color="#fa6205" />
             </TouchableOpacity>
         </>
       )}
@@ -531,7 +536,7 @@ export default function RegisterStoreScreen() {
       {/* --- AQUI USAMOS LA FUNCIÓN DINÁMICA DE OPCIONES --- */}
       <TouchableOpacity style={styles.inputDark} onPress={() => openPicker('tipoDocumento', getDocumentOptions(), "Tipo de Documento")}>
         <Text style={styles.inputText}>{formData.tipo_documento || "Selecciona..."}</Text>
-        <MaterialCommunityIcons name="chevron-down" size={20} color="#9DFD05" />
+        <MaterialCommunityIcons name="chevron-down" size={20} color="#fa6205" />
       </TouchableOpacity>
 
       <Text style={styles.label}>Número de Documento *</Text>
@@ -542,13 +547,13 @@ export default function RegisterStoreScreen() {
         <Text style={[styles.inputText, !formData.fecha_nacimiento && { color: '#777' }]}>
           {formData.fecha_nacimiento || "Seleccionar fecha"}
         </Text>
-        <MaterialCommunityIcons name="calendar-month" size={22} color="#9DFD05" />
+        <MaterialCommunityIcons name="calendar-month" size={22} color="#fa6205" />
       </TouchableOpacity>
 
       <Text style={styles.label}>Teléfono de Contacto *</Text>
       <TextInput 
         style={styles.inputDark} 
-        placeholder={pais ? COUNTRY_CONFIG[pais].phonePlaceholder : "Celular"} 
+        placeholder={pais ? COUNTRY_INFO[pais].phonePlaceholder : "Celular"} 
         placeholderTextColor="#777" 
         keyboardType="phone-pad" 
         value={formData.numero_telefono} 
@@ -585,7 +590,7 @@ export default function RegisterStoreScreen() {
               <Image source={{ uri: images[doc.id].uri }} style={styles.docImagePreview} />
             ) : (
               <View style={styles.docPlaceholder}>
-                <MaterialCommunityIcons name="plus" size={35} color="#9DFD05" />
+                <MaterialCommunityIcons name="plus" size={35} color="#fa6205" />
                 <Text style={styles.docLabel}>{doc.label}</Text>
               </View>
             )}
@@ -601,7 +606,7 @@ export default function RegisterStoreScreen() {
       {/* --- PARTE 2: MÉTODO DE PAGO --- */}
       <View style={{ marginTop: 25, marginBottom: 10 }}>
         <Text style={styles.title}>Método de Pago</Text>
-        <Text style={styles.subtitle}>Adjunta tu QR para recibir pagos ({pais === 'CO' ? 'Nequi / Bancolombia' : 'Yape / Plin'}).</Text>
+        <Text style={styles.subtitle}>Adjunta tu QR para recibir pagos (Nequi / Bancolombia).</Text>
 
         <TouchableOpacity
           style={[
@@ -615,7 +620,7 @@ export default function RegisterStoreScreen() {
             <Image source={{ uri: qrImage.uri }} style={styles.docImagePreview} />
           ) : (
             <View style={styles.docPlaceholder}>
-              <MaterialCommunityIcons name="qrcode-scan" size={40} color="#9DFD05" />
+              <MaterialCommunityIcons name="qrcode-scan" size={40} color="#fa6205" />
               <Text style={styles.docLabel}>Subir Imagen del QR</Text>
             </View>
           )}
@@ -633,7 +638,7 @@ export default function RegisterStoreScreen() {
 
   return (
     <KeyboardAvoidingView
-      style={{ flex: 1, backgroundColor: "#1C1C1E" }}
+      style={{ flex: 1, backgroundColor: "#F2F2F7" }}
       behavior={Platform.OS === "ios" ? "padding" : "height"}
     >
       <View style={styles.container}>
@@ -641,9 +646,9 @@ export default function RegisterStoreScreen() {
         {/* HEADER */}
         <View style={styles.headerArea}>
           <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButtonHeader}>
-            <MaterialCommunityIcons name="arrow-left" size={24} color="#fff" />
+            <MaterialCommunityIcons name="arrow-left" size={24} color="#1C1C1E" />
           </TouchableOpacity>
-          <Image source={require("../../assets/images/yar.png")} style={styles.logoSmall} />
+          <Image source={require("../../assets/images/nuevo-icono.jpeg")} style={styles.logoSmall} />
           <View style={styles.progressBarContainer}>
             <View style={[styles.progressBarFill, { width: `${(step / totalSteps) * 100}%` }]} />
           </View>
@@ -672,7 +677,7 @@ export default function RegisterStoreScreen() {
               <Text style={styles.buttonTextPrimary}>
                 {step === 1 ? "Comenzar Registro" : step === totalSteps ? "Finalizar" : "Siguiente"}
               </Text>
-              {step < totalSteps && <MaterialCommunityIcons name="arrow-right" size={20} color="#1C1C1E" style={{ marginLeft: 8 }} />}
+              {step < totalSteps && <MaterialCommunityIcons name="arrow-right" size={20} color="#F2F2F7" style={{ marginLeft: 8 }} />}
             </TouchableOpacity>
           </View>
 
@@ -691,7 +696,7 @@ export default function RegisterStoreScreen() {
                   <Text style={styles.modalItemText}>{item.label}</Text>
                   {/* Icono check si es el seleccionado */}
                   {((pickerTarget === 'pais' && pais === item.value) || (pickerTarget === 'departamento' && formData.departamento === item.value)) && 
-                    <MaterialCommunityIcons name="check" size={20} color="#9DFD05" />
+                    <MaterialCommunityIcons name="check" size={20} color="#fa6205" />
                   }
                 </TouchableOpacity>
               )} />
@@ -735,7 +740,7 @@ export default function RegisterStoreScreen() {
         <Modal transparent={true} visible={isLoading} animationType="fade">
           <View style={styles.loadingOverlay}>
             <View style={styles.loadingContainer}>
-              <ActivityIndicator size="large" color="#9DFD05" />
+              <ActivityIndicator size="large" color="#fa6205" />
               <Text style={styles.loadingText}>Registrando tienda...</Text>
               <Text style={styles.loadingSubText}>Servidor: {pais === 'CO' ? 'Colombia' : 'Perú'}</Text>
             </View>
@@ -748,64 +753,64 @@ export default function RegisterStoreScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#1C1C1E" },
+  container: { flex: 1, backgroundColor: "#F2F2F7" },
   scrollContent: { paddingHorizontal: 24, paddingBottom: 50 },
   headerArea: { paddingTop: 60, paddingHorizontal: 24, marginBottom: 20 },
   backButtonHeader: { marginBottom: 15, alignSelf: 'flex-start' },
-  logoSmall: { width: 120, height: 40, resizeMode: "contain", alignSelf: "center", marginBottom: 20 },
+  logoSmall: { width: 80, height: 80, resizeMode: "contain", alignSelf: "center", marginBottom: 20, borderRadius: 16 },
 
   progressBarContainer: { height: 4, backgroundColor: "#333", borderRadius: 2, marginBottom: 8, width: '100%' },
-  progressBarFill: { height: "100%", backgroundColor: "#9DFD05", borderRadius: 2 },
+  progressBarFill: { height: "100%", backgroundColor: "#fa6205", borderRadius: 2 },
   stepText: { color: "#777", fontSize: 12, fontFamily: "Montserrat_400Regular", textAlign: "right" },
 
-  title: { fontSize: 26, fontFamily: "Montserrat_700Bold", color: "#FFF", marginBottom: 8 },
+  title: { fontSize: 26, fontFamily: "Montserrat_700Bold", color: '#1C1C1E', marginBottom: 8 },
   subtitle: { fontSize: 15, fontFamily: "Montserrat_400Regular", color: "#A0A0A0", marginBottom: 25 },
   label: { fontSize: 14, fontFamily: "Montserrat_700Bold", color: "#DDD", marginBottom: 8, marginLeft: 4 },
 
-  inputDark: { backgroundColor: "#2C2C2E", borderRadius: 12, borderWidth: 1, borderColor: "#444", paddingHorizontal: 16, paddingVertical: 14, fontSize: 16, fontFamily: "Montserrat_400Regular", color: "#FFF", marginBottom: 20, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  inputText: { fontSize: 16, fontFamily: "Montserrat_400Regular", color: "#FFF" },
+  inputDark: { backgroundColor: "#FFFFFF", borderRadius: 12, borderWidth: 1, borderColor: "#DDD", paddingHorizontal: 16, paddingVertical: 14, fontSize: 16, fontFamily: "Montserrat_400Regular", color: '#1C1C1E', marginBottom: 20, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  inputText: { fontSize: 16, fontFamily: "Montserrat_400Regular", color: '#1C1C1E' },
 
   // Aviso
   warningContainer: { alignItems: 'center', paddingVertical: 20 },
-  warningTitle: { fontSize: 22, fontFamily: "Montserrat_700Bold", color: "#9DFD05", marginBottom: 10 },
-  warningSub: { fontSize: 16, fontFamily: "Montserrat_600SemiBold", color: "#FFF", marginBottom: 20 },
+  warningTitle: { fontSize: 22, fontFamily: "Montserrat_700Bold", color: "#fa6205", marginBottom: 10 },
+  warningSub: { fontSize: 16, fontFamily: "Montserrat_600SemiBold", color: '#1C1C1E', marginBottom: 20 },
   bulletPoints: { width: '100%', marginBottom: 30 },
   bulletItem: { flexDirection: 'row', alignItems: 'center', marginBottom: 12 },
-  bulletText: { color: "#FFF", fontSize: 15, fontFamily: "Montserrat_400Regular", marginLeft: 10 },
-  infoBox: { flexDirection: 'row', backgroundColor: '#2C2C2E', padding: 15, borderRadius: 12, borderWidth: 1, borderColor: '#444', alignItems: 'center' },
-  infoText: { color: '#CCC', fontSize: 13, fontFamily: "Montserrat_400Regular", marginLeft: 10, flex: 1, fontStyle: 'italic' },
+  bulletText: { color: '#1C1C1E', fontSize: 15, fontFamily: "Montserrat_400Regular", marginLeft: 10 },
+  infoBox: { flexDirection: 'row', backgroundColor: '#FFFFFF', padding: 15, borderRadius: 12, borderWidth: 1, borderColor: '#444', alignItems: 'center' },
+  infoText: { color: '#444', fontSize: 13, fontFamily: "Montserrat_400Regular", marginLeft: 10, flex: 1, fontStyle: 'italic' },
 
   // Grid Docs
   docGrid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between' },
-  docSquare: { width: '48%', aspectRatio: 1, backgroundColor: '#2C2C2E', borderRadius: 12, marginBottom: 15, borderStyle: 'dashed', borderWidth: 1, borderColor: '#666', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' },
-  docSquareDone: { borderStyle: 'solid', borderWidth: 2, borderColor: '#9DFD05' },
+  docSquare: { width: '48%', aspectRatio: 1, backgroundColor: '#FFFFFF', borderRadius: 12, marginBottom: 15, borderStyle: 'dashed', borderWidth: 1, borderColor: '#666', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' },
+  docSquareDone: { borderStyle: 'solid', borderWidth: 2, borderColor: '#fa6205' },
   docPlaceholder: { alignItems: 'center', padding: 10 },
   docLabel: { color: '#999', fontSize: 12, fontFamily: 'Montserrat_400Regular', marginTop: 10, textAlign: 'center' },
   docImagePreview: { width: '100%', height: '100%', resizeMode: 'cover' },
-  checkBadge: { position: 'absolute', top: 8, right: 8, backgroundColor: '#9DFD05', borderRadius: 10, padding: 4, zIndex: 2 },
+  checkBadge: { position: 'absolute', top: 8, right: 8, backgroundColor: '#fa6205', borderRadius: 10, padding: 4, zIndex: 2 },
 
   // Botones
   navButtons: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 20 },
-  buttonPrimary: { backgroundColor: "#9DFD05", borderRadius: 12, paddingVertical: 16, paddingHorizontal: 20, alignItems: "center", justifyContent: 'center', flexDirection: 'row' },
-  buttonTextPrimary: { color: "#1C1C1E", fontFamily: "Montserrat_700Bold", fontSize: 16 },
+  buttonPrimary: { backgroundColor: "#fa6205", borderRadius: 12, paddingVertical: 16, paddingHorizontal: 20, alignItems: "center", justifyContent: 'center', flexDirection: 'row' },
+  buttonTextPrimary: { color: "#F2F2F7", fontFamily: "Montserrat_700Bold", fontSize: 16 },
   buttonSecondary: { paddingVertical: 15, paddingHorizontal: 20, alignItems: "center", marginRight: 10 },
-  buttonTextSecondary: { color: "#FFF", fontFamily: "Montserrat_700Bold", fontSize: 15 },
+  buttonTextSecondary: { color: '#1C1C1E', fontFamily: "Montserrat_700Bold", fontSize: 15 },
 
   // Modales
   modalOverlay: { flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(0,0,0,0.5)' },
-  modalContent: { backgroundColor: '#2C2C2E', borderTopLeftRadius: 20, borderTopRightRadius: 20, maxHeight: '60%', padding: 20 },
+  modalContent: { backgroundColor: '#FFFFFF', borderTopLeftRadius: 20, borderTopRightRadius: 20, maxHeight: '60%', padding: 20 },
   modalHeader: { flexDirection: 'row', justifyContent: 'space-between', paddingBottom: 15, borderBottomWidth: 1, borderBottomColor: '#444' },
-  modalTitle: { color: '#FFF', fontSize: 18, fontFamily: "Montserrat_700Bold", marginBottom: 10 },
-  modalCloseText: { color: '#9DFD05', fontSize: 16, fontFamily: "Montserrat_700Bold" },
+  modalTitle: { color: '#1C1C1E', fontSize: 18, fontFamily: "Montserrat_700Bold", marginBottom: 10 },
+  modalCloseText: { color: '#fa6205', fontSize: 16, fontFamily: "Montserrat_700Bold" },
   modalItem: { padding: 16, borderBottomWidth: 1, borderBottomColor: '#333', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  modalItemText: { color: '#FFF', fontSize: 16, fontFamily: "Montserrat_400Regular" },
+  modalItemText: { color: '#1C1C1E', fontSize: 16, fontFamily: "Montserrat_400Regular" },
 
   dateModalOverlay: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: 'rgba(0,0,0,0.8)' },
-  dateModalContent: { width: '90%', backgroundColor: '#2C2C2E', borderRadius: 20, padding: 20, alignItems: 'center' },
+  dateModalContent: { width: '90%', backgroundColor: '#FFFFFF', borderRadius: 20, padding: 20, alignItems: 'center' },
   datePickerContainer: { backgroundColor: '#FFF', borderRadius: 10, padding: 10, width: '100%', alignItems: 'center', marginBottom: 20 },
 
   loadingOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.85)', justifyContent: 'center', alignItems: 'center' },
-  loadingContainer: { backgroundColor: '#2C2C2E', padding: 25, borderRadius: 20, alignItems: 'center', width: '80%' },
-  loadingText: { color: '#FFF', fontSize: 18, fontFamily: "Montserrat_700Bold", marginTop: 20, marginBottom: 5 },
+  loadingContainer: { backgroundColor: '#FFFFFF', padding: 25, borderRadius: 20, alignItems: 'center', width: '80%' },
+  loadingText: { color: '#1C1C1E', fontSize: 18, fontFamily: "Montserrat_700Bold", marginTop: 20, marginBottom: 5 },
   loadingSubText: { color: '#AAA', fontSize: 14, fontFamily: "Montserrat_400Regular" }
 });

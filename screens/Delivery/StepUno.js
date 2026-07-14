@@ -102,8 +102,8 @@ export default function SelectLocationScreen() {
   // Nuevo estado para el modal de política de pago
   const [paymentPolicyModalVisible, setPaymentPolicyModalVisible] = useState(false);
 
-  const isColombia = BASE_URL.toString().includes("co.yariders");
-  const textoPago = isColombia ? "Pagar con Nequi o Bancolombia" : "Pagar con Yape o Plin";
+  const isColombia = true;
+  const textoPago = "Pagar con Nequi o Bancolombia";
 
   useEffect(() => {
     const getUserRole = async () => {
@@ -205,7 +205,7 @@ export default function SelectLocationScreen() {
           // 1. LÓGICA DINÁMICA DE PAÍS
           // Convertimos la URL a string y revisamos si es la de Colombia
           const currentUrlStr = BASE_URL.toString();
-          const countryCode = currentUrlStr.includes("co.yariders") ? "co" : "pe";
+          const countryCode = "co";
           console.log(countryCode)
           console.log(`🔎 Buscando en Google Maps para región: ${countryCode.toUpperCase()}`);
 
@@ -549,14 +549,14 @@ export default function SelectLocationScreen() {
           origen: pickupAddress || "",
           destino: deliveryAddress || "",
           metododepago:
-            paymentMethod === "tarjeta" ? "Yape o Plin" : "Efectivo",
+            paymentMethod === "tarjeta" ? "Nequi o Bancolombia" : "Efectivo",
         }),
         punto_recogida: JSON.stringify(puntoRecogidaCoords),
         destino: JSON.stringify(destinoCoords),
         costo: parseFloat(totalPrice),
         distancia: distanceInKm,
         estado: "pendiente",
-        metodo_pago: paymentMethod === "tarjeta" ? "Yape o Plin" : "Efectivo",
+        metodo_pago: paymentMethod === "tarjeta" ? "Nequi o Bancolombia" : "Efectivo",
       };
 
       console.log("Datos de carrera a enviar:", carreraData);
@@ -754,7 +754,7 @@ export default function SelectLocationScreen() {
       .toString()
       .padStart(2, "0")}`;
 
-    // Lista de feriados peruanos (formato MM-DD)
+    // Lista de feriados colombianos (formato MM-DD)
     const peruvianHolidays = [
       "01-01", // Año Nuevo
       "04-06", // Jueves Santo (esto varía cada año)
@@ -1055,7 +1055,7 @@ export default function SelectLocationScreen() {
           let calculatedPrice =
             basePrice + distance * pricePerKm + servicePrice;
           // Aplicar tarifa mínima si es necesario
-          const MINIMUM_FARE = 5.0; // Tarifa mínima en Soles
+          const MINIMUM_FARE = 5.0; // Tarifa mínima en Pesos
           calculatedPrice = Math.max(calculatedPrice, MINIMUM_FARE);
 
           // Redondear a 2 decimales
@@ -1063,9 +1063,9 @@ export default function SelectLocationScreen() {
           setTotalPrice(finalPrice.toFixed(2));
 
           console.log(
-            `Precio calculado: S/${finalPrice} (Base: S/${basePrice} + ${distance.toFixed(
+            `Precio calculado: $ ${finalPrice} (Base: $ ${basePrice} + ${distance.toFixed(
               2
-            )} km x ${pricePerKm} S/km + Servicio: S/${servicePrice})`
+            )} km x ${pricePerKm} $ km + Servicio: $ ${servicePrice})`
           );
 
           // También guardar la distancia para uso posterior
@@ -1103,7 +1103,7 @@ export default function SelectLocationScreen() {
           setTotalPrice(finalPrice.toFixed(2));
 
           console.log(
-            `Usando precio estimado: S/${finalPrice} (Base: S/${basePrice} + distancia estimada de ${estimatedDistance} km + Servicio: S/${servicePrice})`
+            `Usando precio estimado: $ ${finalPrice} (Base: $ ${basePrice} + distancia estimada de ${estimatedDistance} km + Servicio: $ ${servicePrice})`
           );
         } catch (fallbackError) {
           console.error(
@@ -1129,7 +1129,7 @@ export default function SelectLocationScreen() {
         // 1. LÓGICA DINÁMICA DE PAÍS
         // Verificamos si la URL actual pertenece a Colombia
         const currentUrlStr = BASE_URL.toString();
-        const countryCode = currentUrlStr.includes("co.yariders") ? "co" : "pe";
+        const countryCode = "co";
 
 
         // (Opcional) Log para verificar qué país está buscando
@@ -1178,7 +1178,7 @@ export default function SelectLocationScreen() {
         // 1. LÓGICA DINÁMICA DE PAÍS
         // Verificamos si la URL actual es de Colombia
         const currentUrlStr = BASE_URL.toString();
-        const countryCode = currentUrlStr.includes("co.yariders") ? "co" : "pe";
+        const countryCode = "co";
 
         // console.log(`🚚 Buscando entrega en: ${countryCode.toUpperCase()}`);
 
@@ -1556,7 +1556,7 @@ export default function SelectLocationScreen() {
     <SafeAreaView style={styles.safeContainer}>
       <ScrollView style={styles.scrollView}>
         <View style={styles.container}>
-          <Text style={styles.title}>Solicitud de Riders</Text>
+          <Text style={styles.title}>Solicita tu transporte</Text>
 
           {/* Paso 1: Selección de tipo de vehículo (siempre visible) */}
           <Text style={styles.sectionTitle}>Seleccione el tipo de vehículo</Text>
@@ -1577,7 +1577,7 @@ export default function SelectLocationScreen() {
                   <MaterialCommunityIcons
                     name="motorbike"
                     size={24}
-                    color={vehicleType === "moto" ? "#000" : "#FFF"} // <-- CAMBIO AQUÍ
+                    color={vehicleType === "moto" ? "#000" : "#fa6205"} // <-- CAMBIO AQUÍ
                   />
                   {' Moto'}
                 </Text>
@@ -1601,7 +1601,7 @@ export default function SelectLocationScreen() {
                     <MaterialCommunityIcons
                       name="taxi"
                       size={24}
-                      color={vehicleType === "taxi" ? "#000" : "#FFF"} // <-- CAMBIO AQUÍ
+                      color={vehicleType === "taxi" ? "#000" : "#fa6205"} // <-- CAMBIO AQUÍ
                     />
                     {' Taxi'}
                   </Text>
@@ -1621,7 +1621,7 @@ export default function SelectLocationScreen() {
                     <MaterialCommunityIcons
                       name="motorbike"
                       size={24}
-                      color={vehicleType === "moto" ? "#000" : "#FFF"} // <-- CAMBIO AQUÍ
+                      color={vehicleType === "moto" ? "#000" : "#fa6205"} // <-- CAMBIO AQUÍ
                     />
                     {' Moto'}
                   </Text>
@@ -1641,7 +1641,7 @@ export default function SelectLocationScreen() {
                     <MaterialCommunityIcons
                       name="rickshaw"
                       size={24}
-                      color={vehicleType === "mototaxi" ? "#000" : "#FFF"} // <-- CAMBIO AQUÍ
+                      color={vehicleType === "mototaxi" ? "#000" : "#fa6205"} // <-- CAMBIO AQUÍ
                     />
                     {' Mototaxi'}
                   </Text>
@@ -1658,7 +1658,7 @@ export default function SelectLocationScreen() {
               <MaterialCommunityIcons
                 name="hand-pointing-up"
                 size={28}
-                color="#FFFFFF"
+                color="#1C1C1E"
                 style={styles.promptIcon}
               />
               <Text style={styles.promptText}>
@@ -1673,7 +1673,7 @@ export default function SelectLocationScreen() {
               <Text style={styles.sectionTitle}>Servicios disponibles</Text>
               {isLoadingServices ? (
                 <View style={styles.loadingContainer}>
-                  <ActivityIndicator size="large" color="#39FF14" />
+                  <ActivityIndicator size="large" color="#fa6205" />
                   <Text style={styles.loadingText}>Cargando servicios...</Text>
                 </View>
               ) : availableServices.length > 0 ? (
@@ -1768,7 +1768,7 @@ export default function SelectLocationScreen() {
                     : "Selecciona punto de destino"}
                 </Text>
                 <TouchableOpacity onPress={() => setMapModalVisible(false)}>
-                  <IconMC name="close" size={24} color="white" />
+                  <IconMC name="close" size={24} color="#1C1C1E" />
                 </TouchableOpacity>
               </View>
 
@@ -1778,7 +1778,7 @@ export default function SelectLocationScreen() {
                   <Ionicons
                     name="search"
                     size={20}
-                    color="#4CD964"
+                    color="#fa6205"
                     style={styles.mapSearchIcon}
                   />
                   <TextInput
@@ -1813,7 +1813,7 @@ export default function SelectLocationScreen() {
                     <Ionicons
                       name={result.recent ? "time" : "location"}
                       size={18}
-                      color={result.recent ? "#FF9500" : "#4CD964"}
+                      color={result.recent ? "#FF9500" : "#fa6205"}
                       style={styles.mapSearchResultIcon}
                     />
                     <Text style={styles.mapSearchResultText} numberOfLines={2}>
@@ -1839,7 +1839,7 @@ export default function SelectLocationScreen() {
                   showsPointsOfInterest={false}
                   toolbarEnabled={false}
                   loadingEnabled={true}
-                  loadingIndicatorColor="#4CD964"
+                  loadingIndicatorColor="#fa6205"
                   loadingBackgroundColor="#222"
                   onRegionChangeComplete={(region) => {
                     if (ignoreNextRegionChange) {
@@ -1872,7 +1872,7 @@ export default function SelectLocationScreen() {
                         latitude: selectedLocation.latitude,
                         longitude: selectedLocation.longitude,
                       }}
-                      pinColor="#4CD964"
+                      pinColor="#fa6205"
                     />
                   )}
                 </MapView>
@@ -1883,7 +1883,7 @@ export default function SelectLocationScreen() {
                   style={styles.centerLocationButton}
                   onPress={centerMapOnUserLocation}
                 >
-                  <Ionicons name="locate" size={28} color="#4CD964" />
+                  <Ionicons name="locate" size={28} color="#fa6205" />
                 </TouchableOpacity>
 
                 {/* Botón para seleccionar ubicación central */}
@@ -1903,13 +1903,13 @@ export default function SelectLocationScreen() {
                     );
                   }}
                 >
-                  <Ionicons name="flag" size={28} color="#4CD964" />
+                  <Ionicons name="flag" size={28} color="#fa6205" />
                 </TouchableOpacity>
 
                 <View style={styles.mapPinOverlay}>
                   <Text style={styles.mapInstructions}>
                     Mueve el mapa y presiona el botón
-                    <Ionicons name="flag" size={16} color="#4CD964" /> para
+                    <Ionicons name="flag" size={16} color="#fa6205" /> para
                     seleccionar la ubicación
                   </Text>
                 </View>
@@ -2118,7 +2118,7 @@ export default function SelectLocationScreen() {
                         <MaterialCommunityIcons
                           name="cash"
                           size={24}
-                          color="#fff"
+                          color="#1C1C1E"
                         />
                       </View>
                       <Text style={styles.paymentText}>Efectivo</Text>
@@ -2133,7 +2133,7 @@ export default function SelectLocationScreen() {
                           <MaterialCommunityIcons
                             name="check"
                             size={20}
-                            color="#8BC34A"
+                            color="#fa6205"
                           />
                         )}
                       </View>
@@ -2147,7 +2147,7 @@ export default function SelectLocationScreen() {
                     <MaterialCommunityIcons
                       name="credit-card"
                       size={24}
-                      color="#fff"
+                      color="#1C1C1E"
                     />
                   </View>
                   <Text style={styles.paymentText}>{textoPago}</Text>
@@ -2161,7 +2161,7 @@ export default function SelectLocationScreen() {
                 {/* Mostrar indicador de carga mientras se consulta la configuración del usuario */}
                 {loadingUserSettings && (
                   <View style={styles.loadingPaymentContainer}>
-                    <ActivityIndicator size="small" color="#39FF14" />
+                    <ActivityIndicator size="small" color="#fa6205" />
                     <Text style={styles.loadingPaymentText}>
                       Cargando métodos de pago...
                     </Text>
@@ -2186,7 +2186,7 @@ export default function SelectLocationScreen() {
                 <View style={styles.priceContainer}>
                   {isCalculatingPrice ? (
                     <View style={styles.calculatingContainer}>
-                      <ActivityIndicator size="large" color="#39FF14" />
+                      <ActivityIndicator size="large" color="#fa6205" />
                       <Text style={styles.calculatingText}>
                         Calculando precio...
                       </Text>
@@ -2195,7 +2195,7 @@ export default function SelectLocationScreen() {
                     <Text style={styles.priceError}>{priceError}</Text>
                   ) : totalPrice ? (
                     <View>
-                      <Text style={styles.totalPrice}>{BASE_URL.toString().includes("co.yariders") ? "$" : "S/"}{totalPrice}</Text>
+                      <Text style={styles.totalPrice}>$ {totalPrice}</Text>
                       {distanceInKm && (
                         <View>
                           <Text style={styles.distanceText}>
@@ -2286,7 +2286,7 @@ export default function SelectLocationScreen() {
 
             <Text style={styles.paymentPolicyTitle}>Información importante</Text>
             <Text style={styles.paymentPolicyText}>
-              Estimado usuario, por políticas de seguridad para cuentas nuevas, el pago debe realizarse por Yape o Plin antes de iniciar el servicio. Una vez complete 5 servicios o delivery, podrá pagar al finalizar. Agradecemos su comprensión.
+              Estimado usuario, por políticas de seguridad para cuentas nuevas, el pago debe realizarse por Nequi o Bancolombia antes de iniciar el servicio. Una vez complete 5 servicios o delivery, podrá pagar al finalizar. Agradecemos su comprensión.
             </Text>
 
             <TouchableOpacity
@@ -2364,7 +2364,7 @@ export default function SelectLocationScreen() {
       {isCreatingRide && (
         <View style={styles.globalLoadingContainer}>
           <View style={styles.globalLoadingContent}>
-            <ActivityIndicator size="large" color="#39FF14" />
+            <ActivityIndicator size="large" color="#fa6205" />
             <Text style={styles.globalLoadingText}>Creando servicio...</Text>
           </View>
         </View>
@@ -2376,7 +2376,7 @@ export default function SelectLocationScreen() {
 const styles = StyleSheet.create({
   safeContainer: {
     flex: 1,
-    backgroundColor: "#121212", // Añadido para un fondo de tema oscuro consistente
+    backgroundColor: "#F2F2F7", // Añadido para un fondo de tema oscuro consistente
   },
   scrollView: {
     // El fondo se hereda de safeContainer
@@ -2391,7 +2391,7 @@ const styles = StyleSheet.create({
   mapSearchContainer: {
     padding: 10,
     borderBottomWidth: 1,
-    borderBottomColor: "#444", // Borde claro sobre fondo oscuro
+    borderBottomColor: "#DDD", // Borde claro sobre fondo oscuro
   },
   mapSearchInputContainer: {
     flexDirection: "row",
@@ -2409,9 +2409,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 15,
     paddingVertical: 12,
     height: 50,
-    color: "#FFFFFF", // Texto blanco
-    backgroundColor: 'rgba(80, 80, 80, 0.6)', // Fondo de input oscuro
-    borderColor: 'rgba(100, 100, 100, 0.6)', // Borde de input oscuro
+    color: "#1C1C1E",
+    backgroundColor: '#FFFFFF',
+    borderColor: '#DDD',
     borderWidth: 1,
     borderRadius: 10,
     fontFamily: "MontserratBold",
@@ -2452,7 +2452,7 @@ const styles = StyleSheet.create({
     justifyContent: "flex-end",
   },
   mapModalContent: {
-    backgroundColor: "#1C1C1E", // Fondo oscuro para el modal
+    backgroundColor: "#F2F2F7", // Fondo oscuro para el modal
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
     height: "100%",
@@ -2464,12 +2464,12 @@ const styles = StyleSheet.create({
     alignItems: "center",
     padding: 15,
     borderBottomWidth: 1,
-    borderBottomColor: "#444",
+    borderBottomColor: "#DDD",
   },
   mapModalTitle: {
     fontSize: 18,
     fontFamily: "MontserratBold",
-    color: "#FFFFFF",
+    color: "#1C1C1E",
   },
   mapContainer: {
     flex: 1,
@@ -2497,10 +2497,10 @@ const styles = StyleSheet.create({
   },
   mapButtonContainer: {
     padding: 15,
-    backgroundColor: "#1C1C1E", // Para que coincida con el fondo del modal
+    backgroundColor: "#F2F2F7", // Para que coincida con el fondo del modal
   },
   mapButton: {
-    backgroundColor: "#9DFD05", // Nuevo verde
+    backgroundColor: "#fa6205", // Nuevo verde
     paddingVertical: 15,
     borderRadius: 30,
     alignItems: "center",
@@ -2518,7 +2518,7 @@ const styles = StyleSheet.create({
     position: "absolute",
     bottom: 20,
     left: 20,
-    backgroundColor: "#333", // Botón oscuro
+    backgroundColor: "#ECECEC", // Botón oscuro
     borderRadius: 30,
     padding: 12,
     elevation: 5,
@@ -2537,9 +2537,9 @@ const styles = StyleSheet.create({
     marginLeft: -10,
     marginTop: -10,
     borderRadius: 10,
-    backgroundColor: "rgba(157, 253, 5, 0.5)", // Nuevo verde con transparencia
+    backgroundColor: "rgba(250, 98, 5, 0.5)", // Nuevo verde con transparencia
     borderWidth: 2,
-    borderColor: "#9DFD05", // Nuevo verde
+    borderColor: "#fa6205", // Nuevo verde
     justifyContent: "center",
     alignItems: "center",
   },
@@ -2547,7 +2547,7 @@ const styles = StyleSheet.create({
     width: 6,
     height: 6,
     borderRadius: 3,
-    backgroundColor: "#9DFD05", // Nuevo verde
+    backgroundColor: "#fa6205", // Nuevo verde
   },
   mapSearchResultsContainerInline: {
     backgroundColor: "#FFFFFF",
@@ -2570,7 +2570,7 @@ const styles = StyleSheet.create({
     position: "absolute",
     bottom: 20,
     right: 20,
-    backgroundColor: "#333",
+    backgroundColor: "#ECECEC",
     borderRadius: 30,
     padding: 12,
     elevation: 5,
@@ -2586,14 +2586,14 @@ const styles = StyleSheet.create({
     marginTop: 40,
     marginBottom: 20,
     fontFamily: "MontserratBold",
-    color: "#FFFFFF",
+    color: "#1C1C1E",
   },
   sectionTitle: {
     fontSize: 18,
     marginTop: 5,
     marginBottom: 5,
     fontFamily: "MontserratRegular",
-    color: "#E0E0E0",
+    color: "#444",
   },
   vehicleOptions: {
     marginBottom: 20,
@@ -2601,26 +2601,28 @@ const styles = StyleSheet.create({
   vehicleButton: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#333", // Nuevo verde con transparencia
-    borderRadius: 8,
+    backgroundColor: "#FFFFFF",
+    borderRadius: 12,
+    borderWidth: 1.5,
+    borderColor: "#fa6205",
     marginTop: 10,
-    paddingVertical: 10,
+    paddingVertical: 12,
     justifyContent: "center",
   },
   selectedTextVehicle: {
 
   },
   vehicleButtonSelected: {
-    backgroundColor: "#9DFD05",
+    backgroundColor: "#fa6205",
   },
   mototaxiButton: {
-    backgroundColor: "#9DFD05",
+    backgroundColor: "#fa6205",
   },
   taxiButton: {
-    backgroundColor: "#9DFD05",
+    backgroundColor: "#fa6205",
   },
   vehicleButtonText: {
-    color: "#FFF", // Texto negro para contraste
+    color: "#1C1C1E", // Texto negro para contraste
     fontFamily: "MontserratBold",
     width: "100%",
     textAlign: 'center',
@@ -2656,10 +2658,12 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   serviceButton: {
-    backgroundColor: "#333", // Fondo oscuro para botón no seleccionado
-    paddingVertical: 12,
+    backgroundColor: "#FFFFFF",
+    paddingVertical: 14,
     paddingHorizontal: 15,
-    borderRadius: 8,
+    borderRadius: 12,
+    borderWidth: 1.5,
+    borderColor: "#fa6205",
     marginBottom: 10,
     width: "48%",
     alignItems: "center",
@@ -2667,12 +2671,12 @@ const styles = StyleSheet.create({
     minHeight: 90,
   },
   serviceButtonSelected: {
-    backgroundColor: "#9DFD05", // Nuevo verde para el seleccionado
+    backgroundColor: "#fa6205", // Nuevo verde para el seleccionado
     borderWidth: 1,
-    borderColor: "#9DFD05",
+    borderColor: "#fa6205",
   },
   serviceButtonText: {
-    color: "#FFFFFF",
+    color: "#1C1C1E",
     textAlign: "center",
     fontFamily: "MontserratRegular",
   },
@@ -2689,13 +2693,13 @@ const styles = StyleSheet.create({
   loadingText: {
     marginTop: 10,
     fontFamily: "MontserratRegular",
-    color: "#FFFFFF",
+    color: "#1C1C1E",
   },
   noServicesText: {
     textAlign: "center",
     fontFamily: "MontserratRegular",
     marginBottom: 20,
-    color: "#FFFFFF",
+    color: "#1C1C1E",
   },
   servicePriceText: {
     color: "#888", // Gris claro
@@ -2710,23 +2714,25 @@ const styles = StyleSheet.create({
     flexWrap: "wrap",
   },
   categoryButton: {
-    backgroundColor: "#333",
-    paddingVertical: 12,
+    backgroundColor: "#FFFFFF",
+    borderWidth: 1.5,
+    borderColor: "#fa6205",
+    paddingVertical: 14,
     paddingHorizontal: 15,
-    borderRadius: 8,
+    borderRadius: 12,
     marginBottom: 10,
   },
-  mandadoButton: { backgroundColor: "#333" },
-  pagosButton: { backgroundColor: "#333" },
-  paquetesButton: { backgroundColor: "#333", flex: 1, marginRight: 10, },
-  personasButton: { backgroundColor: "#333", flex: 1, },
+  mandadoButton: { backgroundColor: "#FFFFFF", borderWidth: 1.5, borderColor: "#fa6205" },
+  pagosButton: { backgroundColor: "#FFFFFF", borderWidth: 1.5, borderColor: "#fa6205" },
+  paquetesButton: { backgroundColor: "#FFFFFF", borderWidth: 1.5, borderColor: "#fa6205", flex: 1, marginRight: 10, },
+  personasButton: { backgroundColor: "#FFFFFF", borderWidth: 1.5, borderColor: "#fa6205", flex: 1, },
   categoryButtonSelected: {
-    backgroundColor: "#9DFD05",
+    backgroundColor: "#fa6205",
     borderWidth: 1,
-    borderColor: "#9DFD05",
+    borderColor: "#fa6205",
   },
   categoryButtonText: {
-    color: "#FFFFFF", // Texto blanco, cambiar a negro en el seleccionado
+    color: "#1C1C1E", // Texto blanco, cambiar a negro en el seleccionado
     textAlign: "center",
     fontFamily: "MontserratRegular",
   },
@@ -2734,7 +2740,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     borderWidth: 1,
     backgroundColor: "#FFF",
-    borderColor: "#9DFD05", // Nuevo verde
+    borderColor: "#fa6205", // Nuevo verde
     borderRadius: 15,
     padding: 15,
     marginBottom: 15,
@@ -2771,7 +2777,7 @@ const styles = StyleSheet.create({
   },
   observationsContainer: {
     borderWidth: 1,
-    borderColor: "#9DFD05", // Nuevo verde
+    borderColor: "#fa6205", // Nuevo verde
     borderRadius: 15,
     backgroundColor: "#FFF",
     padding: 15,
@@ -2784,7 +2790,7 @@ const styles = StyleSheet.create({
   paymentContainer: {
     backgroundColor: "#FFF",
     borderWidth: 1,
-    borderColor: "#9DFD05",
+    borderColor: "#fa6205",
     borderRadius: 15,
     padding: 15,
     marginBottom: 25,
@@ -2807,7 +2813,7 @@ const styles = StyleSheet.create({
     marginBottom: 15,
   },
   paymentIconContainer: {
-    backgroundColor: "#444",
+    backgroundColor: "#DDD",
     borderRadius: 8,
     width: 36,
     height: 36,
@@ -2818,13 +2824,15 @@ const styles = StyleSheet.create({
   paymentText: {
     flex: 1,
     fontFamily: "MontserratRegular",
+    color: "#1C1C1E",
+    fontSize: 16,
   },
   radioButton: {
     width: 24,
     height: 24,
     borderRadius: 12,
     borderWidth: 2,
-    borderColor: "#9DFD05", // Nuevo verde
+    borderColor: "#fa6205", // Nuevo verde
     justifyContent: "center",
     alignItems: "center",
   },
@@ -2832,7 +2840,7 @@ const styles = StyleSheet.create({
     width: 14,
     height: 14,
     borderRadius: 7,
-    backgroundColor: "#9DFD05", // Relleno verde
+    backgroundColor: "#fa6205", // Relleno verde
   },
   footer: {
     flexDirection: "row",
@@ -2848,10 +2856,10 @@ const styles = StyleSheet.create({
     fontSize: 32,
     fontWeight: "bold",
     fontFamily: "MontserratBold",
-    color: "#FFFFFF",
+    color: "#1C1C1E",
   },
   payButton: {
-    backgroundColor: "#9DFD05",
+    backgroundColor: "#fa6205",
     paddingVertical: 15,
     paddingHorizontal: 40,
     borderRadius: 30,
@@ -2866,7 +2874,7 @@ const styles = StyleSheet.create({
     fontFamily: "MontserratBold",
   },
   modalContent: {
-    backgroundColor: "#2C2C2E", // Fondo oscuro para modal
+    backgroundColor: "#FFFFFF", // Fondo oscuro para modal
     padding: 30,
     borderRadius: 20,
     alignItems: "center",
@@ -2876,13 +2884,13 @@ const styles = StyleSheet.create({
     fontSize: 22,
     fontWeight: "bold",
     marginBottom: 10,
-    color: "#FFFFFF",
+    color: "#1C1C1E",
     textAlign: "center",
     fontFamily: "MontserratBold",
   },
   subtitle5: {
     fontSize: 16,
-    color: "#BBBBBB",
+    color: "#777",
     marginBottom: 25,
     textAlign: "center",
     fontFamily: "MontserratRegular",
@@ -2897,13 +2905,13 @@ const styles = StyleSheet.create({
   },
   subtitle6: {
     fontSize: 16,
-    color: "#BBBBBB",
+    color: "#777",
     marginBottom: 25,
     textAlign: "center",
     fontFamily: "MontserratRegular",
   },
   button5: {
-    backgroundColor: "#9DFD05",
+    backgroundColor: "#fa6205",
     paddingVertical: 12,
     paddingHorizontal: 25,
     borderRadius: 10,
@@ -2942,7 +2950,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 15,
     paddingVertical: 12,
     height: 50,
-    backgroundColor: 'rgba(255, 255, 255, 0.6)',
+    color: "#1C1C1E",
+    backgroundColor: '#FFFFFF',
+    borderColor: '#DDD',
     borderWidth: 1,
     borderRadius: 10,
     fontFamily: "MontserratBold",
@@ -2959,11 +2969,11 @@ const styles = StyleSheet.create({
     lineHeight: 20,
     minHeight: 60,
     borderRadius: 12,
-    backgroundColor: 'rgba(80, 80, 80, 0.1)',
-    color: 'rgba(0, 0, 0, 1)',
+    backgroundColor: '#FFFFFF',
+    color: '#1C1C1E',
     textAlignVertical: "top",
     fontFamily: "MontserratLight",
-    padding: 10, // Añadido padding para mejor apariencia
+    padding: 10,
   },
   calculatingContainer: {
     alignItems: "center",
@@ -2971,7 +2981,7 @@ const styles = StyleSheet.create({
   calculatingText: {
     marginTop: 5,
     fontFamily: "MontserratRegular",
-    color: "#FFFFFF",
+    color: "#1C1C1E",
   },
   priceError: {
     color: "#FF3B30",
@@ -2981,19 +2991,19 @@ const styles = StyleSheet.create({
   totalPricePrompt: {
     fontSize: 16,
     fontFamily: "MontserratRegular",
-    color: "#FFFFFF",
+    color: "#1C1C1E",
   },
   distanceText: {
     fontSize: 14,
     fontFamily: "MontserratRegular",
     marginTop: 5,
-    color: "#BBBBBB",
+    color: "#777",
   },
   basePriceText: {
     fontSize: 14,
     fontFamily: "MontserratRegular",
     marginTop: 2,
-    color: "#BBBBBB",
+    color: "#777",
   },
   payButtonDisabled: {
     backgroundColor: "#555",
@@ -3008,7 +3018,7 @@ const styles = StyleSheet.create({
   loadingPaymentText: {
     marginLeft: 10,
     fontFamily: "MontserratRegular",
-    color: "#FFFFFF",
+    color: "#1C1C1E",
   },
   paymentInfoContainer: {
     flexDirection: "row",
@@ -3052,20 +3062,20 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: "bold",
     marginBottom: 15,
-    color: "#FFFFFF",
+    color: "#1C1C1E",
     textAlign: "center",
     fontFamily: "MontserratBold",
   },
   paymentPolicyText: {
     fontSize: 16,
-    color: "#BBBBBB",
+    color: "#777",
     marginBottom: 25,
     textAlign: "center",
     lineHeight: 24,
     fontFamily: "MontserratRegular",
   },
   paymentPolicyButton: {
-    backgroundColor: "#9DFD05",
+    backgroundColor: "#fa6205",
     paddingVertical: 12,
     paddingHorizontal: 30,
     borderRadius: 10,
@@ -3078,7 +3088,7 @@ const styles = StyleSheet.create({
   },
   mensajeAyuda: {
     fontSize: 12,
-    color: "#BBBBBB",
+    color: "#666",
   },
   mensajeAyudaSecundaria: {
     fontSize: 12,
@@ -3098,7 +3108,7 @@ const styles = StyleSheet.create({
   actionButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#9DFD05', // Nuevo verde
+    backgroundColor: '#fa6205', // Nuevo verde
     paddingVertical: 10,
     paddingHorizontal: 12,
     borderRadius: 8,
@@ -3119,7 +3129,7 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     paddingVertical: 15,
     paddingHorizontal: 20,
-    backgroundColor: '#2C2C2E', // Un gris oscuro para que contraste con el fondo
+    backgroundColor: '#FFFFFF', // Un gris oscuro para que contraste con el fondo
     borderRadius: 15,
     // Sombra sutil para dar profundidad
     shadowColor: "#000",
@@ -3135,7 +3145,7 @@ const styles = StyleSheet.create({
     marginRight: 12,
   },
   promptText: {
-    color: '#FFFFFF', // Texto blanco brillante para máxima legibilidad
+    color: '#1C1C1E', // Texto blanco brillante para máxima legibilidad
     fontFamily: 'MontserratBold',
     fontSize: 15,
   },

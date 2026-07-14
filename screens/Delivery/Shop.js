@@ -197,7 +197,7 @@ const Shop = () => {
   }, [fetchedSubcategories, initialSubcategories, fetchedServicios, isSede, sedeId]);
 
   if (!fontsLoaded || loading) {
-    return ( <View style={styles.loadingContainer}><ActivityIndicator size="large" color="#A3FF00" /></View> );
+    return ( <View style={styles.loadingContainer}><ActivityIndicator size="large" color="#fa6205" /></View> );
   }
 
   const addToCart = async (product) => {
@@ -252,14 +252,14 @@ const Shop = () => {
 
   return (
     <View style={styles.container}>
-      <StatusBar barStyle="light-content" backgroundColor="#1c1c1c" />
+      <StatusBar barStyle="dark-content" backgroundColor="#F2F2F7" />
       
       <ScrollView stickyHeaderIndices={[0]} showsVerticalScrollIndicator={false}>
         
         <View style={{zIndex: 10}}> 
            <View style={styles.topNav}>
                 <TouchableOpacity style={styles.backButtonCircle} onPress={() => navigation.goBack()}>
-                    <Ionicons name="arrow-back" size={24} color="#fff" />
+                    <Ionicons name="arrow-back" size={24} color="#1C1C1E" />
                 </TouchableOpacity>
             </View>
         </View>
@@ -287,7 +287,7 @@ const Shop = () => {
                         
                         {isSede && sedeLocation && (
                           <Text style={styles.heroSubtitle}>
-                            <Ionicons name="location-outline" size={12} color="#A3FF00" /> {sedeLocation}
+                            <Ionicons name="location-outline" size={12} color="#fa6205" /> {sedeLocation}
                           </Text>
                         )}
 
@@ -355,7 +355,7 @@ const Shop = () => {
                           <View style={styles.cardBody}>
                             <View style={styles.priceRow}>
                                 <Text style={styles.cardPrice}>
-                                    {BASE_URL.toString().includes("co.yariders") ? "$" : "S/"}
+                                    {"$"}
                                     {product.precio || "0"}
                                 </Text>
                             </View>
@@ -398,7 +398,7 @@ const Shop = () => {
 
                             <View style={styles.cardBody}>
                                 <Text style={styles.cardPrice}>
-                                    {BASE_URL.toString().includes("co.yariders") ? "$" : "S/"}
+                                    {"$"}
                                     {servicio.precio || "0"}
                                 </Text>
                                 <Text style={styles.cardTitle} numberOfLines={2}>{servicio.nombre}</Text>
@@ -455,7 +455,7 @@ const Shop = () => {
                         <Ionicons name="close-circle" size={30} color="#666" />
                     </TouchableOpacity>
                 </View>
-                {loadingRatings ? <ActivityIndicator size="large" color="#A3FF00" /> : (
+                {loadingRatings ? <ActivityIndicator size="large" color="#fa6205" /> : (
                     <FlatList 
                         data={comercioPedidos}
                         keyExtractor={(item) => item.id.toString()}
@@ -472,7 +472,7 @@ const Shop = () => {
                                     <Text style={styles.reviewUser}>{item.user?.nombre_completo || "Anónimo"}</Text>
                                     <Text style={styles.reviewDate}>{formatDate(item.created_at)}</Text>
                                 </View>
-                                <View style={{flexDirection:'row', marginBottom:5}}>{[...Array(5)].map((_,i)=><FontAwesome key={i} name="star" size={12} color={i<item.puntuacion_restaurante?"#FFD700":"#444"} />)}</View>
+                                <View style={{flexDirection:'row', marginBottom:5}}>{[...Array(5)].map((_,i)=><FontAwesome key={i} name="star" size={12} color={i<item.puntuacion_restaurante?"#FFD700":"#DDD"} />)}</View>
                                 {item.comentario_restaurante && <Text style={styles.reviewText}>"{item.comentario_restaurante}"</Text>}
                             </View>
                         )}
@@ -490,11 +490,11 @@ const Shop = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#1c1c1c",
+    backgroundColor: "#F2F2F7",
   },
   heroContainer: {
     paddingBottom: 20,
-    backgroundColor: '#1c1c1c',
+    backgroundColor: '#F2F2F7',
     marginTop: -50,
     paddingTop: 50
   },
@@ -519,7 +519,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   avatarContainer: {
-    shadowColor: "#A3FF00",
+    shadowColor: "#fa6205",
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 5,
@@ -530,14 +530,14 @@ const styles = StyleSheet.create({
     height: 80,
     borderRadius: 40,
     borderWidth: 2,
-    borderColor: '#A3FF00',
+    borderColor: '#fa6205',
   },
   heroInfo: {
     flex: 1,
     marginLeft: 15,
   },
   heroTitle: {
-    color: '#fff',
+    color: '#1C1C1E',
     fontFamily: 'Montserrat_700Bold',
     fontSize: 22,
     lineHeight: 26,
@@ -556,7 +556,7 @@ const styles = StyleSheet.create({
   ratingBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#A3FF00',
+    backgroundColor: '#fa6205',
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 12,
@@ -583,14 +583,14 @@ const styles = StyleSheet.create({
     marginBottom: 25,
   },
   sectionTitle: {
-    color: '#fff',
+    color: '#1C1C1E',
     fontFamily: 'Montserrat_700Bold',
     fontSize: 20,
     marginLeft: 15,
     marginBottom: 15,
   },
   subSectionTitle: {
-    color: '#A3FF00',
+    color: '#fa6205',
     fontFamily: 'Montserrat_600SemiBold',
     fontSize: 16,
     marginLeft: 15,
@@ -603,7 +603,7 @@ const styles = StyleSheet.create({
   },
   cardContainer: {
     width: CARD_WIDTH,
-    backgroundColor: '#2a2a2a',
+    backgroundColor: '#ECECEC',
     borderRadius: 16,
     marginRight: 15,
     overflow: 'hidden',
@@ -630,7 +630,7 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: '#A3FF00',
+    backgroundColor: '#fa6205',
     justifyContent: 'center',
     alignItems: 'center',
     shadowColor: "#000",
@@ -657,12 +657,12 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   cardPrice: {
-    color: '#A3FF00',
+    color: '#fa6205',
     fontFamily: 'Montserrat_700Bold',
     fontSize: 16,
   },
   cardTitle: {
-    color: '#fff',
+    color: '#1C1C1E',
     fontFamily: 'Montserrat_700Bold',
     fontSize: 14,
     marginBottom: 4,
@@ -675,31 +675,31 @@ const styles = StyleSheet.create({
     fontSize: 11,
     lineHeight: 14,
   },
-  loadingContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#1c1c1c' },
+  loadingContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#F2F2F7' },
   emptyContainer: { alignItems: 'center', justifyContent: 'center', paddingVertical: 50, opacity: 0.5 },
-  emptyText: { color: '#fff', fontFamily: 'Montserrat_400Regular', marginTop: 10 },
+  emptyText: { color: '#1C1C1E', fontFamily: 'Montserrat_400Regular', marginTop: 10 },
   errorContainer: { alignItems: 'center', margin: 20 },
   errorText: { color: '#ff6b6b', fontFamily: 'Montserrat_400Regular' },
-  retryButton: { backgroundColor: '#A3FF00', padding: 8, borderRadius: 5, marginTop: 10 },
+  retryButton: { backgroundColor: '#fa6205', padding: 8, borderRadius: 5, marginTop: 10 },
   retryButtonText: { fontFamily: 'Montserrat_700Bold' },
   modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.8)', justifyContent: 'center', alignItems: 'center' },
-  modalContent: { width: '80%', backgroundColor: '#2a2a2a', borderRadius: 20, padding: 25, alignItems: 'center' },
-  successIconCircle: { width: 70, height: 70, borderRadius: 35, backgroundColor: '#A3FF00', justifyContent: 'center', alignItems: 'center', marginBottom: 15 },
-  modalTitle: { color: '#fff', fontFamily: 'Montserrat_700Bold', fontSize: 20, marginBottom: 10 },
+  modalContent: { width: '80%', backgroundColor: '#ECECEC', borderRadius: 20, padding: 25, alignItems: 'center' },
+  successIconCircle: { width: 70, height: 70, borderRadius: 35, backgroundColor: '#fa6205', justifyContent: 'center', alignItems: 'center', marginBottom: 15 },
+  modalTitle: { color: '#1C1C1E', fontFamily: 'Montserrat_700Bold', fontSize: 20, marginBottom: 10 },
   modalText: { color: '#ccc', fontFamily: 'Montserrat_400Regular', textAlign: 'center', marginBottom: 20 },
   modalActions: { width: '100%' },
-  btnPrimary: { backgroundColor: '#A3FF00', padding: 15, borderRadius: 30, alignItems: 'center', marginBottom: 10 },
+  btnPrimary: { backgroundColor: '#fa6205', padding: 15, borderRadius: 30, alignItems: 'center', marginBottom: 10 },
   btnPrimaryText: { fontFamily: 'Montserrat_700Bold', color: '#000' },
   btnSecondary: { padding: 10, alignItems: 'center', marginBottom: 5 },
-  btnSecondaryText: { fontFamily: 'Montserrat_600SemiBold', color: '#fff' },
+  btnSecondaryText: { fontFamily: 'Montserrat_600SemiBold', color: '#1C1C1E' },
   ratingsModalContent: { width: '100%', height: '70%', marginTop: 'auto', backgroundColor: '#222', borderTopLeftRadius: 25, borderTopRightRadius: 25, padding: 20 },
   ratingHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 },
-  ratingTitle: { color: '#fff', fontSize: 20, fontFamily: 'Montserrat_700Bold' },
+  ratingTitle: { color: '#1C1C1E', fontSize: 20, fontFamily: 'Montserrat_700Bold' },
   scoreBigContainer: { alignItems: 'center', paddingVertical: 20, borderBottomWidth: 1, borderBottomColor: '#333', marginBottom: 15 },
-  scoreBig: { color: '#fff', fontSize: 48, fontFamily: 'Montserrat_700Bold' },
-  reviewItem: { marginBottom: 15, backgroundColor: '#2a2a2a', padding: 15, borderRadius: 10 },
+  scoreBig: { color: '#1C1C1E', fontSize: 48, fontFamily: 'Montserrat_700Bold' },
+  reviewItem: { marginBottom: 15, backgroundColor: '#ECECEC', padding: 15, borderRadius: 10 },
   reviewHeader: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 5 },
-  reviewUser: { color: '#fff', fontFamily: 'Montserrat_700Bold' },
+  reviewUser: { color: '#1C1C1E', fontFamily: 'Montserrat_700Bold' },
   reviewDate: { color: '#666', fontSize: 12 },
   reviewText: { color: '#ccc', fontStyle: 'italic', marginTop: 5 },
 });

@@ -21,22 +21,19 @@ import { useNavigation } from "@react-navigation/native";
 import * as Font from 'expo-font';
 import AsyncStorage from "@react-native-async-storage/async-storage";
 // Mantenemos BASE_URL para referencias por defecto, pero usaremos URLS dinámicas
-import { BASE_URL, configureUrl } from "../../constants/url";
+import { BASE_URL } from "../../constants/url";
 import * as ImagePicker from "expo-image-picker";
 import { Picker } from "@react-native-picker/picker";
 import { useNotification } from "../../context/NotificationContext";
 import RoleSelectionScreen from "../../components/RoleSelectionScreen";
 import ProviderTypeSelection from "../../components/ProviderTypeSelection";
 
-// --- CONSTANTES MULTI-PAÍS ---
-const URLS = {
-  PE: "https://back.yariders.com/api/",
-  CO: "https://co.yariders.com/api/"
-};
+// --- CONSTANTES ---
+const API_URL = "https://back.carbycol.com/api/";
 
 const userTypes = [
-  { id: "user", label: "Usuario", icon: "user", color: "#9DFD05", desc: "Más popular", tipo_usuario: "usuario" },
-  { id: "commerce", label: "Comercio", icon: "store", color: "#10b981", desc: "Vende productos", tipo_usuario: "comercio" },
+  { id: "user", label: "Usuario", icon: "user", color: "#fa6205", desc: "Más popular", tipo_usuario: "usuario" },
+  { id: "commerce", label: "Comercio", icon: "store", color: "#fa6205", desc: "Vende productos", tipo_usuario: "comercio" },
   { id: "moto", label: "Moto", icon: "motorcycle", color: "#f97316", desc: "Delivery rápido", tipo_usuario: "rider.moto" },
   { id: "mototaxi", label: "Mototaxi", icon: "tuk-tuk.png", color: "#8b5cf6", desc: "Transporte personas", tipo_usuario: "rider.mototaxi" },
   { id: "taxi", label: "Taxi", icon: "car", color: "#eab308", desc: "Servicio de taxi", tipo_usuario: "rider.taxi" },
@@ -60,9 +57,7 @@ export default function LoginScreen() {
   const [password, setPassword] = useState("");
 
   // --- ESTADOS MULTI-PAÍS ---
-  const [modalSeleccionPais, setModalSeleccionPais] = useState(false);
-  const [cuentasDetectadas, setCuentasDetectadas] = useState(null); // { PE: data, CO: data }
-  const [urlContexto, setUrlContexto] = useState(BASE_URL); // Url detectada para correcciones/resets
+  const [urlContexto, setUrlContexto] = useState(API_URL); // Url para correcciones
 
   // --- ESTADOS RECUPERACIÓN CONTRASEÑA ---
   const [forgotModalVisible, setForgotModalVisible] = useState(false);
@@ -176,59 +171,23 @@ export default function LoginScreen() {
     });
 
     try {
-      console.log("🌍 Verificando credenciales en PE y CO...");
+      console.log("🌍 Iniciando sesión...");
 
-      // 1. Petición paralela a ambos backends
-      const results = await Promise.allSettled([
-        fetch(`${URLS.PE}login`, { method: "POST", headers: { "Content-Type": "application/json" }, body: loginBody })
-          .then(res => res.json().then(data => ({ country: 'PE', status: res.status, data }))),
-        fetch(`${URLS.CO}login`, { method: "POST", headers: { "Content-Type": "application/json" }, body: loginBody })
-          .then(res => res.json().then(data => ({ country: 'CO', status: res.status, data })))
-      ]);
+      const res = await fetch(`${API_URL}login`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: loginBody,
+      });
+      const data = await res.json();
 
-      // 2. Éxitos (Token recibido)
-      const loginsExitosos = results
-        .filter(r => r.status === 'fulfilled' && r.value.status === 200 && r.value.data.token)
-        .map(r => r.value);
-
-      // 3. Errores de negocio (Contraseña mal, pendiente, rechazado)
-      const erroresNegocio = results
-        .filter(r => r.status === 'fulfilled' && r.value.status !== 200 && r.value.data)
-        .map(r => r.value);
-
-      // CASO A: Ningún éxito
-      if (loginsExitosos.length === 0) {
-        setIsLoading(false);
-        if (erroresNegocio.length > 0) {
-          // Manejar error del primer servidor que respondió algo útil
-          // Preferiblemente el que tenga un mensaje específico
-          const errorRelevante = erroresNegocio.find(e => e.data.razon) || erroresNegocio[0];
-          manejarErrorNegocio(errorRelevante);
-        } else {
-          Alert.alert("⚠️ Error", "Credenciales incorrectas o error de conexión.");
-        }
+      if (res.status === 200 && data.token) {
+        console.log("🚀 Ingreso exitoso");
+        await finalizarLogin(data);
         return;
       }
 
-      // CASO B: Un solo país
-      if (loginsExitosos.length === 1) {
-        const unico = loginsExitosos[0];
-        console.log(`🚀 Ingresando a ${unico.country}`);
-        await finalizarLogin(unico.data, unico.country);
-        return;
-      }
-
-      // CASO C: Dos países (Ambigüedad)
-      if (loginsExitosos.length === 2) {
-        const mapa = {
-          PE: loginsExitosos.find(l => l.country === 'PE').data,
-          CO: loginsExitosos.find(l => l.country === 'CO').data
-        };
-        setCuentasDetectadas(mapa);
-        setIsLoading(false);
-        setModalSeleccionPais(true);
-      }
-
+      setIsLoading(false);
+      manejarErrorNegocio(data, API_URL);
     } catch (error) {
       console.error("Error handleLogin:", error);
       setIsLoading(false);
@@ -236,7 +195,7 @@ export default function LoginScreen() {
     }
   };
 
-  const finalizarLogin = async (data, countryCode) => {
+  const finalizarLogin = async (data) => {
     setIsLoading(true);
     try {
       await Promise.all([
@@ -244,14 +203,12 @@ export default function LoginScreen() {
         AsyncStorage.setItem("userId", data.user.id.toString()),
         AsyncStorage.setItem("userData", JSON.stringify(data.user)),
         AsyncStorage.setItem("tipo_usuario", data.user.tipo_usuario),
-        AsyncStorage.setItem("pais_seleccionado", countryCode)
+        AsyncStorage.setItem("pais_seleccionado", "CO")
       ]);
-
-      await configureUrl(countryCode);
 
       // Registrar Token Push
       if (expoPushToken) {
-        await fetch(`${URLS[countryCode]}notification-token/assign-user`, {
+        await fetch(`${API_URL}notification-token/assign-user`, {
           method: "POST", headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ user_id: data.user.id, token: expoPushToken })
         }).catch(e => console.log("Push error", e));
@@ -259,7 +216,6 @@ export default function LoginScreen() {
 
       setTimeout(() => {
         setIsLoading(false);
-        setModalSeleccionPais(false);
         redirectUser(data.user.tipo_usuario);
       }, 500);
     } catch (e) {
@@ -269,13 +225,9 @@ export default function LoginScreen() {
     }
   };
 
-  const manejarErrorNegocio = (errorObj) => {
-    const { data, country } = errorObj;
+  const manejarErrorNegocio = (data) => {
     const estado = data.user_role_estado?.estado;
     let mensaje = data.message || "Acceso denegado.";
-
-    // Guardamos URL para poder enviar correcciones si es necesario
-    setUrlContexto(URLS[country]);
 
     if (data.razon === "estado_inexistente") {
       mensaje = "Faltan documentos por subir.";
@@ -289,18 +241,17 @@ export default function LoginScreen() {
           break;
         case "pendiente_correccion":
           procesarCorreccion(data);
-          return; // Salir, procesarCorreccion abre su modal
+          return;
       }
-      // Intento de asignar push token (silent)
-      asignarTokenFallo(data.user_id, URLS[country]);
+      asignarTokenFallo(data.user_id);
     }
     Alert.alert("⚠️ Acceso denegado", mensaje);
   };
 
-  const asignarTokenFallo = async (userId, baseUrl) => {
+  const asignarTokenFallo = async (userId) => {
     if (!expoPushToken) return;
     try {
-      await fetch(`${baseUrl}notification-token/assign-user`, {
+      await fetch(`${API_URL}notification-token/assign-user`, {
         method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ user_id: userId, token: expoPushToken }),
       });
@@ -317,19 +268,14 @@ export default function LoginScreen() {
     setForgotMessage("");
 
     try {
-      // Intentamos enviar a ambos servidores. Si el usuario existe, el backend envía el correo.
       const body = JSON.stringify({ email: forgotEmail.trim() });
-      const headers = { "Content-Type": "application/json" };
+      const res = await fetch(`${API_URL}auth/request-reset-token`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body,
+      });
 
-      const results = await Promise.allSettled([
-        fetch(`${URLS.PE}auth/request-reset-token`, { method: "POST", headers, body }),
-        fetch(`${URLS.CO}auth/request-reset-token`, { method: "POST", headers, body })
-      ]);
-
-      // Verificamos si al menos uno fue exitoso (200 OK)
-      const algunExito = results.some(r => r.status === 'fulfilled' && r.value.ok);
-
-      if (algunExito) {
+      if (res.ok) {
         setForgotMessage("✔ Si el correo existe, recibirás un código.");
         setResetEmailStorage(forgotEmail.trim());
         setTimeout(() => {
@@ -362,17 +308,14 @@ export default function LoginScreen() {
         password: newPassword,
         password_confirmation: confirmPassword
       });
-      const headers = { "Content-Type": "application/json" };
 
-      // Intentamos cambiar en ambos (el token solo será válido en el servidor que lo generó)
-      const results = await Promise.allSettled([
-        fetch(`${URLS.PE}auth/reset-password`, { method: "POST", headers, body }),
-        fetch(`${URLS.CO}auth/reset-password`, { method: "POST", headers, body })
-      ]);
+      const res = await fetch(`${API_URL}auth/reset-password`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body,
+      });
 
-      const exito = results.find(r => r.status === 'fulfilled' && r.value.ok);
-
-      if (exito) {
+      if (res.ok) {
         setResetMessage("✔ Contraseña actualizada.");
         setTimeout(() => {
           setResetModalVisible(false);
@@ -467,7 +410,7 @@ export default function LoginScreen() {
         AsyncStorage.setItem("userData", JSON.stringify({ id: "demo", nombre: "Demo", email: "demo@yar.com" })),
         AsyncStorage.setItem("tipo_usuario", "usuario"),
         AsyncStorage.setItem("is_demo", "true"),
-        AsyncStorage.setItem("pais_seleccionado", "PE")
+        AsyncStorage.setItem("pais_seleccionado", "CO")
       ]);
       setTimeout(() => {
         navigation.reset({ index: 0, routes: [{ name: "BottomTabNavigatorUsuario" }] });
@@ -533,7 +476,7 @@ export default function LoginScreen() {
 
   // --- RENDER ---
 
-  if (!fontsLoaded) return <View style={{ flex: 1, backgroundColor: '#1C1C1E', justifyContent: 'center' }}><ActivityIndicator color="#9DFD05" size="large" /></View>;
+  if (!fontsLoaded) return <View style={{ flex: 1, backgroundColor: '#F2F2F7', justifyContent: 'center' }}><ActivityIndicator color="#fa6205" size="large" /></View>;
 
   if (step === 1) return <RoleSelectionScreen onSelectUser={() => { setSelectedType('user'); setStep(3); }} onSelectProvider={() => setStep(2)} />;
   if (step === 2) return <ProviderTypeSelection userTypes={userTypes.slice(1)} onSelectType={(t) => { setSelectedType(t); setStep(3); }} onGoBack={() => setStep(1)} />;
@@ -548,7 +491,7 @@ export default function LoginScreen() {
               <Text style={styles.backButtonText}>Volver atrás</Text>
             </TouchableOpacity>
 
-            <Image source={require("../../assets/images/yar.png")} style={styles.logo} />
+            <Image source={require("../../assets/images/nuevo-icono.jpeg")} style={styles.logo} />
             <Text style={styles.subtitle}>Inicia sesión como {selected?.label.toUpperCase()}</Text>
 
             <Text style={styles.inputLabel}>Email</Text>
@@ -575,39 +518,20 @@ export default function LoginScreen() {
 
             <View style={styles.forgotPasswordContainer}>
               <TouchableOpacity onPress={() => setForgotModalVisible(true)}>
-                <Text style={{ color: "#9DFD05", fontFamily: "Montserrat-Bold" }}>¿Olvidaste tu contraseña?</Text>
+                <Text style={{ color: "#fa6205", fontFamily: "Montserrat-Bold" }}>¿Olvidaste tu contraseña?</Text>
               </TouchableOpacity>
             </View>
-
-            {/* MODAL SELECCIÓN DE PAÍS */}
-            <Modal transparent={true} visible={modalSeleccionPais} animationType="slide">
-              <View style={styles.modalOverlay}>
-                <View style={styles.modalContainer}>
-                  <Text style={styles.modalTitle}>Selecciona una cuenta</Text>
-                  <Text style={styles.modalText}>Hemos detectado tu cuenta en ambos países.</Text>
-                  <TouchableOpacity style={styles.button} onPress={() => finalizarLogin(cuentasDetectadas['PE'], 'PE')}>
-                    <Text style={styles.buttonText}>Ingresar a Perú 🇵🇪</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity style={[styles.button, { marginTop: 10, backgroundColor: '#FFD700' }]} onPress={() => finalizarLogin(cuentasDetectadas['CO'], 'CO')}>
-                    <Text style={styles.buttonText}>Ingresar a Colombia 🇨🇴</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity style={[styles.cancelButton, { marginTop: 20, width: '100%' }]} onPress={() => setModalSeleccionPais(false)}>
-                    <Text style={styles.cancelButtonText}>Cancelar</Text>
-                  </TouchableOpacity>
-                </View>
-              </View>
-            </Modal>
 
             {/* MODAL CORRECCIONES */}
             <Modal animationType="slide" transparent={true} visible={modalVisible} onRequestClose={() => setModalVisible(false)}>
               <View style={styles.modalOverlay}>
-                <View style={{ backgroundColor: "#242424", borderRadius: 10, padding: 20, width: "90%", maxHeight: "90%" }}>
+                <View style={{ backgroundColor: "#FFFFFF", borderRadius: 10, padding: 20, width: "90%", maxHeight: "90%" }}>
                   <ScrollView showsVerticalScrollIndicator={false}>
-                    <Text style={{ fontWeight: "bold", fontSize: 16, marginBottom: 10, color: 'white' }}>Información adicional requerida</Text>
-                    <Text style={{ color: 'white', marginBottom: 15 }}>{textoObservacion}</Text>
+                    <Text style={{ fontWeight: "bold", fontSize: 16, marginBottom: 10, color: '#1C1C1E' }}>Información adicional requerida</Text>
+                    <Text style={{ color: '#1C1C1E', marginBottom: 15 }}>{textoObservacion}</Text>
                     {camposArchivos.map((campo) => (
                       <View key={campo} style={{ marginBottom: 20 }}>
-                        <Text style={{ marginBottom: 5, color: 'white' }}>{labelsCampos[campo] || campo.toUpperCase()}</Text>
+                        <Text style={{ marginBottom: 5, color: '#1C1C1E' }}>{labelsCampos[campo] || campo.toUpperCase()}</Text>
                         <TouchableOpacity style={{ backgroundColor: "#007bff", padding: 12, borderRadius: 50, width: 50, height: 50, alignItems: "center", justifyContent: "center" }}
                           onPress={async () => {
                             const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -619,14 +543,14 @@ export default function LoginScreen() {
                             }
                           }}
                         >
-                          <FontAwesome name="camera" size={20} color="#fff" />
+                          <FontAwesome name="camera" size={20} color="#1C1C1E" />
                         </TouchableOpacity>
                         {archivos[campo]?.uri && <Image source={{ uri: archivos[campo].uri }} style={{ width: 100, height: 100, borderRadius: 10, marginTop: 10, borderWidth: 1, borderColor: '#ccc' }} />}
                       </View>
                     ))}
                     {camposTexto.map((campo) => (
                       <View key={campo} style={{ marginBottom: 20 }}>
-                        <Text style={{ marginBottom: 5, color: 'white' }}>{labelsCampos2[campo] || campo.toUpperCase()}</Text>
+                        <Text style={{ marginBottom: 5, color: '#1C1C1E' }}>{labelsCampos2[campo] || campo.toUpperCase()}</Text>
                         {campo === "fecha_nacimiento" ? (
                           <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
                             <TextInput placeholder="AAAA" placeholderTextColor="#999" keyboardType="numeric" maxLength={4} style={fechaInputStyle} value={inputsFecha.año} onChangeText={(t) => setInputsFecha(p => ({ ...p, año: t }))} />
@@ -643,7 +567,7 @@ export default function LoginScreen() {
                   </ScrollView>
                   <View style={{ flexDirection: "row", justifyContent: "space-between", marginTop: 20, gap: 10 }}>
                     <TouchableOpacity style={{ flex: 1, backgroundColor: "#e0e0e0", paddingVertical: 10, borderRadius: 6 }} onPress={() => setModalVisible(false)}><Text style={{ color: "#333", textAlign: "center" }}>Cancelar</Text></TouchableOpacity>
-                    <TouchableOpacity style={{ flex: 1, backgroundColor: isLoading ? "#ccc" : "#9DFD05", paddingVertical: 10, borderRadius: 6 }} onPress={isLoading ? null : enviarCorrecciones} disabled={isLoading}><Text style={{ textAlign: "center" }}>{isLoading ? "Enviando..." : "Enviar"}</Text></TouchableOpacity>
+                    <TouchableOpacity style={{ flex: 1, backgroundColor: isLoading ? "#ccc" : "#fa6205", paddingVertical: 10, borderRadius: 6 }} onPress={isLoading ? null : enviarCorrecciones} disabled={isLoading}><Text style={{ textAlign: "center" }}>{isLoading ? "Enviando..." : "Enviar"}</Text></TouchableOpacity>
                   </View>
                 </View>
               </View>
@@ -654,7 +578,7 @@ export default function LoginScreen() {
               <View style={styles.modalOverlay}>
                 <View style={styles.modalContainer}>
                   <View style={styles.modalIconContainer}>
-                    <MaterialCommunityIcons name="email-lock" size={50} color="#9DFD05" />
+                    <MaterialCommunityIcons name="email-lock" size={50} color="#fa6205" />
                   </View>
 
                   <Text style={styles.modalTitle}>Recuperar Contraseña</Text>
@@ -673,8 +597,8 @@ export default function LoginScreen() {
                   />
 
                   {forgotMessage ? (
-                    <View style={{ backgroundColor: forgotMessage.startsWith("✔") ? 'rgba(157, 253, 5, 0.1)' : 'rgba(255, 111, 0, 0.1)', padding: 10, borderRadius: 8, marginBottom: 15, width: '100%' }}>
-                      <Text style={{ color: forgotMessage.startsWith("✔") ? "#9DFD05" : "#FF6F00", textAlign: "center", fontFamily: "Montserrat-Bold", fontSize: 13 }}>
+                    <View style={{ backgroundColor: forgotMessage.startsWith("✔") ? 'rgba(250, 98, 5, 0.1)' : 'rgba(255, 111, 0, 0.1)', padding: 10, borderRadius: 8, marginBottom: 15, width: '100%' }}>
+                      <Text style={{ color: forgotMessage.startsWith("✔") ? "#fa6205" : "#FF6F00", textAlign: "center", fontFamily: "Montserrat-Bold", fontSize: 13 }}>
                         {forgotMessage}
                       </Text>
                     </View>
@@ -685,34 +609,14 @@ export default function LoginScreen() {
                       <Text style={styles.cancelButtonText}>Cancelar</Text>
                     </TouchableOpacity>
 
-                    <TouchableOpacity style={styles.confirmButton} onPress={async () => {
-                      if (!forgotEmail) return setForgotMessage("Por favor ingresa tu correo.");
-                      setForgotLoading(true);
-                      try {
-                        const body = JSON.stringify({ email: forgotEmail.trim() });
-                        const headers = { "Content-Type": "application/json" };
-                        // Petición a ambos servidores
-                        const results = await Promise.allSettled([
-                          fetch(`${URLS.PE}auth/request-reset-token`, { method: "POST", headers, body }),
-                          fetch(`${URLS.CO}auth/request-reset-token`, { method: "POST", headers, body })
-                        ]);
-                        const algunExito = results.some(r => r.status === 'fulfilled' && r.value.ok);
-
-                        if (algunExito) {
-                          setForgotMessage("✔ Código enviado. Revisa tu correo.");
-                          setResetEmailStorage(forgotEmail.trim());
-                          setTimeout(() => { setForgotModalVisible(false); setResetModalVisible(true); }, 2000);
-                        } else setForgotMessage("No se encontró el correo o hubo un error.");
-                      } catch (e) { setForgotMessage("Error de conexión."); }
-                      finally { setForgotLoading(false); }
-                    }}>
-                      {forgotLoading ? <ActivityIndicator color="#1C1C1E" size="small" /> : <Text style={styles.confirmButtonText}>Enviar Código</Text>}
+                    <TouchableOpacity style={styles.confirmButton} onPress={solicitarResetPassword}>
+                      {forgotLoading ? <ActivityIndicator color="#F2F2F7" size="small" /> : <Text style={styles.confirmButtonText}>Enviar Código</Text>}
                     </TouchableOpacity>
                   </View>
 
                   <TouchableOpacity onPress={handleOpenResetModal} style={{ marginTop: 20, padding: 10 }}>
-                    <Text style={{ color: "#FFF", textAlign: 'center', fontSize: 14 }}>
-                      ¿Ya tienes un código? <Text style={{ color: "#9DFD05", fontFamily: "Montserrat-Bold" }}>Ingrésalo aquí</Text>
+                    <Text style={{ color: '#1C1C1E', textAlign: 'center', fontSize: 14 }}>
+                      ¿Ya tienes un código? <Text style={{ color: "#fa6205", fontFamily: "Montserrat-Bold" }}>Ingrésalo aquí</Text>
                     </Text>
                   </TouchableOpacity>
                 </View>
@@ -767,8 +671,8 @@ export default function LoginScreen() {
                   />
 
                   {resetMessage ? (
-                    <View style={{ backgroundColor: resetMessage.startsWith("✔") ? 'rgba(157, 253, 5, 0.1)' : 'rgba(255, 111, 0, 0.1)', padding: 10, borderRadius: 8, marginBottom: 15, width: '100%' }}>
-                      <Text style={{ color: resetMessage.startsWith("✔") ? "#9DFD05" : "#FF6F00", textAlign: "center", fontFamily: "Montserrat-Bold", fontSize: 13 }}>
+                    <View style={{ backgroundColor: resetMessage.startsWith("✔") ? 'rgba(250, 98, 5, 0.1)' : 'rgba(255, 111, 0, 0.1)', padding: 10, borderRadius: 8, marginBottom: 15, width: '100%' }}>
+                      <Text style={{ color: resetMessage.startsWith("✔") ? "#fa6205" : "#FF6F00", textAlign: "center", fontFamily: "Montserrat-Bold", fontSize: 13 }}>
                         {resetMessage}
                       </Text>
                     </View>
@@ -780,7 +684,7 @@ export default function LoginScreen() {
                     </TouchableOpacity>
 
                     <TouchableOpacity style={styles.confirmButton} onPress={confirmarResetPassword}>
-                      {resetLoading ? <ActivityIndicator color="#1C1C1E" size="small" /> : <Text style={styles.confirmButtonText}>Actualizar</Text>}
+                      {resetLoading ? <ActivityIndicator color="#F2F2F7" size="small" /> : <Text style={styles.confirmButtonText}>Actualizar</Text>}
                     </TouchableOpacity>
                   </View>
                 </View>
@@ -810,10 +714,10 @@ export default function LoginScreen() {
 }
 
 const styles = StyleSheet.create({
-  keyboardAvoidingContainer: { flex: 1, backgroundColor: "#1C1C1E" },
+  keyboardAvoidingContainer: { flex: 1, backgroundColor: "#F2F2F7" },
   scrollContainer: { flexGrow: 1, justifyContent: "center", paddingVertical: 20 },
-  container: { flex: 1, backgroundColor: "#1C1C1E", justifyContent: "center", alignItems: "center", paddingHorizontal: 20, minHeight: 550 },
-  logo: { width: 200, height: 200, resizeMode: "contain" },
+  container: { flex: 1, backgroundColor: "#F2F2F7", justifyContent: "center", alignItems: "center", paddingHorizontal: 20, minHeight: 550 },
+  logo: { width: 100, height: 100, resizeMode: "contain", borderRadius: 20, marginBottom: 10 },
 
   // --- INPUTS LOGIN PRINCIPAL ---
   inputLabel: { alignSelf: "flex-start", fontSize: 14, fontFamily: "Montserrat-Regular", color: "#DDD", marginBottom: 8, marginLeft: 4 },
@@ -821,48 +725,48 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     borderWidth: 1,
-    borderColor: "#444",
+    borderColor: "#DDD",
     borderRadius: 12,
     paddingHorizontal: 15,
     marginBottom: 20,
     width: "100%",
     height: 55,
-    backgroundColor: "#2C2C2E" // Fondo oscuro para inputs principales
+    backgroundColor: "#FFFFFF" // Fondo oscuro para inputs principales
   },
   input: {
     flex: 1,
     height: 50,
     fontSize: 16,
-    color: "#FFF",
+    color: '#1C1C1E',
     fontFamily: "Montserrat-Regular"
   },
   icon: { marginRight: 15, color: "#999" }, // Iconos gris claro
 
   // --- BOTONES ---
-  button: { backgroundColor: "#9DFD05", paddingVertical: 12, borderRadius: 12, marginTop: 10, width: "100%", alignItems: "center", height: 55, justifyContent: "center" },
+  button: { backgroundColor: "#fa6205", paddingVertical: 12, borderRadius: 12, marginTop: 10, width: "100%", alignItems: "center", height: 55, justifyContent: "center" },
   disabledButton: { opacity: 0.6 },
-  buttonText: { color: "#1C1C1E", fontFamily: "Montserrat-Bold", fontSize: 16 },
+  buttonText: { color: "#F2F2F7", fontFamily: "Montserrat-Bold", fontSize: 16 },
   forgotPasswordContainer: { flexDirection: "row", justifyContent: "center", marginTop: 20 },
 
   // --- HEADER ---
-  subtitle: { textAlign: "center", marginBottom: 25, fontSize: 16, marginTop: -30, color: "#A0A0A0", fontFamily: "Montserrat-Regular" },
+  subtitle: { textAlign: "center", marginBottom: 25, fontSize: 16, marginTop: 5, color: "#A0A0A0", fontFamily: "Montserrat-Regular" },
   backButton: { position: 'absolute', top: 60, left: 20, flexDirection: 'row', alignItems: 'center', zIndex: 10 },
-  backButtonText: { color: '#FFF', fontSize: 16, marginLeft: 8, fontFamily: "Montserrat-Bold" },
+  backButtonText: { color: '#1C1C1E', fontSize: 16, marginLeft: 8, fontFamily: "Montserrat-Bold" },
 
   // --- MODALES (ESTILOS MEJORADOS) ---
   modalOverlay: { flex: 1, backgroundColor: "rgba(0,0,0,0.85)", justifyContent: "center", alignItems: "center", padding: 20 },
-  modalContainer: { backgroundColor: "#2C2C2E", borderRadius: 20, padding: 25, width: "100%", maxWidth: 380, alignItems: "center", borderWidth: 1, borderColor: "#444" },
-  modalIconContainer: { marginBottom: 15, backgroundColor: 'rgba(157, 253, 5, 0.1)', padding: 15, borderRadius: 50 },
-  modalTitle: { fontSize: 20, fontFamily: "Montserrat-Bold", color: "#FFF", marginBottom: 10, textAlign: "center" },
+  modalContainer: { backgroundColor: "#FFFFFF", borderRadius: 20, padding: 25, width: "100%", maxWidth: 380, alignItems: "center", borderWidth: 1, borderColor: "#DDD" },
+  modalIconContainer: { marginBottom: 15, backgroundColor: 'rgba(250, 98, 5, 0.1)', padding: 15, borderRadius: 50 },
+  modalTitle: { fontSize: 20, fontFamily: "Montserrat-Bold", color: '#1C1C1E', marginBottom: 10, textAlign: "center" },
   modalText: { fontSize: 14, fontFamily: "Montserrat-Regular", color: "#CCC", marginBottom: 20, textAlign: "center", lineHeight: 20 },
 
   // ESTILO DE INPUT DENTRO DEL MODAL
   modalInput: {
-    backgroundColor: "#1C1C1E", // Fondo más oscuro que el modal
+    backgroundColor: "#F2F2F7", // Fondo más oscuro que el modal
     borderWidth: 1,
     borderColor: "#555",
     borderRadius: 12,
-    color: "#FFF", // Texto Blanco
+    color: '#1C1C1E', // Texto Blanco
     width: "100%",
     height: 50,
     paddingHorizontal: 15,
@@ -872,10 +776,10 @@ const styles = StyleSheet.create({
   },
 
   modalButtonsContainer: { flexDirection: "row", justifyContent: "space-between", width: "100%", marginTop: 10, gap: 12 },
-  cancelButton: { backgroundColor: "#444", paddingVertical: 14, borderRadius: 12, flex: 1, alignItems: "center" },
-  cancelButtonText: { color: "#FFF", fontFamily: "Montserrat-Bold", fontSize: 15 },
-  confirmButton: { backgroundColor: "#9DFD05", paddingVertical: 14, borderRadius: 12, flex: 1, alignItems: "center" },
-  confirmButtonText: { color: "#1C1C1E", fontFamily: "Montserrat-Bold", fontSize: 15 },
+  cancelButton: { backgroundColor: "#DDD", paddingVertical: 14, borderRadius: 12, flex: 1, alignItems: "center" },
+  cancelButtonText: { color: '#1C1C1E', fontFamily: "Montserrat-Bold", fontSize: 15 },
+  confirmButton: { backgroundColor: "#fa6205", paddingVertical: 14, borderRadius: 12, flex: 1, alignItems: "center" },
+  confirmButtonText: { color: "#F2F2F7", fontFamily: "Montserrat-Bold", fontSize: 15 },
 
   extraSpace: { height: 30 },
 });

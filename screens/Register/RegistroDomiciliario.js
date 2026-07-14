@@ -27,20 +27,11 @@ import colombiaData from "../../BaseColombia/colombia_departamentos.json";
 
 const { width } = Dimensions.get("window");
 
-// 1. CONFIGURACIÓN DE PAÍSES
-const COUNTRY_CONFIG = {
-  PE: {
-    label: "Perú 🇵🇪",
-    url: "https://back.yariders.com/api/",
-    currency: "PEN",
-    phonePlaceholder: "Ej. 912 345 678"
-  },
-  CO: {
-    label: "Colombia 🇨🇴",
-    url: "https://co.yariders.com/api/",
-    currency: "COP",
-    phonePlaceholder: "Ej. 300 123 4567"
-  }
+// 1. CONFIGURACIÓN POR PAÍS (solo info visual, misma API)
+const API_URL = "https://back.carbycol.com/api/";
+const COUNTRY_INFO = {
+  PE: { label: "Perú 🇵🇪", currency: "PEN", phonePlaceholder: "Ej. 912 345 678" },
+  CO: { label: "Colombia 🇨🇴", currency: "COP", phonePlaceholder: "Ej. 300 123 4567" }
 };
 
 export default function RegisterRiderScreen() {
@@ -52,7 +43,7 @@ export default function RegisterRiderScreen() {
   const [isLoading, setIsLoading] = useState(false);
 
   // --- NUEVO ESTADO: PAÍS ---
-  const [pais, setPais] = useState(""); // 'PE' o 'CO'
+  const [pais, setPais] = useState("CO"); // 'PE' o 'CO'
 
   const [formData, setFormData] = useState({
     tipo_usuario: "rider.moto",
@@ -94,6 +85,11 @@ export default function RegisterRiderScreen() {
     Montserrat_400Regular,
     Montserrat_700Bold,
   });
+
+  // --- HANDLERS ---
+  const handleInputChange = (name, value) => {
+    setFormData(prev => ({ ...prev, [name]: value }));
+  };
 
   // --- EFECTOS: CARGA DE DATOS ---
   useEffect(() => {
@@ -177,11 +173,6 @@ export default function RegisterRiderScreen() {
   };
 
   if (!fontsLoaded) return null;
-
-  // --- HANDLERS ---
-  const handleInputChange = (name, value) => {
-    setFormData(prev => ({ ...prev, [name]: value }));
-  };
 
   // --- HELPER: OPCIONES DE DOCUMENTO SEGÚN PAÍS ---
   const getDocumentOptions = () => {
@@ -325,12 +316,12 @@ export default function RegisterRiderScreen() {
     }
 
     // VALIDAR URL
-    if(!pais || !COUNTRY_CONFIG[pais]) {
+    if(!pais || !COUNTRY_INFO[pais]) {
         Alert.alert("Error", "Configuración de país no válida.");
         return;
     }
     
-    const currentBaseUrl = COUNTRY_CONFIG[pais].url;
+    const currentBaseUrl = API_URL;
     setIsLoading(true);
 
     try {
@@ -371,11 +362,25 @@ export default function RegisterRiderScreen() {
         body: dataToSend
       });
 
-      const data = await response.json();
+      const textResponse = await response.text();
+      console.log("=== RESPUESTA CRUDA DEL SERVIDOR (Domiciliario) ===");
+      console.log("Status:", response.status);
+      console.log("Headers:", JSON.stringify(response.headers, null, 2));
+      console.log("Body:", textResponse.substring(0, 500));
+      console.log("==================================================");
+
+      let data;
+      try {
+        data = JSON.parse(textResponse);
+      } catch (parseError) {
+        console.error("JSON parse error:", parseError.message);
+        console.error("Respuesta no es JSON. Body completo:", textResponse);
+        throw new Error(`El servidor respondió con HTML/error (status ${response.status})`);
+      }
       setIsLoading(false);
 
       if (response.ok || data?.message?.toLowerCase().includes("creado correctamente")) {
-        Alert.alert("¡Registro Exitoso!", `Tu solicitud ha sido enviada a ${COUNTRY_CONFIG[pais].label}.`, [
+        Alert.alert("¡Registro Exitoso!", `Tu solicitud ha sido enviada a ${COUNTRY_INFO[pais].label}.`, [
           { text: "OK", onPress: () => navigation.navigate("Login") }
         ]);
       } else {
@@ -411,7 +416,7 @@ export default function RegisterRiderScreen() {
 
   return (
     <KeyboardAvoidingView
-      style={{ flex: 1, backgroundColor: "#1C1C1E" }}
+      style={{ flex: 1, backgroundColor: "#F2F2F7" }}
       behavior={Platform.OS === "ios" ? "padding" : "height"}
     >
       <View style={styles.container}>
@@ -419,9 +424,9 @@ export default function RegisterRiderScreen() {
         {/* HEADER */}
         <View style={styles.headerArea}>
           <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButtonHeader}>
-            <MaterialCommunityIcons name="arrow-left" size={24} color="#fff" />
+            <MaterialCommunityIcons name="arrow-left" size={24} color="#1C1C1E" />
           </TouchableOpacity>
-          <Image source={require("../../assets/images/yar.png")} style={styles.logoSmall} />
+          <Image source={require("../../assets/images/nuevo-icono.jpeg")} style={styles.logoSmall} />
           <View style={styles.progressBarContainer}>
             <View style={[styles.progressBarFill, { width: `${(step / totalSteps) * 100}%` }]} />
           </View>
@@ -446,9 +451,9 @@ export default function RegisterRiderScreen() {
                     ], "Selecciona País")}
                 >
                     <Text style={[styles.inputText, !pais && { color: '#777' }]}>
-                        {pais ? COUNTRY_CONFIG[pais].label : "Selecciona..."}
+                        {pais ? COUNTRY_INFO[pais].label : "Selecciona..."}
                     </Text>
-                    <MaterialCommunityIcons name="chevron-down" size={20} color="#9DFD05" />
+                    <MaterialCommunityIcons name="chevron-down" size={20} color="#fa6205" />
                 </TouchableOpacity>
               </View>
 
@@ -469,7 +474,7 @@ export default function RegisterRiderScreen() {
                       <MaterialCommunityIcons
                         name={item.icon}
                         size={30}
-                        color={formData.tipo_usuario === item.id ? '#1C1C1E' : '#FFF'}
+                        color={formData.tipo_usuario === item.id ? '#F2F2F7' : '#FFF'}
                       />
                     </View>
                     <View style={styles.cardTexts}>
@@ -497,7 +502,7 @@ export default function RegisterRiderScreen() {
               <Text style={styles.label}>Tipo de documento</Text>
               <TouchableOpacity style={styles.inputDark} onPress={() => openPicker('tipoDocumento', getDocumentOptions(), "Selecciona Documento")}>
                 <Text style={[styles.inputText, !tipoDocumento && { color: '#777' }]}>{tipoDocumento || "Selecciona..."}</Text>
-                <MaterialCommunityIcons name="chevron-down" size={20} color="#9DFD05" />
+                <MaterialCommunityIcons name="chevron-down" size={20} color="#fa6205" />
               </TouchableOpacity>
 
               <Text style={styles.label}>Número de documento</Text>
@@ -511,13 +516,13 @@ export default function RegisterRiderScreen() {
                 <Text style={[styles.inputText, !fechaNacimiento && { color: '#777' }]}>
                   {fechaNacimiento || "Seleccionar fecha"}
                 </Text>
-                <MaterialCommunityIcons name="calendar-month" size={22} color="#9DFD05" />
+                <MaterialCommunityIcons name="calendar-month" size={22} color="#fa6205" />
               </TouchableOpacity>
 
               <Text style={styles.label}>Teléfono</Text>
               <TextInput 
                 style={styles.inputDark} 
-                placeholder={pais ? COUNTRY_CONFIG[pais].phonePlaceholder : "Celular"} 
+                placeholder={pais ? COUNTRY_INFO[pais].phonePlaceholder : "Celular"} 
                 placeholderTextColor="#777" 
                 keyboardType="phone-pad" 
                 value={formData.numero_telefono} 
@@ -537,13 +542,13 @@ export default function RegisterRiderScreen() {
               <Text style={styles.label}>Departamento</Text>
               <TouchableOpacity style={styles.inputDark} onPress={() => openPicker('departamento', departamentos, "Selecciona Departamento")}>
                 <Text style={[styles.inputText, !departamento && { color: '#777' }]}>{departamento || "Selecciona..."}</Text>
-                <MaterialCommunityIcons name="chevron-down" size={20} color="#9DFD05" />
+                <MaterialCommunityIcons name="chevron-down" size={20} color="#fa6205" />
               </TouchableOpacity>
 
               <Text style={styles.label}>Ciudad/Provincia</Text>
               <TouchableOpacity style={[styles.inputDark, !departamento && { opacity: 0.5 }]} disabled={!departamento} onPress={() => openPicker('ciudad', ciudades, "Selecciona Ciudad")}>
                 <Text style={[styles.inputText, !ciudad && { color: '#777' }]}>{ciudad || "Selecciona..."}</Text>
-                <MaterialCommunityIcons name="chevron-down" size={20} color="#9DFD05" />
+                <MaterialCommunityIcons name="chevron-down" size={20} color="#fa6205" />
               </TouchableOpacity>
 
               {/* DISTRITO: SOLO SI HAY DATOS (PERÚ) */}
@@ -552,7 +557,7 @@ export default function RegisterRiderScreen() {
                   <Text style={styles.label}>Distrito</Text>
                   <TouchableOpacity style={styles.inputDark} onPress={() => openPicker('distrito', distritos, "Selecciona Distrito")}>
                     <Text style={[styles.inputText, !formData.distrito && { color: '#777' }]}>{formData.distrito || "Selecciona..."}</Text>
-                    <MaterialCommunityIcons name="chevron-down" size={20} color="#9DFD05" />
+                    <MaterialCommunityIcons name="chevron-down" size={20} color="#fa6205" />
                   </TouchableOpacity>
                 </>
               )}
@@ -608,7 +613,7 @@ export default function RegisterRiderScreen() {
                       <Image source={{ uri: images[doc.id].uri }} style={styles.docImagePreview} />
                     ) : (
                       <View style={styles.docPlaceholder}>
-                        <MaterialCommunityIcons name="plus" size={35} color="#9DFD05" />
+                        <MaterialCommunityIcons name="plus" size={35} color="#fa6205" />
                         <Text style={styles.docLabel}>
                           {doc.label} {doc.required ? '*' : ''}
                         </Text>
@@ -627,7 +632,7 @@ export default function RegisterRiderScreen() {
               <View style={{ marginTop: 25 }}>
                 <Text style={styles.title}>Método de Pago</Text>
                 <Text style={styles.subtitle}>
-                  Sube tu código QR ({pais === 'CO' ? 'Nequi' : 'Yape'}) para pagos.
+                  Sube tu código QR (Nequi) para pagos.
                 </Text>
 
                 <TouchableOpacity
@@ -642,7 +647,7 @@ export default function RegisterRiderScreen() {
                     <Image source={{ uri: qrImage.uri }} style={styles.docImagePreview} />
                   ) : (
                     <View style={styles.docPlaceholder}>
-                      <MaterialCommunityIcons name="qrcode-scan" size={40} color="#9DFD05" />
+                      <MaterialCommunityIcons name="qrcode-scan" size={40} color="#fa6205" />
                       <Text style={styles.docLabel}>Subir Imagen del QR</Text>
                     </View>
                   )}
@@ -667,7 +672,7 @@ export default function RegisterRiderScreen() {
             )}
             <TouchableOpacity style={[styles.buttonPrimary, step > 1 && { flex: 1 }]} onPress={step === totalSteps ? handleSubmit : handleNextStep}>
               <Text style={styles.buttonTextPrimary}>{step === totalSteps ? "Finalizar Registro" : "Siguiente"}</Text>
-              {step < totalSteps && <MaterialCommunityIcons name="arrow-right" size={20} color="#1C1C1E" style={{ marginLeft: 8 }} />}
+              {step < totalSteps && <MaterialCommunityIcons name="arrow-right" size={20} color="#F2F2F7" style={{ marginLeft: 8 }} />}
             </TouchableOpacity>
           </View>
         </ScrollView>
@@ -676,7 +681,7 @@ export default function RegisterRiderScreen() {
         <Modal transparent={true} visible={isLoading} animationType="fade">
           <View style={styles.loadingOverlay}>
             <View style={styles.loadingContainer}>
-              <ActivityIndicator size="large" color="#9DFD05" />
+              <ActivityIndicator size="large" color="#fa6205" />
               <Text style={styles.loadingText}>Procesando registro...</Text>
               <Text style={styles.loadingSubText}>Servidor: {pais === 'CO' ? 'Colombia' : 'Perú'}</Text>
             </View>
@@ -696,7 +701,7 @@ export default function RegisterRiderScreen() {
                   <Text style={styles.modalItemText}>{item.label}</Text>
                   {/* Check de seleccionado */}
                   {((pickerTarget === 'pais' && pais === item.value) || (pickerTarget === 'departamento' && departamento === item.value)) && 
-                    <MaterialCommunityIcons name="check" size={20} color="#9DFD05" />
+                    <MaterialCommunityIcons name="check" size={20} color="#fa6205" />
                   }
                 </TouchableOpacity>
               )} />
@@ -724,74 +729,74 @@ export default function RegisterRiderScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#1C1C1E" },
+  container: { flex: 1, backgroundColor: "#F2F2F7" },
   scrollContent: { paddingHorizontal: 24, paddingBottom: 50 },
   headerArea: { paddingTop: 60, paddingHorizontal: 24, marginBottom: 20 },
   backButtonHeader: { marginBottom: 15, alignSelf: 'flex-start' },
-  logoSmall: { width: 120, height: 40, resizeMode: "contain", alignSelf: "center", marginBottom: 20 },
+  logoSmall: { width: 80, height: 80, resizeMode: "contain", alignSelf: "center", marginBottom: 20, borderRadius: 16 },
 
   // Progreso
   progressBarContainer: { height: 4, backgroundColor: "#333", borderRadius: 2, marginBottom: 8, width: '100%' },
-  progressBarFill: { height: "100%", backgroundColor: "#9DFD05", borderRadius: 2 },
+  progressBarFill: { height: "100%", backgroundColor: "#fa6205", borderRadius: 2 },
   stepText: { color: "#777", fontSize: 12, fontFamily: "Montserrat_400Regular", textAlign: "right" },
 
   // Textos
-  title: { fontSize: 26, fontFamily: "Montserrat_700Bold", color: "#FFF", marginBottom: 8 },
+  title: { fontSize: 26, fontFamily: "Montserrat_700Bold", color: '#1C1C1E', marginBottom: 8 },
   subtitle: { fontSize: 15, fontFamily: "Montserrat_400Regular", color: "#A0A0A0", marginBottom: 25 },
   label: { fontSize: 14, fontFamily: "Montserrat_700Bold", color: "#DDD", marginBottom: 8, marginLeft: 4 },
 
   // --- TARJETAS (LISTA) ---
   cardsList: { marginTop: 10, gap: 15 },
-  cardRow: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#2C2C2E', borderRadius: 12, padding: 16, borderWidth: 1, borderColor: '#444' },
-  cardRowActive: { backgroundColor: '#9DFD05', borderColor: '#9DFD05' },
+  cardRow: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#FFFFFF', borderRadius: 12, padding: 16, borderWidth: 1, borderColor: '#444' },
+  cardRowActive: { backgroundColor: '#fa6205', borderColor: '#fa6205' },
   iconContainer: { width: 50, height: 50, borderRadius: 25, backgroundColor: '#3A3A3C', alignItems: 'center', justifyContent: 'center', marginRight: 15 },
   iconContainerActive: { backgroundColor: '#FFF' },
   cardTexts: { flex: 1 },
-  cardTitle: { fontSize: 16, fontFamily: "Montserrat_700Bold", color: "#FFF" },
-  cardTitleActive: { color: "#1C1C1E" },
+  cardTitle: { fontSize: 16, fontFamily: "Montserrat_700Bold", color: '#1C1C1E' },
+  cardTitleActive: { color: "#F2F2F7" },
   cardDesc: { fontSize: 13, fontFamily: "Montserrat_400Regular", color: "#AAA", marginTop: 2 },
   cardDescActive: { color: "#333" },
   radioOuter: { width: 22, height: 22, borderRadius: 11, borderWidth: 2, borderColor: '#666', alignItems: 'center', justifyContent: 'center' },
-  radioOuterActive: { borderColor: '#1C1C1E' },
-  radioInner: { width: 12, height: 12, borderRadius: 6, backgroundColor: '#1C1C1E' },
+  radioOuterActive: { borderColor: '#F2F2F7' },
+  radioInner: { width: 12, height: 12, borderRadius: 6, backgroundColor: '#F2F2F7' },
 
   // Inputs Dark
-  inputDark: { backgroundColor: "#2C2C2E", borderRadius: 12, borderWidth: 1, borderColor: "#444", paddingHorizontal: 16, paddingVertical: 14, fontSize: 16, fontFamily: "Montserrat_400Regular", color: "#FFF", marginBottom: 20, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  inputText: { fontSize: 16, fontFamily: "Montserrat_400Regular", color: "#FFF" },
+  inputDark: { backgroundColor: "#FFFFFF", borderRadius: 12, borderWidth: 1, borderColor: "#DDD", paddingHorizontal: 16, paddingVertical: 14, fontSize: 16, fontFamily: "Montserrat_400Regular", color: '#1C1C1E', marginBottom: 20, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  inputText: { fontSize: 16, fontFamily: "Montserrat_400Regular", color: '#1C1C1E' },
 
   // Grid Documentos
   docGrid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between' },
-  docSquare: { width: '48%', aspectRatio: 1, backgroundColor: '#2C2C2E', borderRadius: 12, marginBottom: 15, borderStyle: 'dashed', borderWidth: 1, borderColor: '#666', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' },
-  docSquareDone: { borderStyle: 'solid', borderWidth: 2, borderColor: '#9DFD05' },
+  docSquare: { width: '48%', aspectRatio: 1, backgroundColor: '#FFFFFF', borderRadius: 12, marginBottom: 15, borderStyle: 'dashed', borderWidth: 1, borderColor: '#666', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' },
+  docSquareDone: { borderStyle: 'solid', borderWidth: 2, borderColor: '#fa6205' },
   docPlaceholder: { alignItems: 'center', padding: 10 },
   docLabel: { color: '#999', fontSize: 12, fontFamily: 'Montserrat_400Regular', marginTop: 10, textAlign: 'center' },
   docImagePreview: { width: '100%', height: '100%', resizeMode: 'cover' },
-  checkBadge: { position: 'absolute', top: 8, right: 8, backgroundColor: '#9DFD05', borderRadius: 10, padding: 4, zIndex: 2 },
+  checkBadge: { position: 'absolute', top: 8, right: 8, backgroundColor: '#fa6205', borderRadius: 10, padding: 4, zIndex: 2 },
 
   // Botones
   navButtons: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 20 },
-  buttonPrimary: { backgroundColor: "#9DFD05", borderRadius: 12, paddingVertical: 16, paddingHorizontal: 20, alignItems: "center", justifyContent: 'center', flexDirection: 'row' },
-  buttonTextPrimary: { color: "#1C1C1E", fontFamily: "Montserrat_700Bold", fontSize: 16 },
+  buttonPrimary: { backgroundColor: "#fa6205", borderRadius: 12, paddingVertical: 16, paddingHorizontal: 20, alignItems: "center", justifyContent: 'center', flexDirection: 'row' },
+  buttonTextPrimary: { color: "#F2F2F7", fontFamily: "Montserrat_700Bold", fontSize: 16 },
   buttonSecondary: { paddingVertical: 15, paddingHorizontal: 20, alignItems: "center", marginRight: 10 },
-  buttonTextSecondary: { color: "#FFF", fontFamily: "Montserrat_700Bold", fontSize: 15 },
+  buttonTextSecondary: { color: '#1C1C1E', fontFamily: "Montserrat_700Bold", fontSize: 15 },
 
   // Modales
   modalOverlay: { flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(0,0,0,0.5)' },
-  modalContent: { backgroundColor: '#2C2C2E', borderTopLeftRadius: 20, borderTopRightRadius: 20, maxHeight: '60%', padding: 20 },
+  modalContent: { backgroundColor: '#FFFFFF', borderTopLeftRadius: 20, borderTopRightRadius: 20, maxHeight: '60%', padding: 20 },
   modalHeader: { flexDirection: 'row', justifyContent: 'space-between', paddingBottom: 15, borderBottomWidth: 1, borderBottomColor: '#444' },
-  modalTitle: { color: '#FFF', fontSize: 18, fontFamily: "Montserrat_700Bold", marginBottom: 10 },
-  modalCloseText: { color: '#9DFD05', fontSize: 16, fontFamily: "Montserrat_700Bold" },
+  modalTitle: { color: '#1C1C1E', fontSize: 18, fontFamily: "Montserrat_700Bold", marginBottom: 10 },
+  modalCloseText: { color: '#fa6205', fontSize: 16, fontFamily: "Montserrat_700Bold" },
   modalItem: { padding: 16, borderBottomWidth: 1, borderBottomColor: '#333', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  modalItemText: { color: '#FFF', fontSize: 16, fontFamily: "Montserrat_400Regular" },
+  modalItemText: { color: '#1C1C1E', fontSize: 16, fontFamily: "Montserrat_400Regular" },
 
   // Modal Fecha
   dateModalOverlay: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: 'rgba(0,0,0,0.8)' },
-  dateModalContent: { width: '90%', backgroundColor: '#2C2C2E', borderRadius: 20, padding: 20, alignItems: 'center' },
+  dateModalContent: { width: '90%', backgroundColor: '#FFFFFF', borderRadius: 20, padding: 20, alignItems: 'center' },
   datePickerContainer: { backgroundColor: '#FFF', borderRadius: 10, padding: 10, width: '100%', alignItems: 'center', marginBottom: 20 },
 
   // ESTILOS PARA LOADING
   loadingOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.85)', justifyContent: 'center', alignItems: 'center' },
-  loadingContainer: { backgroundColor: '#2C2C2E', padding: 25, borderRadius: 20, alignItems: 'center', width: '80%' },
-  loadingText: { color: '#FFF', fontSize: 18, fontFamily: "Montserrat_700Bold", marginTop: 20, marginBottom: 5 },
+  loadingContainer: { backgroundColor: '#FFFFFF', padding: 25, borderRadius: 20, alignItems: 'center', width: '80%' },
+  loadingText: { color: '#1C1C1E', fontSize: 18, fontFamily: "Montserrat_700Bold", marginTop: 20, marginBottom: 5 },
   loadingSubText: { color: '#AAA', fontSize: 14, fontFamily: "Montserrat_400Regular" }
 });

@@ -38,7 +38,7 @@ const BoletaCard = ({ item, onShowQr }) => {
                     source={{ uri: item.qr_base64 }}
                     style={styles.qrImage}
                 />
-                <View style={[styles.statusBadge, { backgroundColor: item.estado === 'approved' ? '#28a745' : '#ffc107' }]}>
+                <View style={[styles.statusBadge, { backgroundColor: item.estado === 'approved' ? '#fa6205' : '#ffc107' }]}>
                     <Text style={styles.statusBadgeText}>
                         {item.estado === 'approved' ? 'APROBADO' : 'PENDIENTE'}
                     </Text>
@@ -262,7 +262,7 @@ const styles = StyleSheet.create({
     headerButton: { padding: 5, width: 40, alignItems: 'center' },
     emptyText: { fontSize: 18, color: '#666', marginBottom: 20, textAlign: 'center' },
     button: { backgroundColor: '#8d24b6', paddingVertical: 12, paddingHorizontal: 30, borderRadius: 8 },
-    buttonText: { color: '#ffffff', fontSize: 16, fontWeight: '600' },
+    buttonText: { color: '#1C1C1E', fontSize: 16, fontWeight: '600' },
     ticketContainer: { backgroundColor: '#fff', borderRadius: 16, marginBottom: 16, flexDirection: 'row', elevation: 4, shadowColor: '#5a3a69', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.1, shadowRadius: 12 },
     leftSection: { width: 100, padding: 10, alignItems: 'center', justifyContent: 'space-between', borderTopLeftRadius: 16, borderBottomLeftRadius: 16 },
     qrImage: { width: 70, height: 70 },
@@ -273,7 +273,7 @@ const styles = StyleSheet.create({
     detailRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 4 },
     detailText: { fontSize: 14, color: '#555', marginLeft: 6 },
     statusBadge: { paddingVertical: 5, paddingHorizontal: 10, borderRadius: 20, width: '100%', alignItems: 'center' },
-    statusBadgeText: { color: '#fff', fontSize: 10, fontWeight: '700', letterSpacing: 0.5 },
+    statusBadgeText: { color: '#1C1C1E', fontSize: 10, fontWeight: '700', letterSpacing: 0.5 },
     footer: { position: 'absolute', bottom: 0, left: 0, right: 0, paddingVertical: 20, paddingBottom: 30, backgroundColor: '#f4f2f8', alignItems: 'center', borderTopWidth: 1, borderTopColor: '#e8e8e8' },
     footerText: { color: '#666' },
     footerLink: { color: '#8d24b6', fontWeight: '600' },
@@ -284,7 +284,7 @@ const styles = StyleSheet.create({
     qrModalImage: { width: 250, height: 250, marginBottom: 20 },
     modalTicketInfo: { fontSize: 16, fontWeight: '500', color: '#333', marginBottom: 25 },
     closeButton: { backgroundColor: '#8d24b6', borderRadius: 10, paddingVertical: 12, paddingHorizontal: 50 },
-    closeButtonText: { color: 'white', fontWeight: '600', fontSize: 16 },
+    closeButtonText: { color: '#1C1C1E', fontWeight: '600', fontSize: 16 },
 });
 
 export default MisComprasScreen;

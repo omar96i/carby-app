@@ -16,7 +16,7 @@ export default function RegisterScreen() {
   if (!fontsLoaded) {
     return (
       <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#9DFD05" />
+        <ActivityIndicator size="large" color="#fa6205" />
       </View>
     );
   }
@@ -25,14 +25,14 @@ export default function RegisterScreen() {
     <View style={styles.container}>
       {/* Botón Atrás */}
       <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
-        <MaterialCommunityIcons name="arrow-left" color="#fff" size={24} />
+        <MaterialCommunityIcons name="arrow-left" color="#1C1C1E" size={24} />
       </TouchableOpacity>
 
       <ScrollView
         contentContainerStyle={styles.scrollViewContent}
         showsVerticalScrollIndicator={false}
       >
-        <Image source={require("../../assets/images/yar.png")} style={styles.logo} />
+        <Image source={require("../../assets/images/nuevo-icono.jpeg")} style={styles.logo} />
 
         <Text style={styles.title}>¿Cómo te quieres registrar?</Text>
         <Text style={styles.subtitle}>Elige la opción que mejor se adapte a ti.</Text>
@@ -44,7 +44,7 @@ export default function RegisterScreen() {
           activeOpacity={0.7}
         >
           {/* Icono a la izquierda para coincidir con tu otra pantalla */}
-          <FontAwesome6 name="user-large" size={28} color="#9DFD05" style={styles.iconLeft} />
+          <FontAwesome6 name="user-large" size={28} color="#fa6205" style={styles.iconLeft} />
           
           <View style={styles.textContainer}>
             <Text style={styles.cardTitle}>CLIENTE</Text>
@@ -80,7 +80,7 @@ export default function RegisterScreen() {
           onPress={() => navigation.navigate("Comercio")}
           activeOpacity={0.7}
         >
-          <FontAwesome6 name="shop" size={26} color="#9DFD05" style={styles.iconLeft} />
+          <FontAwesome6 name="shop" size={26} color="#fa6205" style={styles.iconLeft} />
           
           <View style={styles.textContainer}>
             <Text style={styles.cardTitle}>COMERCIO ALIADO</Text>
@@ -100,11 +100,11 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: "#1C1C1E", // Color de fondo actualizado
+    backgroundColor: "#F2F2F7", // Color de fondo actualizado
   },
   container: {
     flex: 1,
-    backgroundColor: "#1C1C1E", // Color de fondo actualizado
+    backgroundColor: "#F2F2F7", // Color de fondo actualizado
   },
   scrollViewContent: {
     flexGrow: 1,
@@ -123,16 +123,17 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255,255,255,0.1)',
   },
   logo: {
-    width: 180,
-    height: 80,
+    width: 100,
+    height: 100,
     resizeMode: "contain",
     marginBottom: 20,
+    borderRadius: 20,
   },
   title: {
     fontSize: 22,
     fontFamily: "Montserrat_700Bold",
     textAlign: "center",
-    color: "#FFFFFF",
+    color: "#1C1C1E",
     marginBottom: 5,
   },
   subtitle: {
@@ -146,9 +147,9 @@ const styles = StyleSheet.create({
   cardButton: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#2C2C2E", // Fondo de tarjeta gris oscuro
+    backgroundColor: "#FFFFFF", // Fondo de tarjeta gris oscuro
     borderWidth: 1.5,
-    borderColor: "#444444", // Borde gris medio
+    borderColor: "#DDDDDD", // Borde gris medio
     borderRadius: 12,
     width: "100%",
     padding: 20,
@@ -166,10 +167,10 @@ const styles = StyleSheet.create({
     width: 30,
     height: 30,
     marginRight: 20,
-    tintColor: "#9DFD05", // TRUCO: Pintamos la imagen de la llanta del color verde neón
+    tintColor: "#fa6205", // TRUCO: Pintamos la imagen de la llanta del color verde neón
   },
   cardTitle: {
-    color: "#FFFFFF",
+    color: "#1C1C1E",
     fontFamily: "Montserrat_700Bold", // Usando tu fuente Montserrat
     fontSize: 16,
     letterSpacing: 0.5,

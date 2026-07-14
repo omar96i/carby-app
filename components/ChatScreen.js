@@ -346,7 +346,7 @@ const ChatScreen = ({ tripId }) => {
     <View style={styles.container}>
       {isLoadingHistory ? (
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#1E7D22" />
+          <ActivityIndicator size="large" color="#fa6205" />
           <Text style={styles.loadingText}>Cargando mensajes anteriores...</Text>
         </View>
       ) : messages.length === 0 ? (
@@ -422,7 +422,7 @@ const ChatScreen = ({ tripId }) => {
           <FontAwesome
             name={isLoading ? "circle-o-notch" : "paper-plane"}
             size={24}
-            color="white"
+            color="#1C1C1E"
           />
         </TouchableOpacity>
       </View>
@@ -481,7 +481,7 @@ const styles = StyleSheet.create({
   },
   myMessageContainer: {
     alignSelf: 'flex-end', // Mensajes del usuario a la derecha
-    backgroundColor: "#4CAF50", // Verde para mensajes del usuario
+    backgroundColor: "#fa6205", // Verde para mensajes del usuario
   },
   otherMessageContainer: {
     alignSelf: 'flex-start', // Mensajes del rider a la izquierda
@@ -498,7 +498,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   myUserName: {
-    color: "white", // Texto blanco para mensajes del usuario (sobre fondo verde)
+    color: "#1C1C1E", // Texto blanco para mensajes del usuario (sobre fondo verde)
   },
   otherUserName: {
     color: "#333", // Texto oscuro para mensajes del rider (sobre fondo blanco)
@@ -531,7 +531,7 @@ const styles = StyleSheet.create({
     marginTop: 5,
   },
   myMessageText: {
-    color: "white", // Texto blanco para mensajes del usuario
+    color: "#1C1C1E", // Texto blanco para mensajes del usuario
   },
   otherMessageText: {
     color: "#333", // Texto oscuro para mensajes del rider

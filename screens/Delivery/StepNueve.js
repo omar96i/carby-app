@@ -252,12 +252,12 @@ export default function StepNueve({ route }) {
 
   return (
     <SafeAreaView style={styles.safeContainer}>
-      <StatusBar barStyle="light-content" backgroundColor="#121212" />
+      <StatusBar barStyle="dark-content" backgroundColor="#F2F2F7" />
 
       {/* Header Flotante */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-          <Feather name="arrow-left" size={24} color="#FFF" />
+          <Feather name="arrow-left" size={24} color="#1C1C1E" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>
           {type === "pedido" ? "Tu Pedido" : "En Camino"}
@@ -266,7 +266,7 @@ export default function StepNueve({ route }) {
 
       {isLoading ? (
         <View style={styles.centerContainer}>
-          <ActivityIndicator size="large" color="#A0FF00" />
+          <ActivityIndicator size="large" color="#fa6205" />
           <Text style={styles.loadingText}>Conectando con conductor...</Text>
         </View>
       ) : error ? (
@@ -297,7 +297,7 @@ export default function StepNueve({ route }) {
                 {/* Marcador Origen */}
                 {pickupCoords && (
                   <Marker coordinate={pickupCoords} title="Recogida" zIndex={5} anchor={{ x: 0.5, y: 0.5 }}>
-                    <View style={[styles.dotMarker, { backgroundColor: '#A0FF00' }]} />
+                    <View style={[styles.dotMarker, { backgroundColor: '#fa6205' }]} />
                   </Marker>
                 )}
 
@@ -347,7 +347,7 @@ export default function StepNueve({ route }) {
                   {type === "pedido" ? tripData?.comercio?.establecimiento_nombre : tripData?.conductor?.nombre_completo || "Asignando..."}
                 </Text>
                 <View style={styles.driverPhoneContainer}>
-                  <Feather name="phone" size={14} color="#A0FF00" />
+                  <Feather name="phone" size={14} color="#fa6205" />
                   <Text style={styles.driverPhone}>
                     {type === "pedido" ? tripData?.comercio?.numero_telefono : tripData?.conductor?.numero_telefono || "---"}
                   </Text>
@@ -363,17 +363,17 @@ export default function StepNueve({ route }) {
               <TouchableOpacity style={[styles.actionButton, styles.actionButtonPrimary]} onPress={fetchRiderQrCode} disabled={loadingQr}>
                 <MaterialCommunityIcons name="qrcode-scan" size={20} color="#000" />
                 <Text style={styles.actionButtonTextPrimary}>
-                  {BASE_URL.toString().includes("co.yariders") ? "Pago QR" : "Pago Yape/Plin"}
+                  "Pago Nequi / Bancolombia"
                 </Text>
               </TouchableOpacity>
 
               <TouchableOpacity style={[styles.actionButton, styles.actionButtonSecondary]} onPress={() => setModalVisible(true)}>
-                <Feather name="lock" size={20} color="#FFF" />
+                <Feather name="lock" size={20} color="#1C1C1E" />
                 <Text style={styles.actionButtonTextSecondary}>Ver PIN</Text>
               </TouchableOpacity>
 
               <TouchableOpacity style={[styles.actionButton, styles.actionButtonSecondary]} onPress={() => setShowChat(true)}>
-                <Feather name="message-circle" size={20} color="#FFF" />
+                <Feather name="message-circle" size={20} color="#1C1C1E" />
                 <Text style={styles.actionButtonTextSecondary}>Chat</Text>
               </TouchableOpacity>
             </View>
@@ -382,7 +382,7 @@ export default function StepNueve({ route }) {
             {tripData?.conductor && (
               <View style={styles.infoCard}>
                 <View style={styles.infoCardHeader}>
-                  <MaterialCommunityIcons name="car-sports" size={20} color="#A0FF00" />
+                  <MaterialCommunityIcons name="car-sports" size={20} color="#fa6205" />
                   <Text style={styles.infoCardTitle}>Vehículo</Text>
                 </View>
                 <View style={styles.divider} />
@@ -400,7 +400,7 @@ export default function StepNueve({ route }) {
             {/* Ruta Texto */}
             <View style={styles.infoCard}>
               <View style={styles.infoCardHeader}>
-                <Feather name="map-pin" size={18} color="#A0FF00" />
+                <Feather name="map-pin" size={18} color="#fa6205" />
                 <Text style={styles.infoCardTitle}>Ruta</Text>
               </View>
               <View style={styles.divider} />
@@ -418,14 +418,14 @@ export default function StepNueve({ route }) {
             {/* Costo */}
             <View style={styles.infoCard}>
               <View style={styles.infoCardHeader}>
-                <Feather name="dollar-sign" size={18} color="#A0FF00" />
+                <Feather name="dollar-sign" size={18} color="#fa6205" />
                 <Text style={styles.infoCardTitle}>Costo</Text>
               </View>
               <View style={styles.divider} />
               <View style={styles.infoRow}>
                 <Text style={styles.infoLabel}>Total Estimado</Text>
                 <Text style={styles.priceValue}>
-                  {BASE_URL.toString().includes("co.yariders") ? "$" : "S/"}
+                  {"$"}
                   {type === "pedido" ? parseFloat(tripData?.costo_total || 0).toLocaleString() : parseFloat(tripData?.costo || 0).toLocaleString()}
                 </Text>
               </View>
@@ -448,7 +448,7 @@ export default function StepNueve({ route }) {
             <View style={styles.chatOverlay}>
               <View style={styles.chatHeaderOverlay}>
                 <Text style={styles.chatHeaderTitle}>Chat con Conductor</Text>
-                <TouchableOpacity onPress={() => setShowChat(false)} style={styles.closeChatBtn}><Feather name="x" size={24} color="#FFF" /></TouchableOpacity>
+                <TouchableOpacity onPress={() => setShowChat(false)} style={styles.closeChatBtn}><Feather name="x" size={24} color="#1C1C1E" /></TouchableOpacity>
               </View>
               <ChatUsuario tripId={tripId} />
             </View>
@@ -473,7 +473,7 @@ export default function StepNueve({ route }) {
 
       <Modal isVisible={isModalVisible} backdropOpacity={0.8} onBackdropPress={() => setModalVisible(false)} animationIn="fadeInUp" animationOut="fadeOutDown">
         <View style={styles.modalContent}>
-          <Feather name="shield" size={40} color="#A0FF00" style={{ marginBottom: 15 }} />
+          <Feather name="shield" size={40} color="#fa6205" style={{ marginBottom: 15 }} />
           <Text style={styles.modalHeader}>PIN de Seguridad</Text>
           <Text style={styles.modalSubtext}>Comparte este código con el conductor.</Text>
           <View style={styles.pinBox}><Text style={styles.pinText}>{codigoConfirmacion || "----"}</Text></View>
@@ -486,83 +486,83 @@ export default function StepNueve({ route }) {
 }
 
 const styles = StyleSheet.create({
-  safeContainer: { flex: 1, backgroundColor: "#121212" },
-  header: { flexDirection: "row", alignItems: "center", paddingHorizontal: 20, paddingVertical: 15, paddingTop: 30, borderBottomWidth: 1, borderBottomColor: "#252525" },
+  safeContainer: { flex: 1, backgroundColor: "#F2F2F7" },
+  header: { flexDirection: "row", alignItems: "center", paddingHorizontal: 20, paddingVertical: 15, paddingTop: 30, borderBottomWidth: 1, borderBottomColor: "#F0F0F0" },
   backButton: { padding: 8, marginRight: 10 },
-  headerTitle: { fontSize: 18, fontFamily: "Montserrat_700Bold", color: "#FFF" },
+  headerTitle: { fontSize: 18, fontFamily: "Montserrat_700Bold", color: "#1C1C1E" },
   centerContainer: { flex: 1, justifyContent: "center", alignItems: "center", padding: 20 },
-  loadingText: { marginTop: 15, color: "#A0FF00", fontFamily: "Montserrat_500Medium" },
-  errorText: { color: "#FFF", textAlign: "center", marginBottom: 20, fontFamily: "Montserrat_400Regular" },
+  loadingText: { marginTop: 15, color: "#fa6205", fontFamily: "Montserrat_500Medium" },
+  errorText: { color: "#1C1C1E", textAlign: "center", marginBottom: 20, fontFamily: "Montserrat_400Regular" },
   contentContainer: { flex: 1, padding: 20 },
 
   // MAPA ESTILO
   mapContainer: { height: 250, borderRadius: 16, overflow: 'hidden', marginBottom: 20, borderWidth: 1, borderColor: '#333' },
   dotMarker: { width: 14, height: 14, borderRadius: 7, borderWidth: 2, borderColor: '#FFF' },
-  driverMarker: { backgroundColor: '#A0FF00', padding: 5, borderRadius: 20, borderWidth: 2, borderColor: '#FFF' },
+  driverMarker: { backgroundColor: '#fa6205', padding: 5, borderRadius: 20, borderWidth: 2, borderColor: '#FFF' },
   mapStatusOverlay: { position: 'absolute', top: 10, left: 10, backgroundColor: 'rgba(0,0,0,0.6)', borderRadius: 20, padding: 5 },
   statusBadge: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 8 },
   liveDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: '#FF4757', marginRight: 5 },
-  statusText: { color: '#FFF', fontSize: 10, fontWeight: 'bold' },
+  statusText: { color: '#1C1C1E', fontSize: 10, fontWeight: 'bold' },
 
   // DRIVER CARD
-  driverCard: { flexDirection: "row", backgroundColor: "#1E1E1E", padding: 16, borderRadius: 16, alignItems: "center", marginBottom: 20, borderWidth: 1, borderColor: "#2C2C2C" },
+  driverCard: { flexDirection: "row", backgroundColor: "#FFFFFF", padding: 16, borderRadius: 16, alignItems: "center", marginBottom: 20, borderWidth: 1, borderColor: "#F0F0F0" },
   driverImage: { width: 60, height: 60, borderRadius: 30, marginRight: 15, backgroundColor: '#333' },
   driverInfo: { flex: 1 },
   driverLabel: { fontSize: 12, color: "#888", fontFamily: "Montserrat_400Regular" },
-  driverName: { fontSize: 16, color: "#FFF", fontFamily: "Montserrat_700Bold", marginBottom: 2 },
+  driverName: { fontSize: 16, color: "#1C1C1E", fontFamily: "Montserrat_700Bold", marginBottom: 2 },
   driverPhoneContainer: { flexDirection: 'row', alignItems: 'center', marginTop: 2 },
   driverPhone: { fontSize: 14, color: "#CCC", marginLeft: 6, fontFamily: "Montserrat_500Medium" },
-  serviceTag: { marginTop: 4, backgroundColor: 'rgba(160, 255, 0, 0.1)', color: '#A0FF00', alignSelf: 'flex-start', paddingHorizontal: 8, paddingVertical: 2, borderRadius: 4, fontSize: 10, fontFamily: "Montserrat_700Bold" },
+  serviceTag: { marginTop: 4, backgroundColor: 'rgba(160, 255, 0, 0.1)', color: '#fa6205', alignSelf: 'flex-start', paddingHorizontal: 8, paddingVertical: 2, borderRadius: 4, fontSize: 10, fontFamily: "Montserrat_700Bold" },
 
   // ACCIONES
   actionsGrid: { flexDirection: 'column', gap: 10, marginBottom: 25 },
   actionButton: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingVertical: 14, borderRadius: 12 },
-  actionButtonPrimary: { backgroundColor: "#39FF14", elevation: 4 },
-  actionButtonSecondary: { backgroundColor: "#252525", borderWidth: 1, borderColor: "#333" },
+  actionButtonPrimary: { backgroundColor: "#fa6205", elevation: 4 },
+  actionButtonSecondary: { backgroundColor: "#F0F0F0", borderWidth: 1, borderColor: "#333" },
   actionButtonTextPrimary: { color: "#000", fontFamily: "Montserrat_700Bold", marginLeft: 8, fontSize: 16 },
-  actionButtonTextSecondary: { color: "#FFF", fontFamily: "Montserrat_600SemiBold", marginLeft: 8, fontSize: 16 },
+  actionButtonTextSecondary: { color: "#1C1C1E", fontFamily: "Montserrat_600SemiBold", marginLeft: 8, fontSize: 16 },
 
   // INFO GENERAL
-  infoCard: { backgroundColor: "#1E1E1E", borderRadius: 16, padding: 16, marginBottom: 15, borderWidth: 1, borderColor: "#252525" },
+  infoCard: { backgroundColor: "#FFFFFF", borderRadius: 16, padding: 16, marginBottom: 15, borderWidth: 1, borderColor: "#F0F0F0" },
   infoCardHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: 12 },
-  infoCardTitle: { color: "#FFF", fontFamily: "Montserrat_600SemiBold", fontSize: 14, marginLeft: 8 },
-  divider: { height: 1, backgroundColor: "#2C2C2C", marginBottom: 12 },
+  infoCardTitle: { color: "#1C1C1E", fontFamily: "Montserrat_600SemiBold", fontSize: 14, marginLeft: 8 },
+  divider: { height: 1, backgroundColor: "#F0F0F0", marginBottom: 12 },
   infoRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 },
   infoLabel: { color: "#888", fontSize: 13, fontFamily: "Montserrat_500Medium" },
-  infoValue: { color: "#FFF", fontSize: 13, fontFamily: "Montserrat_400Regular", textAlign: 'right', flex: 1, marginLeft: 10 },
-  infoValueHighlight: { color: "#FFF", fontSize: 15, fontFamily: "Montserrat_700Bold", backgroundColor: "#252525", paddingHorizontal: 8, paddingVertical: 2, borderRadius: 6 },
+  infoValue: { color: "#1C1C1E", fontSize: 13, fontFamily: "Montserrat_400Regular", textAlign: 'right', flex: 1, marginLeft: 10 },
+  infoValueHighlight: { color: "#1C1C1E", fontSize: 15, fontFamily: "Montserrat_700Bold", backgroundColor: "#F0F0F0", paddingHorizontal: 8, paddingVertical: 2, borderRadius: 6 },
   infoValueItalic: { color: "#CCC", fontSize: 13, fontFamily: "Montserrat_400Regular", fontStyle: 'italic', marginTop: 4 },
-  priceValue: { color: "#39FF14", fontSize: 18, fontFamily: "Montserrat_700Bold" },
+  priceValue: { color: "#fa6205", fontSize: 18, fontFamily: "Montserrat_700Bold" },
 
   // RUTA VISUAL
   routeRow: { flexDirection: 'row', alignItems: 'flex-start', paddingVertical: 2 },
   dotOrigin: { width: 10, height: 10, borderRadius: 5, backgroundColor: "#CCC", marginTop: 4, marginRight: 10 },
-  dotDest: { width: 10, height: 10, borderRadius: 5, backgroundColor: "#39FF14", marginTop: 4, marginRight: 10 },
+  dotDest: { width: 10, height: 10, borderRadius: 5, backgroundColor: "#fa6205", marginTop: 4, marginRight: 10 },
   connectorLine: { width: 2, height: 15, backgroundColor: "#333", marginLeft: 4, marginVertical: 2 },
-  routeText: { color: "#FFF", fontSize: 13, fontFamily: "Montserrat_400Regular", flex: 1 },
+  routeText: { color: "#1C1C1E", fontSize: 13, fontFamily: "Montserrat_400Regular", flex: 1 },
 
   // BOTONES VARIOS
   cancelButton: { marginTop: 10, paddingVertical: 15, borderWidth: 1, borderColor: "#FF4757", borderRadius: 12, alignItems: 'center', marginBottom: 30 },
   cancelButtonText: { color: "#FF4757", fontFamily: "Montserrat_600SemiBold", fontSize: 14 },
-  retryButton: { backgroundColor: "#39FF14", paddingHorizontal: 20, paddingVertical: 10, borderRadius: 20 },
+  retryButton: { backgroundColor: "#fa6205", paddingHorizontal: 20, paddingVertical: 10, borderRadius: 20 },
   retryButtonText: { color: "#000", fontWeight: 'bold' },
 
   // CHAT
-  chatOverlay: { position: 'absolute', bottom: 0, left: 0, right: 0, height: '85%', backgroundColor: '#1E1E1E', borderTopLeftRadius: 20, borderTopRightRadius: 20, elevation: 20, padding: 20 },
+  chatOverlay: { position: 'absolute', bottom: 0, left: 0, right: 0, height: '85%', backgroundColor: '#FFFFFF', borderTopLeftRadius: 20, borderTopRightRadius: 20, elevation: 20, padding: 20 },
   chatHeaderOverlay: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 15 },
-  chatHeaderTitle: { color: "#FFF", fontSize: 18, fontFamily: "Montserrat_700Bold" },
+  chatHeaderTitle: { color: "#1C1C1E", fontSize: 18, fontFamily: "Montserrat_700Bold" },
   closeChatBtn: { padding: 5 },
 
   // MODALES
-  modalContent: { backgroundColor: "#1E1E1E", borderRadius: 20, padding: 25, alignItems: "center", borderWidth: 1, borderColor: "#333" },
-  modalHeader: { fontSize: 20, color: "#FFF", fontFamily: "Montserrat_700Bold", marginBottom: 10 },
+  modalContent: { backgroundColor: "#FFFFFF", borderRadius: 20, padding: 25, alignItems: "center", borderWidth: 1, borderColor: "#333" },
+  modalHeader: { fontSize: 20, color: "#1C1C1E", fontFamily: "Montserrat_700Bold", marginBottom: 10 },
   modalSubtext: { color: "#AAA", textAlign: 'center', marginBottom: 20, fontSize: 14, fontFamily: "Montserrat_400Regular" },
   qrFrame: { backgroundColor: "#FFF", padding: 10, borderRadius: 12, marginBottom: 20 },
   qrImage: { width: 220, height: 220 },
   noQrBox: { width: 220, height: 220, justifyContent: 'center', alignItems: 'center', backgroundColor: '#EEE' },
   noQrText: { marginTop: 10, color: '#555', fontFamily: "Montserrat_500Medium" },
-  pinBox: { backgroundColor: "#252525", paddingHorizontal: 40, paddingVertical: 15, borderRadius: 12, marginBottom: 25, borderWidth: 1, borderColor: "#39FF14" },
-  pinText: { color: "#39FF14", fontSize: 32, fontFamily: "Montserrat_700Bold", letterSpacing: 4 },
-  modalButtonPrimary: { backgroundColor: "#39FF14", width: '100%', paddingVertical: 14, borderRadius: 12, alignItems: 'center' },
+  pinBox: { backgroundColor: "#F0F0F0", paddingHorizontal: 40, paddingVertical: 15, borderRadius: 12, marginBottom: 25, borderWidth: 1, borderColor: "#fa6205" },
+  pinText: { color: "#fa6205", fontSize: 32, fontFamily: "Montserrat_700Bold", letterSpacing: 4 },
+  modalButtonPrimary: { backgroundColor: "#fa6205", width: '100%', paddingVertical: 14, borderRadius: 12, alignItems: 'center' },
   modalButtonText: { color: "#000", fontSize: 16, fontFamily: "Montserrat_700Bold" }
 });

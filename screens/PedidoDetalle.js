@@ -909,7 +909,7 @@ const PedidoDetalle = () => {
                       )}
                     </Text>
                     <Text style={styles.additionalPrice}>
-                      +S/
+                      +$ 
                       {(
                         parseFloat(
                           adicional.producto_adicional?.precio ||
@@ -924,10 +924,10 @@ const PedidoDetalle = () => {
             )}
           </View>
           <View style={styles.productPriceContainer}>
-            <Text style={styles.productPrice}>S/{precioTotal.toFixed(2)}</Text>
+            <Text style={styles.productPrice}>$ {precioTotal.toFixed(2)}</Text>
             {adicionales.length > 0 && (
               <Text style={styles.productBasePrice}>
-                Base: S/{(precioBase * producto.cantidad).toFixed(2)}
+                Base: $ {(precioBase * producto.cantidad).toFixed(2)}
               </Text>
             )}
           </View>
@@ -1119,7 +1119,7 @@ const PedidoDetalle = () => {
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#a7ff00" />
+          <ActivityIndicator size="large" color="#fa6205" />
           <Text
             style={[
               styles.loadingText,
@@ -1177,7 +1177,7 @@ const PedidoDetalle = () => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="light-content" />
+      <StatusBar barStyle="dark-content" />
 
       {/* Header */}
       <View style={styles.header}>
@@ -1185,7 +1185,7 @@ const PedidoDetalle = () => {
           onPress={() => navigation.goBack()}
           style={styles.headerBackButton}
         >
-          <Ionicons name="arrow-back" size={24} color="white" />
+          <Ionicons name="arrow-back" size={24} color="#1C1C1E" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Pedido #{pedido.id}</Text>
 
@@ -1199,7 +1199,7 @@ const PedidoDetalle = () => {
         <View style={styles.statusSection}>
           <View style={styles.priceContainer}>
             <Text style={styles.price}>
-              S/{parseFloat(pedido.costo_total || 0).toLocaleString()}
+              $ {parseFloat(pedido.costo_total || 0).toLocaleString()}
             </Text>
             <Text style={styles.statusBadge}>
               {obtenerTextoEstadoPedidos(pedido.estado)}
@@ -1220,7 +1220,7 @@ const PedidoDetalle = () => {
                 <FontAwesome
                   name={paso.icon}
                   size={20}
-                  color={isCompleted || isActive ? '#a7ff00' : '#ccc'}
+                  color={isCompleted || isActive ? '#fa6205' : '#ccc'}
                 />
                 <Text
                   style={[
@@ -1258,7 +1258,7 @@ const PedidoDetalle = () => {
                   <FontAwesome
                     name={paso.icon}
                     size={20}
-                    color={isCompleted || isActive ? '#a7ff00' : '#ccc'}
+                    color={isCompleted || isActive ? '#fa6205' : '#ccc'}
                   />
                   <Text
                     style={[
@@ -1287,7 +1287,7 @@ const PedidoDetalle = () => {
             style={[
               styles.headerActionButton,
               {
-                backgroundColor: '#9BFE03',
+                backgroundColor: '#fa6205',
                 paddingVertical: 12,
                 marginTop: 10,
                 borderRadius: 6,
@@ -1336,7 +1336,7 @@ const PedidoDetalle = () => {
           </View>
 
           <View style={styles.locationRow}>
-            <FontAwesome name="map-marker" size={16} color="#197200" />
+            <FontAwesome name="map-marker" size={16} color="#fa6205" />
             <View style={styles.locationDetails}>
               <Text style={styles.locationLabel}>Destino</Text>
               <Text style={styles.locationText}>{pedidoInfo.destino}</Text>
@@ -1386,7 +1386,7 @@ const PedidoDetalle = () => {
                   setShowEvidenceModal(true);
                 }}
               >
-                <MaterialIcons name="file-upload" size={24} color="white" />
+                <MaterialIcons name="file-upload" size={24} color="#1C1C1E" />
                 <Text style={styles.actionButtonText}>
                   Cargar evidencia de pago
                 </Text>
@@ -1479,7 +1479,7 @@ const PedidoDetalle = () => {
                       style={styles.selectImageButton}
                       onPress={pickEvidenceImage}
                     >
-                      <MaterialIcons name="add-a-photo" size={48} color="#a7ff00" />
+                      <MaterialIcons name="add-a-photo" size={48} color="#fa6205" />
                       <Text style={styles.selectImageText}>Seleccionar imagen</Text>
                     </TouchableOpacity>
                   )}
@@ -1534,7 +1534,7 @@ const PedidoDetalle = () => {
               onPress={() => setShowChatModal(false)}
               style={styles.chatBackButton}
             >
-              <Ionicons name="arrow-back" size={24} color="white" />
+              <Ionicons name="arrow-back" size={24} color="#1C1C1E" />
             </TouchableOpacity>
             <Text style={styles.chatTitle}>Chat del pedido #{pedido.id}</Text>
           </View>
@@ -1550,7 +1550,7 @@ const PedidoDetalle = () => {
             {loadingChat ? (
               <ActivityIndicator
                 size="large"
-                color="#a7ff00"
+                color="#fa6205"
                 style={styles.chatLoading}
               />
             ) : chatMessages.length === 0 ? (
@@ -1588,7 +1588,7 @@ const PedidoDetalle = () => {
                 style={styles.chatImageButton}
                 onPress={pickChatImage}
               >
-                <Ionicons name="camera" size={24} color="#a7ff00" />
+                <Ionicons name="camera" size={24} color="#fa6205" />
               </TouchableOpacity>
 
               <TextInput
@@ -1626,7 +1626,7 @@ const PedidoDetalle = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#1a1a1a",
+    backgroundColor: "#F0F0F0",
   },
   loadingContainer: {
     flex: 1,
@@ -1634,7 +1634,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   loadingText: {
-    color: "white",
+    color: "#1C1C1E",
     fontSize: 16,
     fontFamily: "MontserratRegular",
     marginTop: 15,
@@ -1646,14 +1646,14 @@ const styles = StyleSheet.create({
     padding: 20,
   },
   errorText: {
-    color: "white",
+    color: "#1C1C1E",
     fontSize: 18,
     fontFamily: "MontserratRegular",
     textAlign: "center",
     marginBottom: 20,
   },
   header: {
-    backgroundColor: "#a7ff00",
+    backgroundColor: "#fa6205",
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
@@ -1682,7 +1682,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   statusSection: {
-    backgroundColor: "#2a2a2a",
+    backgroundColor: "#ECECEC",
     padding: 20,
   },
   priceContainer: {
@@ -1692,12 +1692,12 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   price: {
-    color: "#a7ff00",
+    color: "#fa6205",
     fontSize: 24,
     fontFamily: "MontserratBold",
   },
   statusBadge: {
-    backgroundColor: "#a7ff00",
+    backgroundColor: "#fa6205",
     color: "black",
     paddingHorizontal: 12,
     paddingVertical: 6,
@@ -1711,18 +1711,18 @@ const styles = StyleSheet.create({
     fontFamily: "MontserratRegular",
   },
   section: {
-    backgroundColor: "#2a2a2a",
+    backgroundColor: "#ECECEC",
     padding: 20,
     marginBottom: 10,
   },
   sectionTitle: {
-    color: "#a7ff00",
+    color: "#fa6205",
     fontSize: 18,
     fontFamily: "MontserratBold",
     marginBottom: 15,
   },
   establishmentName: {
-    color: "white",
+    color: "#1C1C1E",
     fontSize: 16,
     fontFamily: "MontserratRegular",
   },
@@ -1734,10 +1734,10 @@ const styles = StyleSheet.create({
     alignItems: "flex-start",
     paddingVertical: 15,
     borderBottomWidth: 1,
-    borderBottomColor: "#444",
+    borderBottomColor: "#DDD",
   },
   productQuantity: {
-    backgroundColor: "#a7ff00",
+    backgroundColor: "#fa6205",
     borderRadius: 15,
     width: 30,
     height: 30,
@@ -1755,7 +1755,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   productName: {
-    color: "white",
+    color: "#1C1C1E",
     fontSize: 16,
     fontFamily: "MontserratRegular",
   },
@@ -1772,7 +1772,7 @@ const styles = StyleSheet.create({
     padding: 10,
   },
   additionalsTitle: {
-    color: "#a7ff00",
+    color: "#fa6205",
     fontSize: 13,
     fontFamily: "MontserratBold",
     marginBottom: 5,
@@ -1790,11 +1790,11 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   additionalQuantity: {
-    color: "#a7ff00",
+    color: "#fa6205",
     fontFamily: "MontserratBold",
   },
   additionalPrice: {
-    color: "#a7ff00",
+    color: "#fa6205",
     fontSize: 12,
     fontFamily: "MontserratBold",
     marginLeft: 10,
@@ -1803,7 +1803,7 @@ const styles = StyleSheet.create({
     alignItems: "flex-end",
   },
   productPrice: {
-    color: "#a7ff00",
+    color: "#fa6205",
     fontSize: 16,
     fontFamily: "MontserratBold",
   },
@@ -1823,13 +1823,13 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   locationLabel: {
-    color: "#a7ff00",
+    color: "#fa6205",
     fontSize: 14,
     fontFamily: "MontserratBold",
     marginBottom: 5,
   },
   locationText: {
-    color: "white",
+    color: "#1C1C1E",
     fontSize: 16,
     fontFamily: "MontserratRegular",
     lineHeight: 22,
@@ -1849,7 +1849,7 @@ const styles = StyleSheet.create({
     fontFamily: "MontserratRegular",
   },
   paymentValue: {
-    color: "white",
+    color: "#1C1C1E",
     fontSize: 14,
     fontFamily: "MontserratBold",
   },
@@ -1857,7 +1857,7 @@ const styles = StyleSheet.create({
     padding: 20,
   },
   actionButton: {
-    backgroundColor: "#a7ff00",
+    backgroundColor: "#fa6205",
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
@@ -1875,7 +1875,7 @@ const styles = StyleSheet.create({
     height: 50,
   },
   backButton: {
-    backgroundColor: "#a7ff00",
+    backgroundColor: "#fa6205",
     paddingHorizontal: 20,
     paddingVertical: 10,
     borderRadius: 25,
@@ -1893,21 +1893,21 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   modalContainer: {
-    backgroundColor: "#2a2a2a",
+    backgroundColor: "#ECECEC",
     borderRadius: 15,
     padding: 25,
     width: width * 0.9,
     maxHeight: height * 0.8,
   },
   modalTitle: {
-    color: "#a7ff00",
+    color: "#fa6205",
     fontSize: 20,
     fontFamily: "MontserratBold",
     textAlign: "center",
     marginBottom: 15,
   },
   modalDescription: {
-    color: "white",
+    color: "#1C1C1E",
     fontSize: 16,
     fontFamily: "MontserratRegular",
     textAlign: "center",
@@ -1919,16 +1919,16 @@ const styles = StyleSheet.create({
     marginBottom: 25,
   },
   selectImageButton: {
-    backgroundColor: "#3a3a3a",
+    backgroundColor: "#D8D8D8",
     borderRadius: 10,
     padding: 40,
     alignItems: "center",
     borderWidth: 2,
-    borderColor: "#a7ff00",
+    borderColor: "#fa6205",
     borderStyle: "dashed",
   },
   selectImageText: {
-    color: "#a7ff00",
+    color: "#fa6205",
     fontSize: 16,
     fontFamily: "MontserratBold",
     marginTop: 10,
@@ -1943,7 +1943,7 @@ const styles = StyleSheet.create({
     marginBottom: 15,
   },
   changeImageButton: {
-    backgroundColor: "#a7ff00",
+    backgroundColor: "#fa6205",
     paddingHorizontal: 15,
     paddingVertical: 8,
     borderRadius: 20,
@@ -1958,7 +1958,7 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
   },
   cancelButton: {
-    backgroundColor: "#444",
+    backgroundColor: "#DDD",
     flex: 1,
     marginRight: 10,
     paddingVertical: 12,
@@ -1966,12 +1966,12 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   cancelButtonText: {
-    color: "white",
+    color: "#1C1C1E",
     fontSize: 16,
     fontFamily: "MontserratBold",
   },
   uploadButton: {
-    backgroundColor: "#a7ff00",
+    backgroundColor: "#fa6205",
     flex: 1,
     marginLeft: 10,
     paddingVertical: 12,
@@ -1993,10 +1993,10 @@ const styles = StyleSheet.create({
   // Estilos del chat
   chatContainer: {
     flex: 1,
-    backgroundColor: "#1a1a1a",
+    backgroundColor: "#F0F0F0",
   },
   chatHeader: {
-    backgroundColor: "#a7ff00",
+    backgroundColor: "#fa6205",
     flexDirection: "row",
     alignItems: "center",
     paddingHorizontal: 20,
@@ -2015,7 +2015,7 @@ const styles = StyleSheet.create({
   },
   chatMessages: {
     flex: 1,
-    backgroundColor: "#1a1a1a",
+    backgroundColor: "#F0F0F0",
   },
   chatMessagesContent: {
     padding: 20,
@@ -2037,17 +2037,17 @@ const styles = StyleSheet.create({
     borderRadius: 15,
   },
   myMessage: {
-    backgroundColor: "#a7ff00",
+    backgroundColor: "#fa6205",
     alignSelf: "flex-end",
   },
   otherMessage: {
-    backgroundColor: "#2a2a2a",
+    backgroundColor: "#ECECEC",
     alignSelf: "flex-start",
   },
   senderName: {
     fontSize: 12,
     fontFamily: "MontserratBold",
-    color: "#a7ff00",
+    color: "#fa6205",
     marginBottom: 4,
   },
   messageText: {
@@ -2059,7 +2059,7 @@ const styles = StyleSheet.create({
     color: "black",
   },
   otherMessageText: {
-    color: "white",
+    color: "#1C1C1E",
   },
   messageImage: {
     width: 200,
@@ -2079,7 +2079,7 @@ const styles = StyleSheet.create({
     color: "rgba(255,255,255,0.7)",
   },
   chatInputContainer: {
-    backgroundColor: "#2a2a2a",
+    backgroundColor: "#ECECEC",
     padding: 15,
   },
   selectedChatImageContainer: {
@@ -2109,17 +2109,17 @@ const styles = StyleSheet.create({
   },
   chatInput: {
     flex: 1,
-    backgroundColor: "#3a3a3a",
+    backgroundColor: "#D8D8D8",
     borderRadius: 20,
     paddingHorizontal: 15,
     paddingVertical: 10,
-    color: "white",
+    color: "#1C1C1E",
     fontSize: 16,
     fontFamily: "MontserratRegular",
     maxHeight: 100,
   },
   chatSendButton: {
-    backgroundColor: "#a7ff00",
+    backgroundColor: "#fa6205",
     borderRadius: 20,
     padding: 10,
     marginLeft: 10,
@@ -2129,7 +2129,7 @@ const styles = StyleSheet.create({
   },
   pasosContainer: {
     flexDirection: 'row',
-    backgroundColor: '#2a2a2a',
+    backgroundColor: '#ECECEC',
     justifyContent: 'space-between',
     paddingVertical: 10,
     borderRadius: 8,
@@ -2146,11 +2146,11 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   pasoTextoActivo: {
-    color: '#a7ff00',
+    color: '#fa6205',
     fontWeight: 'bold',
   },
   pasoTextoCompletado: {
-    color: '#a7ff00',
+    color: '#fa6205',
   },
   avisoCarreraNoAsignada: {
     marginTop: 10,

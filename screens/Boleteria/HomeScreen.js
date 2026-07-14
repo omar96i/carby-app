@@ -270,7 +270,7 @@ export default function BoleteriaScreen({ navigation }) {
                     </View>
                     {precioMin !== null && (
                         <View style={styles.priceTag}>
-                            <Text style={styles.priceText}>Desde S/ {precioMin}</Text>
+                            <Text style={styles.priceText}>Desde $  {precioMin}</Text>
                         </View>
                     )}
                 </View>
@@ -286,7 +286,7 @@ export default function BoleteriaScreen({ navigation }) {
                         <Icon
                             name={isVentaActiva ? 'check-circle' : (estadoCompra === 'Próximamente' ? 'clock' : 'x-circle')}
                             size={16}
-                            color="#fff"
+                            color="#1C1C1E"
                         />
                         <Text style={styles.statusText}>{estadoCompra}</Text>
                     </View>
@@ -558,7 +558,7 @@ export default function BoleteriaScreen({ navigation }) {
                                                 activeOpacity={0.8}
                                             >
                                                 <Text style={styles.localidadNombre}>{loc.nombre}</Text>
-                                                <Text style={styles.localidadPrecio}>S/ {loc.precio}</Text>
+                                                <Text style={styles.localidadPrecio}>$ {loc.precio}</Text>
                                                 <Text style={styles.localidadSubText}>Aforo total: {loc.aforo}</Text>
                                                 <Text style={styles.localidadSubText}>
                                                     Disponibles para venta: {loc.disponibilidad_venta ?? '0'}
@@ -664,7 +664,7 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
     verDetallesText: {
-        color: '#fff',
+        color: '#1C1C1E',
         fontWeight: 'bold',
         fontSize: 16,
     },
@@ -775,7 +775,7 @@ const styles = StyleSheet.create({
         fontSize: 13,
     },
     buttonDisabledText: {
-        color: '#FFF',
+        color: '#1C1C1E',
         fontWeight: 'bold',
         fontSize: 16,
     },
@@ -877,7 +877,7 @@ const styles = StyleSheet.create({
         backgroundColor: '#cccccc',
     },
     buttonText: {
-        color: '#ffffff',
+        color: '#1C1C1E',
         fontSize: 16,
         fontWeight: '600',
     },
@@ -931,7 +931,7 @@ const styles = StyleSheet.create({
         borderRadius: 999,
     },
     badgeText: { // Última definición
-        color: '#fff',
+        color: '#1C1C1E',
         fontSize: 12,
         fontWeight: 'bold',
     },
@@ -945,7 +945,7 @@ const styles = StyleSheet.create({
         borderRadius: 999,
     },
     priceText: { // Última definición
-        color: '#fff',
+        color: '#1C1C1E',
         fontSize: 14,
         fontWeight: 'bold',
     },
@@ -991,7 +991,7 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
     detailsButtonText: {
-        color: '#fff',
+        color: '#1C1C1E',
         fontSize: 16,
         fontWeight: 'bold',
     },
@@ -1056,7 +1056,7 @@ const styles = StyleSheet.create({
         alignItems: 'center'
     },
     applyButtonText: { // Última definición
-        color: '#fff',
+        color: '#1C1C1E',
         fontWeight: 'bold',
         fontSize: 16
     },
@@ -1077,7 +1077,7 @@ const styles = StyleSheet.create({
         marginBottom: 16,
     },
     statusActiva: {
-        backgroundColor: '#28a745', // Verde
+        backgroundColor: '#fa6205', // Verde
     },
     statusProximamente: {
         backgroundColor: '#ffc107', // Naranja
@@ -1089,7 +1089,7 @@ const styles = StyleSheet.create({
         backgroundColor: '#dc3545', // Rojo
     },
     statusText: {
-        color: '#fff',
+        color: '#1C1C1E',
         fontWeight: 'bold',
         marginLeft: 8,
     },

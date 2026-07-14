@@ -1,7 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // Reemplaza esta URL con la base de tu API
-const API_URL = 'https://back.yariders.com/api';
+const API_URL = 'https://back.carbycol.com/api';
 
 export const getMyBalance = async () => {
     try {

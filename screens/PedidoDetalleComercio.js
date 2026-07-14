@@ -392,7 +392,7 @@ const PedidoDetalleComercio = () => {
     return (
       <SafeAreaView style={styles.safeArea}>
         <View style={styles.centerContainer}>
-          <ActivityIndicator size="large" color="#A0FF00" />
+          <ActivityIndicator size="large" color="#fa6205" />
           <Text style={styles.loadingText}>Cargando pedido...</Text>
         </View>
       </SafeAreaView>
@@ -404,12 +404,12 @@ const PedidoDetalleComercio = () => {
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <StatusBar barStyle="light-content" backgroundColor="#121212" />
+      <StatusBar barStyle="dark-content" backgroundColor="#F2F2F7" />
 
       {/* HEADER */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
-          <Feather name="arrow-left" size={24} color="#FFF" />
+          <Feather name="arrow-left" size={24} color="#1C1C1E" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Pedido #{pedido.id}</Text>
         <View style={{width: 32}} /> 
@@ -428,7 +428,7 @@ const PedidoDetalleComercio = () => {
                 </View>
                 <View style={{alignItems: 'flex-end'}}>
                     <Text style={styles.label}>Total Pedido</Text>
-                    <Text style={styles.totalPrice}>S/{parseFloat(pedido.costo_total).toLocaleString()}</Text>
+                    <Text style={styles.totalPrice}>$ {parseFloat(pedido.costo_total).toLocaleString()}</Text>
                 </View>
             </View>
             <View style={styles.divider} />
@@ -441,11 +441,11 @@ const PedidoDetalleComercio = () => {
         {/* --- PAGO AL CONDUCTOR --- */}
         <View style={styles.driverPayCard}>
             <View style={styles.driverPayRow}>
-                <MaterialCommunityIcons name="cash-fast" size={24} color="#121212" />
+                <MaterialCommunityIcons name="cash-fast" size={24} color="#F2F2F7" />
                 <Text style={styles.driverPayLabel}>Pago por servicio de delivery:</Text>
             </View>
             <Text style={styles.driverPayValue}>
-                S/{pagoConductor.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                $ {pagoConductor.toLocaleString(undefined, { minimumFractionDigits: 2 })}
             </Text>
         </View>
 
@@ -463,7 +463,7 @@ const PedidoDetalleComercio = () => {
                             <FontAwesome
                                 name={paso.icon}
                                 size={22}
-                                color={isCompleted || isActive ? '#A0FF00' : '#444'}
+                                color={isCompleted || isActive ? '#fa6205' : '#444'}
                             />
                             <Text style={[
                                 styles.pasoTexto,
@@ -486,7 +486,7 @@ const PedidoDetalleComercio = () => {
                     // Caso: No hay carrera asignada
                     pasosConductor.map(paso => (
                         <View key={paso.key} style={styles.paso}>
-                            <FontAwesome name={paso.icon} size={22} color="#444" />
+                            <FontAwesome name={paso.icon} size={22} color="#DDD" />
                             <Text style={[styles.pasoTexto, { color: '#555' }]}>{paso.label}</Text>
                         </View>
                     ))
@@ -501,7 +501,7 @@ const PedidoDetalleComercio = () => {
                                 <FontAwesome
                                     name={paso.icon}
                                     size={22}
-                                    color={isCompleted || isActive ? '#A0FF00' : '#444'}
+                                    color={isCompleted || isActive ? '#fa6205' : '#444'}
                                 />
                                 <Text style={[
                                     styles.pasoTexto,
@@ -534,7 +534,7 @@ const PedidoDetalleComercio = () => {
                     style={styles.chatBtn}
                     onPress={() => { setShowChatModal(true); loadChatMessages(); }}
                 >
-                    <Feather name="message-circle" size={24} color="#121212" />
+                    <Feather name="message-circle" size={24} color="#F2F2F7" />
                 </TouchableOpacity>
             </View>
         </View>
@@ -576,7 +576,7 @@ const PedidoDetalleComercio = () => {
                                     <Text key={i} style={styles.addText}>+ {ad.producto_adicional?.nombre || ad.nombre} (x{ad.cantidad || 1})</Text>
                                 ))}
                             </View>
-                            <Text style={styles.prodPrice}>S/{precioTotalItem.toFixed(2)}</Text>
+                            <Text style={styles.prodPrice}>$ {precioTotalItem.toFixed(2)}</Text>
                         </View>
                     );
                 })}
@@ -594,7 +594,7 @@ const PedidoDetalleComercio = () => {
             </View>
             <View style={styles.rowBetween}>
                 <Text style={styles.payLabel}>Estado</Text>
-                <Text style={[styles.payValue, {color: pedido.estado_pago === 'pagado' ? '#A0FF00' : '#FF4757'}]}>
+                <Text style={[styles.payValue, {color: pedido.estado_pago === 'pagado' ? '#fa6205' : '#FF4757'}]}>
                     {pedido.estado_pago || "Pendiente"}
                 </Text>
             </View>
@@ -603,18 +603,18 @@ const PedidoDetalleComercio = () => {
         {/* ACCIONES DEL COMERCIO */}
         <View style={styles.actionsContainer}>
             {pedido.estado === "pendiente" && (
-                <TouchableOpacity style={[styles.mainBtn, {backgroundColor: '#4CAF50'}]} onPress={() => updatePedidoStatus("confirmado")} disabled={updatingStatus}>
-                     {updatingStatus ? <ActivityIndicator color="#FFF"/> : <Text style={styles.mainBtnText}>Aceptar Pedido</Text>}
+                <TouchableOpacity style={[styles.mainBtn, {backgroundColor: '#fa6205'}]} onPress={() => updatePedidoStatus("confirmado")} disabled={updatingStatus}>
+                     {updatingStatus ? <ActivityIndicator color="#1C1C1E"/> : <Text style={styles.mainBtnText}>Aceptar Pedido</Text>}
                 </TouchableOpacity>
             )}
             {pedido.estado === "confirmado" && (
-                <TouchableOpacity style={[styles.mainBtn, {backgroundColor: '#A0FF00'}]} onPress={() => updatePedidoStatus("preparado")} disabled={updatingStatus}>
+                <TouchableOpacity style={[styles.mainBtn, {backgroundColor: '#fa6205'}]} onPress={() => updatePedidoStatus("preparado")} disabled={updatingStatus}>
                      {updatingStatus ? <ActivityIndicator color="#000"/> : <Text style={[styles.mainBtnText, {color: '#000'}]}>Marcar Preparado</Text>}
                 </TouchableOpacity>
             )}
             {pedido.estado === "preparado" && (
                 <TouchableOpacity style={[styles.mainBtn, {backgroundColor: '#2196F3'}]} onPress={() => updatePedidoStatus("entregado")} disabled={updatingStatus}>
-                     {updatingStatus ? <ActivityIndicator color="#FFF"/> : <Text style={styles.mainBtnText}>Marcar Entregado</Text>}
+                     {updatingStatus ? <ActivityIndicator color="#1C1C1E"/> : <Text style={styles.mainBtnText}>Marcar Entregado</Text>}
                 </TouchableOpacity>
             )}
 
@@ -635,7 +635,7 @@ const PedidoDetalleComercio = () => {
       <Modal visible={showChatModal} animationType="slide" onRequestClose={() => setShowChatModal(false)}>
          <SafeAreaView style={styles.chatContainer}>
             <View style={styles.chatHeader}>
-                <TouchableOpacity onPress={() => setShowChatModal(false)}><Ionicons name="close" size={28} color="#FFF"/></TouchableOpacity>
+                <TouchableOpacity onPress={() => setShowChatModal(false)}><Ionicons name="close" size={28} color="#1C1C1E"/></TouchableOpacity>
                 <Text style={styles.chatHeaderTitle}>Chat Pedido #{pedido.id}</Text>
                 <View style={{width: 28}} />
             </View>
@@ -646,18 +646,18 @@ const PedidoDetalleComercio = () => {
                 contentContainerStyle={{padding: 20}}
                 onContentSizeChange={() => chatScrollViewRef.current?.scrollToEnd({animated: true})}
             >
-                 {loadingChat ? <ActivityIndicator color="#A0FF00" /> : chatMessages.length === 0 ? <Text style={styles.emptyChat}>Inicia la conversación...</Text> : chatMessages.map(renderChatMessage)}
+                 {loadingChat ? <ActivityIndicator color="#fa6205" /> : chatMessages.length === 0 ? <Text style={styles.emptyChat}>Inicia la conversación...</Text> : chatMessages.map(renderChatMessage)}
             </ScrollView>
 
             <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} style={styles.inputArea}>
                 {chatImage && (
                     <View style={styles.imgPreviewBox}>
                         <Image source={{ uri: chatImage }} style={styles.imgPreview} />
-                        <TouchableOpacity style={styles.delImgBtn} onPress={() => setChatImage(null)}><Ionicons name="close" size={16} color="#FFF"/></TouchableOpacity>
+                        <TouchableOpacity style={styles.delImgBtn} onPress={() => setChatImage(null)}><Ionicons name="close" size={16} color="#1C1C1E"/></TouchableOpacity>
                     </View>
                 )}
                 <View style={styles.inputRow}>
-                    <TouchableOpacity onPress={pickChatImage} style={styles.attachBtn}><Ionicons name="camera" size={24} color="#A0FF00"/></TouchableOpacity>
+                    <TouchableOpacity onPress={pickChatImage} style={styles.attachBtn}><Ionicons name="camera" size={24} color="#fa6205"/></TouchableOpacity>
                     <TextInput 
                         style={styles.textInput} 
                         placeholder="Escribe aquí..." 
@@ -679,9 +679,9 @@ const PedidoDetalleComercio = () => {
 };
 
 const styles = StyleSheet.create({
-  safeArea: { flex: 1, backgroundColor: "#121212" },
+  safeArea: { flex: 1, backgroundColor: "#F2F2F7" },
   centerContainer: { flex: 1, justifyContent: "center", alignItems: "center" },
-  loadingText: { color: "#A0FF00", marginTop: 10, fontFamily: "MontserratMedium" },
+  loadingText: { color: "#fa6205", marginTop: 10, fontFamily: "MontserratMedium" },
   
   // HEADER
   header: { 
@@ -692,37 +692,37 @@ const styles = StyleSheet.create({
       paddingVertical: 15, 
       paddingTop: 30,
       borderBottomWidth: 1, 
-      borderBottomColor: "#252525" 
+      borderBottomColor: "#F0F0F0" 
   },
-  headerTitle: { color: "#FFF", fontSize: 18, fontFamily: "MontserratBold" },
+  headerTitle: { color: "#1C1C1E", fontSize: 18, fontFamily: "MontserratBold" },
   backBtn: { padding: 5 },
 
   scroll: { flex: 1, paddingHorizontal: 20 },
 
   // CARDS GENERICS
   card: {
-      backgroundColor: "#1E1E1E",
+      backgroundColor: "#FFFFFF",
       borderRadius: 16,
       padding: 16,
       marginTop: 20,
       borderWidth: 1,
-      borderColor: "#2C2C2C"
+      borderColor: "#F0F0F0"
   },
-  cardTitle: { color: "#FFF", fontFamily: "MontserratBold", fontSize: 16, marginBottom: 12 },
+  cardTitle: { color: "#1C1C1E", fontFamily: "MontserratBold", fontSize: 16, marginBottom: 12 },
   
   // STATUS CARD SPECIFIC
   statusRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   label: { color: "#888", fontSize: 12, fontFamily: "MontserratMedium", marginBottom: 4 },
   statusBadge: { backgroundColor: "rgba(160, 255, 0, 0.15)", paddingHorizontal: 10, paddingVertical: 4, borderRadius: 8 },
-  statusText: { color: "#A0FF00", fontFamily: "MontserratBold", fontSize: 12 },
-  totalPrice: { color: "#FFF", fontFamily: "MontserratBold", fontSize: 20 },
-  divider: { height: 1, backgroundColor: "#2C2C2C", marginVertical: 12 },
+  statusText: { color: "#fa6205", fontFamily: "MontserratBold", fontSize: 12 },
+  totalPrice: { color: "#1C1C1E", fontFamily: "MontserratBold", fontSize: 20 },
+  divider: { height: 1, backgroundColor: "#F0F0F0", marginVertical: 12 },
   dateRow: { flexDirection: 'row', alignItems: 'center' },
   dateText: { color: "#888", fontSize: 12, fontFamily: "MontserratRegular" },
 
   // DRIVER PAY CARD
   driverPayCard: {
-      backgroundColor: "#A0FF00", 
+      backgroundColor: "#fa6205", 
       borderRadius: 12,
       padding: 16,
       marginTop: 20,
@@ -732,8 +732,8 @@ const styles = StyleSheet.create({
       elevation: 5
   },
   driverPayRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  driverPayLabel: { color: "#121212", fontFamily: "MontserratBold", fontSize: 14 },
-  driverPayValue: { color: "#121212", fontFamily: "MontserratBold", fontSize: 18 },
+  driverPayLabel: { color: "#F2F2F7", fontFamily: "MontserratBold", fontSize: 14 },
+  driverPayValue: { color: "#F2F2F7", fontFamily: "MontserratBold", fontSize: 18 },
 
   // PASOS (TRACKING)
   pasosContainer: {
@@ -754,68 +754,68 @@ const styles = StyleSheet.create({
     fontFamily: "MontserratMedium"
   },
   pasoTextoActivo: {
-    color: '#A0FF00',
+    color: '#fa6205',
     fontFamily: "MontserratBold"
   },
   pasoTextoCompletado: {
-    color: '#A0FF00',
+    color: '#fa6205',
     fontFamily: "MontserratSemiBold"
   },
 
   // CLIENT
   rowBetween: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 },
-  clientName: { color: "#FFF", fontSize: 15, fontFamily: "MontserratSemiBold" },
+  clientName: { color: "#1C1C1E", fontSize: 15, fontFamily: "MontserratSemiBold" },
   phoneRow: { flexDirection: 'row', alignItems: 'center', marginTop: 4 },
   clientPhone: { color: "#CCC", fontSize: 13, fontFamily: "MontserratRegular" },
-  chatBtn: { backgroundColor: "#A0FF00", width: 44, height: 44, borderRadius: 22, justifyContent: 'center', alignItems: 'center' },
+  chatBtn: { backgroundColor: "#fa6205", width: 44, height: 44, borderRadius: 22, justifyContent: 'center', alignItems: 'center' },
 
   // PRODUCTS
-  productRow: { flexDirection: 'row', marginBottom: 16, borderBottomWidth: 1, borderBottomColor: "#252525", paddingBottom: 10 },
-  qtyBox: { backgroundColor: "#252525", width: 30, height: 30, borderRadius: 8, justifyContent: 'center', alignItems: 'center', marginRight: 10 },
-  qtyText: { color: "#A0FF00", fontFamily: "MontserratBold", fontSize: 12 },
-  prodName: { color: "#FFF", fontFamily: "MontserratMedium", fontSize: 14 },
+  productRow: { flexDirection: 'row', marginBottom: 16, borderBottomWidth: 1, borderBottomColor: "#F0F0F0", paddingBottom: 10 },
+  qtyBox: { backgroundColor: "#F0F0F0", width: 30, height: 30, borderRadius: 8, justifyContent: 'center', alignItems: 'center', marginRight: 10 },
+  qtyText: { color: "#fa6205", fontFamily: "MontserratBold", fontSize: 12 },
+  prodName: { color: "#1C1C1E", fontFamily: "MontserratMedium", fontSize: 14 },
   variantText: { color: "#888", fontSize: 12 },
   addText: { color: "#AAA", fontSize: 11, marginTop: 2, fontStyle: 'italic' },
-  prodPrice: { color: "#A0FF00", fontFamily: "MontserratBold", fontSize: 14, marginLeft: 5 },
+  prodPrice: { color: "#fa6205", fontFamily: "MontserratBold", fontSize: 14, marginLeft: 5 },
 
   // PAY INFO
   payLabel: { color: "#888", fontFamily: "MontserratMedium", fontSize: 13 },
-  payValue: { color: "#FFF", fontFamily: "MontserratSemiBold", fontSize: 13 },
+  payValue: { color: "#1C1C1E", fontFamily: "MontserratSemiBold", fontSize: 13 },
 
   // ACTIONS
   actionsContainer: { marginTop: 30 },
   mainBtn: { paddingVertical: 16, borderRadius: 12, alignItems: 'center', justifyContent: 'center', marginBottom: 15 },
-  mainBtnText: { color: "#FFF", fontFamily: "MontserratBold", fontSize: 16 },
+  mainBtnText: { color: "#1C1C1E", fontFamily: "MontserratBold", fontSize: 16 },
   cancelBtn: { paddingVertical: 14, borderWidth: 1, borderColor: "#FF4757", borderRadius: 12, alignItems: 'center' },
   cancelText: { color: "#FF4757", fontFamily: "MontserratSemiBold", fontSize: 14 },
 
   // CHAT STYLES
-  chatContainer: { flex: 1, backgroundColor: "#121212" },
+  chatContainer: { flex: 1, backgroundColor: "#F2F2F7" },
   chatHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 15, borderBottomWidth: 1, borderBottomColor: "#333" },
-  chatHeaderTitle: { color: "#FFF", fontFamily: "MontserratBold", fontSize: 16 },
+  chatHeaderTitle: { color: "#1C1C1E", fontFamily: "MontserratBold", fontSize: 16 },
   msgList: { flex: 1 },
   emptyChat: { color: "#555", textAlign: 'center', marginTop: 50, fontFamily: "MontserratMedium" },
   
   msgContainer: { maxWidth: '75%', borderRadius: 12, padding: 10, marginBottom: 10 },
-  msgMy: { backgroundColor: "#A0FF00", alignSelf: 'flex-end', borderBottomRightRadius: 2 },
-  msgOther: { backgroundColor: "#252525", alignSelf: 'flex-start', borderBottomLeftRadius: 2 },
-  msgSender: { color: "#A0FF00", fontSize: 10, fontFamily: "MontserratBold", marginBottom: 2 },
+  msgMy: { backgroundColor: "#fa6205", alignSelf: 'flex-end', borderBottomRightRadius: 2 },
+  msgOther: { backgroundColor: "#F0F0F0", alignSelf: 'flex-start', borderBottomLeftRadius: 2 },
+  msgSender: { color: "#fa6205", fontSize: 10, fontFamily: "MontserratBold", marginBottom: 2 },
   msgText: { fontSize: 14, fontFamily: "MontserratRegular" },
   msgTextMy: { color: "#000" },
-  msgTextOther: { color: "#FFF" },
+  msgTextOther: { color: "#1C1C1E" },
   msgTime: { fontSize: 10, alignSelf: 'flex-end', marginTop: 4 },
   msgTimeMy: { color: "rgba(0,0,0,0.6)" },
   msgTimeOther: { color: "#777" },
   msgImage: { width: 150, height: 150, borderRadius: 8, marginTop: 5 },
 
-  inputArea: { backgroundColor: "#1E1E1E", padding: 10, borderTopWidth: 1, borderTopColor: "#333" },
+  inputArea: { backgroundColor: "#FFFFFF", padding: 10, borderTopWidth: 1, borderTopColor: "#333" },
   imgPreviewBox: { flexDirection: 'row', marginBottom: 10 },
   imgPreview: { width: 60, height: 60, borderRadius: 8 },
   delImgBtn: { position: 'absolute', top: -5, left: 50, backgroundColor: 'red', borderRadius: 10, padding: 2 },
   inputRow: { flexDirection: 'row', alignItems: 'center' },
   attachBtn: { padding: 8 },
-  textInput: { flex: 1, backgroundColor: "#2C2C2C", color: "#FFF", borderRadius: 20, paddingHorizontal: 15, paddingVertical: 8, marginHorizontal: 8, maxHeight: 80 },
-  sendBtn: { backgroundColor: "#A0FF00", width: 40, height: 40, borderRadius: 20, justifyContent: 'center', alignItems: 'center' },
+  textInput: { flex: 1, backgroundColor: "#F0F0F0", color: "#1C1C1E", borderRadius: 20, paddingHorizontal: 15, paddingVertical: 8, marginHorizontal: 8, maxHeight: 80 },
+  sendBtn: { backgroundColor: "#fa6205", width: 40, height: 40, borderRadius: 20, justifyContent: 'center', alignItems: 'center' },
 });
 
 export default PedidoDetalleComercio;

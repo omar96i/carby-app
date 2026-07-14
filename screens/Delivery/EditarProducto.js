@@ -376,7 +376,7 @@ const EditarProducto = () => {
   if (!fontsLoaded || isLoadingProduct) {
     return (
       <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#9BFE03" />
+        <ActivityIndicator size="large" color="#fa6205" />
         <Text style={styles.loadingText}>Cargando producto...</Text>
       </View>
     );
@@ -493,7 +493,7 @@ const EditarProducto = () => {
           style={styles.editButton}
           onPress={() => openAdicionalModal(item)}
         >
-          <Ionicons name="pencil" size={20} color="#9BFE03" />
+          <Ionicons name="pencil" size={20} color="#fa6205" />
         </TouchableOpacity>
         <TouchableOpacity
           style={styles.deleteButton}
@@ -533,7 +533,7 @@ const EditarProducto = () => {
             />
           ) : (
             <View style={styles.placeholderContainer}>
-              <Ionicons name="camera" size={50} color="#9BFE03" />
+              <Ionicons name="camera" size={50} color="#fa6205" />
               <Text style={styles.placeholderText}>
                 Toca para seleccionar imagen
               </Text>
@@ -607,7 +607,7 @@ const EditarProducto = () => {
 
           {loadingAdicionales ? (
             <View style={styles.loadingAdicionales}>
-              <ActivityIndicator size="small" color="#9BFE03" />
+              <ActivityIndicator size="small" color="#fa6205" />
               <Text style={styles.loadingAdicionalesText}>
                 Cargando adicionales...
               </Text>
@@ -644,7 +644,7 @@ const EditarProducto = () => {
                 style={styles.closeButton}
                 onPress={closeAdicionalModal}
               >
-                <Ionicons name="close" size={24} color="#fff" />
+                <Ionicons name="close" size={24} color="#1C1C1E" />
               </TouchableOpacity>
             </View>
 
@@ -671,7 +671,7 @@ const EditarProducto = () => {
                   />
                 ) : (
                   <View style={styles.modalPlaceholder}>
-                    <Ionicons name="camera" size={40} color="#9BFE03" />
+                    <Ionicons name="camera" size={40} color="#fa6205" />
                     <Text style={styles.modalPlaceholderText}>
                       Seleccionar imagen
                     </Text>
@@ -749,16 +749,16 @@ const EditarProducto = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#1c1c1c",
+    backgroundColor: "#F2F2F7",
   },
   loadingContainer: {
     flex: 1,
-    backgroundColor: "#1c1c1c",
+    backgroundColor: "#F2F2F7",
     justifyContent: "center",
     alignItems: "center",
   },
   loadingText: {
-    color: "#fff",
+    color: "#1C1C1E",
     marginTop: 10,
     fontSize: 16,
     fontFamily: "Montserrat_400Regular",
@@ -767,7 +767,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    backgroundColor: "#a4ff00",
+    backgroundColor: "#fa6205",
     padding: 15,
     marginTop: 60,
   },
@@ -790,16 +790,16 @@ const styles = StyleSheet.create({
   placeholderContainer: {
     width: "100%",
     height: "100%",
-    backgroundColor: "#2a2a2a",
+    backgroundColor: "#ECECEC",
     justifyContent: "center",
     alignItems: "center",
     borderWidth: 1,
     borderStyle: "dashed",
-    borderColor: "#9BFE03",
+    borderColor: "#fa6205",
   },
   placeholderText: {
     marginTop: 10,
-    color: "#fff",
+    color: "#1C1C1E",
     fontFamily: "Montserrat_400Regular",
   },
   formContainer: {
@@ -807,17 +807,17 @@ const styles = StyleSheet.create({
   },
   inputLabel: {
     fontSize: 16,
-    color: "white",
+    color: "#1C1C1E",
     fontFamily: "Montserrat_700Bold",
     marginBottom: 5,
     marginTop: 15,
   },
   input: {
-    backgroundColor: "#2a2a2a",
+    backgroundColor: "#ECECEC",
     borderRadius: 8,
     padding: 12,
     fontSize: 16,
-    color: "white",
+    color: "#1C1C1E",
     fontFamily: "Montserrat_400Regular",
   },
   textArea: {
@@ -825,7 +825,7 @@ const styles = StyleSheet.create({
     textAlignVertical: "top",
   },
   myButton: {
-    backgroundColor: "#39FF14",
+    backgroundColor: "#fa6205",
     paddingVertical: 10,
     paddingHorizontal: 50,
     borderRadius: 15,
@@ -859,11 +859,11 @@ const styles = StyleSheet.create({
   },
   adicionalesTitle: {
     fontSize: 18,
-    color: "#9BFE03",
+    color: "#fa6205",
     fontFamily: "Montserrat_700Bold",
   },
   addAdicionalButton: {
-    backgroundColor: "#9BFE03",
+    backgroundColor: "#fa6205",
     flexDirection: "row",
     alignItems: "center",
     paddingHorizontal: 15,
@@ -882,7 +882,7 @@ const styles = StyleSheet.create({
     padding: 20,
   },
   loadingAdicionalesText: {
-    color: "#fff",
+    color: "#1C1C1E",
     marginLeft: 10,
     fontFamily: "Montserrat_400Regular",
   },
@@ -894,7 +894,7 @@ const styles = StyleSheet.create({
     fontStyle: "italic",
   },
   adicionalItem: {
-    backgroundColor: "#2a2a2a",
+    backgroundColor: "#ECECEC",
     borderRadius: 10,
     padding: 15,
     marginBottom: 10,
@@ -930,7 +930,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   adicionalNombre: {
-    color: "#fff",
+    color: "#1C1C1E",
     fontSize: 16,
     fontFamily: "Montserrat_700Bold",
     marginBottom: 2,
@@ -944,7 +944,7 @@ const styles = StyleSheet.create({
     lineHeight: 18,
   },
   adicionalPrecio: {
-    color: "#9BFE03",
+    color: "#fa6205",
     fontSize: 16,
     fontFamily: "Montserrat_700Bold",
   },
@@ -971,7 +971,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   modalContent: {
-    backgroundColor: "#2a2a2a",
+    backgroundColor: "#ECECEC",
     borderRadius: 15,
     width: "90%",
     maxHeight: "80%",
@@ -982,10 +982,10 @@ const styles = StyleSheet.create({
     alignItems: "center",
     padding: 20,
     borderBottomWidth: 1,
-    borderBottomColor: "#444",
+    borderBottomColor: "#DDD",
   },
   modalTitle: {
-    color: "#9BFE03",
+    color: "#fa6205",
     fontSize: 18,
     fontFamily: "Montserrat_700Bold",
   },
@@ -1014,15 +1014,15 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     borderWidth: 1,
     borderStyle: "dashed",
-    borderColor: "#9BFE03",
+    borderColor: "#fa6205",
   },
   modalPlaceholderText: {
-    color: "#9BFE03",
+    color: "#fa6205",
     marginTop: 10,
     fontFamily: "Montserrat_400Regular",
   },
   modalInputLabel: {
-    color: "#fff",
+    color: "#1C1C1E",
     fontSize: 16,
     fontFamily: "Montserrat_700Bold",
     marginBottom: 8,
@@ -1033,7 +1033,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     padding: 12,
     fontSize: 16,
-    color: "#fff",
+    color: "#1C1C1E",
     fontFamily: "Montserrat_400Regular",
   },
   modalTextArea: {
@@ -1055,11 +1055,11 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   modalCancelText: {
-    color: "#fff",
+    color: "#1C1C1E",
     fontFamily: "Montserrat_700Bold",
   },
   modalSaveButton: {
-    backgroundColor: "#9BFE03",
+    backgroundColor: "#fa6205",
     paddingVertical: 12,
     paddingHorizontal: 20,
     borderRadius: 8,

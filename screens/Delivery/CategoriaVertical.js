@@ -306,7 +306,7 @@ export default function CategoriaVertical() {
   if (!fontsLoaded || loading) {
     return (
       <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#A3FF00" />
+        <ActivityIndicator size="large" color="#fa6205" />
       </View>
     );
   }
@@ -369,7 +369,7 @@ export default function CategoriaVertical() {
           onPress={() => navigation.goBack()}
           style={styles.backButton}
         >
-          <Ionicons name="arrow-back" size={25} color="#2B2B2B" />
+          <Ionicons name="arrow-back" size={25} color="#333333" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Categorías</Text>
         <View style={styles.placeholder}></View>
@@ -400,20 +400,20 @@ export default function CategoriaVertical() {
 const styles = StyleSheet.create({
   safeContainer: {
     flex: 1,
-    backgroundColor: "#242424",
+    backgroundColor: "#FFFFFF",
     paddingTop: Platform.OS === "android" ? 10 : 0,
   },
   loadingContainer: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "#242424",
+    backgroundColor: "#FFFFFF",
   },
   headerBar: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    backgroundColor: "#9BFE03",
+    backgroundColor: "#fa6205",
     padding: 15,
     marginTop: 30,
   },
@@ -423,7 +423,7 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 22,
     fontFamily: "Montserrat_700Bold",
-    color: "#2B2B2B",
+    color: "#333333",
   },
   placeholder: {
     width: 35, // Same width as back button for balanced header
@@ -431,14 +431,14 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: 10,
-    backgroundColor: "#121212",
+    backgroundColor: "#F2F2F7",
   },
   gridContainer: {
     paddingHorizontal: 5,
     paddingBottom: 20,
   },
   card: {
-    backgroundColor: "#1A1A1A", // Fondo de tarjeta mucho más oscuro
+    backgroundColor: "#F0F0F0", // Fondo de tarjeta mucho más oscuro
     borderRadius: 16, // Bordes un poco más redondeados para modernidad
     margin: 6,
     width: cardWidth,
@@ -459,7 +459,7 @@ const styles = StyleSheet.create({
     width: "100%",
     height: 110, // Un poco más compacto
     overflow: "hidden",
-    backgroundColor: "#252525", // Fondo oscuro placeholder detrás de la imagen
+    backgroundColor: "#F0F0F0", // Fondo oscuro placeholder detrás de la imagen
     justifyContent: "center",
     alignItems: "center",
   },
@@ -467,24 +467,24 @@ const styles = StyleSheet.create({
     width: "80%", // Reduje un poco para que la imagen "respire" dentro del contenedor
     height: "80%",
     resizeMode: "contain",
-    // IMPORTANTE: Quitamos el backgroundColor claro (#ECFFE6)
+    // IMPORTANTE: Quitamos el backgroundColor claro (#fff5ee)
   },
   cardContent: {
     paddingVertical: 12,
     paddingHorizontal: 12,
-    backgroundColor: "#1A1A1A", // Asegura coincidencia con la tarjeta
+    backgroundColor: "#F0F0F0", // Asegura coincidencia con la tarjeta
   },
   cardTitle: {
     fontSize: 15,
     fontFamily: "Montserrat_700Bold",
-    color: "#FFFFFF", // Blanco puro para máximo contraste
+    color: "#1C1C1E", // Blanco puro para máximo contraste
     marginBottom: 4,
     letterSpacing: 0.5,
   },
   cardSubtitle: {
     fontSize: 11,
     fontFamily: "Montserrat_600SemiBold", // Un poco más de peso
-    color: "#9BFE03", // Tu color de acento se ve genial sobre el negro
+    color: "#fa6205", // Tu color de acento se ve genial sobre el negro
     textTransform: "uppercase", // Le da un toque más "tech"
     opacity: 0.9,
   },

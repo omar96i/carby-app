@@ -47,7 +47,7 @@ export default function CategoriesScreen() {
   if (!fontsLoaded) {
     return (
       <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#9DFD05" />
+        <ActivityIndicator size="large" color="#fa6205" />
         <Text style={styles.loadingText}>Cargando fuentes...</Text>
       </View>
     );
@@ -316,7 +316,7 @@ export default function CategoriesScreen() {
             <Text style={styles.modalTitle}>Suscripción Requerida</Text>
             
             <View style={styles.subscriptionIconContainer}>
-              <Ionicons name="warning-outline" size={60} color="#9DFD05" />
+              <Ionicons name="warning-outline" size={60} color="#fa6205" />
             </View>
             
             <Text style={styles.subscriptionModalText}>
@@ -348,14 +348,14 @@ export default function CategoriesScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#242424",
+    backgroundColor: "#FFFFFF",
     
     padding: 10,
   },
   title: {
     fontSize: 24,
     fontWeight: "bold",
-    color: "#fff",
+    color: "#1C1C1E",
     fontFamily: "Montserrat_700Bold",
     marginTop: 10,
     textAlign: "center",
@@ -371,7 +371,7 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   categoryName: {
-    color: "#fff",
+    color: "#1C1C1E",
     fontSize: 16,
     fontFamily: "Montserrat_400Regular",
   },
@@ -382,7 +382,7 @@ const styles = StyleSheet.create({
     fontFamily: "Montserrat_400Regular",
   },
   createButton: {
-    backgroundColor: "#9DFD05",
+    backgroundColor: "#fa6205",
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
@@ -419,13 +419,13 @@ const styles = StyleSheet.create({
   modalTitle: {
     fontSize: 20,
     fontFamily: "Montserrat_700Bold",
-    color: "#fff",
+    color: "#1C1C1E",
     marginBottom: 20,
     textAlign: "center",
   },
   inputLabel: {
     fontSize: 16,
-    color: "#fff",
+    color: "#1C1C1E",
     marginBottom: 8,
     fontFamily: "Montserrat_400Regular",
   },
@@ -453,10 +453,10 @@ const styles = StyleSheet.create({
     backgroundColor: "#666",
   },
   buttonCreate: {
-    backgroundColor: "#9DFD05",
+    backgroundColor: "#fa6205",
   },
   buttonCancelText: {
-    color: "#fff",
+    color: "#1C1C1E",
     fontFamily: "Montserrat_700Bold",
     fontSize: 16,
   },
@@ -471,7 +471,7 @@ const styles = StyleSheet.create({
     marginVertical: 15,
   },
   subscriptionModalText: {
-    color: "#fff",
+    color: "#1C1C1E",
     fontSize: 16,
     fontFamily: "Montserrat_400Regular",
     textAlign: "center",
@@ -482,10 +482,10 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "#242424",
+    backgroundColor: "#FFFFFF",
   },
   loadingText: {
-    color: "#fff",
+    color: "#1C1C1E",
     marginTop: 10,
     fontSize: 16,
     fontFamily: "Montserrat_400Regular",

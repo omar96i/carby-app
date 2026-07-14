@@ -360,7 +360,7 @@ export default function StepTrece({ route }) {
   if (!fontsLoaded || isLoading) {
     return (
       <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#A0FF00" />
+        <ActivityIndicator size="large" color="#fa6205" />
         <Text style={styles.loadingText}>Cargando viaje...</Text>
       </View>
     );
@@ -374,7 +374,7 @@ export default function StepTrece({ route }) {
 
   return (
     <View style={styles.container}>
-        <StatusBar barStyle="light-content" backgroundColor="#121212" />
+        <StatusBar barStyle="dark-content" backgroundColor="#F2F2F7" />
 
         <View style={styles.mapContainer}>
              <MapView
@@ -387,7 +387,7 @@ export default function StepTrece({ route }) {
                     latitudeDelta: 0.05, longitudeDelta: 0.05,
                 }}
             >
-                {pickupCoords?.lat && <Marker coordinate={{latitude: pickupCoords.lat, longitude: pickupCoords.lng}} title="Recogida" zIndex={5} anchor={{ x: 0.5, y: 0.5 }}><View style={[styles.dotMarker, {backgroundColor: '#A0FF00'}]} /></Marker>}
+                {pickupCoords?.lat && <Marker coordinate={{latitude: pickupCoords.lat, longitude: pickupCoords.lng}} title="Recogida" zIndex={5} anchor={{ x: 0.5, y: 0.5 }}><View style={[styles.dotMarker, {backgroundColor: '#fa6205'}]} /></Marker>}
                 {destCoords?.lat && <Marker coordinate={{latitude: destCoords.lat, longitude: destCoords.lng}} title="Destino" zIndex={5} anchor={{ x: 0.5, y: 0.5 }}><View style={[styles.dotMarker, {backgroundColor: '#FF4757'}]} /></Marker>}
                 
                 {pickupCoords?.lat && destCoords?.lat && (
@@ -400,7 +400,7 @@ export default function StepTrece({ route }) {
             </TouchableOpacity>
 
             <TouchableOpacity style={styles.floatNavButton} onPress={navigateWithGoogleMaps}>
-                <MaterialCommunityIcons name="google-maps" size={24} color="#FFF" />
+                <MaterialCommunityIcons name="google-maps" size={24} color="#1C1C1E" />
                 <Text style={styles.floatNavText}>Abrir Maps</Text>
             </TouchableOpacity>
         </View>
@@ -429,7 +429,7 @@ export default function StepTrece({ route }) {
 
                 <View style={styles.routeCard}>
                     <View style={styles.timelineRow}>
-                        <View style={[styles.dot, {backgroundColor: '#A0FF00'}]} />
+                        <View style={[styles.dot, {backgroundColor: '#fa6205'}]} />
                         <Text style={styles.addressText}>{origen}</Text>
                     </View>
                     <View style={styles.line} />
@@ -441,7 +441,7 @@ export default function StepTrece({ route }) {
                     <View style={styles.priceRow}>
                         <Text style={styles.priceLabel}>Valor Total:</Text>
                         <Text style={styles.priceValue}>
-                            {(BASE_URL || "").toString().includes("co.yariders") ? "$" : "S/"} {tripData?.costo ? parseFloat(tripData.costo).toLocaleString() : "0"}
+                            {"$"} {tripData?.costo ? parseFloat(tripData.costo).toLocaleString() : "0"}
                         </Text>
                     </View>
                 </View>
@@ -461,26 +461,26 @@ export default function StepTrece({ route }) {
                          </TouchableOpacity>
                     )}
                     <TouchableOpacity style={[styles.notifyBtn, tripData?.pedido_id && styles.notifyBtnSec]} onPress={() => handleNotifyArrival('usuario')}>
-                         <MaterialIcons name="person-pin-circle" size={20} color={tripData?.pedido_id ? "#A0FF00" : "#000"} />
-                         <Text style={[styles.notifyBtnText, tripData?.pedido_id && {color: "#A0FF00"}]}>Llegué donde Cliente</Text>
+                         <MaterialIcons name="person-pin-circle" size={20} color={tripData?.pedido_id ? "#fa6205" : "#000"} />
+                         <Text style={[styles.notifyBtnText, tripData?.pedido_id && {color: "#fa6205"}]}>Llegué donde Cliente</Text>
                     </TouchableOpacity>
                 </View>
 
                 <View style={styles.actionsGrid}>
                     <TouchableOpacity style={styles.actionItem} onPress={() => setShowChat(true)}>
-                        <Ionicons name="chatbubble-ellipses" size={24} color="#FFF" />
+                        <Ionicons name="chatbubble-ellipses" size={24} color="#1C1C1E" />
                         <Text style={styles.actionText}>Chat</Text>
                     </TouchableOpacity>
 
                     {!paymentApproved ? (
-                        <TouchableOpacity style={[styles.actionItem, {borderColor: '#A0FF00', borderWidth: 1}]} onPress={approvePayment} disabled={approvingPayment}>
-                            {approvingPayment ? <ActivityIndicator color="#A0FF00"/> : <MaterialIcons name="attach-money" size={24} color="#A0FF00" />}
-                            <Text style={[styles.actionText, {color: '#A0FF00'}]}>Aprobar Pago</Text>
+                        <TouchableOpacity style={[styles.actionItem, {borderColor: '#fa6205', borderWidth: 1}]} onPress={approvePayment} disabled={approvingPayment}>
+                            {approvingPayment ? <ActivityIndicator color="#fa6205"/> : <MaterialIcons name="attach-money" size={24} color="#fa6205" />}
+                            <Text style={[styles.actionText, {color: '#fa6205'}]}>Aprobar Pago</Text>
                         </TouchableOpacity>
                     ) : (
-                        <View style={[styles.actionItem, {backgroundColor: '#1E3310'}]}>
-                            <MaterialIcons name="check-circle" size={24} color="#A0FF00" />
-                            <Text style={[styles.actionText, {color: '#A0FF00'}]}>Pagado</Text>
+                        <View style={[styles.actionItem, {backgroundColor: '#FFF5EE'}]}>
+                            <MaterialIcons name="check-circle" size={24} color="#fa6205" />
+                            <Text style={[styles.actionText, {color: '#fa6205'}]}>Pagado</Text>
                         </View>
                     )}
                 </View>
@@ -517,7 +517,7 @@ export default function StepTrece({ route }) {
                             {pinError && <Text style={{color: '#FF4757', marginBottom: 10}}>PIN Incorrecto</Text>}
                             <View style={styles.modalBtnsRow}>
                                 <TouchableOpacity style={styles.modalBtnCancel} onPress={() => setModalVisible(false)}>
-                                    <Text style={{color: '#FFF'}}>Cancelar</Text>
+                                    <Text style={{color: '#1C1C1E'}}>Cancelar</Text>
                                 </TouchableOpacity>
                                 <TouchableOpacity style={styles.modalBtnVerify} onPress={verifyPin}>
                                     <Text style={{color: '#000', fontWeight: 'bold'}}>Verificar</Text>
@@ -526,7 +526,7 @@ export default function StepTrece({ route }) {
                         </>
                     ) : (
                         <View style={{alignItems: 'center'}}>
-                            <Ionicons name="checkmark-circle" size={60} color="#A0FF00" />
+                            <Ionicons name="checkmark-circle" size={60} color="#fa6205" />
                             <Text style={styles.modalTitle}>¡Entregado!</Text>
                         </View>
                     )}
@@ -548,7 +548,7 @@ export default function StepTrece({ route }) {
                     />
                     <View style={styles.modalBtnsRow}>
                          <TouchableOpacity style={styles.modalBtnCancel} onPress={() => setRatingModalVisible(false)}>
-                            <Text style={{color: '#FFF'}}>Cancelar</Text>
+                            <Text style={{color: '#1C1C1E'}}>Cancelar</Text>
                          </TouchableOpacity>
                          <TouchableOpacity style={styles.modalBtnVerify} onPress={submitRating} disabled={isSubmittingRating}>
                             <Text style={{color: '#000', fontWeight: 'bold'}}>{isSubmittingRating ? "Enviando..." : "Enviar"}</Text>
@@ -561,7 +561,7 @@ export default function StepTrece({ route }) {
         <Modal transparent visible={infoModalVisible} animationType="fade">
             <View style={styles.modalOverlay}>
                 <View style={styles.modalContent}>
-                    <FontAwesome name="info-circle" size={40} color="#A0FF00" style={{marginBottom: 10}} />
+                    <FontAwesome name="info-circle" size={40} color="#fa6205" style={{marginBottom: 10}} />
                     <Text style={styles.modalTitle}>Usuario Nuevo</Text>
                     <Text style={styles.modalSub}>Recuerda solicitar el pago por adelantado si el usuario no tiene calificaciones previas.</Text>
                     <TouchableOpacity style={styles.modalBtnVerify} onPress={closeInfoModal}>
@@ -574,8 +574,8 @@ export default function StepTrece({ route }) {
         {showChat && (
             <View style={styles.chatOverlay}>
                 <View style={styles.chatHeaderOverlay}>
-                    <Text style={{color: '#FFF', fontSize: 18, fontWeight: 'bold'}}>Chat</Text>
-                    <TouchableOpacity onPress={() => setShowChat(false)}><Ionicons name="close" size={24} color="#FFF"/></TouchableOpacity>
+                    <Text style={{color: '#1C1C1E', fontSize: 18, fontWeight: 'bold'}}>Chat</Text>
+                    <TouchableOpacity onPress={() => setShowChat(false)}><Ionicons name="close" size={24} color="#1C1C1E"/></TouchableOpacity>
                 </View>
                 <ChatScreen tripId={activeId} />
             </View>
@@ -585,54 +585,54 @@ export default function StepTrece({ route }) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#121212" },
-  loadingContainer: { flex: 1, backgroundColor: "#121212", justifyContent: 'center', alignItems: 'center' },
-  loadingText: { color: '#A0FF00', marginTop: 10, fontFamily: 'Inter_700Bold' },
+  container: { flex: 1, backgroundColor: "#F2F2F7" },
+  loadingContainer: { flex: 1, backgroundColor: "#F2F2F7", justifyContent: 'center', alignItems: 'center' },
+  loadingText: { color: '#fa6205', marginTop: 10, fontFamily: 'Inter_700Bold' },
   mapContainer: { height: height * 0.45, width: '100%' },
   dotMarker: { width: 14, height: 14, borderRadius: 7, borderWidth: 2, borderColor: '#FFF' },
-  backButton: { position: 'absolute', top: 40, left: 20, backgroundColor: '#A0FF00', padding: 8, borderRadius: 20, elevation: 5 },
-  floatNavButton: { position: 'absolute', bottom: 20, right: 20, backgroundColor: '#333', paddingVertical: 10, paddingHorizontal: 15, borderRadius: 25, flexDirection: 'row', alignItems: 'center', borderWidth: 1, borderColor: '#A0FF00', elevation: 5 },
-  floatNavText: { color: '#FFF', marginLeft: 8, fontFamily: 'Inter_700Bold' },
-  bottomSheet: { flex: 1, backgroundColor: '#121212', marginTop: -20, borderTopLeftRadius: 25, borderTopRightRadius: 25, paddingHorizontal: 20, paddingTop: 25 },
-  userCard: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#1E1E1E', padding: 15, borderRadius: 15, marginBottom: 15, borderWidth: 1, borderColor: '#333' },
-  userAvatar: { width: 50, height: 50, borderRadius: 25, borderWidth: 2, borderColor: '#A0FF00' },
+  backButton: { position: 'absolute', top: 40, left: 20, backgroundColor: '#fa6205', padding: 8, borderRadius: 20, elevation: 5 },
+  floatNavButton: { position: 'absolute', bottom: 20, right: 20, backgroundColor: '#ECECEC', paddingVertical: 10, paddingHorizontal: 15, borderRadius: 25, flexDirection: 'row', alignItems: 'center', borderWidth: 1, borderColor: '#fa6205', elevation: 5 },
+  floatNavText: { color: '#1C1C1E', marginLeft: 8, fontFamily: 'Inter_700Bold' },
+  bottomSheet: { flex: 1, backgroundColor: '#F2F2F7', marginTop: -20, borderTopLeftRadius: 25, borderTopRightRadius: 25, paddingHorizontal: 20, paddingTop: 25 },
+  userCard: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#FFFFFF', padding: 15, borderRadius: 15, marginBottom: 15, borderWidth: 1, borderColor: '#DDD' },
+  userAvatar: { width: 50, height: 50, borderRadius: 25, borderWidth: 2, borderColor: '#fa6205' },
   userInfo: { flex: 1, marginLeft: 15 },
-  userName: { color: '#FFF', fontSize: 16, fontFamily: 'Inter_700Bold' },
+  userName: { color: '#1C1C1E', fontSize: 16, fontFamily: 'Inter_700Bold' },
   userPhone: { color: '#888', fontSize: 12 },
-  ratingBtnSmall: { backgroundColor: '#A0FF00', flexDirection: 'row', alignSelf: 'flex-start', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 10, marginTop: 5, alignItems: 'center' },
+  ratingBtnSmall: { backgroundColor: '#fa6205', flexDirection: 'row', alignSelf: 'flex-start', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 10, marginTop: 5, alignItems: 'center' },
   ratingBtnText: { color: '#000', fontSize: 10, fontWeight: 'bold', marginLeft: 4 },
-  routeCard: { backgroundColor: '#1E1E1E', padding: 15, borderRadius: 15, marginBottom: 15, borderWidth: 1, borderColor: '#333' },
+  routeCard: { backgroundColor: '#FFFFFF', padding: 15, borderRadius: 15, marginBottom: 15, borderWidth: 1, borderColor: '#DDD' },
   timelineRow: { flexDirection: 'row', alignItems: 'center' },
   dot: { width: 8, height: 8, borderRadius: 4, marginRight: 10 },
-  line: { width: 2, height: 20, backgroundColor: '#333', marginLeft: 3, marginVertical: 2 },
-  addressText: { color: '#DDD', fontSize: 13, flex: 1 },
+  line: { width: 2, height: 20, backgroundColor: '#ECECEC', marginLeft: 3, marginVertical: 2 },
+  addressText: { color: '#444', fontSize: 13, flex: 1 },
   priceRow: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 15, borderTopWidth: 1, borderTopColor: '#333', paddingTop: 10 },
   priceLabel: { color: '#888' },
-  priceValue: { color: '#A0FF00', fontSize: 18, fontFamily: 'Inter_700Bold' },
+  priceValue: { color: '#fa6205', fontSize: 18, fontFamily: 'Inter_700Bold' },
   infoBox: { backgroundColor: 'rgba(255,255,255,0.05)', padding: 10, borderRadius: 10, marginBottom: 15 },
-  infoLabel: { color: '#A0FF00', fontSize: 12, fontWeight: 'bold' },
-  infoText: { color: '#CCC', fontSize: 12, fontStyle: 'italic' },
+  infoLabel: { color: '#fa6205', fontSize: 12, fontWeight: 'bold' },
+  infoText: { color: '#333', fontSize: 12, fontStyle: 'italic' },
   notifyContainer: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 15 },
-  notifyBtn: { flex: 1, backgroundColor: '#A0FF00', padding: 12, borderRadius: 12, alignItems: 'center', justifyContent: 'center', marginHorizontal: 2, flexDirection: 'row' },
-  notifyBtnSec: { backgroundColor: '#333', borderWidth: 1, borderColor: '#A0FF00' },
+  notifyBtn: { flex: 1, backgroundColor: '#fa6205', padding: 12, borderRadius: 12, alignItems: 'center', justifyContent: 'center', marginHorizontal: 2, flexDirection: 'row' },
+  notifyBtnSec: { backgroundColor: '#ECECEC', borderWidth: 1, borderColor: '#fa6205' },
   notifyBtnText: { color: '#000', fontWeight: 'bold', fontSize: 12, marginLeft: 5 },
   actionsGrid: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 10 },
-  actionItem: { width: '48%', backgroundColor: '#252525', padding: 10, borderRadius: 12, alignItems: 'center', justifyContent: 'center', minHeight: 70 },
-  actionText: { color: '#FFF', fontSize: 12, marginTop: 5, textAlign: 'center', fontWeight: '500' },
+  actionItem: { width: '48%', backgroundColor: '#F0F0F0', padding: 10, borderRadius: 12, alignItems: 'center', justifyContent: 'center', minHeight: 70 },
+  actionText: { color: '#1C1C1E', fontSize: 12, marginTop: 5, textAlign: 'center', fontWeight: '500' },
   warningText: { color: '#888', fontSize: 10, textAlign: 'center', marginBottom: 15 },
-  finishBtn: { backgroundColor: '#A0FF00', flexDirection: 'row', justifyContent: 'center', alignItems: 'center', paddingVertical: 16, borderRadius: 15, marginBottom: 10, elevation: 4 },
+  finishBtn: { backgroundColor: '#fa6205', flexDirection: 'row', justifyContent: 'center', alignItems: 'center', paddingVertical: 16, borderRadius: 15, marginBottom: 10, elevation: 4 },
   finishBtnText: { color: '#000', fontSize: 16, fontFamily: 'Inter_700Bold', marginRight: 8 },
   cancelLink: { alignItems: 'center', padding: 10 },
   cancelLinkText: { color: '#FF4757', textDecorationLine: 'underline' },
   modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.85)', justifyContent: 'center', alignItems: 'center' },
-  modalContent: { width: '85%', backgroundColor: '#1E1E1E', padding: 20, borderRadius: 20, borderWidth: 1, borderColor: '#333', alignItems: 'center' },
-  modalTitle: { color: '#FFF', fontSize: 20, fontFamily: 'Inter_700Bold', marginBottom: 5 },
+  modalContent: { width: '85%', backgroundColor: '#FFFFFF', padding: 20, borderRadius: 20, borderWidth: 1, borderColor: '#DDD', alignItems: 'center' },
+  modalTitle: { color: '#1C1C1E', fontSize: 20, fontFamily: 'Inter_700Bold', marginBottom: 5 },
   modalSub: { color: '#888', textAlign: 'center', marginBottom: 15 },
-  pinInput: { backgroundColor: '#2C2C2C', color: '#FFF', fontSize: 24, textAlign: 'center', padding: 10, borderRadius: 10, width: '80%', marginBottom: 15, letterSpacing: 5 },
-  commentInput: { backgroundColor: '#2C2C2C', color: '#FFF', padding: 10, borderRadius: 10, width: '100%', minHeight: 60, textAlignVertical: 'top' },
+  pinInput: { backgroundColor: '#F0F0F0', color: '#1C1C1E', fontSize: 24, textAlign: 'center', padding: 10, borderRadius: 10, width: '80%', marginBottom: 15, letterSpacing: 5 },
+  commentInput: { backgroundColor: '#F0F0F0', color: '#1C1C1E', padding: 10, borderRadius: 10, width: '100%', minHeight: 60, textAlignVertical: 'top' },
   modalBtnsRow: { flexDirection: 'row', width: '100%', justifyContent: 'space-between', marginTop: 10 },
-  modalBtnCancel: { flex: 1, padding: 12, alignItems: 'center', backgroundColor: '#333', borderRadius: 10, marginRight: 5 },
-  modalBtnVerify: { flex: 1, padding: 12, alignItems: 'center', backgroundColor: '#A0FF00', borderRadius: 10, marginLeft: 5 },
-  chatOverlay: { position: 'absolute', top: 0, bottom: 0, left: 0, right: 0, backgroundColor: '#121212', zIndex: 100 },
-  chatHeaderOverlay: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 15, paddingTop: 40, backgroundColor: '#1E1E1E' }
+  modalBtnCancel: { flex: 1, padding: 12, alignItems: 'center', backgroundColor: '#ECECEC', borderRadius: 10, marginRight: 5 },
+  modalBtnVerify: { flex: 1, padding: 12, alignItems: 'center', backgroundColor: '#fa6205', borderRadius: 10, marginLeft: 5 },
+  chatOverlay: { position: 'absolute', top: 0, bottom: 0, left: 0, right: 0, backgroundColor: '#F2F2F7', zIndex: 100 },
+  chatHeaderOverlay: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 15, paddingTop: 40, backgroundColor: '#FFFFFF' }
 });

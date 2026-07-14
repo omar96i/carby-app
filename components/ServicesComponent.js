@@ -42,7 +42,7 @@ const ServicesComponent = () => {
   };
 
   if (loading) {
-    return <ActivityIndicator size="large" color="#288018" style={styles.loader} />;
+    return <ActivityIndicator size="large" color="#fa6205" style={styles.loader} />;
   }
 
   return (

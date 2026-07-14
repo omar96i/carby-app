@@ -404,7 +404,7 @@ const LocationSection = ({ precioKilometro, setDistance, setTotalPrice }) => {
       <View style={styles.locationBox}>
         <View style={styles.locationItem}>
           <View style={styles.locationRow}>
-            <Icon name="map-marker" size={22} color="#009900" />
+            <Icon name="map-marker" size={22} color="#fa6205" />
             <Text style={styles.pointTitle}> Punto A</Text>
             <TouchableOpacity style={styles.addButton}>
               <IconMC name="pluscircleo" size={22} color="#000" />
@@ -447,7 +447,7 @@ const LocationSection = ({ precioKilometro, setDistance, setTotalPrice }) => {
 
         <View style={styles.locationItem}>
           <View style={styles.locationRow}>
-            <Icon name="map-marker" size={22} color="#009900" />
+            <Icon name="map-marker" size={22} color="#fa6205" />
             <Text style={styles.pointTitle}> Punto B</Text>
             <TouchableOpacity style={styles.addButton}>
               <IconMC name="pluscircleo" size={22} color="#000" />
@@ -568,7 +568,7 @@ const styles = StyleSheet.create({
     top: 0,
     borderLeftWidth: 2,
     borderStyle: "dashed",
-    borderColor: "#B2D8B2",
+    borderColor: "#fde2cc",
   },
   gradientOverlay: {
     position: 'absolute',
@@ -600,12 +600,12 @@ const styles = StyleSheet.create({
   },
   pricingLabel: {
     fontSize: 16,
-    color: "#444",
+    color: "#DDD",
   },
   pricingValue: {
     fontSize: 16,
     fontWeight: "600",
-    color: "#009900",
+    color: "#fa6205",
   },
   totalRow: {
     marginTop: 10,
@@ -622,7 +622,7 @@ const styles = StyleSheet.create({
   totalValue: {
     fontSize: 20,
     fontWeight: "bold",
-    color: "#009900",
+    color: "#fa6205",
   },
 });
 

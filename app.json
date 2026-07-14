@@ -1,29 +1,28 @@
 {
   "expo": {
-    "name": "yaridersapp",
-    "slug": "yaridersapp",
-    "version": "4.1.2",
+    "name": "Carbycol",
+    "slug": "carbycol",
+    "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/icon.png",
-    "scheme": "myapp",
-    "userInterfaceStyle": "automatic",
+    "icon": "./assets/images/nuevo-icono.jpeg",
+    "scheme": "carbycol",
+    "userInterfaceStyle": "light",
     "splash": {
-      "image": "./assets/images/splash.png",
+      "image": "./assets/images/nuevo-icono.jpeg",
       "resizeMode": "contain",
-      "backgroundColor": "#ffffff"
+      "backgroundColor": "#F2F2F7"
     },
     "updates": {
       "checkAutomatically": "ON_LOAD",
-      "fallbackToCacheTimeout": 0,
-      "url": "https://u.expo.dev/bdd1a504-2524-4337-8a8a-8efbdf682049"
+      "fallbackToCacheTimeout": 0
     },
     "assetBundlePatterns": [
       "**/*"
     ],
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.yariders.appriders",
-      "buildNumber": "4.0.3",
+      "bundleIdentifier": "com.carbycol.app",
+      "buildNumber": "1",
       "infoPlist": {
         "NSCameraUsageDescription": "Necesitamos poder validar tu identificación y garantizar a nuestros usuarios la calidad del servicio.",
         "NSPhotoLibraryUsageDescription": "Necesitamos poder ingresar a tu galería para que puedas seleccionar la foto de los documentos solicitados.",
@@ -46,14 +45,15 @@
       ]
     },
     "android": {
+      "package": "com.carbycol.app",
+      "versionCode": 1,
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/images/nuevo-icono.jpeg",
+        "backgroundColor": "#F2F2F7"
+      },
+      "allowBackup": true,
+      "softwareKeyboardLayoutMode": "resize",
       "permissions": [
-        "ACCESS_COARSE_LOCATION",
-        "ACCESS_FINE_LOCATION",
-        "android.permission.CAMERA",
-        "android.permission.ACCESS_COARSE_LOCATION",
-        "android.permission.ACCESS_FINE_LOCATION",
-        "android.permission.USE_BIOMETRIC",
-        "android.permission.USE_FINGERPRINT",
         "ACCESS_COARSE_LOCATION",
         "ACCESS_FINE_LOCATION",
         "android.permission.CAMERA",
@@ -68,22 +68,15 @@
         "VIBRATE",
         "WAKE_LOCK"
       ],
-      "allowBackup": true,
-      "softwareKeyboardLayoutMode": "resize",
-      "adaptiveIcon": {
-        "foregroundImage": "./assets/images/icon.png",
-        "backgroundColor": "#ffffff"
-      },
-      "package": "com.deloreanstudios.yaridersapp",
       "config": {
         "googleMaps": {
           "apiKey": "AIzaSyA5Q7U5qVt_NbzZ5z5vBJv7ECTsGZ9-chM"
         }
       },
       "googleServicesFile": "./google-services.json",
-      "versionCode": 39,
       "launchMode": "singleTask"
     },
+    "runtimeVersion": "1.0.0",
     "web": {
       "favicon": "./assets/images/icon.png"
     },
@@ -109,10 +102,9 @@
     ],
     "extra": {
       "eas": {
-        "projectId": "bdd1a504-2524-4337-8a8a-8efbdf682049"
+        "projectId": "6d1c249f-72db-48aa-8440-3b942a4ae021"
       }
     },
-    "owner": "deloreanstudios",
-    "runtimeVersion": "4.1.2"
+    "owner": "carloscar21"
   }
 }

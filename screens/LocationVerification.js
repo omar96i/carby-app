@@ -62,7 +62,7 @@ export default function LocationVerification() {
     if (isLoading) {
         return (
             <View style={styles.container}>
-                <ActivityIndicator size="large" color="#9BFE03" />
+                <ActivityIndicator size="large" color="#fa6205" />
             </View>
         );
     }
@@ -70,7 +70,7 @@ export default function LocationVerification() {
     // Renderizado de la pantalla de permisos
     return (
         <View style={styles.container}>
-            <Ionicons name="location-sharp" size={80} color="#9BFE03" />
+            <Ionicons name="location-sharp" size={80} color="#fa6205" />
             <Text style={styles.title}>Necesitamos tu ubicación en tiempo real</Text>
             <Text style={styles.subtitle}>YaRiders utiliza tu ubicación en tiempo real para:</Text>
             <View style={styles.reasonsContainer}>
@@ -129,7 +129,7 @@ const styles = StyleSheet.create({
         marginBottom: 40,
     },
     button: {
-        backgroundColor: '#9BFE03',
+        backgroundColor: '#fa6205',
         paddingVertical: 15,
         paddingHorizontal: 80,
         borderRadius: 10,

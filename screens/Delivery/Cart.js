@@ -178,7 +178,7 @@ const Cart = () => {
         </View>
         
         <Text style={styles.itemBasePrice}>
-          {BASE_URL.toString().includes("co.yariders") ? "$" : "S/"}{parseFloat(item.product.precio).toLocaleString()}
+          {"$"}{parseFloat(item.product.precio).toLocaleString()}
         </Text>
 
         {/* Lista de Adicionales */}
@@ -196,7 +196,7 @@ const Cart = () => {
         <View style={styles.itemFooter}>
             <View style={styles.quantityPill}>
                 <TouchableOpacity onPress={() => onDecrease(item.product.id)} style={styles.qtyBtn}>
-                    <AntDesign name="minus" size={14} color="#fff" />
+                    <AntDesign name="minus" size={14} color="#1C1C1E" />
                 </TouchableOpacity>
                 <Text style={styles.qtyText}>{item.quantity}</Text>
                 <TouchableOpacity onPress={() => onIncrease(item.product.id)} style={styles.qtyBtn}>
@@ -204,7 +204,7 @@ const Cart = () => {
                 </TouchableOpacity>
             </View>
             <Text style={styles.itemTotalPrice}>
-                {BASE_URL.toString().includes("co.yariders") ? "$" : "S/"}{item.totalPrice.toLocaleString()}
+                {"$"}{item.totalPrice.toLocaleString()}
             </Text>
         </View>
       </View>
@@ -214,7 +214,7 @@ const Cart = () => {
   if (loading || !fontsLoaded) {
     return (
       <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#a7ff00" />
+        <ActivityIndicator size="large" color="#fa6205" />
       </View>
     );
   }
@@ -222,12 +222,12 @@ const Cart = () => {
   // --- RENDERIZADO UI PRINCIPAL ---
   return (
     <View style={styles.container}>
-      <StatusBar barStyle="light-content" backgroundColor="#1c1c1c" />
+      <StatusBar barStyle="dark-content" backgroundColor="#F2F2F7" />
 
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-          <Ionicons name="arrow-back" size={24} color="#fff" />
+          <Ionicons name="arrow-back" size={24} color="#1C1C1E" />
         </TouchableOpacity>
         <View style={{flex:1, alignItems:'center'}}>
             <Text style={styles.headerTitle}>Tu Pedido</Text>
@@ -261,7 +261,7 @@ const Cart = () => {
                 <View style={styles.summaryRow}>
                     <Text style={styles.summaryLabel}>Subtotal</Text>
                     <Text style={styles.summaryValue}>
-                        {BASE_URL.toString().includes("co.yariders") ? "$" : "S/"}{totalPrice.toLocaleString()}
+                        {"$"}{totalPrice.toLocaleString()}
                     </Text>
                 </View>
                 <View style={styles.summaryRow}>
@@ -272,7 +272,7 @@ const Cart = () => {
                 <View style={styles.summaryRow}>
                     <Text style={styles.totalLabel}>Total</Text>
                     <Text style={styles.totalValue}>
-                        {BASE_URL.toString().includes("co.yariders") ? "$" : "S/"}{totalPrice.toLocaleString()}
+                        {"$"}{totalPrice.toLocaleString()}
                     </Text>
                 </View>
             </View>
@@ -324,7 +324,7 @@ const Cart = () => {
                   <Text style={styles.payButtonText}>Ir a pagar</Text>
               </View>
               <Text style={styles.payButtonTotal}>
-                {BASE_URL.toString().includes("co.yariders") ? "$" : "S/"}{totalPrice.toLocaleString()}
+                {"$"}{totalPrice.toLocaleString()}
               </Text>
             </TouchableOpacity>
           </View>
@@ -350,7 +350,7 @@ const Cart = () => {
       <Modal animationType="fade" transparent={true} visible={isModalVisible} onRequestClose={() => setIsModalVisible(false)}>
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
-            <Ionicons name="person-add-outline" size={40} color="#a7ff00" style={{marginBottom: 10}} />
+            <Ionicons name="person-add-outline" size={40} color="#fa6205" style={{marginBottom: 10}} />
             <Text style={styles.modalTitle}>Registro requerido</Text>
             <Text style={styles.modalText}>Regístrate para completar tu pedido.</Text>
             <View style={styles.modalButtons}>
@@ -371,13 +371,13 @@ const Cart = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#1c1c1c",
+    backgroundColor: "#F2F2F7",
   },
   loadingContainer: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "#1c1c1c",
+    backgroundColor: "#F2F2F7",
   },
   
   // --- HEADER ---
@@ -388,20 +388,20 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingTop: Platform.OS === 'android' ? 40 : 50,
     paddingBottom: 15,
-    backgroundColor: "#1c1c1c",
+    backgroundColor: "#F2F2F7",
     borderBottomWidth: 1,
-    borderBottomColor: "#2a2a2a",
+    borderBottomColor: "#ECECEC",
   },
   backButton: {
     padding: 5,
   },
   headerTitle: {
-    color: "#fff",
+    color: "#1C1C1E",
     fontSize: 18,
     fontFamily: "MontserratBold",
   },
   headerSubtitle: {
-    color: "#a7ff00",
+    color: "#fa6205",
     fontSize: 12,
     fontFamily: "MontserratRegular",
     marginTop: 2,
@@ -419,18 +419,18 @@ const styles = StyleSheet.create({
   // --- CARD ITEM ---
   itemCard: {
     flexDirection: "row",
-    backgroundColor: "#2a2a2a",
+    backgroundColor: "#ECECEC",
     borderRadius: 16,
     padding: 12,
     marginBottom: 15,
     borderWidth: 1,
-    borderColor: "#333",
+    borderColor: "#ECECEC",
   },
   itemImage: {
     width: 80,
     height: 80,
     borderRadius: 12,
-    backgroundColor: "#333",
+    backgroundColor: "#ECECEC",
   },
   itemInfo: {
     flex: 1,
@@ -443,7 +443,7 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
   },
   itemName: {
-    color: "#fff",
+    color: "#1C1C1E",
     fontSize: 15,
     fontFamily: "MontserratBold",
     flex: 1,
@@ -464,10 +464,10 @@ const styles = StyleSheet.create({
     marginTop: 6,
     paddingLeft: 4,
     borderLeftWidth: 2,
-    borderLeftColor: "#444",
+    borderLeftColor: "#DDD",
   },
   adicionalText: {
-    color: "#ccc",
+    color: "#666",
     fontSize: 11,
     fontFamily: "MontserratRegular",
     marginBottom: 2,
@@ -482,7 +482,7 @@ const styles = StyleSheet.create({
   },
   quantityPill: {
     flexDirection: 'row',
-    backgroundColor: '#3a3a3a',
+    backgroundColor: '#D8D8D8',
     borderRadius: 20,
     alignItems: 'center',
     paddingHorizontal: 4,
@@ -494,32 +494,32 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     borderRadius: 12,
-    backgroundColor: '#4a4a4a',
+    backgroundColor: '#CCCCCC',
   },
   qtyBtnAdd: {
-    backgroundColor: '#a7ff00',
+    backgroundColor: '#fa6205',
   },
   qtyText: {
-    color: '#fff',
+    color: '#1C1C1E',
     fontFamily: 'MontserratBold',
     fontSize: 14,
     marginHorizontal: 10,
   },
   itemTotalPrice: {
-    color: "#a7ff00",
+    color: "#fa6205",
     fontSize: 16,
     fontFamily: "MontserratBold",
   },
 
   // --- SUMMARY SECTION ---
   summaryContainer: {
-    backgroundColor: "#252525",
+    backgroundColor: "#FFFFFF",
     borderRadius: 16,
     padding: 20,
     marginBottom: 20,
   },
   summaryTitle: {
-    color: "#fff",
+    color: "#1C1C1E",
     fontSize: 16,
     fontFamily: "MontserratBold",
     marginBottom: 15,
@@ -535,22 +535,22 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
   summaryValue: {
-    color: "#fff",
+    color: "#1C1C1E",
     fontFamily: "MontserratRegular",
     fontSize: 14,
   },
   divider: {
     height: 1,
-    backgroundColor: "#444",
+    backgroundColor: "#DDD",
     marginVertical: 10,
   },
   totalLabel: {
-    color: "#fff",
+    color: "#1C1C1E",
     fontFamily: "MontserratBold",
     fontSize: 18,
   },
   totalValue: {
-    color: "#a7ff00",
+    color: "#fa6205",
     fontFamily: "MontserratBold",
     fontSize: 18,
   },
@@ -561,7 +561,7 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
     right: 0,
-    backgroundColor: '#252525',
+    backgroundColor: '#FFFFFF',
     paddingHorizontal: 20,
     paddingTop: 15,
     paddingBottom: Platform.OS === 'ios' ? 30 : 20,
@@ -574,14 +574,14 @@ const styles = StyleSheet.create({
     elevation: 20,
   },
   payButton: {
-    backgroundColor: "#a7ff00",
+    backgroundColor: "#fa6205",
     borderRadius: 30,
     paddingVertical: 16,
     paddingHorizontal: 25,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    shadowColor: "#a7ff00",
+    shadowColor: "#fa6205",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.3,
     shadowRadius: 5,
@@ -596,7 +596,7 @@ const styles = StyleSheet.create({
     marginRight: 10,
   },
   payButtonCount: {
-    color: '#a7ff00',
+    color: '#fa6205',
     fontSize: 12,
     fontFamily: 'MontserratBold',
   },
@@ -622,13 +622,13 @@ const styles = StyleSheet.create({
     width: 100,
     height: 100,
     borderRadius: 50,
-    backgroundColor: '#2a2a2a',
+    backgroundColor: '#ECECEC',
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 20,
   },
   emptyCartTitle: {
-    color: "#fff",
+    color: "#1C1C1E",
     fontSize: 22,
     fontFamily: "MontserratBold",
     marginBottom: 10,
@@ -641,7 +641,7 @@ const styles = StyleSheet.create({
     marginBottom: 30,
   },
   continueShoppingButton: {
-    backgroundColor: "#a7ff00",
+    backgroundColor: "#fa6205",
     paddingHorizontal: 30,
     paddingVertical: 15,
     borderRadius: 30,
@@ -660,20 +660,20 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(0,0,0,0.8)",
   },
   modalContent: {
-    backgroundColor: "#2a2a2a",
+    backgroundColor: "#ECECEC",
     borderRadius: 20,
     padding: 30,
     alignItems: "center",
     width: "85%",
   },
   modalTitle: {
-    color: "#fff",
+    color: "#1C1C1E",
     fontSize: 20,
     fontFamily: "MontserratBold",
     marginBottom: 10,
   },
   modalText: {
-    color: "#ccc",
+    color: "#666",
     fontSize: 14,
     fontFamily: "MontserratRegular",
     textAlign: "center",
@@ -693,13 +693,13 @@ const styles = StyleSheet.create({
     marginHorizontal: 5,
   },
   cancelButton: {
-    backgroundColor: "#3a3a3a",
+    backgroundColor: "#D8D8D8",
   },
   registerButton: {
-    backgroundColor: "#a7ff00",
+    backgroundColor: "#fa6205",
   },
   cancelButtonText: {
-    color: "#fff",
+    color: "#1C1C1E",
     fontFamily: "MontserratSemiBold",
   },
   registerButtonText: {
