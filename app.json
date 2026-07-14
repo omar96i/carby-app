@@ -1,0 +1,118 @@
+{
+  "expo": {
+    "name": "yaridersapp",
+    "slug": "yaridersapp",
+    "version": "4.1.2",
+    "orientation": "portrait",
+    "icon": "./assets/images/icon.png",
+    "scheme": "myapp",
+    "userInterfaceStyle": "automatic",
+    "splash": {
+      "image": "./assets/images/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#ffffff"
+    },
+    "updates": {
+      "checkAutomatically": "ON_LOAD",
+      "fallbackToCacheTimeout": 0,
+      "url": "https://u.expo.dev/bdd1a504-2524-4337-8a8a-8efbdf682049"
+    },
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.yariders.appriders",
+      "buildNumber": "4.0.3",
+      "infoPlist": {
+        "NSCameraUsageDescription": "Necesitamos poder validar tu identificación y garantizar a nuestros usuarios la calidad del servicio.",
+        "NSPhotoLibraryUsageDescription": "Necesitamos poder ingresar a tu galería para que puedas seleccionar la foto de los documentos solicitados.",
+        "NSLocationWhenInUseUsageDescription": "Necesitamos acceder a tu ubicación en tiempo real y en segundo plano para poder ubicarte y ofrecerte los mejores servicios de transporte acorde a tu lugar de ubicación o destino",
+        "NSLocationAlwaysUsageDescription": "Necesitamos acceder a tu ubicación en tiempo real y en segundo plano para poder ubicarte y ofrecerte los mejores servicios de transporte acorde a tu lugar de ubicación o destino",
+        "NSMicrophoneUsageDescription": "Necesitamos enviarte una alerta de audio para que no pierdas ni un sola sola oferta de servicio solicitada por nuestros clientes",
+        "ITSAppUsesNonExemptEncryption": false,
+        "UIBackgroundModes": [
+          "location",
+          "fetch",
+          "audio"
+        ]
+      },
+      "config": {
+        "googleMapsApiKey": "AIzaSyA5Q7U5qVt_NbzZ5z5vBJv7ECTsGZ9-chM"
+      },
+      "sounds": [
+        "./assets/sounds/pedido.wav",
+        "./assets/sounds/carrera.wav"
+      ]
+    },
+    "android": {
+      "permissions": [
+        "ACCESS_COARSE_LOCATION",
+        "ACCESS_FINE_LOCATION",
+        "android.permission.CAMERA",
+        "android.permission.ACCESS_COARSE_LOCATION",
+        "android.permission.ACCESS_FINE_LOCATION",
+        "android.permission.USE_BIOMETRIC",
+        "android.permission.USE_FINGERPRINT",
+        "ACCESS_COARSE_LOCATION",
+        "ACCESS_FINE_LOCATION",
+        "android.permission.CAMERA",
+        "android.permission.ACCESS_COARSE_LOCATION",
+        "android.permission.ACCESS_FINE_LOCATION",
+        "android.permission.USE_BIOMETRIC",
+        "android.permission.USE_FINGERPRINT",
+        "INTERNET",
+        "ACCESS_BACKGROUND_LOCATION",
+        "FOREGROUND_SERVICE",
+        "RECEIVE_BOOT_COMPLETED",
+        "VIBRATE",
+        "WAKE_LOCK"
+      ],
+      "allowBackup": true,
+      "softwareKeyboardLayoutMode": "resize",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/images/icon.png",
+        "backgroundColor": "#ffffff"
+      },
+      "package": "com.deloreanstudios.yaridersapp",
+      "config": {
+        "googleMaps": {
+          "apiKey": "AIzaSyA5Q7U5qVt_NbzZ5z5vBJv7ECTsGZ9-chM"
+        }
+      },
+      "googleServicesFile": "./google-services.json",
+      "versionCode": 39,
+      "launchMode": "singleTask"
+    },
+    "web": {
+      "favicon": "./assets/images/icon.png"
+    },
+    "plugins": [
+      "expo-font",
+      "expo-asset",
+      [
+        "expo-location",
+        {
+          "locationAlwaysAndWhenInUsePermission": "Allow $(PRODUCT_NAME) to use your location."
+        }
+      ],
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/images/icono_notificacion.png",
+          "defaultChannel": "default",
+          "color": "#ffffff",
+          "enableBackgroundRemoteNotifications": false
+        }
+      ],
+      "expo-background-task"
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "bdd1a504-2524-4337-8a8a-8efbdf682049"
+      }
+    },
+    "owner": "deloreanstudios",
+    "runtimeVersion": "4.1.2"
+  }
+}

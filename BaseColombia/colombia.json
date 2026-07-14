@@ -1,0 +1,3000 @@
+[
+    {
+        "departamento": "Amazonas",
+        "ciudades": [
+            {
+                "ciudad": "Bagua",
+                "distritos": [
+                    "Aramango",
+                    "Bagua",
+                    "Copallin",
+                    "El Parco",
+                    "Imaza",
+                    "La Peca"
+                ]
+            },
+            {
+                "ciudad": "Bongara",
+                "distritos": [
+                    "Chisquilla",
+                    "Churuja",
+                    "Corosha",
+                    "Cuispes",
+                    "Florida",
+                    "Jazan",
+                    "Jumbilla",
+                    "Recta",
+                    "San Carlos",
+                    "Shipasbamba",
+                    "Valera",
+                    "Yambrasbamba"
+                ]
+            },
+            {
+                "ciudad": "Chachapoyas",
+                "distritos": [
+                    "Asuncion",
+                    "Balsas",
+                    "Chachapoyas",
+                    "Cheto",
+                    "Chiliquin",
+                    "Chuquibamba",
+                    "Granada",
+                    "Huancas",
+                    "La Jalca",
+                    "Leimebamba",
+                    "Levanto",
+                    "Magdalena",
+                    "Mariscal Castilla",
+                    "Molinopampa",
+                    "Montevideo",
+                    "Olleros",
+                    "Quinjalca",
+                    "San Francisco De Daguas",
+                    "San Isidro De Maino",
+                    "Soloco",
+                    "Sonche"
+                ]
+            },
+            {
+                "ciudad": "Condorcanqui",
+                "distritos": [
+                    "El Cenepa",
+                    "Nieva",
+                    "Rio Santiago"
+                ]
+            },
+            {
+                "ciudad": "Luya",
+                "distritos": [
+                    "Camporredondo",
+                    "Cocabamba",
+                    "Colcamar",
+                    "Conila",
+                    "Inguilpata",
+                    "Lamud",
+                    "Longuita",
+                    "Lonya Chico",
+                    "Luya",
+                    "Luya Viejo",
+                    "Maria",
+                    "Ocalli",
+                    "Ocumal",
+                    "Pisuquia",
+                    "Providencia",
+                    "San Cristobal",
+                    "San Francisco Del Yeso",
+                    "San Jeronimo",
+                    "San Juan De Lopecancha",
+                    "Santa Catalina",
+                    "Santo Tomas",
+                    "Tingo",
+                    "Trita"
+                ]
+            },
+            {
+                "ciudad": "Rodriguez De Mendoza",
+                "distritos": [
+                    "Chirimoto",
+                    "Cochamal",
+                    "Huambo",
+                    "Limabamba",
+                    "Longar",
+                    "Mariscal Benavides",
+                    "Milpuc",
+                    "Omia",
+                    "San Nicolas",
+                    "Santa Rosa",
+                    "Totora",
+                    "Vista Alegre"
+                ]
+            },
+            {
+                "ciudad": "Utcubamba",
+                "distritos": [
+                    "Bagua Grande",
+                    "Cajaruro",
+                    "Cumba",
+                    "El Milagro",
+                    "Jamalca",
+                    "Lonya Grande",
+                    "Yamon"
+                ]
+            }
+        ]
+    },
+    {
+        "departamento": "Ancash",
+        "ciudades": [
+            {
+                "ciudad": "Aija",
+                "distritos": [
+                    "Aija",
+                    "Coris",
+                    "Huacllan",
+                    "La Merced",
+                    "Succha"
+                ]
+            },
+            {
+                "ciudad": "Antonio Raymondi",
+                "distritos": [
+                    "Aczo",
+                    "Chaccho",
+                    "Chingas",
+                    "Llamellin",
+                    "Mirgas",
+                    "San Juan De Rontoy"
+                ]
+            },
+            {
+                "ciudad": "Asuncion",
+                "distritos": [
+                    "Acochaca",
+                    "Chacas"
+                ]
+            },
+            {
+                "ciudad": "Bolognesi",
+                "distritos": [
+                    "Abelardo Pardo Lezameta",
+                    "Antonio Raymondi",
+                    "Aquia",
+                    "Cajacay",
+                    "Canis",
+                    "Chiquian",
+                    "Colquioc",
+                    "Huallanca",
+                    "Huasta",
+                    "Huayllacayan",
+                    "La Primavera",
+                    "Mangas",
+                    "Pacllon",
+                    "San Miguel De Corpanqui",
+                    "Ticllos"
+                ]
+            },
+            {
+                "ciudad": "Carhuaz",
+                "distritos": [
+                    "Acopampa",
+                    "Amashca",
+                    "Anta",
+                    "Ataquero",
+                    "Carhuaz",
+                    "Marcara",
+                    "Pariahuanca",
+                    "San Miguel De Aco",
+                    "Shilla",
+                    "Tinco",
+                    "Yungar"
+                ]
+            },
+            {
+                "ciudad": "Carlos Fermin Fitzcarrald",
+                "distritos": [
+                    "San Luis",
+                    "San Nicolas",
+                    "Yauya"
+                ]
+            },
+            {
+                "ciudad": "Casma",
+                "distritos": [
+                    "Buena Vista Alta",
+                    "Casma",
+                    "Comandante Noel",
+                    "Yautan"
+                ]
+            },
+            {
+                "ciudad": "Corongo",
+                "distritos": [
+                    "Aco",
+                    "Bambas",
+                    "Corongo",
+                    "Cusca",
+                    "La Pampa",
+                    "Yanac",
+                    "Yupan"
+                ]
+            },
+            {
+                "ciudad": "Huaraz",
+                "distritos": [
+                    "Cochabamba",
+                    "Colcabamba",
+                    "Huanchay",
+                    "Huaraz",
+                    "Independencia",
+                    "Jangas",
+                    "La Libertad",
+                    "Olleros",
+                    "Pampas",
+                    "Pariacoto",
+                    "Pira",
+                    "Tarica"
+                ]
+            },
+            {
+                "ciudad": "Huari",
+                "distritos": [
+                    "Anra",
+                    "Cajay",
+                    "Chavin De Huantar",
+                    "Huacachi",
+                    "Huacchis",
+                    "Huachis",
+                    "Huantar",
+                    "Huari",
+                    "Masin",
+                    "Paucas",
+                    "Ponto",
+                    "Rahuapampa",
+                    "Rapayan",
+                    "San Marcos",
+                    "San Pedro De Chana",
+                    "Uco"
+                ]
+            },
+            {
+                "ciudad": "Huarmey",
+                "distritos": [
+                    "Cochapeti",
+                    "Culebras",
+                    "Huarmey",
+                    "Huayan",
+                    "Malvas"
+                ]
+            },
+            {
+                "ciudad": "Huaylas",
+                "distritos": [
+                    "Caraz",
+                    "Huallanca",
+                    "Huata",
+                    "Huaylas",
+                    "Mato",
+                    "Pamparomas",
+                    "Pueblo Libre",
+                    "Santa Cruz",
+                    "Santo Toribio",
+                    "Yuracmarca"
+                ]
+            },
+            {
+                "ciudad": "Mariscal Luzuriaga",
+                "distritos": [
+                    "Casca",
+                    "Eleazar Guzman Barron",
+                    "Fidel Olivas Escudero",
+                    "Llama",
+                    "Llumpa",
+                    "Lucma",
+                    "Musga",
+                    "Piscobamba"
+                ]
+            },
+            {
+                "ciudad": "Ocros",
+                "distritos": [
+                    "Acas",
+                    "Cajamarquilla",
+                    "Carhuapampa",
+                    "Cochas",
+                    "Congas",
+                    "Llipa",
+                    "Ocros",
+                    "San Cristobal De Rajan",
+                    "San Pedro",
+                    "Santiago De Chilcas"
+                ]
+            },
+            {
+                "ciudad": "Pallasca",
+                "distritos": [
+                    "Bolognesi",
+                    "Cabana",
+                    "Conchucos",
+                    "Huacaschuque",
+                    "Huandoval",
+                    "Lacabamba",
+                    "Llapo",
+                    "Pallasca",
+                    "Pampas",
+                    "Santa Rosa",
+                    "Tauca"
+                ]
+            },
+            {
+                "ciudad": "Pomabamba",
+                "distritos": [
+                    "Huayllan",
+                    "Parobamba",
+                    "Pomabamba",
+                    "Quinuabamba"
+                ]
+            },
+            {
+                "ciudad": "Recuay",
+                "distritos": [
+                    "Catac",
+                    "Cotaparaco",
+                    "Huayllapampa",
+                    "Llacllin",
+                    "Marca",
+                    "Pampas Chico",
+                    "Pararin",
+                    "Recuay",
+                    "Tapacocha",
+                    "Ticapampa"
+                ]
+            },
+            {
+                "ciudad": "Santa",
+                "distritos": [
+                    "Caceres Del Peru",
+                    "Chimbote",
+                    "Coishco",
+                    "Macate",
+                    "Moro",
+                    "Nepeña",
+                    "Nuevo Chimbote",
+                    "Samanco",
+                    "Santa"
+                ]
+            },
+            {
+                "ciudad": "Sihuas",
+                "distritos": [
+                    "Acobamba",
+                    "Alfonso Ugarte",
+                    "Cashapampa",
+                    "Chingalpo",
+                    "Huayllabamba",
+                    "Quiches",
+                    "Ragash",
+                    "San Juan",
+                    "Sicsibamba",
+                    "Sihuas"
+                ]
+            },
+            {
+                "ciudad": "Yungay",
+                "distritos": [
+                    "Cascapara",
+                    "Mancos",
+                    "Matacoto",
+                    "Quillo",
+                    "Ranrahirca",
+                    "Shupluy",
+                    "Yanama",
+                    "Yungay"
+                ]
+            }
+        ]
+    },
+    {
+        "departamento": "Apurimac",
+        "ciudades": [
+            {
+                "ciudad": "Abancay",
+                "distritos": [
+                    "Abancay",
+                    "Chacoche",
+                    "Circa",
+                    "Curahuasi",
+                    "Huanipaca",
+                    "Lambrama",
+                    "Pichirhua",
+                    "San Pedro De Cachora",
+                    "Tamburco"
+                ]
+            },
+            {
+                "ciudad": "Andahuaylas",
+                "distritos": [
+                    "Andahuaylas",
+                    "Andarapa",
+                    "Chiara",
+                    "Huancarama",
+                    "Huancaray",
+                    "Huayana",
+                    "Jose Maria Arguedas",
+                    "Kaquiabamba",
+                    "Kishuara",
+                    "Pacobamba",
+                    "Pacucha",
+                    "Pampachiri",
+                    "Pomacocha",
+                    "San Antonio De Cachi",
+                    "San Jeronimo",
+                    "San Miguel De Chaccrampa",
+                    "Santa Maria De Chicmo",
+                    "Talavera",
+                    "Tumay Huaraca",
+                    "Turpo"
+                ]
+            },
+            {
+                "ciudad": "Antabamba",
+                "distritos": [
+                    "Antabamba",
+                    "El Oro",
+                    "Huaquirca",
+                    "Juan Espinoza Medrano",
+                    "Oropesa",
+                    "Pachaconas",
+                    "Sabaino"
+                ]
+            },
+            {
+                "ciudad": "Aymaraes",
+                "distritos": [
+                    "Capaya",
+                    "Caraybamba",
+                    "Chalhuanca",
+                    "Chapimarca",
+                    "Colcabamba",
+                    "Cotaruse",
+                    "Huayllo",
+                    "Justo Apu Sahuaraura",
+                    "Lucre",
+                    "Pocohuanca",
+                    "San Juan De Chacña",
+                    "Sañayca",
+                    "Soraya",
+                    "Tapairihua",
+                    "Tintay",
+                    "Toraya",
+                    "Yanaca"
+                ]
+            },
+            {
+                "ciudad": "Chincheros",
+                "distritos": [
+                    "Ahuayro",
+                    "Anco-Huallo",
+                    "Chincheros",
+                    "Cocharcas",
+                    "El Porvenir",
+                    "Huaccana",
+                    "Los Chankas",
+                    "Ocobamba",
+                    "Ongoy",
+                    "Ranracancha",
+                    "Rocchacc",
+                    "Uranmarca"
+                ]
+            },
+            {
+                "ciudad": "Cotabambas",
+                "distritos": [
+                    "Challhuahuacho",
+                    "Cotabambas",
+                    "Coyllurqui",
+                    "Haquira",
+                    "Mara",
+                    "Tambobamba"
+                ]
+            },
+            {
+                "ciudad": "Grau",
+                "distritos": [
+                    "Chuquibambilla",
+                    "Curasco",
+                    "Curpahuasi",
+                    "Gamarra",
+                    "Huayllati",
+                    "Mamara",
+                    "Micaela Bastidas",
+                    "Pataypampa",
+                    "Progreso",
+                    "San Antonio",
+                    "Santa Rosa",
+                    "Turpay",
+                    "Vilcabamba",
+                    "Virundo"
+                ]
+            }
+        ]
+    },
+    {
+        "departamento": "Arequipa",
+        "ciudades": [
+            {
+                "ciudad": "Arequipa",
+                "distritos": [
+                    "Alto Selva Alegre",
+                    "Arequipa",
+                    "Cayma",
+                    "Cerro Colorado",
+                    "Characato",
+                    "Chiguata",
+                    "Jacobo Hunter",
+                    "Jose Luis Bustamante Y Rivero",
+                    "La Joya",
+                    "Mariano Melgar",
+                    "Miraflores",
+                    "Mollebaya",
+                    "Paucarpata",
+                    "Pocsi",
+                    "Polobaya",
+                    "Quequeña",
+                    "Sabandia",
+                    "Sachaca",
+                    "San Juan De Siguas",
+                    "San Juan De Tarucani",
+                    "Santa Isabel De Siguas",
+                    "Santa Rita De Siguas",
+                    "Socabaya",
+                    "Tiabaya",
+                    "Uchumayo",
+                    "Vitor",
+                    "Yanahuara",
+                    "Yarabamba",
+                    "Yura"
+                ]
+            },
+            {
+                "ciudad": "Camana",
+                "distritos": [
+                    "Camana",
+                    "Jose Maria Quimper",
+                    "Mariano Nicolas Valcarcel",
+                    "Mariscal Caceres",
+                    "Nicolas De Pierola",
+                    "Ocoña",
+                    "Quilca",
+                    "Samuel Pastor"
+                ]
+            },
+            {
+                "ciudad": "Caraveli",
+                "distritos": [
+                    "Acari",
+                    "Atico",
+                    "Atiquipa",
+                    "Bella Union",
+                    "Cahuacho",
+                    "Caraveli",
+                    "Chala",
+                    "Chaparra",
+                    "Huanuhuanu",
+                    "Jaqui",
+                    "Lomas",
+                    "Quicacha",
+                    "Yauca"
+                ]
+            },
+            {
+                "ciudad": "Castilla",
+                "distritos": [
+                    "Andagua",
+                    "Aplao",
+                    "Ayo",
+                    "Chachas",
+                    "Chilcaymarca",
+                    "Choco",
+                    "Huancarqui",
+                    "Machaguay",
+                    "Orcopampa",
+                    "Pampacolca",
+                    "Tipan",
+                    "Uraca",
+                    "Uñon",
+                    "Viraco"
+                ]
+            },
+            {
+                "ciudad": "Caylloma",
+                "distritos": [
+                    "Achoma",
+                    "Cabanaconde",
+                    "Callalli",
+                    "Caylloma",
+                    "Chivay",
+                    "Coporaque",
+                    "Huambo",
+                    "Huanca",
+                    "Ichupampa",
+                    "Lari",
+                    "Lluta",
+                    "Maca",
+                    "Madrigal",
+                    "Majes",
+                    "San Antonio De Chuca",
+                    "Sibayo",
+                    "Tapay",
+                    "Tisco",
+                    "Tuti",
+                    "Yanque"
+                ]
+            },
+            {
+                "ciudad": "Condesuyos",
+                "distritos": [
+                    "Andaray",
+                    "Cayarani",
+                    "Chichas",
+                    "Chuquibamba",
+                    "Iray",
+                    "Rio Grande",
+                    "Salamanca",
+                    "Yanaquihua"
+                ]
+            },
+            {
+                "ciudad": "Islay",
+                "distritos": [
+                    "Cocachacra",
+                    "Dean Valdivia",
+                    "Islay",
+                    "Mejia",
+                    "Mollendo",
+                    "Punta De Bombon"
+                ]
+            },
+            {
+                "ciudad": "La Union",
+                "distritos": [
+                    "Alca",
+                    "Charcana",
+                    "Cotahuasi",
+                    "Huaynacotas",
+                    "Pampamarca",
+                    "Puyca",
+                    "Quechualla",
+                    "Sayla",
+                    "Tauria",
+                    "Tomepampa",
+                    "Toro"
+                ]
+            }
+        ]
+    },
+    {
+        "departamento": "Ayacucho",
+        "ciudades": [
+            {
+                "ciudad": "Cangallo",
+                "distritos": [
+                    "Cangallo",
+                    "Chuschi",
+                    "Los Morochucos",
+                    "Maria Parado De Bellido",
+                    "Paras",
+                    "Totos"
+                ]
+            },
+            {
+                "ciudad": "Huamanga",
+                "distritos": [
+                    "Acocro",
+                    "Acos Vinchos",
+                    "Andres Avelino Caceres Dorregaray",
+                    "Ayacucho",
+                    "Carmen Alto",
+                    "Chiara",
+                    "Jesus Nazareno",
+                    "Ocros",
+                    "Pacaycasa",
+                    "Quinua",
+                    "San Jose De Ticllas",
+                    "San Juan Bautista",
+                    "Santiago De Pischa",
+                    "Socos",
+                    "Tambillo",
+                    "Vinchos"
+                ]
+            },
+            {
+                "ciudad": "Huanca Sancos",
+                "distritos": [
+                    "Carapo",
+                    "Sacsamarca",
+                    "Sancos",
+                    "Santiago De Lucanamarca"
+                ]
+            },
+            {
+                "ciudad": "Huanta",
+                "distritos": [
+                    "Ayahuanco",
+                    "Canayre",
+                    "Chaca",
+                    "Huamanguilla",
+                    "Huanta",
+                    "Iguain",
+                    "Llochegua",
+                    "Luricocha",
+                    "Pucacolpa",
+                    "Putis",
+                    "Santillana",
+                    "Sivia",
+                    "Uchuraccay"
+                ]
+            },
+            {
+                "ciudad": "La Mar",
+                "distritos": [
+                    "Anchihuay",
+                    "Anco",
+                    "Ayna",
+                    "Chilcas",
+                    "Chungui",
+                    "Luis Carranza",
+                    "Ninabamba",
+                    "Oronccoy",
+                    "Patibamba",
+                    "Rio Magdalena",
+                    "Samugari",
+                    "San Miguel",
+                    "Santa Rosa",
+                    "Tambo",
+                    "Union Progreso"
+                ]
+            },
+            {
+                "ciudad": "Lucanas",
+                "distritos": [
+                    "Aucara",
+                    "Cabana",
+                    "Carmen Salcedo",
+                    "Chaviña",
+                    "Chipao",
+                    "Huac-Huas",
+                    "Laramate",
+                    "Leoncio Prado",
+                    "Llauta",
+                    "Lucanas",
+                    "Ocaña",
+                    "Otoca",
+                    "Puquio",
+                    "Saisa",
+                    "San Cristobal",
+                    "San Juan",
+                    "San Pedro",
+                    "San Pedro De Palco",
+                    "Sancos",
+                    "Santa Ana De Huaycahuacho",
+                    "Santa Lucia"
+                ]
+            },
+            {
+                "ciudad": "Parinacochas",
+                "distritos": [
+                    "Chumpi",
+                    "Coracora",
+                    "Coronel Castañeda",
+                    "Pacapausa",
+                    "Pullo",
+                    "Puyusca",
+                    "San Francisco De Ravacayco",
+                    "Upahuacho"
+                ]
+            },
+            {
+                "ciudad": "Paucar Del Sara Sara",
+                "distritos": [
+                    "Colta",
+                    "Corculla",
+                    "Lampa",
+                    "Marcabamba",
+                    "Oyolo",
+                    "Pararca",
+                    "Pausa",
+                    "San Javier De Alpabamba",
+                    "San Jose De Ushua",
+                    "Sara Sara"
+                ]
+            },
+            {
+                "ciudad": "Sucre",
+                "distritos": [
+                    "Belen",
+                    "Chalcos",
+                    "Chilcayoc",
+                    "Huacaña",
+                    "Morcolla",
+                    "Paico",
+                    "Querobamba",
+                    "San Pedro De Larcay",
+                    "San Salvador De Quije",
+                    "Santiago De Paucaray",
+                    "Soras"
+                ]
+            },
+            {
+                "ciudad": "Victor Fajardo",
+                "distritos": [
+                    "Alcamenca",
+                    "Apongo",
+                    "Asquipata",
+                    "Canaria",
+                    "Cayara",
+                    "Colca",
+                    "Huamanquiquia",
+                    "Huancapi",
+                    "Huancaraylla",
+                    "Huaya",
+                    "Sarhua",
+                    "Vilcanchos"
+                ]
+            },
+            {
+                "ciudad": "Vilcas Huaman",
+                "distritos": [
+                    "Accomarca",
+                    "Carhuanca",
+                    "Concepcion",
+                    "Huambalpa",
+                    "Independencia",
+                    "Saurama",
+                    "Vilcas Huaman",
+                    "Vischongo"
+                ]
+            }
+        ]
+    },
+    {
+        "departamento": "Cajamarca",
+        "ciudades": [
+            {
+                "ciudad": "Cajabamba",
+                "distritos": [
+                    "Cachachi",
+                    "Cajabamba",
+                    "Condebamba",
+                    "Sitacocha"
+                ]
+            },
+            {
+                "ciudad": "Cajamarca",
+                "distritos": [
+                    "Asuncion",
+                    "Cajamarca",
+                    "Chetilla",
+                    "Cospan",
+                    "Encañada",
+                    "Jesus",
+                    "Llacanora",
+                    "Los Baños Del Inca",
+                    "Magdalena",
+                    "Matara",
+                    "Namora",
+                    "San Juan"
+                ]
+            },
+            {
+                "ciudad": "Celendin",
+                "distritos": [
+                    "Celendin",
+                    "Chumuch",
+                    "Cortegana",
+                    "Huasmin",
+                    "Jorge Chavez",
+                    "Jose Galvez",
+                    "La Libertad De Pallan",
+                    "Miguel Iglesias",
+                    "Oxamarca",
+                    "Sorochuco",
+                    "Sucre",
+                    "Utco"
+                ]
+            },
+            {
+                "ciudad": "Chota",
+                "distritos": [
+                    "Anguia",
+                    "Chadin",
+                    "Chalamarca",
+                    "Chiguirip",
+                    "Chimban",
+                    "Choropampa",
+                    "Chota",
+                    "Cochabamba",
+                    "Conchan",
+                    "Huambos",
+                    "Lajas",
+                    "Llama",
+                    "Miracosta",
+                    "Paccha",
+                    "Pion",
+                    "Querocoto",
+                    "San Juan De Licupis",
+                    "Tacabamba",
+                    "Tocmoche"
+                ]
+            },
+            {
+                "ciudad": "Contumaza",
+                "distritos": [
+                    "Chilete",
+                    "Contumaza",
+                    "Cupisnique",
+                    "Guzmango",
+                    "San Benito",
+                    "Santa Cruz De Toledo",
+                    "Tantarica",
+                    "Yonan"
+                ]
+            },
+            {
+                "ciudad": "Cutervo",
+                "distritos": [
+                    "Callayuc",
+                    "Choros",
+                    "Cujillo",
+                    "Cutervo",
+                    "La Ramada",
+                    "Pimpingos",
+                    "Querocotillo",
+                    "San Andres De Cutervo",
+                    "San Juan De Cutervo",
+                    "San Luis De Lucma",
+                    "Santa Cruz",
+                    "Santo Domingo De La Capilla",
+                    "Santo Tomas",
+                    "Socota",
+                    "Toribio Casanova"
+                ]
+            },
+            {
+                "ciudad": "Hualgayoc",
+                "distritos": [
+                    "Bambamarca",
+                    "Chugur",
+                    "Hualgayoc"
+                ]
+            },
+            {
+                "ciudad": "Jaen",
+                "distritos": [
+                    "Bellavista",
+                    "Chontali",
+                    "Colasay",
+                    "Huabal",
+                    "Jaen",
+                    "Las Pirias",
+                    "Pomahuaca",
+                    "Pucara",
+                    "Sallique",
+                    "San Felipe",
+                    "San Jose Del Alto",
+                    "Santa Rosa"
+                ]
+            },
+            {
+                "ciudad": "San Ignacio",
+                "distritos": [
+                    "Chirinos",
+                    "Huarango",
+                    "La Coipa",
+                    "Namballe",
+                    "San Ignacio",
+                    "San Jose De Lourdes",
+                    "Tabaconas"
+                ]
+            },
+            {
+                "ciudad": "San Marcos",
+                "distritos": [
+                    "Chancay",
+                    "Eduardo Villanueva",
+                    "Gregorio Pita",
+                    "Ichocan",
+                    "Jose Manuel Quiroz",
+                    "Jose Sabogal",
+                    "Pedro Galvez"
+                ]
+            },
+            {
+                "ciudad": "San Miguel",
+                "distritos": [
+                    "Bolivar",
+                    "Calquis",
+                    "Catilluc",
+                    "El Prado",
+                    "La Florida",
+                    "Llapa",
+                    "Nanchoc",
+                    "Niepos",
+                    "San Gregorio",
+                    "San Miguel",
+                    "San Silvestre De Cochan",
+                    "Tongod",
+                    "Union Agua Blanca"
+                ]
+            },
+            {
+                "ciudad": "San Pablo",
+                "distritos": [
+                    "San Bernardino",
+                    "San Luis",
+                    "San Pablo",
+                    "Tumbaden"
+                ]
+            },
+            {
+                "ciudad": "Santa Cruz",
+                "distritos": [
+                    "Andabamba",
+                    "Catache",
+                    "Chancaybaños",
+                    "La Esperanza",
+                    "Ninabamba",
+                    "Pulan",
+                    "Santa Cruz",
+                    "Saucepampa",
+                    "Sexi",
+                    "Uticyacu",
+                    "Yauyucan"
+                ]
+            }
+        ]
+    },
+    {
+        "departamento": "Callao",
+        "ciudades": [
+            {
+                "ciudad": "Callao",
+                "distritos": [
+                    "Bellavista",
+                    "Callao",
+                    "Carmen De La Legua Reynoso",
+                    "La Perla",
+                    "La Punta",
+                    "Mi Peru",
+                    "Ventanilla"
+                ]
+            }
+        ]
+    },
+    {
+        "departamento": "Cusco",
+        "ciudades": [
+            {
+                "ciudad": "Acomayo",
+                "distritos": [
+                    "Acomayo",
+                    "Acopia",
+                    "Acos",
+                    "Mosoc Llacta",
+                    "Pomacanchi",
+                    "Rondocan",
+                    "Sangarara"
+                ]
+            },
+            {
+                "ciudad": "Anta",
+                "distritos": [
+                    "Ancahuasi",
+                    "Anta",
+                    "Cachimayo",
+                    "Chinchaypujio",
+                    "Huarocondo",
+                    "Limatambo",
+                    "Mollepata",
+                    "Pucyura",
+                    "Zurite"
+                ]
+            },
+            {
+                "ciudad": "Calca",
+                "distritos": [
+                    "Calca",
+                    "Coya",
+                    "Lamay",
+                    "Lares",
+                    "Pisac",
+                    "San Salvador",
+                    "Taray",
+                    "Yanatile"
+                ]
+            },
+            {
+                "ciudad": "Canas",
+                "distritos": [
+                    "Checca",
+                    "Kunturkanki",
+                    "Langui",
+                    "Layo",
+                    "Pampamarca",
+                    "Quehue",
+                    "Tupac Amaru",
+                    "Yanaoca"
+                ]
+            },
+            {
+                "ciudad": "Canchis",
+                "distritos": [
+                    "Checacupe",
+                    "Combapata",
+                    "Marangani",
+                    "Pitumarca",
+                    "San Pablo",
+                    "San Pedro",
+                    "Sicuani",
+                    "Tinta"
+                ]
+            },
+            {
+                "ciudad": "Chumbivilcas",
+                "distritos": [
+                    "Capacmarca",
+                    "Chamaca",
+                    "Colquemarca",
+                    "Livitaca",
+                    "Llusco",
+                    "Quiñota",
+                    "Santo Tomas",
+                    "Velille"
+                ]
+            },
+            {
+                "ciudad": "Cusco",
+                "distritos": [
+                    "Ccorca",
+                    "Cusco",
+                    "Poroy",
+                    "San Jeronimo",
+                    "San Sebastian",
+                    "Santiago",
+                    "Saylla",
+                    "Wanchaq"
+                ]
+            },
+            {
+                "ciudad": "Espinar",
+                "distritos": [
+                    "Alto Pichigua",
+                    "Condoroma",
+                    "Coporaque",
+                    "Espinar",
+                    "Ocoruro",
+                    "Pallpata",
+                    "Pichigua",
+                    "Suyckutambo"
+                ]
+            },
+            {
+                "ciudad": "La Convencion",
+                "distritos": [
+                    "Cielo Punco",
+                    "Echarate",
+                    "Huayopata",
+                    "Inkawasi",
+                    "Kumpirushiato",
+                    "Manitea",
+                    "Maranura",
+                    "Megantoni",
+                    "Ocobamba",
+                    "Pichari",
+                    "Quellouno",
+                    "Quimbiri",
+                    "Santa Ana",
+                    "Santa Teresa",
+                    "Union Asháninka",
+                    "Vilcabamba",
+                    "Villa Kintiarina",
+                    "Villa Virgen"
+                ]
+            },
+            {
+                "ciudad": "Paruro",
+                "distritos": [
+                    "Accha",
+                    "Ccapi",
+                    "Colcha",
+                    "Huanoquite",
+                    "Omacha",
+                    "Paccaritambo",
+                    "Paruro",
+                    "Pillpinto",
+                    "Yaurisque"
+                ]
+            },
+            {
+                "ciudad": "Paucartambo",
+                "distritos": [
+                    "Caicay",
+                    "Challabamba",
+                    "Colquepata",
+                    "Huancarani",
+                    "Kosñipata",
+                    "Paucartambo"
+                ]
+            },
+            {
+                "ciudad": "Quispicanchi",
+                "distritos": [
+                    "Andahuaylillas",
+                    "Camanti",
+                    "Ccarhuayo",
+                    "Ccatca",
+                    "Cusipata",
+                    "Huaro",
+                    "Lucre",
+                    "Marcapata",
+                    "Ocongate",
+                    "Oropesa",
+                    "Quiquijana",
+                    "Urcos"
+                ]
+            },
+            {
+                "ciudad": "Urubamba",
+                "distritos": [
+                    "Chinchero",
+                    "Huayllabamba",
+                    "Machupicchu",
+                    "Maras",
+                    "Ollantaytambo",
+                    "Urubamba",
+                    "Yucay"
+                ]
+            }
+        ]
+    },
+    {
+        "departamento": "Huancavelica",
+        "ciudades": [
+            {
+                "ciudad": "Acobamba",
+                "distritos": [
+                    "Acobamba",
+                    "Andabamba",
+                    "Anta",
+                    "Caja",
+                    "Marcas",
+                    "Paucara",
+                    "Pomacocha",
+                    "Rosario"
+                ]
+            },
+            {
+                "ciudad": "Angaraes",
+                "distritos": [
+                    "Anchonga",
+                    "Callanmarca",
+                    "Ccochaccasa",
+                    "Chincho",
+                    "Congalla",
+                    "Huanca-Huanca",
+                    "Huayllay Grande",
+                    "Julcamarca",
+                    "Lircay",
+                    "San Antonio De Antaparco",
+                    "Santo Tomas De Pata",
+                    "Secclla"
+                ]
+            },
+            {
+                "ciudad": "Castrovirreyna",
+                "distritos": [
+                    "Arma",
+                    "Aurahua",
+                    "Capillas",
+                    "Castrovirreyna",
+                    "Chupamarca",
+                    "Cocas",
+                    "Huachos",
+                    "Huamatambo",
+                    "Mollepampa",
+                    "San Juan",
+                    "Santa Ana",
+                    "Tantara",
+                    "Ticrapo"
+                ]
+            },
+            {
+                "ciudad": "Churcampa",
+                "distritos": [
+                    "Anco",
+                    "Chinchihuasi",
+                    "Churcampa",
+                    "Cosme",
+                    "El Carmen",
+                    "La Merced",
+                    "Locroja",
+                    "Pachamarca",
+                    "Paucarbamba",
+                    "San Miguel De Mayocc",
+                    "San Pedro De Coris"
+                ]
+            },
+            {
+                "ciudad": "Huancavelica",
+                "distritos": [
+                    "Acobambilla",
+                    "Acoria",
+                    "Ascension",
+                    "Conayca",
+                    "Cuenca",
+                    "Huachocolpa",
+                    "Huancavelica",
+                    "Huando",
+                    "Huayllahuara",
+                    "Izcuchaca",
+                    "Laria",
+                    "Manta",
+                    "Mariscal Caceres",
+                    "Moya",
+                    "Nuevo Occoro",
+                    "Palca",
+                    "Pilchaca",
+                    "Vilca",
+                    "Yauli"
+                ]
+            },
+            {
+                "ciudad": "Huaytara",
+                "distritos": [
+                    "Ayavi",
+                    "Cordova",
+                    "Huayacundo Arma",
+                    "Huaytara",
+                    "Laramarca",
+                    "Ocoyo",
+                    "Pilpichaca",
+                    "Querco",
+                    "Quito-Arma",
+                    "San Antonio De Cusicancha",
+                    "San Francisco De Sangayaico",
+                    "San Isidro",
+                    "Santiago De Chocorvos",
+                    "Santiago De Quirahuara",
+                    "Santo Domingo De Capillas",
+                    "Tambo"
+                ]
+            },
+            {
+                "ciudad": "Tayacaja",
+                "distritos": [
+                    "Acostambo",
+                    "Acraquia",
+                    "Ahuaycha",
+                    "Andaymarca",
+                    "Cochabamba",
+                    "Colcabamba",
+                    "Daniel Hernandez",
+                    "Huachocolpa",
+                    "Huaribamba",
+                    "Lambras",
+                    "Pampas",
+                    "Pazos",
+                    "Pichos",
+                    "Quichuas",
+                    "Quishuar",
+                    "Roble",
+                    "Salcabamba",
+                    "Salcahuasi",
+                    "San Marcos De Rocchac",
+                    "Santiago De Tucuma",
+                    "Surcubamba",
+                    "Tintay Puncu",
+                    "Ñahuimpuquio"
+                ]
+            }
+        ]
+    },
+    {
+        "departamento": "Huanuco",
+        "ciudades": [
+            {
+                "ciudad": "Ambo",
+                "distritos": [
+                    "Ambo",
+                    "Cayna",
+                    "Colpas",
+                    "Conchamarca",
+                    "Huacar",
+                    "San Francisco",
+                    "San Rafael",
+                    "Tomay Kichwa"
+                ]
+            },
+            {
+                "ciudad": "Dos De Mayo",
+                "distritos": [
+                    "Chuquis",
+                    "La Union",
+                    "Marias",
+                    "Pachas",
+                    "Quivilla",
+                    "Ripan",
+                    "Shunqui",
+                    "Sillapata",
+                    "Yanas"
+                ]
+            },
+            {
+                "ciudad": "Huacaybamba",
+                "distritos": [
+                    "Canchabamba",
+                    "Cochabamba",
+                    "Huacaybamba",
+                    "Pinra"
+                ]
+            },
+            {
+                "ciudad": "Huamalies",
+                "distritos": [
+                    "Arancay",
+                    "Chavin De Pariarca",
+                    "Jacas Grande",
+                    "Jircan",
+                    "Llata",
+                    "Miraflores",
+                    "Monzon",
+                    "Punchao",
+                    "Puños",
+                    "Singa",
+                    "Tantamayo"
+                ]
+            },
+            {
+                "ciudad": "Huanuco",
+                "distritos": [
+                    "Amarilis",
+                    "Chinchao",
+                    "Churubamba",
+                    "Huanuco",
+                    "Margos",
+                    "Pillco Marca",
+                    "Quisqui",
+                    "San Francisco De Cayran",
+                    "San Pablo De Pillao",
+                    "San Pedro De Chaulan",
+                    "Santa Maria Del Valle",
+                    "Yacus",
+                    "Yarumayo"
+                ]
+            },
+            {
+                "ciudad": "Lauricocha",
+                "distritos": [
+                    "Baños",
+                    "Jesus",
+                    "Jivia",
+                    "Queropalca",
+                    "Rondos",
+                    "San Francisco De Asis",
+                    "San Miguel De Cauri"
+                ]
+            },
+            {
+                "ciudad": "Leoncio Prado",
+                "distritos": [
+                    "Castillo Grande",
+                    "Daniel Alomias Robles",
+                    "Hermilio Valdizan",
+                    "Jose Crespo Y Castillo",
+                    "Luyando",
+                    "Mariano Damaso Beraun",
+                    "Pucayacu",
+                    "Pueblo Nuevo",
+                    "Rupa-Rupa",
+                    "Santo Domingo De Anda"
+                ]
+            },
+            {
+                "ciudad": "Marañon",
+                "distritos": [
+                    "Cholon",
+                    "Huacrachuco",
+                    "La Morada",
+                    "San Buenaventura",
+                    "Santa Rosa De Alto Yanajanca"
+                ]
+            },
+            {
+                "ciudad": "Pachitea",
+                "distritos": [
+                    "Chaglla",
+                    "Molino",
+                    "Panao",
+                    "Umari"
+                ]
+            },
+            {
+                "ciudad": "Puerto Inca",
+                "distritos": [
+                    "Codo Del Pozuzo",
+                    "Honoria",
+                    "Puerto Inca",
+                    "Tournavista",
+                    "Yuyapichis"
+                ]
+            },
+            {
+                "ciudad": "Yarowilca",
+                "distritos": [
+                    "Aparicio Pomares",
+                    "Cahuac",
+                    "Chacabamba",
+                    "Chavinillo",
+                    "Choras",
+                    "Jacas Chico",
+                    "Obas",
+                    "Pampamarca"
+                ]
+            }
+        ]
+    },
+    {
+        "departamento": "Ica",
+        "ciudades": [
+            {
+                "ciudad": "Chincha",
+                "distritos": [
+                    "Alto Laran",
+                    "Chavin",
+                    "Chincha Alta",
+                    "Chincha Baja",
+                    "El Carmen",
+                    "Grocio Prado",
+                    "Pueblo Nuevo",
+                    "San Juan De Yanac",
+                    "San Pedro De Huacarpana",
+                    "Sunampe",
+                    "Tambo De Mora"
+                ]
+            },
+            {
+                "ciudad": "Ica",
+                "distritos": [
+                    "Ica",
+                    "La Tinguiña",
+                    "Los Aquijes",
+                    "Ocucaje",
+                    "Pachacutec",
+                    "Parcona",
+                    "Pueblo Nuevo",
+                    "Salas",
+                    "San Jose De Los Molinos",
+                    "San Juan Bautista",
+                    "Santiago",
+                    "Subtanjalla",
+                    "Tate",
+                    "Yauca Del Rosario"
+                ]
+            },
+            {
+                "ciudad": "Nazca",
+                "distritos": [
+                    "Changuillo",
+                    "El Ingenio",
+                    "Marcona",
+                    "Nazca",
+                    "Vista Alegre"
+                ]
+            },
+            {
+                "ciudad": "Palpa",
+                "distritos": [
+                    "Llipata",
+                    "Palpa",
+                    "Rio Grande",
+                    "Santa Cruz",
+                    "Tibillo"
+                ]
+            },
+            {
+                "ciudad": "Pisco",
+                "distritos": [
+                    "Huancano",
+                    "Humay",
+                    "Independencia",
+                    "Paracas",
+                    "Pisco",
+                    "San Andres",
+                    "San Clemente",
+                    "Tupac Amaru Inca"
+                ]
+            }
+        ]
+    },
+    {
+        "departamento": "Junin",
+        "ciudades": [
+            {
+                "ciudad": "Chanchamayo",
+                "distritos": [
+                    "Chanchamayo",
+                    "Perene",
+                    "Pichanaqui",
+                    "San Luis De Shuaro",
+                    "San Ramon",
+                    "Vitoc"
+                ]
+            },
+            {
+                "ciudad": "Chupaca",
+                "distritos": [
+                    "Ahuac",
+                    "Chongos Bajo",
+                    "Chupaca",
+                    "Huachac",
+                    "Huamancaca Chico",
+                    "San Juan De Jarpa",
+                    "San Juan De Yscos",
+                    "Tres De Diciembre",
+                    "Yanacancha"
+                ]
+            },
+            {
+                "ciudad": "Concepcion",
+                "distritos": [
+                    "Aco",
+                    "Andamarca",
+                    "Chambara",
+                    "Cochas",
+                    "Comas",
+                    "Concepcion",
+                    "Heroinas Toledo",
+                    "Manzanares",
+                    "Mariscal Castilla",
+                    "Matahuasi",
+                    "Mito",
+                    "Nueve De Julio",
+                    "Orcotuna",
+                    "San Jose De Quero",
+                    "Santa Rosa De Ocopa"
+                ]
+            },
+            {
+                "ciudad": "Huancayo",
+                "distritos": [
+                    "Carhuacallanga",
+                    "Chacapampa",
+                    "Chicche",
+                    "Chilca",
+                    "Chongos Alto",
+                    "Chupuro",
+                    "Colca",
+                    "Cullhuas",
+                    "El Tambo",
+                    "Huacrapuquio",
+                    "Hualhuas",
+                    "Huancan",
+                    "Huancayo",
+                    "Huasicancha",
+                    "Huayucachi",
+                    "Ingenio",
+                    "Pariahuanca",
+                    "Pilcomayo",
+                    "Pucara",
+                    "Quichuay",
+                    "Quilcas",
+                    "San Agustin",
+                    "San Jeronimo De Tunan",
+                    "Santo Domingo De Acobamba",
+                    "Sapallanga",
+                    "Saño",
+                    "Sicaya",
+                    "Viques"
+                ]
+            },
+            {
+                "ciudad": "Jauja",
+                "distritos": [
+                    "Acolla",
+                    "Apata",
+                    "Ataura",
+                    "Canchayllo",
+                    "Curicaca",
+                    "El Mantaro",
+                    "Huamali",
+                    "Huaripampa",
+                    "Huertas",
+                    "Janjaillo",
+                    "Jauja",
+                    "Julcan",
+                    "Leonor Ordoñez",
+                    "Llocllapampa",
+                    "Marco",
+                    "Masma",
+                    "Masma Chicche",
+                    "Molinos",
+                    "Monobamba",
+                    "Muqui",
+                    "Muquiyauyo",
+                    "Paca",
+                    "Paccha",
+                    "Pancan",
+                    "Parco",
+                    "Pomacancha",
+                    "Ricran",
+                    "San Lorenzo",
+                    "San Pedro De Chunan",
+                    "Sausa",
+                    "Sincos",
+                    "Tunan Marca",
+                    "Yauli",
+                    "Yauyos"
+                ]
+            },
+            {
+                "ciudad": "Junin",
+                "distritos": [
+                    "Carhuamayo",
+                    "Junin",
+                    "Ondores",
+                    "Ulcumayo"
+                ]
+            },
+            {
+                "ciudad": "Satipo",
+                "distritos": [
+                    "Coviriali",
+                    "Llaylla",
+                    "Mazamari",
+                    "Pampa Hermosa",
+                    "Pangoa",
+                    "Rio Negro",
+                    "Rio Tambo",
+                    "Satipo",
+                    "Vizcatan Del Ene"
+                ]
+            },
+            {
+                "ciudad": "Tarma",
+                "distritos": [
+                    "Acobamba",
+                    "Huaricolca",
+                    "Huasahuasi",
+                    "La Union",
+                    "Palca",
+                    "Palcamayo",
+                    "San Pedro De Cajas",
+                    "Tapo",
+                    "Tarma"
+                ]
+            },
+            {
+                "ciudad": "Yauli",
+                "distritos": [
+                    "Chacapalpa",
+                    "Huay-Huay",
+                    "La Oroya",
+                    "Marcapomacocha",
+                    "Morococha",
+                    "Paccha",
+                    "Santa Barbara De Carhuacayan",
+                    "Santa Rosa De Sacco",
+                    "Suitucancha",
+                    "Yauli"
+                ]
+            }
+        ]
+    },
+    {
+        "departamento": "La Libertad",
+        "ciudades": [
+            {
+                "ciudad": "Ascope",
+                "distritos": [
+                    "Ascope",
+                    "Casa Grande",
+                    "Chicama",
+                    "Chocope",
+                    "Magdalena De Cao",
+                    "Paijan",
+                    "Razuri",
+                    "Santiago De Cao"
+                ]
+            },
+            {
+                "ciudad": "Bolivar",
+                "distritos": [
+                    "Bambamarca",
+                    "Bolivar",
+                    "Condormarca",
+                    "Longotea",
+                    "Uchumarca",
+                    "Ucuncha"
+                ]
+            },
+            {
+                "ciudad": "Chepen",
+                "distritos": [
+                    "Chepen",
+                    "Pacanga",
+                    "Pueblo Nuevo"
+                ]
+            },
+            {
+                "ciudad": "Gran Chimu",
+                "distritos": [
+                    "Cascas",
+                    "Lucma",
+                    "Marmot",
+                    "Sayapullo"
+                ]
+            },
+            {
+                "ciudad": "Julcan",
+                "distritos": [
+                    "Calamarca",
+                    "Carabamba",
+                    "Huaso",
+                    "Julcan"
+                ]
+            },
+            {
+                "ciudad": "Otuzco",
+                "distritos": [
+                    "Agallpampa",
+                    "Charat",
+                    "Huaranchal",
+                    "La Cuesta",
+                    "Mache",
+                    "Otuzco",
+                    "Paranday",
+                    "Salpo",
+                    "Sinsicap",
+                    "Usquil"
+                ]
+            },
+            {
+                "ciudad": "Pacasmayo",
+                "distritos": [
+                    "Guadalupe",
+                    "Jequetepeque",
+                    "Pacasmayo",
+                    "San Jose",
+                    "San Pedro De Lloc"
+                ]
+            },
+            {
+                "ciudad": "Pataz",
+                "distritos": [
+                    "Buldibuyo",
+                    "Chillia",
+                    "Huancaspata",
+                    "Huaylillas",
+                    "Huayo",
+                    "Ongon",
+                    "Parcoy",
+                    "Pataz",
+                    "Pias",
+                    "Santiago De Challas",
+                    "Taurija",
+                    "Tayabamba",
+                    "Urpay"
+                ]
+            },
+            {
+                "ciudad": "Sanchez Carrion",
+                "distritos": [
+                    "Chugay",
+                    "Cochorco",
+                    "Curgos",
+                    "Huamachuco",
+                    "Marcabal",
+                    "Sanagoran",
+                    "Sarin",
+                    "Sartimbamba"
+                ]
+            },
+            {
+                "ciudad": "Santiago De Chuco",
+                "distritos": [
+                    "Angasmarca",
+                    "Cachicadan",
+                    "Mollebamba",
+                    "Mollepata",
+                    "Quiruvilca",
+                    "Santa Cruz De Chuca",
+                    "Santiago De Chuco",
+                    "Sitabamba"
+                ]
+            },
+            {
+                "ciudad": "Trujillo",
+                "distritos": [
+                    "El Porvenir",
+                    "Florencia De Mora",
+                    "Huanchaco",
+                    "La Esperanza",
+                    "Laredo",
+                    "Moche",
+                    "Poroto",
+                    "Salaverry",
+                    "Simbal",
+                    "Trujillo",
+                    "Victor Larco Herrera"
+                ]
+            },
+            {
+                "ciudad": "Viru",
+                "distritos": [
+                    "Chao",
+                    "Guadalupito",
+                    "Viru"
+                ]
+            }
+        ]
+    },
+    {
+        "departamento": "Lambayeque",
+        "ciudades": [
+            {
+                "ciudad": "Chiclayo",
+                "distritos": [
+                    "Cayalti",
+                    "Chiclayo",
+                    "Chongoyape",
+                    "Eten",
+                    "Eten Puerto",
+                    "Jose Leonardo Ortiz",
+                    "La Victoria",
+                    "Lagunas",
+                    "Monsefu",
+                    "Nueva Arica",
+                    "Oyotun",
+                    "Patapo",
+                    "Picsi",
+                    "Pimentel",
+                    "Pomalca",
+                    "Pucala",
+                    "Reque",
+                    "Santa Rosa",
+                    "Saña",
+                    "Tuman"
+                ]
+            },
+            {
+                "ciudad": "Ferreñafe",
+                "distritos": [
+                    "Cañaris",
+                    "Ferreñafe",
+                    "Incahuasi",
+                    "Manuel Antonio Mesones Muro",
+                    "Pitipo",
+                    "Pueblo Nuevo"
+                ]
+            },
+            {
+                "ciudad": "Lambayeque",
+                "distritos": [
+                    "Chochope",
+                    "Illimo",
+                    "Jayanca",
+                    "Lambayeque",
+                    "Mochumi",
+                    "Morrope",
+                    "Motupe",
+                    "Olmos",
+                    "Pacora",
+                    "Salas",
+                    "San Jose",
+                    "Tucume"
+                ]
+            }
+        ]
+    },
+    {
+        "departamento": "Lima",
+        "ciudades": [
+            {
+                "ciudad": "Barranca",
+                "distritos": [
+                    "Barranca",
+                    "Paramonga",
+                    "Pativilca",
+                    "Supe",
+                    "Supe Puerto"
+                ]
+            },
+            {
+                "ciudad": "Cajatambo",
+                "distritos": [
+                    "Cajatambo",
+                    "Copa",
+                    "Gorgor",
+                    "Huancapon",
+                    "Manas"
+                ]
+            },
+            {
+                "ciudad": "Canta",
+                "distritos": [
+                    "Arahuay",
+                    "Canta",
+                    "Huamantanga",
+                    "Huaros",
+                    "Lachaqui",
+                    "San Buenaventura",
+                    "Santa Rosa De Quives"
+                ]
+            },
+            {
+                "ciudad": "Cañete",
+                "distritos": [
+                    "Asia",
+                    "Calango",
+                    "Cerro Azul",
+                    "Chilca",
+                    "Coayllo",
+                    "Imperial",
+                    "Lunahuana",
+                    "Mala",
+                    "Nuevo Imperial",
+                    "Pacaran",
+                    "Quilmana",
+                    "San Antonio",
+                    "San Luis",
+                    "San Vicente De Cañete",
+                    "Santa Cruz De Flores",
+                    "Zuñiga"
+                ]
+            },
+            {
+                "ciudad": "Huaral",
+                "distritos": [
+                    "Atavillos Alto",
+                    "Atavillos Bajo",
+                    "Aucallama",
+                    "Chancay",
+                    "Huaral",
+                    "Ihuari",
+                    "Lampian",
+                    "Pacaraos",
+                    "San Miguel De Acos",
+                    "Santa Cruz De Andamarca",
+                    "Sumbilca",
+                    "Veintisiete De Noviembre"
+                ]
+            },
+            {
+                "ciudad": "Huarochiri",
+                "distritos": [
+                    "Antioquia",
+                    "Callahuanca",
+                    "Carampoma",
+                    "Chicla",
+                    "Cuenca",
+                    "Huachupampa",
+                    "Huanza",
+                    "Huarochiri",
+                    "Lahuaytambo",
+                    "Langa",
+                    "Laraos",
+                    "Mariatana",
+                    "Matucana",
+                    "Ricardo Palma",
+                    "San Andres De Tupicocha",
+                    "San Antonio",
+                    "San Bartolome",
+                    "San Damian",
+                    "San Juan De Iris",
+                    "San Juan De Tantaranche",
+                    "San Lorenzo De Quinti",
+                    "San Mateo",
+                    "San Mateo De Otao",
+                    "San Pedro De Casta",
+                    "San Pedro De Huancayre",
+                    "Sangallaya",
+                    "Santa Cruz De Cocachacra",
+                    "Santa Eulalia",
+                    "Santiago De Anchucaya",
+                    "Santiago De Tuna",
+                    "Santo Domingo De Los Olleros",
+                    "Surco"
+                ]
+            },
+            {
+                "ciudad": "Huaura",
+                "distritos": [
+                    "Ambar",
+                    "Caleta De Carquin",
+                    "Checras",
+                    "Huacho",
+                    "Hualmay",
+                    "Huaura",
+                    "Leoncio Prado",
+                    "Paccho",
+                    "Santa Leonor",
+                    "Santa Maria",
+                    "Sayan",
+                    "Vegueta"
+                ]
+            },
+            {
+                "ciudad": "Lima",
+                "distritos": [
+                    "Ancon",
+                    "Ate",
+                    "Barranco",
+                    "Breña",
+                    "Carabayllo",
+                    "Chaclacayo",
+                    "Chorrillos",
+                    "Cieneguilla",
+                    "Comas",
+                    "El Agustino",
+                    "Independencia",
+                    "Jesus Maria",
+                    "La Molina",
+                    "La Victoria",
+                    "Lima",
+                    "Lince",
+                    "Los Olivos",
+                    "Lurigancho",
+                    "Lurin",
+                    "Magdalena Del Mar",
+                    "Miraflores",
+                    "Pachacamac",
+                    "Pucusana",
+                    "Pueblo Libre",
+                    "Puente Piedra",
+                    "Punta Hermosa",
+                    "Punta Negra",
+                    "Rimac",
+                    "San Bartolo",
+                    "San Borja",
+                    "San Isidro",
+                    "San Juan De Lurigancho",
+                    "San Juan De Miraflores",
+                    "San Luis",
+                    "San Martin De Porres",
+                    "San Miguel",
+                    "Santa Anita",
+                    "Santa Maria De Huachipa",
+                    "Santa Maria Del Mar",
+                    "Santa Rosa",
+                    "Santiago De Surco",
+                    "Surquillo",
+                    "Villa El Salvador",
+                    "Villa Maria Del Triunfo"
+                ]
+            },
+            {
+                "ciudad": "Oyon",
+                "distritos": [
+                    "Andajes",
+                    "Caujul",
+                    "Cochamarca",
+                    "Navan",
+                    "Oyon",
+                    "Pachangara"
+                ]
+            },
+            {
+                "ciudad": "Yauyos",
+                "distritos": [
+                    "Alis",
+                    "Ayauca",
+                    "Ayaviri",
+                    "Azangaro",
+                    "Cacra",
+                    "Carania",
+                    "Catahuasi",
+                    "Chocos",
+                    "Cochas",
+                    "Colonia",
+                    "Hongos",
+                    "Huampara",
+                    "Huancaya",
+                    "Huangascar",
+                    "Huantan",
+                    "Huañec",
+                    "Laraos",
+                    "Lincha",
+                    "Madean",
+                    "Miraflores",
+                    "Omas",
+                    "Putinza",
+                    "Quinches",
+                    "Quinocay",
+                    "San Joaquin",
+                    "San Pedro De Pilas",
+                    "Tanta",
+                    "Tauripampa",
+                    "Tomas",
+                    "Tupe",
+                    "Vitis",
+                    "Viñac",
+                    "Yauyos"
+                ]
+            }
+        ]
+    },
+    {
+        "departamento": "Loreto",
+        "ciudades": [
+            {
+                "ciudad": "Alto Amazonas",
+                "distritos": [
+                    "Balsapuerto",
+                    "Jeberos",
+                    "Lagunas",
+                    "Santa Cruz",
+                    "Teniente Cesar Lopez Rojas",
+                    "Yurimaguas"
+                ]
+            },
+            {
+                "ciudad": "Datem Del Marañon",
+                "distritos": [
+                    "Andoas",
+                    "Barranca",
+                    "Cahuapanas",
+                    "Manseriche",
+                    "Morona",
+                    "Pastaza"
+                ]
+            },
+            {
+                "ciudad": "Loreto",
+                "distritos": [
+                    "Nauta",
+                    "Parinari",
+                    "Tigre",
+                    "Trompeteros",
+                    "Urarinas"
+                ]
+            },
+            {
+                "ciudad": "Mariscal Ramon Castilla",
+                "distritos": [
+                    "Pebas",
+                    "Ramon Castilla",
+                    "San Pablo",
+                    "Yavari"
+                ]
+            },
+            {
+                "ciudad": "Maynas",
+                "distritos": [
+                    "Alto Nanay",
+                    "Belen",
+                    "Fernando Lores",
+                    "Indiana",
+                    "Iquitos",
+                    "Las Amazonas",
+                    "Mazan",
+                    "Napo",
+                    "Punchana",
+                    "Putumayo",
+                    "San Juan Bautista",
+                    "Teniente Manuel Clavero",
+                    "Torres Causana"
+                ]
+            },
+            {
+                "ciudad": "Putumayo",
+                "distritos": [
+                    "Putumayo",
+                    "Rosa Panduro",
+                    "Teniente Manuel Clavero",
+                    "Yaguas"
+                ]
+            },
+            {
+                "ciudad": "Requena",
+                "distritos": [
+                    "Alto Tapiche",
+                    "Capelo",
+                    "Emilio San Martin",
+                    "Jenaro Herrera",
+                    "Maquia",
+                    "Puinahua",
+                    "Requena",
+                    "Saquena",
+                    "Soplin",
+                    "Tapiche",
+                    "Yaquerana"
+                ]
+            },
+            {
+                "ciudad": "Ucayali",
+                "distritos": [
+                    "Contamana",
+                    "Inahuaya",
+                    "Padre Marquez",
+                    "Pampa Hermosa",
+                    "Sarayacu",
+                    "Vargas Guerra"
+                ]
+            }
+        ]
+    },
+    {
+        "departamento": "Madre De Dios",
+        "ciudades": [
+            {
+                "ciudad": "Manu",
+                "distritos": [
+                    "Fitzcarrald",
+                    "Huepetuhe",
+                    "Madre De Dios",
+                    "Manu"
+                ]
+            },
+            {
+                "ciudad": "Tahuamanu",
+                "distritos": [
+                    "Iberia",
+                    "Iñapari",
+                    "Tahuamanu"
+                ]
+            },
+            {
+                "ciudad": "Tambopata",
+                "distritos": [
+                    "Inambari",
+                    "Laberinto",
+                    "Las Piedras",
+                    "Tambopata"
+                ]
+            }
+        ]
+    },
+    {
+        "departamento": "Moquegua",
+        "ciudades": [
+            {
+                "ciudad": "General Sanchez Cerro",
+                "distritos": [
+                    "Chojata",
+                    "Coalaque",
+                    "Ichuña",
+                    "La Capilla",
+                    "Lloque",
+                    "Matalaque",
+                    "Omate",
+                    "Puquina",
+                    "Quinistaquillas",
+                    "Ubinas",
+                    "Yunga"
+                ]
+            },
+            {
+                "ciudad": "Ilo",
+                "distritos": [
+                    "El Algarrobal",
+                    "Ilo",
+                    "Pacocha"
+                ]
+            },
+            {
+                "ciudad": "Mariscal Nieto",
+                "distritos": [
+                    "Carumas",
+                    "Cuchumbaya",
+                    "Moquegua",
+                    "Samegua",
+                    "San Antonio",
+                    "San Cristobal",
+                    "Torata"
+                ]
+            }
+        ]
+    },
+    {
+        "departamento": "Pasco",
+        "ciudades": [
+            {
+                "ciudad": "Daniel Alcides Carrion",
+                "distritos": [
+                    "Chacayan",
+                    "Goyllarisquizga",
+                    "Paucar",
+                    "San Pedro De Pillao",
+                    "Santa Ana De Tusi",
+                    "Tapuc",
+                    "Vilcabamba",
+                    "Yanahuanca"
+                ]
+            },
+            {
+                "ciudad": "Oxapampa",
+                "distritos": [
+                    "Chontabamba",
+                    "Constitucion",
+                    "Huancabamba",
+                    "Oxapampa",
+                    "Palcazu",
+                    "Pozuzo",
+                    "Puerto Bermudez",
+                    "Villa Rica"
+                ]
+            },
+            {
+                "ciudad": "Pasco",
+                "distritos": [
+                    "Chaupimarca",
+                    "Huachon",
+                    "Huariaca",
+                    "Huayllay",
+                    "Ninacaca",
+                    "Pallanchacra",
+                    "Paucartambo",
+                    "San Francisco De Asis De Yarusyacan",
+                    "Simon Bolivar",
+                    "Ticlacayan",
+                    "Tinyahuarco",
+                    "Vicco",
+                    "Yanacancha"
+                ]
+            }
+        ]
+    },
+    {
+        "departamento": "Piura",
+        "ciudades": [
+            {
+                "ciudad": "Ayabaca",
+                "distritos": [
+                    "Ayabaca",
+                    "Frias",
+                    "Jilili",
+                    "Lagunas",
+                    "Montero",
+                    "Pacaipampa",
+                    "Paimas",
+                    "Sapillica",
+                    "Sicchez",
+                    "Suyo"
+                ]
+            },
+            {
+                "ciudad": "Huancabamba",
+                "distritos": [
+                    "Canchaque",
+                    "El Carmen De La Frontera",
+                    "Huancabamba",
+                    "Huarmaca",
+                    "Lalaquiz",
+                    "San Miguel De El Faique",
+                    "Sondor",
+                    "Sondorillo"
+                ]
+            },
+            {
+                "ciudad": "Morropon",
+                "distritos": [
+                    "Buenos Aires",
+                    "Chalaco",
+                    "Chulucanas",
+                    "La Matanza",
+                    "Morropon",
+                    "Salitral",
+                    "San Juan De Bigote",
+                    "Santa Catalina De Mossa",
+                    "Santo Domingo",
+                    "Yamango"
+                ]
+            },
+            {
+                "ciudad": "Paita",
+                "distritos": [
+                    "Amotape",
+                    "Arenal",
+                    "Colan",
+                    "La Huaca",
+                    "Paita",
+                    "Tamarindo",
+                    "Vichayal"
+                ]
+            },
+            {
+                "ciudad": "Piura",
+                "distritos": [
+                    "Castilla",
+                    "Catacaos",
+                    "Cura Mori",
+                    "El Tallan",
+                    "La Arena",
+                    "La Union",
+                    "Las Lomas",
+                    "Piura",
+                    "Tambo Grande",
+                    "Veintiseis De Octubre"
+                ]
+            },
+            {
+                "ciudad": "Sechura",
+                "distritos": [
+                    "Bellavista De La Union",
+                    "Bernal",
+                    "Cristo Nos Valga",
+                    "Rinconada Llicuar",
+                    "Sechura",
+                    "Vice"
+                ]
+            },
+            {
+                "ciudad": "Sullana",
+                "distritos": [
+                    "Bellavista",
+                    "Ignacio Escudero",
+                    "Lancones",
+                    "Marcavelica",
+                    "Miguel Checa",
+                    "Querecotillo",
+                    "Salitral",
+                    "Sullana"
+                ]
+            },
+            {
+                "ciudad": "Talara",
+                "distritos": [
+                    "El Alto",
+                    "La Brea",
+                    "Lobitos",
+                    "Los Organos",
+                    "Mancora",
+                    "Pariñas"
+                ]
+            }
+        ]
+    },
+    {
+        "departamento": "Puno",
+        "ciudades": [
+            {
+                "ciudad": "Azangaro",
+                "distritos": [
+                    "Achaya",
+                    "Arapa",
+                    "Asillo",
+                    "Azangaro",
+                    "Caminaca",
+                    "Chupa",
+                    "Jose Domingo Choquehuanca",
+                    "Muñani",
+                    "Potoni",
+                    "Saman",
+                    "San Anton",
+                    "San Jose",
+                    "San Juan De Salinas",
+                    "Santiago De Pupuja",
+                    "Tirapata"
+                ]
+            },
+            {
+                "ciudad": "Carabaya",
+                "distritos": [
+                    "Ajoyani",
+                    "Ayapata",
+                    "Coasa",
+                    "Corani",
+                    "Crucero",
+                    "Ituata",
+                    "Macusani",
+                    "Ollachea",
+                    "San Gaban",
+                    "Usicayos"
+                ]
+            },
+            {
+                "ciudad": "Chucuito",
+                "distritos": [
+                    "Desaguadero",
+                    "Huacullani",
+                    "Juli",
+                    "Kelluyo",
+                    "Pisacoma",
+                    "Pomata",
+                    "Zepita"
+                ]
+            },
+            {
+                "ciudad": "El Collao",
+                "distritos": [
+                    "Capazo",
+                    "Conduriri",
+                    "Ilave",
+                    "Pilcuyo",
+                    "Santa Rosa"
+                ]
+            },
+            {
+                "ciudad": "Huancane",
+                "distritos": [
+                    "Cojata",
+                    "Huancane",
+                    "Huatasani",
+                    "Inchupalla",
+                    "Pusi",
+                    "Rosaspata",
+                    "Taraco",
+                    "Vilque Chico"
+                ]
+            },
+            {
+                "ciudad": "Lampa",
+                "distritos": [
+                    "Cabanilla",
+                    "Calapuja",
+                    "Lampa",
+                    "Nicasio",
+                    "Ocuviri",
+                    "Palca",
+                    "Paratia",
+                    "Pucara",
+                    "Santa Lucia",
+                    "Vilavila"
+                ]
+            },
+            {
+                "ciudad": "Melgar",
+                "distritos": [
+                    "Antauta",
+                    "Ayaviri",
+                    "Cupi",
+                    "Llalli",
+                    "Macari",
+                    "Nuñoa",
+                    "Orurillo",
+                    "Santa Rosa",
+                    "Umachiri"
+                ]
+            },
+            {
+                "ciudad": "Moho",
+                "distritos": [
+                    "Conima",
+                    "Huayrapata",
+                    "Moho",
+                    "Tilali"
+                ]
+            },
+            {
+                "ciudad": "Puno",
+                "distritos": [
+                    "Acora",
+                    "Amantani",
+                    "Atuncolla",
+                    "Capachica",
+                    "Chucuito",
+                    "Coata",
+                    "Huata",
+                    "Mañazo",
+                    "Paucarcolla",
+                    "Pichacani",
+                    "Plateria",
+                    "Puno",
+                    "San Antonio",
+                    "Tiquillaca",
+                    "Vilque"
+                ]
+            },
+            {
+                "ciudad": "San Antonio De Putina",
+                "distritos": [
+                    "Ananea",
+                    "Pedro Vilca Apaza",
+                    "Putina",
+                    "Quilcapuncu",
+                    "Sina"
+                ]
+            },
+            {
+                "ciudad": "San Roman",
+                "distritos": [
+                    "Cabana",
+                    "Cabanillas",
+                    "Caracoto",
+                    "Juliaca",
+                    "San Miguel"
+                ]
+            },
+            {
+                "ciudad": "Sandia",
+                "distritos": [
+                    "Alto Inambari",
+                    "Cuyocuyo",
+                    "Limbani",
+                    "Patambuco",
+                    "Phara",
+                    "Quiaca",
+                    "San Juan Del Oro",
+                    "San Pedro De Putina Punco",
+                    "Sandia",
+                    "Yanahuaya"
+                ]
+            },
+            {
+                "ciudad": "Yunguyo",
+                "distritos": [
+                    "Anapia",
+                    "Copani",
+                    "Cuturapi",
+                    "Ollaraya",
+                    "Tinicachi",
+                    "Unicachi",
+                    "Yunguyo"
+                ]
+            }
+        ]
+    },
+    {
+        "departamento": "San Martin",
+        "ciudades": [
+            {
+                "ciudad": "Bellavista",
+                "distritos": [
+                    "Alto Biavo",
+                    "Bajo Biavo",
+                    "Bellavista",
+                    "Huallaga",
+                    "San Pablo",
+                    "San Rafael"
+                ]
+            },
+            {
+                "ciudad": "El Dorado",
+                "distritos": [
+                    "Agua Blanca",
+                    "San Jose De Sisa",
+                    "San Martin",
+                    "Santa Rosa",
+                    "Shatoja"
+                ]
+            },
+            {
+                "ciudad": "Huallaga",
+                "distritos": [
+                    "Alto Saposoa",
+                    "El Eslabon",
+                    "Piscoyacu",
+                    "Sacanche",
+                    "Saposoa",
+                    "Tingo De Saposoa"
+                ]
+            },
+            {
+                "ciudad": "Lamas",
+                "distritos": [
+                    "Alonso De Alvarado",
+                    "Barranquita",
+                    "Caynarachi",
+                    "Cuñumbuqui",
+                    "Lamas",
+                    "Pinto Recodo",
+                    "Rumisapa",
+                    "San Roque De Cumbaza",
+                    "Shanao",
+                    "Tabalosos",
+                    "Zapatero"
+                ]
+            },
+            {
+                "ciudad": "Mariscal Caceres",
+                "distritos": [
+                    "Campanilla",
+                    "Huicungo",
+                    "Juanjui",
+                    "Pachiza",
+                    "Pajarillo"
+                ]
+            },
+            {
+                "ciudad": "Moyobamba",
+                "distritos": [
+                    "Calzada",
+                    "Habana",
+                    "Jepelacio",
+                    "Moyobamba",
+                    "Soritor",
+                    "Yantalo"
+                ]
+            },
+            {
+                "ciudad": "Picota",
+                "distritos": [
+                    "Buenos Aires",
+                    "Caspisapa",
+                    "Picota",
+                    "Pilluana",
+                    "Pucacaca",
+                    "San Cristobal",
+                    "San Hilarion",
+                    "Shamboyacu",
+                    "Tingo De Ponasa",
+                    "Tres Unidos"
+                ]
+            },
+            {
+                "ciudad": "Rioja",
+                "distritos": [
+                    "Awajun",
+                    "Elias Soplin Vargas",
+                    "Nueva Cajamarca",
+                    "Pardo Miguel",
+                    "Posic",
+                    "Rioja",
+                    "San Fernando",
+                    "Yorongos",
+                    "Yuracyacu"
+                ]
+            },
+            {
+                "ciudad": "San Martin",
+                "distritos": [
+                    "Alberto Leveau",
+                    "Cacatachi",
+                    "Chazuta",
+                    "Chipurana",
+                    "El Porvenir",
+                    "Huimbayoc",
+                    "Juan Guerra",
+                    "La Banda De Shilcayo",
+                    "Morales",
+                    "Papaplaya",
+                    "San Antonio",
+                    "Sauce",
+                    "Shapaja",
+                    "Tarapoto"
+                ]
+            },
+            {
+                "ciudad": "Tocache",
+                "distritos": [
+                    "Nuevo Progreso",
+                    "Polvora",
+                    "Santa Lucia",
+                    "Shunte",
+                    "Tocache",
+                    "Uchiza"
+                ]
+            }
+        ]
+    },
+    {
+        "departamento": "Tacna",
+        "ciudades": [
+            {
+                "ciudad": "Candarave",
+                "distritos": [
+                    "Cairani",
+                    "Camilaca",
+                    "Candarave",
+                    "Curibaya",
+                    "Huanuara",
+                    "Quilahuani"
+                ]
+            },
+            {
+                "ciudad": "Jorge Basadre",
+                "distritos": [
+                    "Ilabaya",
+                    "Ite",
+                    "Locumba"
+                ]
+            },
+            {
+                "ciudad": "Tacna",
+                "distritos": [
+                    "Alto De La Alianza",
+                    "Calana",
+                    "Ciudad Nueva",
+                    "Coronel Gregorio Albarracin Lanchip",
+                    "Inclan",
+                    "La Yarada Los Palos",
+                    "Pachia",
+                    "Palca",
+                    "Pocollay",
+                    "Sama",
+                    "Tacna"
+                ]
+            },
+            {
+                "ciudad": "Tarata",
+                "distritos": [
+                    "Chucatamani",
+                    "Estique",
+                    "Estique-Pampa",
+                    "Sitajara",
+                    "Susapaya",
+                    "Tarata",
+                    "Tarucachi",
+                    "Ticaco"
+                ]
+            }
+        ]
+    },
+    {
+        "departamento": "Tumbes",
+        "ciudades": [
+            {
+                "ciudad": "Contralmirante Villar",
+                "distritos": [
+                    "Canoas De Punta Sal",
+                    "Casitas",
+                    "Zorritos"
+                ]
+            },
+            {
+                "ciudad": "Tumbes",
+                "distritos": [
+                    "Corrales",
+                    "La Cruz",
+                    "Pampas De Hospital",
+                    "San Jacinto",
+                    "San Juan De La Virgen",
+                    "Tumbes"
+                ]
+            },
+            {
+                "ciudad": "Zarumilla",
+                "distritos": [
+                    "Aguas Verdes",
+                    "Matapalo",
+                    "Papayal",
+                    "Zarumilla"
+                ]
+            }
+        ]
+    },
+    {
+        "departamento": "Ucayali",
+        "ciudades": [
+            {
+                "ciudad": "Atalaya",
+                "distritos": [
+                    "Raymondi",
+                    "Sepahua",
+                    "Tahuania",
+                    "Yurua"
+                ]
+            },
+            {
+                "ciudad": "Coronel Portillo",
+                "distritos": [
+                    "Calleria",
+                    "Campoverde",
+                    "Iparia",
+                    "Manantay",
+                    "Masisea",
+                    "Nueva Requena",
+                    "Yarinacocha"
+                ]
+            },
+            {
+                "ciudad": "Padre Abad",
+                "distritos": [
+                    "Alexander Von Humboldt",
+                    "Boqueron",
+                    "Curimana",
+                    "Huipoca",
+                    "Irazola",
+                    "Neshuya",
+                    "Padre Abad"
+                ]
+            },
+            {
+                "ciudad": "Purus",
+                "distritos": [
+                    "Purus"
+                ]
+            }
+        ]
+    }
+]
