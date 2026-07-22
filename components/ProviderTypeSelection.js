@@ -8,12 +8,10 @@ const ProviderTypeSelection = ({ userTypes, onSelectType, onGoBack }) => {
     const providerDetails = {
         'comercio': { label: 'Comercio', desc: 'Vende productos y servicios.', icon: 'shop' },
         'comercial': { label: 'Comercio', desc: 'Vende productos y servicios.', icon: 'shop' },
-        'rider.moto': { label: 'Motocicleta', desc: 'Delivery / Envíos', icon: 'motorcycle' },
-        'moto': { label: 'Motocicleta', desc: 'Delivery / Envíos', icon: 'motorcycle' },
-        'rider.mototaxi': { label: 'Mototaxi', desc: 'Pasajeros y Delivery', icon: 'tuk-tuk.png' },
-        'mototaxi': { label: 'Mototaxi', desc: 'Pasajeros y Delivery', icon: 'tuk-tuk.png' },
-        'rider.taxi': { label: 'Taxi', desc: 'Movilidad', icon: 'taxi' },
-        'taxi': { label: 'Taxi', desc: 'Movilidad', icon: 'taxi' }
+        'rider.moto': { label: 'Delivery', desc: 'Envíos y mensajería', icon: 'motorcycle' },
+        'moto': { label: 'Delivery', desc: 'Envíos y mensajería', icon: 'motorcycle' },
+        'rider.taxi': { label: 'Particular', desc: 'Transporte de pasajeros', icon: 'car' },
+        'taxi': { label: 'Particular', desc: 'Transporte de pasajeros', icon: 'car' }
     };
 
     const renderIcon = (iconName, isSelected) => {
@@ -48,7 +46,7 @@ const ProviderTypeSelection = ({ userTypes, onSelectType, onGoBack }) => {
             </TouchableOpacity>
 
             <RNImage source={require("../assets/images/nuevo-icono.jpeg")} style={styles.logo} />
-            <Text style={styles.title}>¿Qué tipo de aliado eres?</Text>
+            <Text style={styles.title}>¿Cómo quieres trabajar?</Text>
 
             {/* Grid */}
             <View style={styles.grid}>

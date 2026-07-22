@@ -8,6 +8,7 @@ import { useColorScheme, Alert, Platform, Linking } from "react-native";
 import { useEffect } from "react";
 import * as Updates from "expo-updates";
 import { NotificationProvider } from "./context/NotificationContext";
+import { AlertProvider } from "./context/AlertContext";
 import Constants from 'expo-constants';
 import { BASE_URL, configureUrl } from "./constants/url";
 
@@ -99,8 +100,10 @@ export default function App() {
     return (
       <SafeAreaProvider>
         <NotificationProvider>
-          <Navigation colorScheme={colorScheme} />
-          <StatusBar />
+          <AlertProvider>
+            <Navigation colorScheme={colorScheme} />
+            <StatusBar />
+          </AlertProvider>
         </NotificationProvider>
       </SafeAreaProvider>
     );

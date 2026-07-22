@@ -1,11 +1,11 @@
 {
   "expo": {
-    "name": "Carbycol",
+    "name": "Carby",
     "slug": "carbycol",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/nuevo-icono.jpeg",
-    "scheme": "carbycol",
+    "scheme": "carby",
     "userInterfaceStyle": "light",
     "splash": {
       "image": "./assets/images/nuevo-icono.jpeg",

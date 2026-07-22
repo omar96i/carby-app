@@ -102,7 +102,7 @@ const MisComprasScreen = ({ navigation }) => {
                 distrito: userData.data.distrito
             };
 
-            const clientResponse = await fetch(`https://boleteria.yariders.com/api/clientes`, {
+            const clientResponse = await fetch(`https://boleteria.carbycol.com/api/clientes`, {
                 method: 'POST',
                 headers: {
                     'Accept': 'application/json',
@@ -132,7 +132,7 @@ const MisComprasScreen = ({ navigation }) => {
                 console.log("ID de cliente no proporcionado, saltando la carga de boletas.");
                 return;
             }
-            const url = `https://boleteria.yariders.com/api/clientes/${clienteId}/boletas`;
+            const url = `https://boleteria.carbycol.com/api/clientes/${clienteId}/boletas`;
             const response = await fetch(url, { headers: { 'Accept': 'application/json', 'X-API-KEY': API_SECRET_TOKEN } });
             if (!response.ok) throw new Error('Error al obtener las boletas.');
             const result = await response.json();
@@ -162,7 +162,7 @@ const MisComprasScreen = ({ navigation }) => {
     const handleSyncPurchases = useCallback(async () => {
         setIsSyncing(true);
         try {
-            const url = `https://boleteria.yariders.com/api/clientes/${cliente.id}/validar-pagos`;
+            const url = `https://boleteria.carbycol.com/api/clientes/${cliente.id}/validar-pagos`;
             const response = await fetch(url, { method: 'GET', headers: { 'Accept': 'application/json', 'X-API-KEY': API_SECRET_TOKEN } });
             if (!response.ok) throw new Error("Error en la validación");
             await fetchBoletas();

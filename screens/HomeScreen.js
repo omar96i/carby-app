@@ -17,6 +17,7 @@ import {
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import Ionicons from "react-native-vector-icons/Ionicons";
 import Fontisto from "react-native-vector-icons/Fontisto";
+import MaterialCommunityIcons from "react-native-vector-icons/MaterialCommunityIcons";
 import {
   Montserrat_400Regular,
   Montserrat_700Bold,
@@ -186,9 +187,14 @@ export default function HomeScreen() {
 
       if (geoCodeResult && geoCodeResult.length > 0) {
         const address = geoCodeResult[0];
-        const locationString = `${address.street || ""} ${address.city || ""
-          }, ${address.region || ""}`;
-        return locationString.trim() || "Ubicación seleccionada";
+        const parts = [];
+        if (address.name) parts.push(address.name);
+        if (address.street) parts.push(address.street);
+        if (address.district) parts.push(address.district);
+        if (address.city) parts.push(address.city);
+        if (address.region) parts.push(address.region);
+        const locationString = parts.join(", ");
+        return locationString || "Ubicación seleccionada";
       }
       return "Ubicación seleccionada";
     } catch (error) {
@@ -627,7 +633,7 @@ export default function HomeScreen() {
 
         // URL para modo demo
         const apiUrl =
-          "https://back.yariders.com/api/global-categorias/get/obtener/no-auth";
+          "https://back.carbycol.com/api/global-categorias/get/obtener/no-auth";
 
         console.log("🔗 Llamando a API demo:", apiUrl);
 
@@ -1096,29 +1102,27 @@ export default function HomeScreen() {
           style={styles.locationButton}
         >
           {updatingLocation ? (
-            <ActivityIndicator size="small" color="#333333" />
+            <ActivityIndicator size="small" color="#FFF" />
           ) : (
             <Ionicons
               name="location-outline"
               size={25}
-              color="#333333"
+              color="#FFF"
               style={styles.icon}
             />
           )}
         </TouchableOpacity>
-        <Text style={styles.locationText}>{locationAddress}</Text>
-        <Image
-          source={
-            profileImageUrl
-              ? { uri: profileImageUrl }
-              : userData?.foto_perfil
-                ? { uri: getImageUrl(userData.foto_perfil) }
-                : require("../assets/images/fotoperfil.jpg")
-          }
-          style={styles.avatar}
-          onLoadEnd={() => setIsHeaderLoaded(true)}
-          defaultSource={require("../assets/images/fotoperfil.jpg")}
-        />
+        <Text style={styles.locationText} numberOfLines={2}>{locationAddress}</Text>
+        <View style={styles.avatar}>
+          <Text style={styles.avatarText}>
+            {userData?.nombre_completo
+              ?.split(" ")
+              .slice(0, 2)
+              .map(w => w[0])
+              .join("")
+              .toUpperCase() || "U"}
+          </Text>
+        </View>
       </View>
 
       {!fontsLoaded || loading ? (
@@ -1140,19 +1144,22 @@ export default function HomeScreen() {
               </View>
             </View>
 
-            <View style={styles.mainButtons}>
-              {/* --- Botón de transporte --- */}
-              <TouchableOpacity style={styles.transportButton} onPress={handleBannerPress}>
-                <Image
-                  source={require("../assets/images/nuevo-icono.jpeg")}
-                  style={styles.transportIcon}
-                />
+            <View style={styles.heroSection}>
+              <TouchableOpacity style={styles.transportButton} onPress={handleBannerPress} activeOpacity={0.85}>
+                <View style={styles.transportIconWrap}>
+                  <MaterialCommunityIcons name="motorbike" size={38} color="#FFF" />
+                </View>
                 <View style={styles.transportTextContainer}>
-                  <Text style={styles.transportTitle}>Pide tu transporte aquí</Text>
-                  <Text style={styles.transportSubtitle}>Delivery, mototaxi, taxi y más</Text>
+                  <Text style={styles.transportTitle}>Pide tu transporte</Text>
+                  <Text style={styles.transportSubtitle}>Delivery, particular y más</Text>
+                </View>
+                <View style={styles.transportArrow}>
+                  <MaterialCommunityIcons name="arrow-right" size={28} color="#FFF" />
                 </View>
               </TouchableOpacity>
             </View>
+
+            <AdCarousel />
 
             <Modal
               animationType="fade"
@@ -1346,10 +1353,9 @@ export default function HomeScreen() {
                 <Text style={styles.noDataText}>
                   No hay categorías de servicios
                 </Text>
-              )}
-            </View>
-            <AdCarousel></AdCarousel>
-          </View>
+               )}
+             </View>
+           </View>
         </ScrollView>
       )}
 
@@ -1678,16 +1684,25 @@ const styles = StyleSheet.create({
   },
   locationText: {
     fontSize: 16,
-    color: "#333333",
+    color: "#FFF",
     fontFamily: "Montserrat_400Regular",
     flex: 1,
     marginLeft: 5,
     marginRight: 5,
+    lineHeight: 20,
   },
   avatar: {
     width: 40,
     height: 40,
-    borderRadius: 40,
+    borderRadius: 20,
+    backgroundColor: "#1C1C1E",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  avatarText: {
+    color: "#FFF",
+    fontSize: 14,
+    fontFamily: "Montserrat_700Bold",
   },
   container: {
     flex: 1,
@@ -1718,40 +1733,55 @@ const styles = StyleSheet.create({
     resizeMode: "contain",
     borderRadius: 16,
   },
-  mainButtons: {
-    width: '100%',
-    marginBottom: 10,
-    marginTop: 10
+  heroSection: {
+    marginHorizontal: 15,
+    marginBottom: 4,
+    marginTop: 20,
   },
   transportButton: {
-    backgroundColor: '#FFFFFF',
-    borderWidth: 1.5,
-    borderColor: '#fa6205',
-    borderRadius: 16,
-    padding: 16,
+    backgroundColor: '#fa6205',
+    borderRadius: 18,
+    paddingVertical: 22,
+    paddingHorizontal: 20,
     flexDirection: 'row',
     alignItems: 'center',
     width: '100%',
+    shadowColor: '#fa6205',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.35,
+    shadowRadius: 12,
+    elevation: 10,
   },
-  transportIcon: {
-    width: 55,
-    height: 55,
-    borderRadius: 12,
-    marginRight: 15,
+  transportIconWrap: {
+    width: 56,
+    height: 56,
+    borderRadius: 16,
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 16,
   },
   transportTextContainer: {
     flex: 1,
   },
   transportTitle: {
-    color: '#1C1C1E',
-    fontSize: 16,
+    color: '#FFF',
+    fontSize: 17,
     fontFamily: 'Montserrat_700Bold',
   },
   transportSubtitle: {
-    color: '#555',
-    fontSize: 12,
+    color: 'rgba(255,255,255,0.8)',
+    fontSize: 13,
     fontFamily: 'Montserrat_400Regular',
-    marginTop: 4,
+    marginTop: 3,
+  },
+  transportArrow: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   sectionHeader: {
     flexDirection: "row",

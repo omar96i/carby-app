@@ -31,8 +31,8 @@ const RoleSelectionScreen = ({ onSelectUser, onSelectProvider }) => {
             >
                 <FontAwesome5 name="concierge-bell" size={32} color="#fa6205" style={styles.icon} />
                 <View style={styles.textContainer}>
-                    <Text style={styles.roleTitle}>TRABAJAR CON CARBYCOL</Text>
-                    <Text style={styles.roleDescription}>Ingresa si eres comercio, repartidor, mototaxi o taxi.</Text>
+                    <Text style={styles.roleTitle}>TRABAJAR CON CARBY</Text>
+                    <Text style={styles.roleDescription}>Ingresa si eres comercio, delivery o particular.</Text>
                 </View>
             </TouchableOpacity>
 

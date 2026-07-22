@@ -247,7 +247,7 @@ export default function StepDiecisiete() {
           <Image
             source={
               userData?.foto_documento_file
-                ? { uri: `https://back.yariders.com/storage/${userData.foto_documento_file}` }
+                ? { uri: `https://back.carbycol.com/storage/${userData.foto_documento_file}` }
                 : require('../../assets/images/yar.png')
             }
             style={styles.profileImage}

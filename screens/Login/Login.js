@@ -25,6 +25,7 @@ import { BASE_URL } from "../../constants/url";
 import * as ImagePicker from "expo-image-picker";
 import { Picker } from "@react-native-picker/picker";
 import { useNotification } from "../../context/NotificationContext";
+import { useAlert } from "../../context/AlertContext";
 import RoleSelectionScreen from "../../components/RoleSelectionScreen";
 import ProviderTypeSelection from "../../components/ProviderTypeSelection";
 
@@ -34,14 +35,14 @@ const API_URL = "https://back.carbycol.com/api/";
 const userTypes = [
   { id: "user", label: "Usuario", icon: "user", color: "#fa6205", desc: "Más popular", tipo_usuario: "usuario" },
   { id: "commerce", label: "Comercio", icon: "store", color: "#fa6205", desc: "Vende productos", tipo_usuario: "comercio" },
-  { id: "moto", label: "Moto", icon: "motorcycle", color: "#f97316", desc: "Delivery rápido", tipo_usuario: "rider.moto" },
-  { id: "mototaxi", label: "Mototaxi", icon: "tuk-tuk.png", color: "#8b5cf6", desc: "Transporte personas", tipo_usuario: "rider.mototaxi" },
-  { id: "taxi", label: "Taxi", icon: "car", color: "#eab308", desc: "Servicio de taxi", tipo_usuario: "rider.taxi" },
+  { id: "moto", label: "Delivery", icon: "motorcycle", color: "#f97316", desc: "Envíos y mensajería", tipo_usuario: "rider.moto" },
+  { id: "taxi", label: "Particular", icon: "car", color: "#eab308", desc: "Transporte de pasajeros", tipo_usuario: "rider.taxi" },
 ];
 
 export default function LoginScreen() {
   const navigation = useNavigation();
   const { expoPushToken } = useNotification();
+  const { showAlert } = useAlert();
 
   // --- ESTADOS DE UI ---
   const [step, setStep] = useState(1);
@@ -159,7 +160,7 @@ export default function LoginScreen() {
   const handleLogin = async () => {
     Keyboard.dismiss();
     if (!email.trim() || !password.trim()) {
-      return Alert.alert("⚠️ Error", "Por favor, ingresa tu email y contraseña.");
+      return showAlert({ title: "Error", message: "Por favor, ingresa tu email y contraseña.", type: "error" });
     }
     if (isLoading) return;
     setIsLoading(true);
@@ -191,7 +192,7 @@ export default function LoginScreen() {
     } catch (error) {
       console.error("Error handleLogin:", error);
       setIsLoading(false);
-      Alert.alert("Error", "Error de conexión inesperado.");
+      showAlert({ title: "Error", message: "Error de conexión inesperado.", type: "error" });
     }
   };
 
@@ -221,7 +222,7 @@ export default function LoginScreen() {
     } catch (e) {
       console.error(e);
       setIsLoading(false);
-      Alert.alert("Error", "No se pudo guardar la sesión.");
+      showAlert({ title: "Error", message: "No se pudo guardar la sesión.", type: "error" });
     }
   };
 
@@ -245,7 +246,7 @@ export default function LoginScreen() {
       }
       asignarTokenFallo(data.user_id);
     }
-    Alert.alert("⚠️ Acceso denegado", mensaje);
+    showAlert({ title: "Acceso denegado", message: mensaje, type: "error" });
   };
 
   const asignarTokenFallo = async (userId) => {
@@ -355,7 +356,7 @@ export default function LoginScreen() {
       setEstadoId(data.user_role_estado.id);
       setModalVisible(true);
     } else {
-      Alert.alert("⚠️", "Tu cuenta requiere correcciones.");
+        showAlert({ title: "Atención", message: "Tu cuenta requiere correcciones.", type: "info" });
     }
   };
 
@@ -366,7 +367,7 @@ export default function LoginScreen() {
       return !inputsTexto[campo];
     });
 
-    if (faltanArchivos || faltanTextos) return Alert.alert("Campos requeridos", "Debes completar todo.");
+    if (faltanArchivos || faltanTextos) return showAlert({ title: "Campos requeridos", message: "Debes completar todo.", type: "error" });
 
     try {
       setIsLoading(true);
@@ -389,12 +390,12 @@ export default function LoginScreen() {
       const resData = await response.json();
       if (!response.ok) throw new Error(resData.message || "Error");
 
-      Alert.alert("✅ Enviado", "Tus correcciones están en revisión.");
+      showAlert({ title: "Enviado", message: "Tus correcciones están en revisión.", type: "success" });
       setModalVisible(false);
       setEstadoId(''); setArchivos({}); setInputsTexto({}); setCamposObservados([]);
 
     } catch (error) {
-      Alert.alert("Error", error.message || "No se pudo enviar.");
+      showAlert({ title: "Error", message: error.message || "No se pudo enviar.", type: "error" });
     } finally {
       setIsLoading(false);
     }
@@ -535,7 +536,7 @@ export default function LoginScreen() {
                         <TouchableOpacity style={{ backgroundColor: "#007bff", padding: 12, borderRadius: 50, width: 50, height: 50, alignItems: "center", justifyContent: "center" }}
                           onPress={async () => {
                             const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
-                            if (!perm.granted) return Alert.alert("Permiso", "Requerimos acceso a galería.");
+                            if (!perm.granted) return showAlert({ title: "Permiso", message: "Requerimos acceso a galería.", type: "info" });
                             const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ImagePicker.MediaTypeOptions.Images, quality: 0.8 });
                             if (!result.canceled) {
                               const f = result.assets[0];
@@ -720,7 +721,7 @@ const styles = StyleSheet.create({
   logo: { width: 100, height: 100, resizeMode: "contain", borderRadius: 20, marginBottom: 10 },
 
   // --- INPUTS LOGIN PRINCIPAL ---
-  inputLabel: { alignSelf: "flex-start", fontSize: 14, fontFamily: "Montserrat-Regular", color: "#DDD", marginBottom: 8, marginLeft: 4 },
+  inputLabel: { alignSelf: "flex-start", fontSize: 14, fontFamily: "Montserrat-Regular", color: "#444", marginBottom: 8, marginLeft: 4 },
   inputContainer: {
     flexDirection: "row",
     alignItems: "center",
@@ -749,7 +750,7 @@ const styles = StyleSheet.create({
   forgotPasswordContainer: { flexDirection: "row", justifyContent: "center", marginTop: 20 },
 
   // --- HEADER ---
-  subtitle: { textAlign: "center", marginBottom: 25, fontSize: 16, marginTop: 5, color: "#A0A0A0", fontFamily: "Montserrat-Regular" },
+  subtitle: { textAlign: "center", marginBottom: 25, fontSize: 16, marginTop: 5, color: "#555", fontFamily: "Montserrat-Regular" },
   backButton: { position: 'absolute', top: 60, left: 20, flexDirection: 'row', alignItems: 'center', zIndex: 10 },
   backButtonText: { color: '#1C1C1E', fontSize: 16, marginLeft: 8, fontFamily: "Montserrat-Bold" },
 

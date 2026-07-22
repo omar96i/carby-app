@@ -1078,7 +1078,7 @@ const PaymentScreen = () => {
         // Manejar según el método de pago
         if (paymentMethod === "mercadopago") {
           // Construir URL de pago
-          const paymentUrl = `https://back.yariders.com/proceso-pago/pedido?user_id=${userId}&pedido_id=${newOrderId}&amount=${finalTotal}`;
+          const paymentUrl = `https://back.carbycol.com/proceso-pago/pedido?user_id=${userId}&pedido_id=${newOrderId}&amount=${finalTotal}`;
           console.log("Redirigiendo a pago con Mercado Pago:", paymentUrl);
 
           // Mostrar modal informativo antes de redirigir

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   View,
   Text,
@@ -8,7 +8,6 @@ import {
   StyleSheet,
   Image,
   ScrollView,
-  Alert,
   Modal,
   FlatList,
   KeyboardAvoidingView,
@@ -16,6 +15,7 @@ import {
   ActivityIndicator
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
+import { useAlert } from "../../context/AlertContext";
 import MaterialCommunityIcons from "react-native-vector-icons/MaterialCommunityIcons";
 import { useFonts, Montserrat_400Regular, Montserrat_700Bold } from "@expo-google-fonts/montserrat";
 import * as ImagePicker from "expo-image-picker";
@@ -36,6 +36,8 @@ const COUNTRY_INFO = {
 
 export default function RegisterRiderScreen() {
   const navigation = useNavigation();
+  const { showAlert } = useAlert();
+  const scrollRef = useRef(null);
 
   // --- ESTADOS ---
   const [step, setStep] = useState(1);
@@ -121,7 +123,7 @@ export default function RegisterRiderScreen() {
 
   // --- LÓGICA DE DOCUMENTOS (ADAPTADA) ---
   const camposPorCategoria = {
-    Taxi: [
+    Particular: [
       { id: "tarjeta_propiedad", label: "Tarjeta de propiedad", required: true },
       { id: "certificado_inspeccion", label: "Certif. inspección técnica", required: true },
       { id: "soat", label: "SOAT", required: true },
@@ -129,34 +131,24 @@ export default function RegisterRiderScreen() {
       { id: "licencia_conduccion", label: "Licencia conducción", required: true },
       { id: "tarjeta_circulacion", label: "Tarjeta Única circulación", required: true },
     ],
-    Moto: [
+    Delivery: [
       { id: "tarjeta_identificacion", label: "Tarjeta identificación", required: true },
       { id: "soat", label: "SOAT", required: true },
-      // Etiqueta dinámica: BIIB (PE) vs Licencia Conducción (CO)
       { id: "b2b", label: pais === 'CO' ? "Licencia de Conducción" : "Licencia BIIB", required: true },
-      // Etiqueta dinámica: DNI (PE) vs Cédula (CO)
-      { id: "file_dni", label: pais === 'CO' ? "Cédula (CC) / Ext." : "DNI / Carnet", required: true },
-      { id: "tarjeta_propiedad", label: "Tarjeta de propiedad", required: true },
-    ],
-    Mototaxis: [
-      { id: "soat", label: "SOAT", required: true },
-      { id: "licencia_categoria", label: pais === 'CO' ? "Licencia de Conducción" : "Licencia BIIC", required: true },
-      { id: "permiso_municipal", label: "Permiso municipal", required: true },
       { id: "file_dni", label: pais === 'CO' ? "Cédula (CC) / Ext." : "DNI / Carnet", required: true },
       { id: "tarjeta_propiedad", label: "Tarjeta de propiedad", required: true },
     ],
   };
 
   const getFilteredDocs = () => {
-    let categoryKey = "Taxi";
-    if (formData.tipo_usuario === "rider.moto") categoryKey = "Moto";
-    if (formData.tipo_usuario === "rider.mototaxi") categoryKey = "Mototaxis";
+    let categoryKey = "Particular";
+    if (formData.tipo_usuario === "rider.moto") categoryKey = "Delivery";
 
     const fields = camposPorCategoria[categoryKey] || [];
 
     return fields.filter(field => {
       // --- LÓGICA DE PERÚ (INTACTA) ---
-      if (pais === 'PE' && (formData.tipo_usuario === "rider.moto" || formData.tipo_usuario === "rider.mototaxi")) {
+      if (pais === 'PE' && formData.tipo_usuario === "rider.moto") {
         if (departamento === "Lima") {
           // Ocultar dni y tarjeta de propiedad en Lima
           return field.id !== "file_dni" && field.id !== "tarjeta_propiedad";
@@ -171,6 +163,10 @@ export default function RegisterRiderScreen() {
       return true;
     });
   };
+
+  useEffect(() => {
+    scrollRef.current?.scrollTo({ y: 0, animated: true });
+  }, [step]);
 
   if (!fontsLoaded) return null;
 
@@ -240,7 +236,7 @@ export default function RegisterRiderScreen() {
   const handleImagePick = async (fieldId) => {
     try {
       const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-      if (status !== 'granted') return Alert.alert('Permiso denegado', 'Necesitamos acceso a la galería.');
+      if (status !== 'granted') return showAlert({ title: 'Permiso denegado', message: 'Necesitamos acceso a la galería.', type: 'error' });
 
       const result = await ImagePicker.launchImageLibraryAsync({
         mediaTypes: ImagePicker.MediaTypeOptions.Images,
@@ -263,7 +259,7 @@ export default function RegisterRiderScreen() {
 
     if (step === 1) {
         if(!pais) {
-            Alert.alert("Selección requerida", "Por favor selecciona el país donde vas a trabajar.");
+            showAlert({ title: "Selección requerida", message: "Por favor selecciona el país donde vas a trabajar.", type: "error" });
             return false;
         }
         return true;
@@ -271,27 +267,27 @@ export default function RegisterRiderScreen() {
 
     if (step === 2) {
       if (!nombre_completo || !numero_documento || !numero_telefono || !email || !tipoDocumento || !fechaNacimiento) {
-        Alert.alert("Faltan datos", "Completa todos los campos personales.");
+        showAlert({ title: "Faltan datos", message: "Completa todos los campos personales.", type: "error" });
         return false;
       }
     }
     if (step === 3) {
       if (!departamento || !ciudad || !direccion_residencia) {
-        Alert.alert("Faltan datos", "Completa la ubicación.");
+        showAlert({ title: "Faltan datos", message: "Completa la ubicación.", type: "error" });
         return false;
       }
       if (!password || password.length < 9) {
-        Alert.alert("Contraseña inválida", "Mínimo 9 caracteres.");
+        showAlert({ title: "Contraseña inválida", message: "Mínimo 9 caracteres.", type: "error" });
         return false;
       }
       if (password !== repeatPassword) {
-        Alert.alert("Error", "Las contraseñas no coinciden.");
+        showAlert({ title: "Error", message: "Las contraseñas no coinciden.", type: "error" });
         return false;
       }
     }
     if (step === 4) {
       if (!placa || !marca_vehiculo || !linea || !color) {
-        Alert.alert("Faltan datos", "Completa los datos del vehículo.");
+        showAlert({ title: "Faltan datos", message: "Completa los datos del vehículo.", type: "error" });
         return false;
       }
     }
@@ -306,18 +302,19 @@ export default function RegisterRiderScreen() {
     if (step > 1) setStep(step - 1);
   };
 
+
   const handleSubmit = async () => {
     const docsRequeridos = getFilteredDocs();
     const faltantes = docsRequeridos.filter(f => f.required && !images[f.id]);
 
     if (faltantes.length > 0) {
-      Alert.alert("Documentación Incompleta", "Por favor sube todas las fotos requeridas.");
+      showAlert({ title: "Documentación Incompleta", message: "Por favor sube todas las fotos requeridas.", type: "error" });
       return;
     }
 
     // VALIDAR URL
     if(!pais || !COUNTRY_INFO[pais]) {
-        Alert.alert("Error", "Configuración de país no válida.");
+        showAlert({ title: "Error", message: "Configuración de país no válida.", type: "error" });
         return;
     }
     
@@ -380,18 +377,16 @@ export default function RegisterRiderScreen() {
       setIsLoading(false);
 
       if (response.ok || data?.message?.toLowerCase().includes("creado correctamente")) {
-        Alert.alert("¡Registro Exitoso!", `Tu solicitud ha sido enviada a ${COUNTRY_INFO[pais].label}.`, [
-          { text: "OK", onPress: () => navigation.navigate("Login") }
-        ]);
+        showAlert({ title: "Registro Exitoso", message: `Tu solicitud ha sido enviada a ${COUNTRY_INFO[pais].label}.`, type: "success", confirmText: "Ir al Login", onConfirm: () => navigation.navigate("Login") });
       } else {
         let msg = data.message || "Error desconocido";
         if (data.errors) msg = Object.values(data.errors).flat().join("\n");
-        Alert.alert("Error", msg);
+        showAlert({ title: "Error", message: msg, type: "error" });
       }
 
     } catch (error) {
       setIsLoading(false);
-      Alert.alert("Error", "No se pudo conectar con el servidor.");
+      showAlert({ title: "Error", message: "No se pudo conectar con el servidor.", type: "error" });
       console.error(error);
     }
   };
@@ -433,37 +428,21 @@ export default function RegisterRiderScreen() {
           <Text style={styles.stepText}>Paso {step} de {totalSteps}</Text>
         </View>
 
-        <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
+        <ScrollView ref={scrollRef} showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
 
           {/* PASO 1: PAÍS Y ROL */}
           {step === 1 && (
-            <View>
-              <Text style={styles.title}>¿Cómo vas a trabajar?</Text>
-              
-              {/* SELECTOR DE PAÍS */}
-              <View style={{ width: '100%', marginBottom: 15 }}>
-                <Text style={styles.label}>País de Operación *</Text>
-                <TouchableOpacity 
-                    style={styles.inputDark} 
-                    onPress={() => openPicker('pais', [
-                        {label: 'Perú 🇵🇪', value: 'PE'},
-                        {label: 'Colombia 🇨🇴', value: 'CO'}
-                    ], "Selecciona País")}
-                >
-                    <Text style={[styles.inputText, !pais && { color: '#777' }]}>
-                        {pais ? COUNTRY_INFO[pais].label : "Selecciona..."}
-                    </Text>
-                    <MaterialCommunityIcons name="chevron-down" size={20} color="#fa6205" />
-                </TouchableOpacity>
-              </View>
-
+             <View>
+               <Text style={styles.title}>¿Cómo vas a trabajar?</Text>
+               
+               {/* SELECTOR DE PAÍS - Oculto, siempre Colombia */}
+               
               <Text style={styles.subtitle}>Selecciona la categoría que mejor se adapte.</Text>
 
               <View style={styles.cardsList}>
                 {[
-                  { id: 'rider.moto', label: 'Motocicleta', desc: 'Delivery / Envíos', icon: 'motorbike' },
-                  { id: 'rider.mototaxi', label: 'Mototaxi', desc: 'Pasajeros y Delivery', icon: 'rickshaw' },
-                  { id: 'rider.taxi', label: 'Taxi', desc: 'Movilidad', icon: 'taxi' }
+                  { id: 'rider.moto', label: 'Delivery', desc: 'Envíos y mensajería', icon: 'motorbike' },
+                  { id: 'rider.taxi', label: 'Particular', desc: 'Transporte de pasajeros', icon: 'taxi' }
                 ].map((item) => (
                   <TouchableOpacity
                     key={item.id}
@@ -474,7 +453,7 @@ export default function RegisterRiderScreen() {
                       <MaterialCommunityIcons
                         name={item.icon}
                         size={30}
-                        color={formData.tipo_usuario === item.id ? '#F2F2F7' : '#FFF'}
+                        color={formData.tipo_usuario === item.id ? '#FFF' : '#1C1C1E'}
                       />
                     </View>
                     <View style={styles.cardTexts}>
@@ -583,7 +562,7 @@ export default function RegisterRiderScreen() {
             <View>
               <Text style={styles.title}>Datos del Vehículo</Text>
               <Text style={styles.label}>Placa</Text>
-              <TextInput style={styles.inputDark} placeholder="ABC-123" placeholderTextColor="#777" autoCapitalize="characters" value={formData.placa} onChangeText={(v) => handleInputChange('placa', v.toUpperCase())} />
+              <TextInput style={styles.inputDark} placeholder="ABC-123" placeholderTextColor="#777" maxLength={7} autoCapitalize="characters" value={formData.placa} onChangeText={(v) => handleInputChange('placa', v.toUpperCase())} />
               <Text style={styles.label}>Marca</Text>
               <TextInput style={styles.inputDark} placeholder="Ej. Chevrolet" placeholderTextColor="#777" value={formData.marca_vehiculo} onChangeText={(v) => handleInputChange('marca_vehiculo', v)} />
               <Text style={styles.label}>Línea / Modelo</Text>
@@ -749,9 +728,9 @@ const styles = StyleSheet.create({
   cardsList: { marginTop: 10, gap: 15 },
   cardRow: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#FFFFFF', borderRadius: 12, padding: 16, borderWidth: 1, borderColor: '#444' },
   cardRowActive: { backgroundColor: '#fa6205', borderColor: '#fa6205' },
-  iconContainer: { width: 50, height: 50, borderRadius: 25, backgroundColor: '#3A3A3C', alignItems: 'center', justifyContent: 'center', marginRight: 15 },
-  iconContainerActive: { backgroundColor: '#FFF' },
-  cardTexts: { flex: 1 },
+  iconContainer: { width: 50, height: 50, borderRadius: 25, backgroundColor: '#FFFFFF', alignItems: 'center', justifyContent: 'center', marginRight: 15, borderWidth: 1, borderColor: '#DDD' },
+  iconContainerActive: { backgroundColor: '#1C1C1E', borderColor: '#1C1C1E' },
+
   cardTitle: { fontSize: 16, fontFamily: "Montserrat_700Bold", color: '#1C1C1E' },
   cardTitleActive: { color: "#F2F2F7" },
   cardDesc: { fontSize: 13, fontFamily: "Montserrat_400Regular", color: "#AAA", marginTop: 2 },
@@ -759,6 +738,7 @@ const styles = StyleSheet.create({
   radioOuter: { width: 22, height: 22, borderRadius: 11, borderWidth: 2, borderColor: '#666', alignItems: 'center', justifyContent: 'center' },
   radioOuterActive: { borderColor: '#F2F2F7' },
   radioInner: { width: 12, height: 12, borderRadius: 6, backgroundColor: '#F2F2F7' },
+  cardTexts: { flex: 1, marginLeft: 0 },
 
   // Inputs Dark
   inputDark: { backgroundColor: "#FFFFFF", borderRadius: 12, borderWidth: 1, borderColor: "#DDD", paddingHorizontal: 16, paddingVertical: 14, fontSize: 16, fontFamily: "Montserrat_400Regular", color: '#1C1C1E', marginBottom: 20, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },

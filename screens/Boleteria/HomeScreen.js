@@ -262,7 +262,7 @@ export default function BoleteriaScreen({ navigation }) {
             <TouchableOpacity style={styles.card} onPress={() => handleVerDetalles(item)} activeOpacity={0.8}>
                 <View style={styles.imageContainer}>
                     <Image
-                        source={{ uri: `https://boleteria.yariders.com/storage/${item.imagen_principal}` }}
+                        source={{ uri: `https://boleteria.carbycol.com/storage/${item.imagen_principal}` }}
                         style={styles.image}
                     />
                     <View style={styles.badge}>
@@ -327,7 +327,7 @@ export default function BoleteriaScreen({ navigation }) {
 
     const fetchEventos = useCallback(async () => {
         try {
-            const response = await fetch('https://boleteria.yariders.com/api/getEventos', {
+            const response = await fetch('https://boleteria.carbycol.com/api/getEventos', {
                 method: 'GET',
                 headers: {
                     'Accept': 'application/json',
@@ -487,7 +487,7 @@ export default function BoleteriaScreen({ navigation }) {
                                     <View style={styles.coverContainer}>
                                         {eventoSeleccionado?.imagen_principal ? (
                                             <Image
-                                                source={{ uri: `https://boleteria.yariders.com/storage/${eventoSeleccionado.imagen_principal}` }}
+                                                source={{ uri: `https://boleteria.carbycol.com/storage/${eventoSeleccionado.imagen_principal}` }}
                                                 style={styles.coverImage}
                                             />
                                         ) : (
@@ -541,7 +541,7 @@ export default function BoleteriaScreen({ navigation }) {
                                         activeOpacity={1}
                                     >
                                         <Image
-                                            source={{ uri: `https://boleteria.yariders.com/storage/${eventoSeleccionado?.imagen_distribucion_asientos}` }}
+                                            source={{ uri: `https://boleteria.carbycol.com/storage/${eventoSeleccionado?.imagen_distribucion_asientos}` }}
                                             style={styles.distribucionImage}
                                             resizeMode="contain"
                                         />
@@ -614,7 +614,7 @@ export default function BoleteriaScreen({ navigation }) {
                                 <Text style={styles.sectionTitle}>Distribución</Text>
                                 <TouchableOpacity onPress={() => setShowImageFull(false)}>
                                     <Image
-                                        source={{ uri: `https://boleteria.yariders.com/storage/${eventoSeleccionado?.imagen_distribucion_asientos}` }}
+                                        source={{ uri: `https://boleteria.carbycol.com/storage/${eventoSeleccionado?.imagen_distribucion_asientos}` }}
                                         style={styles.distribucionImage2}
                                         resizeMode="contain"
                                     />

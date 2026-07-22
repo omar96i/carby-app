@@ -133,7 +133,7 @@ const AdCarousel = () => {
     }
     
     // Create direct URL to storage without using BASE_URL
-    const imageUrl = `https://back.yariders.com/storage/${item.file}`;
+    const imageUrl = `https://back.carbycol.com/storage/${item.file}`;
     
    
     // Track image loading state

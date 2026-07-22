@@ -416,7 +416,7 @@ const Wallet = () => {
       }
 
       // Create the payment URL
-      const paymentUrl = `https://back.yariders.com/proceso-pago/pago-suscripcion?user_id=${userId}&user_suscripcion_id=${userSuscripcionId}&amount=${selectedPackage.price}`;
+      const paymentUrl = `https://back.carbycol.com/proceso-pago/pago-suscripcion?user_id=${userId}&user_suscripcion_id=${userSuscripcionId}&amount=${selectedPackage.price}`;
       console.log("URL de pago:", paymentUrl);
 
       // Open the payment URL

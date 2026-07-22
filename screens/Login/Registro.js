@@ -54,7 +54,7 @@ export default function RegisterScreen() {
           </View>
         </TouchableOpacity>
 
-        {/* --- OPCIÓN 2: RIDER / MOTOTAXI --- */}
+        {/* --- OPCIÓN 2: DELIVERY / PARTICULAR --- */}
         <TouchableOpacity 
           style={styles.cardButton} 
           onPress={() => navigation.navigate("RegisterDomiciliary")}
@@ -67,9 +67,9 @@ export default function RegisterScreen() {
           />
           
           <View style={styles.textContainer}>
-            <Text style={styles.cardTitle}>REPARTIDOR O MOTOTAXI</Text>
+            <Text style={styles.cardTitle}>DELIVERY O PARTICULAR</Text>
             <Text style={styles.cardDescription}>
-              Genera ingresos entregando o trasladando.
+              Genera ingresos con envíos o transporte.
             </Text>
           </View>
         </TouchableOpacity>

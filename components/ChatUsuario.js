@@ -167,7 +167,7 @@ const ChatUsuario = ({ tripId }) => {
             id: msg.id.toString(),
             user: sender,
             text: messageContent.type === "text" ? messageContent.content : "",
-            image: messageContent.type === "file" ? `https://back.yariders.com/storage/${messageContent.content}` : null,
+            image: messageContent.type === "file" ? `https://back.carbycol.com/storage/${messageContent.content}` : null,
             time: new Date(msg.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
             status: "sent",
             isMyMessage: isMyMessage

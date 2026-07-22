@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import {
   View,
   Text,
@@ -8,7 +8,6 @@ import {
   StyleSheet,
   Image,
   ScrollView,
-  Alert,
   Modal,
   FlatList,
   KeyboardAvoidingView,
@@ -19,7 +18,7 @@ import MaterialCommunityIcons from "react-native-vector-icons/MaterialCommunityI
 import { Picker } from "@react-native-picker/picker";
 import { useFonts, Montserrat_400Regular, Montserrat_700Bold } from "@expo-google-fonts/montserrat";
 // import { BASE_URL } from "../../constants/url"; // <--- YA NO LA USAREMOS DIRECTAMENTE AQUÍ
-import AlertaModal from '../../components/ErrorModal';
+import { useAlert } from '../../context/AlertContext';
 
 // 1. CONFIGURACIÓN POR PAÍS (solo info visual, misma API)
 const API_URL = "https://back.carbycol.com/api/";
@@ -30,6 +29,8 @@ const COUNTRY_INFO = {
 
 export default function RegisterFormScreen() {
   const navigation = useNavigation();
+  const { showAlert } = useAlert();
+  const scrollRef = useRef(null);
   
   // --- ESTADOS DEL FORMULARIO ---
   const [step, setStep] = useState(1);
@@ -46,8 +47,6 @@ export default function RegisterFormScreen() {
   const [repeatPassword, setRepeatPassword] = useState("");
 
   // --- ESTADOS DE UI ---
-  const [mostrarAlerta, setMostrarAlerta] = useState(false);
-  const [mensajeAlerta, setMensajeAlerta] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   
   // Estados para el Picker personalizado de iOS (REUTILIZABLE)
@@ -60,22 +59,21 @@ export default function RegisterFormScreen() {
     Montserrat_700Bold,
   });
 
+  useEffect(() => {
+    scrollRef.current?.scrollTo({ y: 0, animated: true });
+  }, [step]);
+
   if (!fontsLoaded) return null;
 
   // --- LÓGICA DE NAVEGACIÓN ---
   const handleNextStep = () => {
     if (step === 1) {
-      // 3. VALIDAR QUE SE HAYA SELECCIONADO PAÍS
-      if (!pais) {
-        mostrarError("Por favor selecciona tu país de residencia.");
-        return;
-      }
       if (!nombreCompleto.trim() || !numeroDocumento.trim() || !numeroTelefono.trim()) {
-        mostrarError("Por favor completa todos los campos personales.");
+        showAlert({ title: "Error", message: "Por favor completa todos los campos personales.", type: "error" });
         return;
       }
       if (!tipoDocumento) {
-        mostrarError("Selecciona un tipo de documento.");
+        showAlert({ title: "Error", message: "Selecciona un tipo de documento.", type: "error" });
         return;
       }
       setStep(2);
@@ -85,23 +83,18 @@ export default function RegisterFormScreen() {
   const handlePrevStep = () => setStep(1);
   const getProgressWidth = () => (step === 1 ? "50%" : "100%");
   
-  const mostrarError = (mensaje) => {
-    setMensajeAlerta(mensaje);
-    setMostrarAlerta(true);
-  };
-
   // --- LÓGICA DE ENVÍO ---
   const handleSubmitFormulario = async () => {
-    if (!email.trim()) return mostrarError("El email es obligatorio.");
-    if (!password) return mostrarError("La contraseña es obligatoria.");
-    if (password.length < 9) return mostrarError("La contraseña debe tener al menos 9 caracteres.");
-    if (password !== repeatPassword) return mostrarError("Las contraseñas no coinciden.");
+    if (!email.trim()) return showAlert({ title: "Error", message: "El email es obligatorio.", type: "error" });
+    if (!password) return showAlert({ title: "Error", message: "La contraseña es obligatoria.", type: "error" });
+    if (password.length < 9) return showAlert({ title: "Error", message: "La contraseña debe tener al menos 9 caracteres.", type: "error" });
+    if (password !== repeatPassword) return showAlert({ title: "Error", message: "Las contraseñas no coinciden.", type: "error" });
 
     // 4. SELECCIONAR LA URL BASADA EN EL PAÍS
     const currentBaseUrl = API_URL;
 
     if (!currentBaseUrl) {
-      mostrarError("Error configurando la región. Intente nuevamente.");
+      showAlert({ title: "Error", message: "Error configurando la región. Intente nuevamente.", type: "error" });
       return;
     }
 
@@ -155,18 +148,16 @@ export default function RegisterFormScreen() {
            const firstKey = Object.keys(result.errors)[0];
            if(firstKey) errorMsg = `${firstKey}: ${result.errors[firstKey][0]}`;
         }
-        mostrarError(errorMsg);
+        showAlert({ title: "Error", message: errorMsg, type: "error" });
         return;
       }
 
-      Alert.alert("¡Éxito!", `Usuario creado correctamente en ${COUNTRY_INFO[pais].label}`, [
-        { text: "OK", onPress: () => navigation.navigate("Login") },
-      ]);
+      showAlert({ title: "Éxito", message: `Usuario creado correctamente en ${COUNTRY_INFO[pais].label}`, type: "success", confirmText: "Ir al Login", onConfirm: () => navigation.navigate("Login") });
 
     } catch (error) {
       console.error(error);
       setIsLoading(false);
-      mostrarError("Error de conexión. Inténtalo más tarde.");
+      showAlert({ title: "Error", message: "Error de conexión. Inténtalo más tarde.", type: "error" });
     }
   };
 
@@ -213,43 +204,19 @@ export default function RegisterFormScreen() {
           <Text style={styles.stepText}>Paso {step} de 2</Text>
         </View>
 
-        <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
+        <ScrollView ref={scrollRef} showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
           
           <Text style={styles.title}>{step === 1 ? "Información Personal" : "Configura tu Cuenta"}</Text>
           <Text style={styles.subtitle}>
-            {step === 1 ? "Selecciona tu país e ingresa tus datos." : "Establece tus credenciales de acceso."}
+            {step === 1 ? "Ingresa tus datos personales." : "Establece tus credenciales de acceso."}
           </Text>
 
-          {/* PASO 1 */}
-          {step === 1 && (
-            <View>
-              {/* 6. SELECTOR DE PAÍS (NUEVO UI) */}
-              <Text style={styles.label}>País de residencia</Text>
-              {Platform.OS === 'ios' ? (
-                <TouchableOpacity
-                  style={styles.inputDark}
-                  onPress={() => openIosPicker('pais')}
-                >
-                  <Text style={[styles.inputText, !pais && { color: "#777" }]}>
-                    {pais ? COUNTRY_INFO[pais].label : "Selecciona tu país"}
-                  </Text>
-                  <MaterialCommunityIcons name="chevron-down" size={20} color="#fa6205" />
-                </TouchableOpacity>
-              ) : (
-                <View style={styles.pickerContainerDark}>
-                   <Picker
-                    selectedValue={pais}
-                    onValueChange={(itemValue) => setPais(itemValue)}
-                    style={{ color: '#1C1C1E' }}
-                    dropdownIconColor="#fa6205"
-                  >
-                    <Picker.Item label="Selecciona tu país..." value="" color="#777"/>
-                    <Picker.Item label="Perú 🇵🇪" value="PE" />
-                    <Picker.Item label="Colombia 🇨🇴" value="CO" />
-                  </Picker>
-                </View>
-              )}
+           {/* PASO 1 */}
+           {step === 1 && (
+             <View>
+               {/* País siempre Colombia */}
 
+               
               <Text style={styles.label}>Nombre completo</Text>
               <TextInput
                 style={styles.inputDark}
@@ -363,19 +330,12 @@ export default function RegisterFormScreen() {
         </ScrollView>
 
         {/* MODALES */}
-        <AlertaModal
-          visible={mostrarAlerta}
-          mensaje={mensajeAlerta}
-          onCerrar={() => setMostrarAlerta(false)}
-          titulo="Atención"
-        />
-
         <Modal transparent={true} visible={isLoading} animationType="fade">
             <View style={styles.loadingOverlay}>
                 <View style={styles.loadingContainer}>
                     <ActivityIndicator size="large" color="#fa6205" />
                     <Text style={styles.loadingText}>Creando cuenta...</Text>
-                    <Text style={styles.loadingSubText}>Conectando con servidor {pais === 'CO' ? 'Colombia' : 'Perú'}</Text>
+                    <Text style={styles.loadingSubText}>Conectando con el servidor...</Text>
                 </View>
             </View>
         </Modal>

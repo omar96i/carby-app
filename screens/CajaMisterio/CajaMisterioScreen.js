@@ -22,7 +22,7 @@ import { getMyBalance } from '../../utils/api';
 
 // --- CONFIGURACIÓN ---
 const API_BASE_URL = 'https://back.yariders.com/api';
-const STORAGE_BASE_URL = 'https://back.yariders.com/storage';
+const STORAGE_BASE_URL = 'https://back.carbycol.com/storage';
 
 // Se crea una instancia de axios que se configurará con el token más adelante
 const api = axios.create({
@@ -231,7 +231,7 @@ const CajaMisterioScreen = () => {
                             onAddPointsPress={() => navigation.navigate('Recharge')}
                         />
                         <View style={styles.header}>
-                            <Text style={styles.title}>Fidelización Clientes Carbycol</Text>
+                            <Text style={styles.title}>Fidelización Clientes Carby</Text>
                             <Text style={styles.subtitle}>
                                 Ganas puntos con tus compras y carreras para canjear por premios increíbles. ¡Sigue así!
                             </Text>

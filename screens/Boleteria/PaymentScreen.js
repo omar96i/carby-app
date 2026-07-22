@@ -54,7 +54,7 @@ const PaymentScreen = ({ route, navigation }) => {
                     distrito: userData.data.distrito
                 };
 
-                const clientResponse = await fetch(`https://boleteria.yariders.com/api/clientes`, {
+                const clientResponse = await fetch(`https://boleteria.carbycol.com/api/clientes`, {
                     method: 'POST',
                     headers: {
                         'Accept': 'application/json',
@@ -112,7 +112,7 @@ const PaymentScreen = ({ route, navigation }) => {
 
     const handlePayment = () => {
         // Ahora usa el cliente_id guardado en el estado 'compra'
-        const url = `https://boleteria.yariders.com/proceso-pago?evento_localidad_id=${compra.localidad_id}&cantidad=${compra.cantidad}&cliente_id=${compra.cliente_id}`;
+        const url = `https://boleteria.carbycol.com/proceso-pago?evento_localidad_id=${compra.localidad_id}&cantidad=${compra.cantidad}&cliente_id=${compra.cliente_id}`;
         setPaymentUrl(url);
         setUiState('webview');
     };
@@ -124,7 +124,7 @@ const PaymentScreen = ({ route, navigation }) => {
     const runPaymentValidation = async () => {
         try {
             // Usa el cliente_id guardado en el estado 'compra'
-            const url = `https://boleteria.yariders.com/api/clientes/${compra.cliente_id}/validar-pagos`;
+            const url = `https://boleteria.carbycol.com/api/clientes/${compra.cliente_id}/validar-pagos`;
             const response = await fetch(url, {
                 method: 'GET',
                 headers: {

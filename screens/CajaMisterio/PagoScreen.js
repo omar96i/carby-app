@@ -41,7 +41,7 @@ const PagoScreen = ({ navigation }) => {
                 Alert.alert('Error', 'No se pudo obtener el ID del usuario. Por favor, inicia sesión de nuevo.');
                 return;
             }
-            const baseUrl = 'https://back.yariders.com';
+            const baseUrl = 'https://back.carbycol.com';
             const paymentUrl = `${baseUrl}/recharge/link/${amount}/${userId}`;
             navigation.navigate('PaymentWebView', { url: paymentUrl });
         } catch (error) {

@@ -234,8 +234,8 @@ export default function StepNueve({ route }) {
   if (!fontsLoaded) return null;
 
   let imageUrl = "https://via.placeholder.com/150";
-  if (tripData?.conductor?.foto_documento_file) imageUrl = `https://back.yariders.com/storage/${tripData.conductor.foto_documento_file}`;
-  else if (tripData?.comercio?.foto_documento_file) imageUrl = `https://back.yariders.com/storage/${tripData.comercio.foto_documento_file}`;
+  if (tripData?.conductor?.foto_documento_file) imageUrl = `https://back.carbycol.com/storage/${tripData.conductor.foto_documento_file}`;
+  else if (tripData?.comercio?.foto_documento_file) imageUrl = `https://back.carbycol.com/storage/${tripData.comercio.foto_documento_file}`;
 
   const getVehicleIcon = (tipoUsuario) => {
     switch (tipoUsuario) {

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   View,
   Text,
@@ -8,7 +8,6 @@ import {
   StyleSheet,
   Image,
   ScrollView,
-  Alert,
   Modal,
   FlatList,
   KeyboardAvoidingView,
@@ -16,6 +15,7 @@ import {
   Dimensions
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
+import { useAlert } from "../../context/AlertContext";
 import MaterialCommunityIcons from "react-native-vector-icons/MaterialCommunityIcons";
 import { useFonts, Montserrat_400Regular, Montserrat_600SemiBold, Montserrat_700Bold } from "@expo-google-fonts/montserrat";
 import * as ImagePicker from "expo-image-picker";
@@ -36,6 +36,8 @@ const COUNTRY_INFO = {
 
 export default function RegisterStoreScreen() {
   const navigation = useNavigation();
+  const { showAlert } = useAlert();
+  const scrollRef = useRef(null);
 
   // --- ESTADOS DE UI Y NAVEGACIÓN ---
   const [step, setStep] = useState(1);
@@ -69,7 +71,7 @@ export default function RegisterStoreScreen() {
     email: "",
     password: "",
     repeatPassword: "",
-    tipo_documento: "DNI",
+    tipo_documento: "CC",
     fecha_nacimiento: "",
     numero_telefono: "",
     departamento: "",
@@ -87,15 +89,13 @@ export default function RegisterStoreScreen() {
   const imageFields = [
     { 
         id: "tipo_ruc", 
-        // Si es Colombia pide RUT/NIT, si es Perú pide RUC
-        label: pais === 'CO' ? "Adjuntar RUT / NIT" : "Tipo de RUC 10/15/20", 
-        required: true 
+        label: pais === 'CO' ? "Foto del RUT" : "Tipo de RUC 10/15/20", 
+        required: false 
     },
     { 
         id: "dni", 
-        // Si es Colombia pide Cédula, si es Perú pide DNI
-        label: pais === 'CO' ? "Adjuntar Cédula (CC) / Ext." : "Adjuntar DNI / Carnet Ext.", 
-        required: true 
+        label: pais === 'CO' ? "Cámara de Comercio" : "Adjuntar DNI / Carnet Ext.", 
+        required: false 
     },
   ];
 
@@ -104,6 +104,12 @@ export default function RegisterStoreScreen() {
     Montserrat_600SemiBold,
     Montserrat_700Bold,
   });
+
+  // --- HANDLER ---
+  const handleInputChange = (name, value) => {
+    setFormData(prev => ({ ...prev, [name]: value }));
+    if (errors[name]) setErrors(prev => ({ ...prev, [name]: null }));
+  };
 
   // --- EFECTOS: CARGA DE DATOS Y CONFIGURACIÓN ---
   useEffect(() => {
@@ -162,13 +168,13 @@ export default function RegisterStoreScreen() {
     }
   };
 
+  useEffect(() => {
+    scrollRef.current?.scrollTo({ y: 0, animated: true });
+  }, [step]);
+
   if (!fontsLoaded) return null;
 
   // --- HANDLERS ---
-  const handleInputChange = (name, value) => {
-    setFormData(prev => ({ ...prev, [name]: value }));
-    if (errors[name]) setErrors(prev => ({ ...prev, [name]: null }));
-  };
 
   // --- HELPER: OPCIONES DE DOCUMENTO SEGÚN PAÍS ---
   const getDocumentOptions = () => {
@@ -233,7 +239,7 @@ export default function RegisterStoreScreen() {
   const handleImagePick = async (fieldId) => {
     try {
       const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-      if (status !== 'granted') return Alert.alert('Permiso denegado', 'Necesitamos acceso a la galería.');
+      if (status !== 'granted') return showAlert({ title: 'Permiso denegado', message: 'Necesitamos acceso a la galería.', type: 'error' });
 
       const result = await ImagePicker.launchImageLibraryAsync({
         mediaTypes: ImagePicker.MediaTypeOptions.Images,
@@ -270,7 +276,7 @@ export default function RegisterStoreScreen() {
     const d = formData;
     if (step === 1) {
         if(!pais) {
-            Alert.alert("Selección requerida", "Por favor selecciona el país donde operará tu negocio.");
+            showAlert({ title: "Selección requerida", message: "Por favor selecciona el país donde operará tu negocio.", type: "error" });
             return false;
         }
         return true;
@@ -278,27 +284,27 @@ export default function RegisterStoreScreen() {
 
     if (step === 2) { // Datos Negocio
       if (!d.establecimiento_nombre || !d.global_categoria_id) {
-        Alert.alert("Faltan datos", "Completa el nombre del establecimiento y la categoría.");
+        showAlert({ title: "Faltan datos", message: "Completa el nombre del establecimiento y la categoría.", type: "error" });
         return false;
       }
     }
     if (step === 3) { // Ubicación
       if (!d.departamento || !d.ciudad || !d.direccion) {
-        Alert.alert("Faltan datos", "Completa la ubicación.");
+        showAlert({ title: "Faltan datos", message: "Completa la ubicación.", type: "error" });
         return false;
       }
     }
     if (step === 4) { // Contacto y Representante
       if (!d.persona_natural || !d.tipo_documento || !d.numero_documento || !d.numero_telefono || !d.email || !d.fecha_nacimiento) {
-        Alert.alert("Faltan datos", "Completa los datos del representante legal.");
+        showAlert({ title: "Faltan datos", message: "Completa los datos del representante legal.", type: "error" });
         return false;
       }
       if (!d.password || d.password.length < 9) {
-        Alert.alert("Contraseña", "Mínimo 9 caracteres.");
+        showAlert({ title: "Contraseña", message: "Mínimo 9 caracteres.", type: "error" });
         return false;
       }
       if (d.password !== d.repeatPassword) {
-        Alert.alert("Error", "Las contraseñas no coinciden.");
+        showAlert({ title: "Error", message: "Las contraseñas no coinciden.", type: "error" });
         return false;
       }
     }
@@ -310,13 +316,10 @@ export default function RegisterStoreScreen() {
 
   // --- PROCESO FINAL ---
   const handlePreRegister = () => {
-    let validImages = true;
-    imageFields.forEach(f => {
-      if (f.required && !images[f.id]) validImages = false;
-    });
-
-    if (!validImages) {
-      Alert.alert("Documentación", "Por favor sube las 2 fotos requeridas.");
+    const tieneRUT = images["tipo_ruc"];
+    const tieneCamara = images["dni"];
+    if (!tieneRUT && !tieneCamara) {
+      showAlert({ title: "Documentación", message: "Debes subir al menos el RUT o la Cámara de Comercio.", type: "error" });
       return;
     }
     setModalVisible(true);
@@ -326,7 +329,7 @@ export default function RegisterStoreScreen() {
     setModalVisible(false);
     
     if(!pais || !COUNTRY_INFO[pais]) {
-        Alert.alert("Error", "Configuración de país no válida.");
+        showAlert({ title: "Error", message: "Configuración de país no válida.", type: "error" });
         return;
     }
     
@@ -379,20 +382,18 @@ export default function RegisterStoreScreen() {
       setIsLoading(false);
 
       if (response.ok || data?.message?.toLowerCase().includes("creado")) {
-        Alert.alert("¡Registro Exitoso!", `Tu cuenta ha sido creada en ${COUNTRY_INFO[pais].label}.`, [
-          { text: "OK", onPress: () => navigation.navigate("Login") }
-        ]);
+        showAlert({ title: "Registro Exitoso", message: `Tu cuenta ha sido creada en ${COUNTRY_INFO[pais].label}.`, type: "success", confirmText: "Ir al Login", onConfirm: () => navigation.navigate("Login") });
       } else {
         let msg = data.message || "Error desconocido";
 
         if (data.errors) msg = Object.values(data.errors).flat().join("\n");
         console.log(data.errors)
-        Alert.alert("Error", msg);
+        showAlert({ title: "Error", message: msg, type: "error" });
       }
 
     } catch (error) {
       setIsLoading(false);
-      Alert.alert("Error", "Problema de conexión.");
+      showAlert({ title: "Error", message: "Problema de conexión.", type: "error" });
       console.error(error);
     }
   };
@@ -428,26 +429,12 @@ export default function RegisterStoreScreen() {
     <View style={styles.warningContainer}>
       <MaterialCommunityIcons name="storefront-outline" size={80} color="#fa6205" style={{ marginBottom: 20 }} />
       <Text style={styles.warningTitle}>Registro de Comercio</Text>
-      
-      <View style={{ width: '100%', marginBottom: 20 }}>
-        <Text style={styles.label}>Selecciona tu País *</Text>
-        <TouchableOpacity 
-            style={styles.inputDark} 
-            onPress={() => openPicker('pais', [
-                {label: 'Perú 🇵🇪', value: 'PE'},
-                {label: 'Colombia 🇨🇴', value: 'CO'}
-            ], "Selecciona País")}
-        >
-            <Text style={[styles.inputText, !pais && { color: '#777' }]}>
-                {pais ? COUNTRY_INFO[pais].label : "Selecciona..."}
-            </Text>
-            <MaterialCommunityIcons name="chevron-down" size={20} color="#fa6205" />
-        </TouchableOpacity>
-      </View>
+       
+       {/* SELECTOR DE PAÍS - Oculto, siempre Colombia */}
 
       <Text style={styles.warningSub}>Para activar tu tienda necesitamos:</Text>
       <View style={styles.bulletPoints}>
-        {["Foto de tu DNI/RUC (ambos lados)", "Datos del Negocio", "Fotos de tus productos o carta", "Precios actualizados", "Foto o QR de Pago (Nequi / Bancolombia)"].map((item, index) => (
+        {["Foto del RUT o Cámara de Comercio", "Datos del Negocio", "Fotos de tus productos o carta", "Precios actualizados", "Foto o QR de Pago (Nequi / Bancolombia)"].map((item, index) => (
           <View key={index} style={styles.bulletItem}>
             <MaterialCommunityIcons name="check-circle-outline" size={20} color="#fa6205" />
             <Text style={styles.bulletText}>{item}</Text>
@@ -655,7 +642,7 @@ export default function RegisterStoreScreen() {
           <Text style={styles.stepText}>Paso {step} de {totalSteps}</Text>
         </View>
 
-        <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
+        <ScrollView ref={scrollRef} showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
 
           {step === 1 && renderStep1()}
           {step === 2 && renderStep2()}
