@@ -226,16 +226,10 @@ const Cart = () => {
 
       {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-          <Ionicons name="arrow-back" size={24} color="#1C1C1E" />
-        </TouchableOpacity>
-        <View style={{flex:1, alignItems:'center'}}>
-            <Text style={styles.headerTitle}>Tu Pedido</Text>
-            {restaurantName ? (
-                <Text style={styles.headerSubtitle} numberOfLines={1}>{restaurantName}</Text>
-            ) : null}
-        </View>
-        <View style={{width: 24}} /> 
+        <Text style={styles.headerTitle}>Tu Pedido</Text>
+        {restaurantName ? (
+          <Text style={styles.headerSubtitle} numberOfLines={1}>{restaurantName}</Text>
+        ) : null}
       </View>
 
       {/* Contenido */}
@@ -382,22 +376,21 @@ const styles = StyleSheet.create({
   
   // --- HEADER ---
   header: {
-    flexDirection: "row",
     alignItems: "center",
-    justifyContent: "space-between",
+    justifyContent: "center",
     paddingHorizontal: 20,
-    paddingTop: Platform.OS === 'android' ? 40 : 50,
+    paddingTop: Platform.OS === 'android' ? 50 : 50,
     paddingBottom: 15,
-    backgroundColor: "#F2F2F7",
+    backgroundColor: "#fa6205",
     borderBottomWidth: 1,
-    borderBottomColor: "#ECECEC",
+    borderBottomColor: "rgba(255,255,255,0.2)",
   },
   backButton: {
     padding: 5,
   },
   headerTitle: {
-    color: "#1C1C1E",
-    fontSize: 18,
+    color: "#FFF",
+    fontSize: 20,
     fontFamily: "MontserratBold",
   },
   headerSubtitle: {
@@ -587,7 +580,7 @@ const styles = StyleSheet.create({
     shadowRadius: 5,
   },
   payButtonIconCircle: {
-    backgroundColor: '#000',
+    backgroundColor: '#FFF',
     width: 24,
     height: 24,
     borderRadius: 12,
@@ -601,12 +594,12 @@ const styles = StyleSheet.create({
     fontFamily: 'MontserratBold',
   },
   payButtonText: {
-    color: "#000",
+    color: "#FFF",
     fontSize: 16,
     fontFamily: "MontserratBold",
   },
   payButtonTotal: {
-    color: "#000",
+    color: "#FFF",
     fontSize: 16,
     fontFamily: "MontserratBold",
   },

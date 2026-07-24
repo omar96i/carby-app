@@ -1533,8 +1533,8 @@ const styles = StyleSheet.create({
     borderRadius: 8,
   },
   retryButtonText: {
-    color: "#1C1C1E",
-    fontFamily: "Montserrat_600SemiBold",
+    color: "#FFF",
+    fontFamily: "Montserrat_700Bold",
     fontSize: 16,
   },
   modalScrollView: {
@@ -1547,11 +1547,10 @@ const styles = StyleSheet.create({
     paddingBottom: 20,
   },
   demoModalContent: {
-    backgroundColor: "#333",
+    backgroundColor: "#FFF",
     borderRadius: 15,
-    padding: 20,
+    padding: 25,
     width: "90%",
-    maxHeight: height * 0.85,
     alignItems: "center",
     shadowColor: "#000",
     shadowOffset: {
@@ -1590,7 +1589,7 @@ const styles = StyleSheet.create({
     marginBottom: 15,
   },
   transportCard: {
-    backgroundColor: "#DDD",
+    backgroundColor: "#FFF",
     borderRadius: 10,
     padding: 15,
     alignItems: "center",
@@ -1644,9 +1643,9 @@ const styles = StyleSheet.create({
     marginTop: 10,
   },
   registerButtonText: {
-    color: "#1C1C1E",
+    color: "#FFF",
     fontFamily: "Montserrat_700Bold",
-    fontSize: 16,
+    fontSize: 18,
   },
   starContainer: {
     flexDirection: "row",
@@ -1834,10 +1833,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
   },
   modalContent: {
-    backgroundColor: "#333",
+    backgroundColor: "#FFF",
     borderRadius: 15,
-    padding: 20,
-    width: "100%",
+    padding: 25,
+    width: "90%",
     alignItems: "center",
     shadowColor: "#000",
     shadowOffset: {
@@ -1892,9 +1891,11 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginVertical: 10,
     width: "100%",
-    backgroundColor: "#DDD",
+    backgroundColor: "#FFF",
     padding: 12,
     borderRadius: 10,
+    borderWidth: 1,
+    borderColor: "#E0E0E0",
   },
   locationAddressModal: {
     fontSize: 14,
@@ -1910,16 +1911,18 @@ const styles = StyleSheet.create({
     marginTop: 15,
   },
   cancelButton: {
-    backgroundColor: "#DDD",
+    backgroundColor: "#FFF",
     paddingVertical: 12,
     paddingHorizontal: 20,
     borderRadius: 10,
     marginRight: 10,
     flex: 1,
     alignItems: "center",
+    borderWidth: 1.5,
+    borderColor: "#fa6205",
   },
   cancelButtonText: {
-    color: "#1C1C1E",
+    color: "#fa6205",
     fontFamily: "Montserrat_600SemiBold",
     fontSize: 16,
   },
@@ -1932,7 +1935,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   saveButtonText: {
-    color: "#333333",
+    color: "#FFF",
     fontFamily: "Montserrat_700Bold",
     fontSize: 16,
   },
@@ -1975,7 +1978,7 @@ const styles = StyleSheet.create({
     textAlign: "center",
   },
   paymentPolicyModalContent: {
-    backgroundColor: "#333",
+    backgroundColor: "#FFF",
     borderRadius: 15,
     padding: 25,
     width: "90%",
@@ -2013,7 +2016,7 @@ const styles = StyleSheet.create({
     marginBottom: 25,
   },
   paymentPolicyButton: {
-    backgroundColor: "#FFA726",
+    backgroundColor: "#fa6205",
     borderRadius: 10,
     paddingVertical: 12,
     paddingHorizontal: 30,
@@ -2021,7 +2024,7 @@ const styles = StyleSheet.create({
     minWidth: 120,
   },
   paymentPolicyButtonText: {
-    color: "#1C1C1E",
+    color: "#FFF",
     fontFamily: "Montserrat_700Bold",
     fontSize: 16,
   },

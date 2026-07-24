@@ -19,6 +19,7 @@ import MapView, { Marker } from "react-native-maps";
 import Modal from "react-native-modal";
 import * as Location from "expo-location";
 import { GOOGLE_MAPS_API_KEY } from "../../constants/Keys";
+import AlertaModal from "../../components/ErrorModal";
 
 const GOOGLE_PLACES_API_KEY = GOOGLE_MAPS_API_KEY;
 const DEFAULT_DELTA = { latitudeDelta: 0.01, longitudeDelta: 0.01 };
@@ -59,6 +60,14 @@ const ServicioDetalle = ({ route, navigation }) => {
   const [loadingAgenda, setLoadingAgenda] = useState(false);
   const [fechasDisponibles, setFechasDisponibles] = useState([]);
   const [horariosDisponibles, setHorariosDisponibles] = useState([]);
+
+  const [alertVisible, setAlertVisible] = useState(false);
+  const [alertData, setAlertData] = useState({});
+
+  const showAlert = (title, message, type, onConfirm, primaryLabel) => {
+    setAlertData({ title, message, type: type || (title === "Éxito" ? "success" : "error"), onConfirm: onConfirm || null, primaryLabel: primaryLabel || null });
+    setAlertVisible(true);
+  };
 
   // Estados para métodos de pago del establecimiento
   const [paymentMethods, setPaymentMethods] = useState(null);
@@ -407,17 +416,17 @@ const ServicioDetalle = ({ route, navigation }) => {
   };  // Función para enviar reserva
   const handleReserva = async () => {
     if (!selectedProfile) {
-      Alert.alert("Error", "Selecciona un perfil");
+      showAlert("Error", "Selecciona un perfil");
       return;
     }
 
     if (!fecha) {
-      Alert.alert("Error", "Selecciona una fecha");
+      showAlert("Error", "Selecciona una fecha");
       return;
     }
 
     if (!horaInicio || horariosDisponibles.length === 0) {
-      Alert.alert("Error", "Selecciona una hora disponible");
+      showAlert("Error", "Selecciona una hora disponible");
       return;
     }
 
@@ -428,16 +437,7 @@ const ServicioDetalle = ({ route, navigation }) => {
     );
 
     if (!horaValida) {
-      Alert.alert("Error", "La hora seleccionada no está disponible. Por favor selecciona otra hora.");
-      return;
-    }
-
-    // Validar dirección solo si es domicilio
-    if (tipoReserva === "domicilio" && (!direccion || !latitud || !longitud)) {
-      Alert.alert(
-        "Error",
-        "Completa la dirección y coordenadas para el servicio a domicilio"
-      );
+      showAlert("Error", "La hora seleccionada no está disponible. Por favor selecciona otra hora.");
       return;
     }
 
@@ -452,17 +452,7 @@ const ServicioDetalle = ({ route, navigation }) => {
       formData.append("estado", "pendiente");
       formData.append("metodo_pago", metodoPago);
       formData.append("costo_total", totalPrice);
-
-      // Solo enviar datos de ubicación si es domicilio
-      if (tipoReserva === "domicilio") {
-        formData.append(
-          "datos_generales",
-          JSON.stringify({ direccion, latitud, longitud })
-        );
-      } else {
-        // Para reservas en local, enviar datos básicos o vacíos
-        formData.append("datos_generales", JSON.stringify({}));
-      }
+      formData.append("datos_generales", JSON.stringify({}));
 
       if (
         archivoEvidencia &&
@@ -719,20 +709,15 @@ const ServicioDetalle = ({ route, navigation }) => {
         );
         await fetchAgendaPerfil(selectedProfile.id);
 
-        Alert.alert(
-          "Reserva realizada",
-          "Tu reserva fue registrada correctamente con todos los servicios y adicionales",
-          [{ text: "OK", onPress: () => navigation.goBack() }]
-        );
-        console.log("🎉 SUCCESS ALERT SHOWN - Process completed");
+        showAlert("Reserva realizada", "Tu reserva fue registrada correctamente con todos los servicios y adicionales", "success", () => navigation.goBack(), "OK");
       } else {
         const data = await response.json().catch(() => ({}));
-        console.error("❌ RESERVATION CREATION FAILED:", data);
-        Alert.alert("Error", data.message || "No se pudo registrar la reserva");
+        console.error("RESERVATION CREATION FAILED:", data);
+        showAlert("Error", data.message || "No se pudo registrar la reserva");
       }
     } catch (e) {
-      console.error("💥 GENERAL ERROR in handleReserva:", e);
-      Alert.alert("Error", "No se pudo registrar la reserva");
+      console.error("GENERAL ERROR in handleReserva:", e);
+      showAlert("Error", "No se pudo registrar la reserva");
     } finally {
       setLoading(false);
     }
@@ -1252,7 +1237,7 @@ const ServicioDetalle = ({ route, navigation }) => {
             }}
           >
             <Text
-              style={{ color: "#F5F5F5", fontSize: 20, fontWeight: "bold" }}
+              style={{ color: "#FFF", fontSize: 20, fontWeight: "bold" }}
             >
               +
             </Text>
@@ -1487,7 +1472,7 @@ const ServicioDetalle = ({ route, navigation }) => {
                 <Text
                   style={{
                     color:
-                      selectedProfile?.id === perfil.id ? "#F5F5F5" : "#fff",
+                      selectedProfile?.id === perfil.id ? "#FFF" : "#1C1C1E",
                     fontWeight: "bold",
                     fontSize: 13,
                     textAlign: "center",
@@ -1637,9 +1622,9 @@ const ServicioDetalle = ({ route, navigation }) => {
                     <Text
                       style={{
                         color: isSelected
-                          ? "#F5F5F5"
+                          ? "#FFF"
                           : tieneDisponibilidad
-                          ? "#F5F5F5"
+                          ? "#1C1C1E"
                           : "#aaa",
                         fontSize: 12,
                         fontWeight: "bold",
@@ -1650,9 +1635,9 @@ const ServicioDetalle = ({ route, navigation }) => {
                     <Text
                       style={{
                         color: isSelected
-                          ? "#F5F5F5"
+                          ? "#FFF"
                           : tieneDisponibilidad
-                          ? "#F5F5F5"
+                          ? "#1C1C1E"
                           : "#aaa",
                         fontSize: 11,
                       }}
@@ -1706,7 +1691,7 @@ const ServicioDetalle = ({ route, navigation }) => {
                           >
                             <Text
                               style={{
-                                color: isSelected ? "#F5F5F5" : "#F5F5F5",
+                                color: isSelected ? "#FFF" : "#1C1C1E",
                                 fontSize: 14,
                                 fontWeight: "bold",
                               }}
@@ -1731,176 +1716,18 @@ const ServicioDetalle = ({ route, navigation }) => {
         ) : (
           <View
             style={{
-              backgroundColor: "#333",
+              backgroundColor: "#F5F5F5",
               borderRadius: 8,
               padding: 12,
               marginBottom: 12,
             }}
           >
-            <Text style={{ color: "#aaa", textAlign: "center" }}>
+            <Text style={{ color: "#666", textAlign: "center" }}>
               Selecciona un perfil para ver fechas y horarios disponibles
             </Text>
           </View>
         )}
-        {/* Tipo de reserva */}
-        <Text
-          style={{
-            color: "#1C1C1E",
-            fontSize: 16,
-            fontWeight: "bold",
-            marginBottom: 6,
-          }}
-        >
-          Tipo de reserva
-        </Text>
-        <View style={{ flexDirection: "row", gap: 8, marginBottom: 12 }}>
-          <TouchableOpacity
-            onPress={() => setTipoReserva("local")}
-            style={{
-              backgroundColor: tipoReserva === "local" ? "#fa6205" : "#fff",
-              borderRadius: 8,
-              padding: 8,
-              flex: 1,
-              alignItems: "center",
-            }}
-          >
-            <Text
-              style={{
-                color: tipoReserva === "local" ? "#F5F5F5" : "#F5F5F5",
-                fontWeight: "bold",
-              }}
-            >
-              Local
-            </Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            onPress={() => setTipoReserva("domicilio")}
-            style={{
-              backgroundColor: tipoReserva === "domicilio" ? "#fa6205" : "#fff",
-              borderRadius: 8,
-              padding: 8,
-              flex: 1,
-              alignItems: "center",
-            }}
-          >
-            <Text
-              style={{
-                color: tipoReserva === "domicilio" ? "#F5F5F5" : "#F5F5F5",
-                fontWeight: "bold",
-              }}
-            >
-              Domicilio
-            </Text>
-          </TouchableOpacity>
-        </View>
-        {/* Dirección y buscador/mapa solo si es domicilio */}
-        {tipoReserva === "domicilio" && (
-          <View>
-            <Text
-              style={{
-                color: "#1C1C1E",
-                fontSize: 16,
-                fontWeight: "bold",
-                marginBottom: 6,
-              }}
-            >
-              Dirección
-            </Text>
-            <View
-              style={{
-                flexDirection: "row",
-                alignItems: "center",
-                marginBottom: 8,
-              }}
-            >
-              <TouchableOpacity
-                onPress={openMapModal}
-                style={{ marginRight: 8 }}
-              >
-                <Ionicons name="location" size={24} color="#fa6205" />
-              </TouchableOpacity>
-              <View style={{ flex: 1 }}>
-                <Text style={{ color: "#1C1C1E", marginBottom: 4, fontSize: 13 }}>
-                  Buscar dirección o usa el mapa
-                </Text>
-                <View style={{ flexDirection: "row", alignItems: "center" }}>
-                  <TextInput
-                    style={{
-                      backgroundColor: "#F5F5F5",
-                      color: "#1C1C1E",
-                      borderRadius: 8,
-                      padding: 8,
-                      flex: 1,
-                      borderWidth: 1,
-                      borderColor: "#DDD",
-                    }}
-                    placeholder="Buscar dirección..."
-                    placeholderTextColor="rgba(255,255,255,0.5)"
-                    value={pickupAddress}
-                    onChangeText={searchPickupAddress}
-                    onFocus={() => setShowPickupSuggestions(true)}
-                  />
-                  <TouchableOpacity
-                    style={{ marginLeft: 8 }}
-                    onPress={getCurrentLocationAddress}
-                    disabled={isLoadingCurrentLocation}
-                  >
-                    {isLoadingCurrentLocation ? (
-                      <ActivityIndicator size="small" color="#fa6205" />
-                    ) : (
-                      <Ionicons name="locate" size={20} color="#fa6205" />
-                    )}
-                  </TouchableOpacity>
-                </View>
-                {locationError ? (
-                  <Text style={{ color: "#ff6b6b", marginTop: 4 }}>
-                    {locationError}
-                  </Text>
-                ) : null}
-                {showPickupSuggestions && (
-                  <View
-                    style={{
-                      backgroundColor: "#F5F5F5",
-                      borderRadius: 8,
-                      marginTop: 4,
-                      maxHeight: 120,
-                    }}
-                  >
-                    {isSearchingPickup ? (
-                      <ActivityIndicator
-                        size="small"
-                        color="#fa6205"
-                        style={{ margin: 8 }}
-                      />
-                    ) : (
-                      pickupSuggestions.map((item) => (
-                        <TouchableOpacity
-                          key={item.place_id}
-                          onPress={() => selectPickupAddress(item)}
-                          style={{
-                            flexDirection: "row",
-                            alignItems: "center",
-                            padding: 8,
-                          }}
-                        >
-                          <Ionicons
-                            name="location"
-                            size={16}
-                            color="#fa6205"
-                            style={{ marginRight: 8 }}
-                          />
-                          <Text style={{ color: "#1C1C1E" }}>
-                            {item.description}
-                          </Text>
-                        </TouchableOpacity>
-                      ))
-                    )}
-                  </View>
-                )}
-              </View>
-            </View>
-          </View>
-        )}
+
         {/* Método de pago */}
         <Text
           style={{
@@ -1931,7 +1758,7 @@ const ServicioDetalle = ({ route, navigation }) => {
               >
                 <Text
                   style={{
-                    color: metodoPago === "efectivo" ? "#F5F5F5" : "#F5F5F5",
+                    color: metodoPago === "efectivo" ? "#FFF" : "#1C1C1E",
                     fontWeight: "bold",
                   }}
                 >
@@ -1953,7 +1780,7 @@ const ServicioDetalle = ({ route, navigation }) => {
                 >
                   <Text
                     style={{
-                      color: metodoPago === "qr" ? "#F5F5F5" : "#F5F5F5",
+                      color: metodoPago === "qr" ? "#FFF" : "#1C1C1E",
                       fontWeight: "bold",
                     }}
                   >
@@ -2038,7 +1865,7 @@ const ServicioDetalle = ({ route, navigation }) => {
               alignItems: "center",
             }}
           >
-            <Text style={{ color: "#F5F5F5" }}>
+            <Text style={{ color: "#1C1C1E" }}>
               {archivoEvidencia
                 ? "Evidencia de pago seleccionada"
                 : "Seleccionar comprobante de pago QR"}
@@ -2158,10 +1985,7 @@ const ServicioDetalle = ({ route, navigation }) => {
                 const DOUBLE_PRESS_DELAY = 300;
                 if (lastMapPress && now - lastMapPress < DOUBLE_PRESS_DELAY) {
                   setSelectedLocation(e.nativeEvent.coordinate);
-                  Alert.alert(
-                    "Ubicación seleccionada",
-                    "Punto marcado correctamente en el mapa"
-                  );
+                  showAlert("Ubicación seleccionada", "Punto marcado correctamente en el mapa");
                   setLastMapPress(0);
                 } else {
                   setLastMapPress(now);
@@ -2193,10 +2017,7 @@ const ServicioDetalle = ({ route, navigation }) => {
                   latitude: mapRegion.latitude,
                   longitude: mapRegion.longitude,
                 });
-                Alert.alert(
-                  "Ubicación seleccionada",
-                  "Punto marcado correctamente en el mapa"
-                );
+                showAlert("Ubicación seleccionada", "Punto marcado correctamente en el mapa");
               }}
             >
               <Ionicons name="flag" size={28} color="#fa6205" />
@@ -2221,6 +2042,16 @@ const ServicioDetalle = ({ route, navigation }) => {
           </View>
         </View>
       </Modal>
+
+      <AlertaModal
+        visible={alertVisible}
+        mensaje={alertData.message}
+        onCerrar={() => setAlertVisible(false)}
+        titulo={alertData.title}
+        tipo={alertData.type}
+        onPrimary={alertData.onConfirm}
+        primaryLabel={alertData.primaryLabel || "Entendido"}
+      />
     </ScrollView>
   );
 };
@@ -2313,7 +2144,7 @@ const styles = StyleSheet.create({
     marginTop: 10,
   },
   addButtonText: {
-    color: "#F5F5F5",
+    color: "#FFF",
     fontSize: 18,
     fontFamily: "Montserrat_700Bold",
   },

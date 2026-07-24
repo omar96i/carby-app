@@ -6,8 +6,9 @@ const ProviderTypeSelection = ({ userTypes, onSelectType, onGoBack }) => {
     const [selectedType, setSelectedType] = useState(null);
 
     const providerDetails = {
-        'comercio': { label: 'Comercio', desc: 'Vende productos y servicios.', icon: 'shop' },
-        'comercial': { label: 'Comercio', desc: 'Vende productos y servicios.', icon: 'shop' },
+        'commerce': { label: 'Comercio', desc: 'Vende productos y servicios.', icon: 'store-alt' },
+        'comercio': { label: 'Comercio', desc: 'Vende productos y servicios.', icon: 'store-alt' },
+        'comercial': { label: 'Comercio', desc: 'Vende productos y servicios.', icon: 'store-alt' },
         'rider.moto': { label: 'Delivery', desc: 'Envíos y mensajería', icon: 'motorcycle' },
         'moto': { label: 'Delivery', desc: 'Envíos y mensajería', icon: 'motorcycle' },
         'rider.taxi': { label: 'Particular', desc: 'Transporte de pasajeros', icon: 'car' },
@@ -30,8 +31,7 @@ const ProviderTypeSelection = ({ userTypes, onSelectType, onGoBack }) => {
                 <FontAwesome5
                     name={iconName || 'question'}
                     size={32}
-                    color={isSelected ? '#F2F2F7' : "#fa6205"} // Icono oscuro si está seleccionado
-                    solid
+                    color={isSelected ? '#F2F2F7' : "#fa6205"}
                 />
             );
         }
@@ -57,7 +57,7 @@ const ProviderTypeSelection = ({ userTypes, onSelectType, onGoBack }) => {
                     const details = providerDetails[type.id] || { 
                         label: type.label, 
                         desc: 'Servicio disponible', 
-                        icon: 'circle' 
+                        icon: 'question-circle' 
                     };
 
                     return (

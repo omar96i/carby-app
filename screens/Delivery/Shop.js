@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 import {
   View,
   Text,
@@ -23,7 +23,8 @@ import {
 import { useFonts } from "expo-font";
 import Ionicons from "react-native-vector-icons/Ionicons";
 import { FontAwesome } from "@expo/vector-icons";
-import { useNavigation, useRoute } from "@react-navigation/native";
+import { useNavigation, useRoute, useFocusEffect } from "@react-navigation/native";
+import AlertaModal from "../../components/ErrorModal";
 import { BASE_URL } from "../../constants/url";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
@@ -33,6 +34,18 @@ const CARD_WIDTH = width * 0.55;
 const Shop = () => {
   const route = useRoute();
   const navigation = useNavigation();
+
+  useFocusEffect(useCallback(() => {
+    navigation.getParent()?.setOptions({ tabBarStyle: { display: "none" } });
+    return () => navigation.getParent()?.setOptions({ tabBarStyle: { backgroundColor: '#FFF', height: 56, borderTopWidth: 1, borderTopColor: '#F0F0F0', display: 'flex' } });
+  }, [navigation]));
+
+  const [alertVisible, setAlertVisible] = useState(false);
+  const [alertData, setAlertData] = useState({ title: "", message: "", type: "info", onConfirm: null });
+  const showAlert = (title, message, type, onConfirm) => {
+    setAlertData({ title, message, type: type || (title === "Éxito" ? "success" : "error"), onConfirm });
+    setAlertVisible(true);
+  };
   
   const {
     establishmentId,
@@ -229,7 +242,7 @@ const Shop = () => {
       setAddedQuantity(quantity);
       setAddedProductName(product.nombre || "Producto");
       setModalVisible(true);
-    } catch (error) { console.error("Error cart:", error); Alert.alert("Error", "No se pudo agregar"); }
+    } catch (error) { console.error("Error cart:", error); showAlert("Error", "No se pudo agregar"); }
   };
 
   const formatDate = (dateString) => {
@@ -242,7 +255,7 @@ const Shop = () => {
     const hasRating = rating !== null && rating !== undefined;
     return (
       <TouchableOpacity style={styles.ratingBadge} onPress={onPress}>
-        <FontAwesome name="star" size={14} color="#000" style={{marginRight: 4}} />
+        <FontAwesome name="star" size={14} color="#fa6205" style={{marginRight: 4}} />
         <Text style={styles.ratingBadgeText}>
           {hasRating ? parseFloat(rating).toFixed(1) : "N/A"}
         </Text>
@@ -251,6 +264,7 @@ const Shop = () => {
   };
 
   return (
+    <>
     <View style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor="#F2F2F7" />
       
@@ -259,48 +273,34 @@ const Shop = () => {
         <View style={{zIndex: 10}}> 
            <View style={styles.topNav}>
                 <TouchableOpacity style={styles.backButtonCircle} onPress={() => navigation.goBack()}>
-                    <Ionicons name="arrow-back" size={24} color="#1C1C1E" />
+                    <Ionicons name="arrow-back" size={24} color="#FFF" />
                 </TouchableOpacity>
             </View>
         </View>
 
         {/* 1. Hero Content */}
         <View style={styles.heroContainer}>
-            <View style={styles.heroContent}>
-                <View style={styles.heroHeaderRow}>
-                    <View style={styles.avatarContainer}>
-                          {/* CORRECCIÓN AQUI: Usamos getImageUrl para procesar la ruta relativa de imagenSede */}
-                          <Image
-                            source={{ 
-                                uri: isSede && imagenSede 
-                                    ? getImageUrl(imagenSede) 
-                                    : profilePhoto 
-                            }}
-                            style={styles.heroAvatar}
-                            defaultSource={require("../../assets/images/imagen.jpg")}
-                        />
-                    </View>
-                    <View style={styles.heroInfo}>
-                        <Text style={styles.heroTitle} numberOfLines={2}>
-                          {establishmentDisplayName || "Comercio"}
-                        </Text>
-                        
-                        {isSede && sedeLocation && (
-                          <Text style={styles.heroSubtitle}>
-                            <Ionicons name="location-outline" size={12} color="#fa6205" /> {sedeLocation}
-                          </Text>
-                        )}
-
-                        <View style={styles.heroMetaRow}>
-                            <StarRating rating={rating} onPress={() => setRatingsModalVisible(true)} />
-                            <View style={styles.deliveryBadge}>
-                                <Ionicons name="time-outline" size={14} color="#ccc" style={{marginRight: 4}} />
-                                <Text style={styles.deliveryText}>20-30 min</Text>
-                            </View>
-                        </View>
-                    </View>
-                </View>
+          <View style={styles.heroContent}>
+            <View style={styles.avatarContainer}>
+              <Image
+                source={{ uri: isSede && imagenSede ? getImageUrl(imagenSede) : profilePhoto }}
+                style={styles.heroAvatar}
+                defaultSource={require("../../assets/images/imagen.jpg")}
+              />
             </View>
+            <Text style={styles.heroTitle}>{establishmentDisplayName || "Comercio"}</Text>
+            {isSede && sedeLocation && (
+              <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 4 }}>
+                <Ionicons name="location-outline" size={13} color="#fa6205" />
+                <Text style={styles.heroSubtitle}> {sedeLocation}</Text>
+              </View>
+            )}
+            <StarRating rating={rating} onPress={() => setRatingsModalVisible(true)} />
+            <View style={[styles.deliveryBadge, { marginTop: 6 }]}>
+              <Ionicons name="time-outline" size={13} color="#888" style={{ marginRight: 4 }} />
+              <Text style={styles.deliveryText}>~25 min</Text>
+            </View>
+          </View>
         </View>
 
         {/* 2. Contenido (Productos y Servicios) */}
@@ -347,22 +347,13 @@ const Shop = () => {
                               style={styles.cardImage}
                               resizeMode="cover"
                             />
-                             <TouchableOpacity style={styles.fabAddButton} onPress={() => addToCart(product)}>
-                                <Ionicons name="add" size={24} color="#000" />
+                            <TouchableOpacity style={styles.fabAddButton} onPress={() => addToCart(product)}>
+                              <Ionicons name="add" size={22} color="#FFF" />
                             </TouchableOpacity>
                           </View>
-
                           <View style={styles.cardBody}>
-                            <View style={styles.priceRow}>
-                                <Text style={styles.cardPrice}>
-                                    {"$"}
-                                    {product.precio || "0"}
-                                </Text>
-                            </View>
+                            <Text style={styles.cardPrice}>${product.precio || "0"}</Text>
                             <Text style={styles.cardTitle} numberOfLines={2}>{product.nombre}</Text>
-                            <Text style={styles.cardDescription} numberOfLines={2}>
-                                {product.descripcion || "Sin descripción disponible"}
-                            </Text>
                           </View>
                         </TouchableOpacity>
                       )}
@@ -392,7 +383,7 @@ const Shop = () => {
                                 resizeMode="cover"
                                 />
                                 <View style={styles.serviceBadge}>
-                                    <Ionicons name="eye" size={16} color="#000" />
+                                    <Ionicons name="eye" size={16} color="#FFF" />
                                 </View>
                             </View>
 
@@ -430,7 +421,7 @@ const Shop = () => {
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
             <View style={styles.successIconCircle}>
-                <Ionicons name="checkmark" size={40} color="#000" />
+                <Ionicons name="checkmark" size={40} color="#FFF" />
             </View>
             <Text style={styles.modalTitle}>¡Agregado!</Text>
             <Text style={styles.modalText}>{addedQuantity} {addedProductName} se añadió a tu pedido.</Text>
@@ -484,6 +475,17 @@ const Shop = () => {
       </Modal>
 
     </View>
+
+      <AlertaModal
+        visible={alertVisible}
+        tipo={alertData.type}
+        mensaje={alertData.message}
+        onCerrar={() => {
+          setAlertVisible(false);
+          if (alertData.onConfirm) alertData.onConfirm();
+        }}
+      />
+    </>
   );
 };
 
@@ -507,18 +509,17 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: 'rgba(255,255,255,0.1)',
+    backgroundColor: 'rgba(0,0,0,0.3)',
     justifyContent: 'center',
     alignItems: 'center',
   },
   heroContent: {
-    paddingHorizontal: 20,
-  },
-  heroHeaderRow: {
-    flexDirection: 'row',
     alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingBottom: 20,
   },
   avatarContainer: {
+    marginBottom: 12,
     shadowColor: "#fa6205",
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
@@ -526,44 +527,34 @@ const styles = StyleSheet.create({
     elevation: 10,
   },
   heroAvatar: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    borderWidth: 2,
+    width: 90,
+    height: 90,
+    borderRadius: 50,
+    borderWidth: 3,
     borderColor: '#fa6205',
-  },
-  heroInfo: {
-    flex: 1,
-    marginLeft: 15,
   },
   heroTitle: {
     color: '#1C1C1E',
     fontFamily: 'Montserrat_700Bold',
     fontSize: 22,
-    lineHeight: 26,
-    marginBottom: 4,
+    textAlign: 'center',
   },
   heroSubtitle: {
-    color: '#ddd',
+    color: '#888',
     fontFamily: 'Montserrat_400Regular',
     fontSize: 13,
-    marginBottom: 8,
-  },
-  heroMetaRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
   },
   ratingBadge: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#fa6205',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
     borderRadius: 12,
-    marginRight: 10,
+    marginTop: 8,
   },
   ratingBadgeText: {
-    color: '#000',
+    color: '#FFF',
     fontFamily: 'Montserrat_700Bold',
     fontSize: 12,
   },
@@ -572,7 +563,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   deliveryText: {
-    color: '#ccc',
+    color: '#888',
     fontFamily: 'Montserrat_400Regular',
     fontSize: 12,
   },
@@ -600,36 +591,40 @@ const styles = StyleSheet.create({
   cardsScrollContent: {
     paddingLeft: 15,
     paddingRight: 5,
+    paddingBottom: 20,
   },
   cardContainer: {
     width: CARD_WIDTH,
-    backgroundColor: '#ECECEC',
-    borderRadius: 16,
+    backgroundColor: '#FFF',
+    borderRadius: 14,
     marginRight: 15,
-    overflow: 'hidden',
+    marginBottom: 4,
     shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 5,
-    elevation: 6,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 6,
+    elevation: 3,
+    overflow: 'visible',
   },
   cardImageWrapper: {
-    height: 140,
+    height: 130,
     width: '100%',
     position: 'relative',
   },
   cardImage: {
     width: '100%',
     height: '100%',
-    backgroundColor: '#333',
+    backgroundColor: '#F0F0F0',
+    borderTopLeftRadius: 14,
+    borderTopRightRadius: 14,
   },
   fabAddButton: {
     position: 'absolute',
-    bottom: -18,
-    right: 12,
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+    bottom: -16,
+    right: 10,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
     backgroundColor: '#fa6205',
     justifyContent: 'center',
     alignItems: 'center',
@@ -649,9 +644,9 @@ const styles = StyleSheet.create({
     borderRadius: 20,
   },
   cardBody: {
-    paddingTop: 20,
+    paddingTop: 8,
     paddingHorizontal: 12,
-    paddingBottom: 15,
+    paddingBottom: 12,
   },
   priceRow: {
     marginBottom: 4,
@@ -683,15 +678,15 @@ const styles = StyleSheet.create({
   retryButton: { backgroundColor: '#fa6205', padding: 8, borderRadius: 5, marginTop: 10 },
   retryButtonText: { fontFamily: 'Montserrat_700Bold' },
   modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.8)', justifyContent: 'center', alignItems: 'center' },
-  modalContent: { width: '80%', backgroundColor: '#ECECEC', borderRadius: 20, padding: 25, alignItems: 'center' },
+  modalContent: { width: '80%', backgroundColor: '#FFF', borderRadius: 20, padding: 25, alignItems: 'center' },
   successIconCircle: { width: 70, height: 70, borderRadius: 35, backgroundColor: '#fa6205', justifyContent: 'center', alignItems: 'center', marginBottom: 15 },
   modalTitle: { color: '#1C1C1E', fontFamily: 'Montserrat_700Bold', fontSize: 20, marginBottom: 10 },
-  modalText: { color: '#ccc', fontFamily: 'Montserrat_400Regular', textAlign: 'center', marginBottom: 20 },
+  modalText: { color: '#666', fontFamily: 'Montserrat_400Regular', textAlign: 'center', marginBottom: 20 },
   modalActions: { width: '100%' },
   btnPrimary: { backgroundColor: '#fa6205', padding: 15, borderRadius: 30, alignItems: 'center', marginBottom: 10 },
-  btnPrimaryText: { fontFamily: 'Montserrat_700Bold', color: '#000' },
+  btnPrimaryText: { fontFamily: 'Montserrat_700Bold', color: '#FFF' },
   btnSecondary: { padding: 10, alignItems: 'center', marginBottom: 5 },
-  btnSecondaryText: { fontFamily: 'Montserrat_600SemiBold', color: '#1C1C1E' },
+  btnSecondaryText: { fontFamily: 'Montserrat_600SemiBold', color: '#666' },
   ratingsModalContent: { width: '100%', height: '70%', marginTop: 'auto', backgroundColor: '#222', borderTopLeftRadius: 25, borderTopRightRadius: 25, padding: 20 },
   ratingHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 },
   ratingTitle: { color: '#1C1C1E', fontSize: 20, fontFamily: 'Montserrat_700Bold' },

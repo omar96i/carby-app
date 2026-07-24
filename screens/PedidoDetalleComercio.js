@@ -9,7 +9,6 @@ import {
   StatusBar,
   Image,
   ActivityIndicator,
-  Alert,
   Modal,
   TextInput,
   KeyboardAvoidingView,
@@ -28,6 +27,7 @@ import {
 import { useFonts } from "expo-font";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { BASE_URL } from "../constants/url";
+import AlertaModal from "../components/ErrorModal";
 import * as ImagePicker from "expo-image-picker";
 import { manipulateAsync, SaveFormat } from "expo-image-manipulator";
 import { useNotification } from "../context/NotificationContext";
@@ -52,6 +52,14 @@ const PedidoDetalleComercio = () => {
   const [sendingMessage, setSendingMessage] = useState(false);
   const [loadingChat, setLoadingChat] = useState(false);
   const chatScrollViewRef = useRef(null);
+
+  // Estados para AlertaModal
+  const [alertVisible, setAlertVisible] = useState(false);
+  const [alertData, setAlertData] = useState({ title: "", message: "", type: "info", onConfirm: null, primaryLabel: null });
+  const showAlert = (title, message, type, onConfirm, primaryLabel) => {
+    setAlertData({ title, message, type: type || (title === "Éxito" ? "success" : "error"), onConfirm: onConfirm || null, primaryLabel: primaryLabel || null });
+    setAlertVisible(true);
+  };
 
   // Estados para acciones del pedido
   const [updatingStatus, setUpdatingStatus] = useState(false);
@@ -129,7 +137,7 @@ const PedidoDetalleComercio = () => {
       setPedido(data.pedido || data);
     } catch (error) {
         console.error(error);
-        Alert.alert("Error", "No se pudieron cargar los detalles.");
+        showAlert("Error", "No se pudieron cargar los detalles.");
     } finally {
       setLoading(false);
     }
@@ -172,7 +180,7 @@ const PedidoDetalleComercio = () => {
     try {
       const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
       if (status !== "granted") {
-        Alert.alert("Permisos requeridos", "Necesitamos acceso a tu galería.");
+        showAlert("Permisos requeridos", "Necesitamos acceso a tu galería.", "info");
         return;
       }
       const result = await ImagePicker.launchImageLibraryAsync({
@@ -191,13 +199,13 @@ const PedidoDetalleComercio = () => {
         setChatImage(manipResult.uri);
       }
     } catch (error) {
-      Alert.alert("Error", "No se pudo seleccionar la imagen.");
+      showAlert("Error", "No se pudo seleccionar la imagen.");
     }
   };
 
   const sendChatMessage = async () => {
     if (!newMessage.trim() && !chatImage) {
-      Alert.alert("Error", "Escribe un mensaje o selecciona imagen.");
+      showAlert("Error", "Escribe un mensaje o selecciona imagen.");
       return;
     }
     setSendingMessage(true);
@@ -247,7 +255,7 @@ const PedidoDetalleComercio = () => {
       setChatImage(null);
       await loadChatMessages();
     } catch (error) {
-      Alert.alert("Error", "No se pudo enviar el mensaje");
+      showAlert("Error", "No se pudo enviar el mensaje");
     } finally {
       setSendingMessage(false);
     }
@@ -272,9 +280,9 @@ const PedidoDetalleComercio = () => {
       if (!response.ok) throw new Error("Error status");
 
       setPedido((prev) => ({ ...prev, estado: newStatus }));
-      Alert.alert("Éxito", `Estado actualizado a: ${newStatus}`);
+      showAlert("Éxito", `Estado actualizado a: ${newStatus}`);
     } catch (error) {
-      Alert.alert("Error", "No se pudo actualizar el estado");
+      showAlert("Error", "No se pudo actualizar el estado");
     } finally {
       setUpdatingStatus(false);
     }
@@ -301,9 +309,9 @@ const PedidoDetalleComercio = () => {
         });
       }
       navigation.goBack();
-      Alert.alert("Éxito", "Pedido cancelado correctamente.");
+      showAlert("Éxito", "Pedido cancelado correctamente.");
     } catch (error) {
-      Alert.alert("Error", "No se pudo cancelar el pedido.");
+      showAlert("Error", "No se pudo cancelar el pedido.");
     }
   };
 
@@ -316,6 +324,12 @@ const PedidoDetalleComercio = () => {
       hour: "2-digit",
       minute: "2-digit",
     });
+  };
+
+  const getImageUrl = (path) => {
+    if (!path) return null;
+    if (path.startsWith("http")) return path;
+    return `${BASE_URL.toString().replace("/api", "")}/storage/${path}`;
   };
 
   // --- ARRAYS DE PASOS (RESTAURADOS) ---
@@ -366,11 +380,17 @@ const PedidoDetalleComercio = () => {
   // --- RENDERIZADO DEL CHAT ---
   const renderChatMessage = (message, index) => {
     const isMyMessage = message.negocio_id && message.negocio_id.toString() === message.currentNegocioId?.toString();
+    let parsedMessage = null;
     let messageContent = "";
+    let imageUrl = message.image_url || null;
     try {
       if (message.message && typeof message.message === "string") {
-        const parsed = JSON.parse(message.message);
-        messageContent = parsed.content || parsed.text || message.message;
+        parsedMessage = JSON.parse(message.message);
+        if (parsedMessage.type === "file") {
+          imageUrl = parsedMessage.content;
+        } else {
+          messageContent = parsedMessage.content || parsedMessage.text || message.message;
+        }
       } else {
         messageContent = message.message || "";
       }
@@ -381,8 +401,10 @@ const PedidoDetalleComercio = () => {
         {!isMyMessage && (
           <Text style={styles.msgSender}>{message.usuario?.nombre_completo || "Cliente"}</Text>
         )}
-        <Text style={[styles.msgText, isMyMessage ? styles.msgTextMy : styles.msgTextOther]}>{messageContent}</Text>
-        {message.image_url && <Image source={{ uri: message.image_url }} style={styles.msgImage} resizeMode="cover" />}
+        {messageContent ? (
+          <Text style={[styles.msgText, isMyMessage ? styles.msgTextMy : styles.msgTextOther]}>{messageContent}</Text>
+        ) : null}
+        {imageUrl && <Image source={{ uri: getImageUrl(imageUrl) }} style={styles.msgImage} resizeMode="cover" />}
         <Text style={[styles.msgTime, isMyMessage ? styles.msgTimeMy : styles.msgTimeOther]}>{formatDate(message.created_at)}</Text>
       </View>
     );
@@ -409,7 +431,7 @@ const PedidoDetalleComercio = () => {
       {/* HEADER */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
-          <Feather name="arrow-left" size={24} color="#1C1C1E" />
+          <Feather name="arrow-left" size={24} color="#FFF" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Pedido #{pedido.id}</Text>
         <View style={{width: 32}} /> 
@@ -428,7 +450,7 @@ const PedidoDetalleComercio = () => {
                 </View>
                 <View style={{alignItems: 'flex-end'}}>
                     <Text style={styles.label}>Total Pedido</Text>
-                    <Text style={styles.totalPrice}>$ {parseFloat(pedido.costo_total).toLocaleString()}</Text>
+                    <Text style={styles.totalPrice}>$ {Math.floor(parseFloat(pedido.costo_total || 0)).toLocaleString()}</Text>
                 </View>
             </View>
             <View style={styles.divider} />
@@ -441,11 +463,11 @@ const PedidoDetalleComercio = () => {
         {/* --- PAGO AL CONDUCTOR --- */}
         <View style={styles.driverPayCard}>
             <View style={styles.driverPayRow}>
-                <MaterialCommunityIcons name="cash-fast" size={24} color="#F2F2F7" />
+                <MaterialCommunityIcons name="cash-fast" size={24} color="#FFF" />
                 <Text style={styles.driverPayLabel}>Pago por servicio de delivery:</Text>
             </View>
             <Text style={styles.driverPayValue}>
-                $ {pagoConductor.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                $ {Math.floor(pagoConductor).toLocaleString()}
             </Text>
         </View>
 
@@ -534,7 +556,7 @@ const PedidoDetalleComercio = () => {
                     style={styles.chatBtn}
                     onPress={() => { setShowChatModal(true); loadChatMessages(); }}
                 >
-                    <Feather name="message-circle" size={24} color="#F2F2F7" />
+                    <Feather name="message-circle" size={24} color="#FFF" />
                 </TouchableOpacity>
             </View>
         </View>
@@ -576,7 +598,7 @@ const PedidoDetalleComercio = () => {
                                     <Text key={i} style={styles.addText}>+ {ad.producto_adicional?.nombre || ad.nombre} (x{ad.cantidad || 1})</Text>
                                 ))}
                             </View>
-                            <Text style={styles.prodPrice}>$ {precioTotalItem.toFixed(2)}</Text>
+                            <Text style={styles.prodPrice}>$ {Math.floor(precioTotalItem).toLocaleString()}</Text>
                         </View>
                     );
                 })}
@@ -604,17 +626,17 @@ const PedidoDetalleComercio = () => {
         <View style={styles.actionsContainer}>
             {pedido.estado === "pendiente" && (
                 <TouchableOpacity style={[styles.mainBtn, {backgroundColor: '#fa6205'}]} onPress={() => updatePedidoStatus("confirmado")} disabled={updatingStatus}>
-                     {updatingStatus ? <ActivityIndicator color="#1C1C1E"/> : <Text style={styles.mainBtnText}>Aceptar Pedido</Text>}
+                     {updatingStatus ? <ActivityIndicator color="#FFF"/> : <Text style={styles.mainBtnText}>Aceptar Pedido</Text>}
                 </TouchableOpacity>
             )}
             {pedido.estado === "confirmado" && (
                 <TouchableOpacity style={[styles.mainBtn, {backgroundColor: '#fa6205'}]} onPress={() => updatePedidoStatus("preparado")} disabled={updatingStatus}>
-                     {updatingStatus ? <ActivityIndicator color="#000"/> : <Text style={[styles.mainBtnText, {color: '#000'}]}>Marcar Preparado</Text>}
+                     {updatingStatus ? <ActivityIndicator color="#FFF"/> : <Text style={styles.mainBtnText}>Marcar Preparado</Text>}
                 </TouchableOpacity>
             )}
             {pedido.estado === "preparado" && (
                 <TouchableOpacity style={[styles.mainBtn, {backgroundColor: '#2196F3'}]} onPress={() => updatePedidoStatus("entregado")} disabled={updatingStatus}>
-                     {updatingStatus ? <ActivityIndicator color="#1C1C1E"/> : <Text style={styles.mainBtnText}>Marcar Entregado</Text>}
+                     {updatingStatus ? <ActivityIndicator color="#FFF"/> : <Text style={styles.mainBtnText}>Marcar Entregado</Text>}
                 </TouchableOpacity>
             )}
 
@@ -622,7 +644,7 @@ const PedidoDetalleComercio = () => {
             {pedido.estado !== 'completado' && pedido.estado !== 'cancelado' && pedido.estado !== 'entregado' && (
                 <TouchableOpacity 
                     style={styles.cancelBtn} 
-                    onPress={() => Alert.alert("Cancelar", "¿Seguro que deseas cancelar?", [{ text: "No" }, { text: "Sí", onPress: () => cancelarPedido(pedido.id, pedido.carrera?.id) }])}
+                    onPress={() => showAlert("Cancelar", "¿Seguro que deseas cancelar?", "confirm", () => cancelarPedido(pedido.id, pedido.carrera?.id), "Sí, cancelar")}
                 >
                     <Text style={styles.cancelText}>Cancelar Pedido</Text>
                 </TouchableOpacity>
@@ -635,7 +657,7 @@ const PedidoDetalleComercio = () => {
       <Modal visible={showChatModal} animationType="slide" onRequestClose={() => setShowChatModal(false)}>
          <SafeAreaView style={styles.chatContainer}>
             <View style={styles.chatHeader}>
-                <TouchableOpacity onPress={() => setShowChatModal(false)}><Ionicons name="close" size={28} color="#1C1C1E"/></TouchableOpacity>
+                <TouchableOpacity onPress={() => setShowChatModal(false)}><Ionicons name="arrow-back" size={28} color="#FFF"/></TouchableOpacity>
                 <Text style={styles.chatHeaderTitle}>Chat Pedido #{pedido.id}</Text>
                 <View style={{width: 28}} />
             </View>
@@ -653,7 +675,7 @@ const PedidoDetalleComercio = () => {
                 {chatImage && (
                     <View style={styles.imgPreviewBox}>
                         <Image source={{ uri: chatImage }} style={styles.imgPreview} />
-                        <TouchableOpacity style={styles.delImgBtn} onPress={() => setChatImage(null)}><Ionicons name="close" size={16} color="#1C1C1E"/></TouchableOpacity>
+                        <TouchableOpacity style={styles.delImgBtn} onPress={() => setChatImage(null)}><Ionicons name="close" size={16} color="#FFF"/></TouchableOpacity>
                     </View>
                 )}
                 <View style={styles.inputRow}>
@@ -667,13 +689,22 @@ const PedidoDetalleComercio = () => {
                         multiline 
                     />
                     <TouchableOpacity style={styles.sendBtn} onPress={sendChatMessage} disabled={sendingMessage}>
-                        {sendingMessage ? <ActivityIndicator size="small" color="#000"/> : <Ionicons name="send" size={20} color="#000" />}
+                        {sendingMessage ? <ActivityIndicator size="small" color="#FFF"/> : <Ionicons name="send" size={20} color="#FFF" />}
                     </TouchableOpacity>
                 </View>
             </KeyboardAvoidingView>
          </SafeAreaView>
       </Modal>
 
+      <AlertaModal
+        visible={alertVisible}
+        mensaje={alertData.message}
+        onCerrar={() => setAlertVisible(false)}
+        titulo={alertData.title}
+        tipo={alertData.type}
+        onPrimary={alertData.onConfirm}
+        primaryLabel={alertData.primaryLabel || "Entendido"}
+      />
     </SafeAreaView>
   );
 };
@@ -691,10 +722,9 @@ const styles = StyleSheet.create({
       paddingHorizontal: 20, 
       paddingVertical: 15, 
       paddingTop: 30,
-      borderBottomWidth: 1, 
-      borderBottomColor: "#F0F0F0" 
+      backgroundColor: "#fa6205",
   },
-  headerTitle: { color: "#1C1C1E", fontSize: 18, fontFamily: "MontserratBold" },
+  headerTitle: { color: "#FFF", fontSize: 18, fontFamily: "MontserratBold" },
   backBtn: { padding: 5 },
 
   scroll: { flex: 1, paddingHorizontal: 20 },
@@ -713,8 +743,8 @@ const styles = StyleSheet.create({
   // STATUS CARD SPECIFIC
   statusRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   label: { color: "#888", fontSize: 12, fontFamily: "MontserratMedium", marginBottom: 4 },
-  statusBadge: { backgroundColor: "rgba(160, 255, 0, 0.15)", paddingHorizontal: 10, paddingVertical: 4, borderRadius: 8 },
-  statusText: { color: "#fa6205", fontFamily: "MontserratBold", fontSize: 12 },
+  statusBadge: { backgroundColor: "#fa6205", paddingHorizontal: 10, paddingVertical: 4, borderRadius: 8 },
+  statusText: { color: "#FFF", fontFamily: "MontserratBold", fontSize: 12 },
   totalPrice: { color: "#1C1C1E", fontFamily: "MontserratBold", fontSize: 20 },
   divider: { height: 1, backgroundColor: "#F0F0F0", marginVertical: 12 },
   dateRow: { flexDirection: 'row', alignItems: 'center' },
@@ -729,11 +759,12 @@ const styles = StyleSheet.create({
       flexDirection: 'row',
       justifyContent: 'space-between',
       alignItems: 'center',
-      elevation: 5
+      elevation: 5,
+      gap: 8,
   },
-  driverPayRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  driverPayLabel: { color: "#F2F2F7", fontFamily: "MontserratBold", fontSize: 14 },
-  driverPayValue: { color: "#F2F2F7", fontFamily: "MontserratBold", fontSize: 18 },
+  driverPayRow: { flexDirection: 'row', alignItems: 'center', gap: 8, flex: 1, flexWrap: 'wrap' },
+  driverPayLabel: { color: "#FFF", fontFamily: "MontserratBold", fontSize: 12, flexShrink: 1 },
+  driverPayValue: { color: "#FFF", fontFamily: "MontserratBold", fontSize: 18, whiteSpace: 'nowrap' },
 
   // PASOS (TRACKING)
   pasosContainer: {
@@ -785,33 +816,33 @@ const styles = StyleSheet.create({
   // ACTIONS
   actionsContainer: { marginTop: 30 },
   mainBtn: { paddingVertical: 16, borderRadius: 12, alignItems: 'center', justifyContent: 'center', marginBottom: 15 },
-  mainBtnText: { color: "#1C1C1E", fontFamily: "MontserratBold", fontSize: 16 },
+  mainBtnText: { color: "#FFF", fontFamily: "MontserratBold", fontSize: 16 },
   cancelBtn: { paddingVertical: 14, borderWidth: 1, borderColor: "#FF4757", borderRadius: 12, alignItems: 'center' },
   cancelText: { color: "#FF4757", fontFamily: "MontserratSemiBold", fontSize: 14 },
 
   // CHAT STYLES
-  chatContainer: { flex: 1, backgroundColor: "#F2F2F7" },
-  chatHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 15, borderBottomWidth: 1, borderBottomColor: "#333" },
-  chatHeaderTitle: { color: "#1C1C1E", fontFamily: "MontserratBold", fontSize: 16 },
+  chatContainer: { flex: 1, backgroundColor: "#FFF" },
+  chatHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 15, backgroundColor: "#fa6205", paddingTop: 40 },
+  chatHeaderTitle: { color: "#FFF", fontFamily: "MontserratBold", fontSize: 16 },
   msgList: { flex: 1 },
   emptyChat: { color: "#555", textAlign: 'center', marginTop: 50, fontFamily: "MontserratMedium" },
   
   msgContainer: { maxWidth: '75%', borderRadius: 12, padding: 10, marginBottom: 10 },
   msgMy: { backgroundColor: "#fa6205", alignSelf: 'flex-end', borderBottomRightRadius: 2 },
-  msgOther: { backgroundColor: "#F0F0F0", alignSelf: 'flex-start', borderBottomLeftRadius: 2 },
+  msgOther: { backgroundColor: "#FFF", alignSelf: 'flex-start', borderBottomLeftRadius: 2, borderWidth: 1, borderColor: "#E0E0E0" },
   msgSender: { color: "#fa6205", fontSize: 10, fontFamily: "MontserratBold", marginBottom: 2 },
   msgText: { fontSize: 14, fontFamily: "MontserratRegular" },
-  msgTextMy: { color: "#000" },
+  msgTextMy: { color: "#FFF" },
   msgTextOther: { color: "#1C1C1E" },
   msgTime: { fontSize: 10, alignSelf: 'flex-end', marginTop: 4 },
-  msgTimeMy: { color: "rgba(0,0,0,0.6)" },
-  msgTimeOther: { color: "#777" },
+  msgTimeMy: { color: "rgba(255,255,255,0.7)" },
+  msgTimeOther: { color: "#999" },
   msgImage: { width: 150, height: 150, borderRadius: 8, marginTop: 5 },
 
-  inputArea: { backgroundColor: "#FFFFFF", padding: 10, borderTopWidth: 1, borderTopColor: "#333" },
+  inputArea: { backgroundColor: "#FFF", padding: 10, borderTopWidth: 1, borderTopColor: "#E0E0E0" },
   imgPreviewBox: { flexDirection: 'row', marginBottom: 10 },
   imgPreview: { width: 60, height: 60, borderRadius: 8 },
-  delImgBtn: { position: 'absolute', top: -5, left: 50, backgroundColor: 'red', borderRadius: 10, padding: 2 },
+  delImgBtn: { position: 'absolute', top: -5, left: 50, backgroundColor: '#fa6205', borderRadius: 10, padding: 2 },
   inputRow: { flexDirection: 'row', alignItems: 'center' },
   attachBtn: { padding: 8 },
   textInput: { flex: 1, backgroundColor: "#F0F0F0", color: "#1C1C1E", borderRadius: 20, paddingHorizontal: 15, paddingVertical: 8, marginHorizontal: 8, maxHeight: 80 },

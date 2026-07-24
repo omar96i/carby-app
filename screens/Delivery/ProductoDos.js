@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Entypo, FontAwesome } from "@expo/vector-icons";
 
 
@@ -10,7 +10,8 @@ import {
     Montserrat_300Light,
 } from "@expo-google-fonts/montserrat";
 import { useFonts } from "expo-font";
-import { useNavigation, useRoute } from "@react-navigation/native";
+import { useNavigation, useRoute, useFocusEffect } from "@react-navigation/native";
+import AlertaModal from "../../components/ErrorModal";
 import * as ImagePicker from 'expo-image-picker';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { BASE_URL } from "../../constants/url";
@@ -34,12 +35,24 @@ const ProductoDos = () => {
     const [foto, setFoto] = useState(null);
     const [loading, setLoading] = useState(false);
 
+  useFocusEffect(useCallback(() => {
+    navigation.getParent()?.setOptions({ tabBarStyle: { display: "none" } });
+    return () => navigation.getParent()?.setOptions({ tabBarStyle: { backgroundColor: '#FFF', height: 56, borderTopWidth: 1, borderTopColor: '#F0F0F0', display: 'flex' } });
+  }, [navigation]));
+
+  const [alertVisible, setAlertVisible] = useState(false);
+  const [alertData, setAlertData] = useState({ title: "", message: "", type: "info", onConfirm: null });
+  const showAlert = (title, message, type, onConfirm) => {
+    setAlertData({ title, message, type: type || (title === "Éxito" ? "success" : "error"), onConfirm });
+    setAlertVisible(true);
+  };
+
     // Request camera permission on component mount
     useEffect(() => {
         (async () => {
             const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
             if (status !== 'granted') {
-                Alert.alert('Permiso requerido', 'Se necesita permiso para acceder a la galería');
+                showAlert('Permiso requerido', 'Se necesita permiso para acceder a la galería');
             }
         })();
     }, []);
@@ -68,7 +81,7 @@ const ProductoDos = () => {
     // Form submission
     const handleSubmit = async () => {
         if (!nombre || !precio || !descripcion || !foto) {
-            Alert.alert('Error', 'Todos los campos son obligatorios');
+            showAlert("Error", 'Todos los campos son obligatorios');
             return;
         }
 
@@ -78,7 +91,7 @@ const ProductoDos = () => {
             const token = await AsyncStorage.getItem('userToken');
 
             if (!token) {
-                Alert.alert('Error', 'No se encontró el token de autenticación');
+                showAlert("Error", 'No se encontró el token de autenticación');
                 setLoading(false);
                 return;
             }
@@ -127,20 +140,19 @@ const ProductoDos = () => {
                 const data = await response.json();
 
                 if (response.ok) {
-                    Alert.alert('Éxito', 'Producto creado correctamente');
-                    navigation.navigate('ShopDos');
+                    showAlert('Éxito', 'Producto creado correctamente', 'success', () => navigation.navigate('ShopDos'));
                 } else {
-                    Alert.alert('Error', data.message || 'No se pudo crear el producto');
+                    showAlert("Error", data.message || 'No se pudo crear el producto');
                 }
             } else {
                 // Handle non-JSON response
                 const text = await response.text();
                 console.error('Unexpected response:', text);
-                Alert.alert('Error', 'El servidor devolvió una respuesta inesperada');
+                showAlert("Error", 'El servidor devolvió una respuesta inesperada');
             }
         } catch (error) {
             console.error('Error al crear producto:', error);
-            Alert.alert('Error', 'Ocurrió un error al crear el producto: ' + error.message);
+            showAlert("Error", 'Ocurrió un error al crear el producto: ' + error.message);
         } finally {
             setLoading(false);
         }
@@ -162,7 +174,7 @@ const ProductoDos = () => {
                     {/* Header */}
                     <View style={styles.header}>
                         <TouchableOpacity onPress={() => navigation.goBack()}>
-                            <Ionicons name="arrow-back" size={24} color="black" />
+                            <Ionicons name="arrow-back" size={24} color="#FFF" />
                         </TouchableOpacity>
                         <Text style={styles.headerText}>
                             {categoria_nombre ? `Nuevo producto - ${categoria_nombre}` : 'Nuevo producto'}
@@ -228,14 +240,24 @@ const ProductoDos = () => {
                         disabled={loading}
                     >
                         {loading ? (
-                            <ActivityIndicator size="small" color="#000" />
+                            <ActivityIndicator size="small" color="#FFF" />
                         ) : (
                             <Text style={styles.buttonText}>Guardar Producto</Text>
                         )}
                     </TouchableOpacity>
                 </ScrollView>
-            </KeyboardAvoidingView>
-        </View>
+      </KeyboardAvoidingView>
+
+      <AlertaModal
+        visible={alertVisible}
+        tipo={alertData.type}
+        mensaje={alertData.message}
+        onCerrar={() => {
+          setAlertVisible(false);
+          if (alertData.onConfirm) alertData.onConfirm();
+        }}
+      />
+    </View>
     );
 };
 
@@ -255,8 +277,8 @@ const styles = StyleSheet.create({
     headerText: {
         fontSize: 16,
         fontWeight: 'bold',
-        color: 'black',
-        fontFamily: 'Montserrat_700Bold',
+    color: '#FFF',
+    fontFamily: 'Montserrat_700Bold',
     },
     imagePickerContainer: {
         width: '100%',
@@ -293,14 +315,16 @@ const styles = StyleSheet.create({
         marginBottom: 5,
         marginTop: 15,
     },
-    input: {
-        backgroundColor: '#ECECEC',
-        borderRadius: 8,
-        padding: 12,
-        fontSize: 16,
-        color: '#1C1C1E',
-        fontFamily: 'Montserrat_400Regular',
-    },
+  input: {
+    backgroundColor: '#FFF',
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#DDD',
+    padding: 14,
+    fontSize: 16,
+    color: '#1C1C1E',
+    fontFamily: 'Montserrat_400Regular',
+  },
     textArea: {
         minHeight: 100,
         textAlignVertical: 'top',
@@ -321,19 +345,19 @@ const styles = StyleSheet.create({
         marginVertical: 20,
         marginBottom: 30,
     },
-    buttonText: {
-        color: "#000",
-        fontSize: 20,
-        fontWeight: "bold",
-        fontFamily: 'Montserrat_700Bold',
-    },
-    recommendationText: {
-        color: 'rgba(255, 255, 255, 0.7)', // Un color más sutil
-        fontFamily: 'MontserratRegular',
-        fontSize: 13,
-        marginTop: 8, // Espacio para separarlo del texto principal
-        textAlign: 'center',
-    },
+  buttonText: {
+    color: "#FFF",
+    fontSize: 20,
+    fontWeight: "bold",
+    fontFamily: 'Montserrat_700Bold',
+  },
+  recommendationText: {
+    color: '#888',
+    fontFamily: 'Montserrat_400Regular',
+    fontSize: 13,
+    marginTop: 8,
+    textAlign: 'center',
+  },
 });
 
 export default ProductoDos;

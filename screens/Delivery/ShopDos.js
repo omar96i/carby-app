@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Entypo, FontAwesome } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
@@ -27,6 +27,7 @@ import Ionicons from "react-native-vector-icons/Ionicons";
 import { useNavigation } from "@react-navigation/native";
 import CategoriesScreen from "../Categories/CategoriesScreen";
 import { BASE_URL } from "../../constants/url";
+import AlertaModal from "../../components/ErrorModal";
 import * as Location from "expo-location";
 import MapView, { Marker } from "react-native-maps";
 import { AntDesign } from "@expo/vector-icons";
@@ -69,6 +70,13 @@ const ShopDos = () => {
   // Nuevo estado para servicios
   const [services, setServices] = useState([]);
 
+  const [alertVisible, setAlertVisible] = useState(false);
+  const alertRef = useRef({ title: "", message: "", type: "info" });
+  const showAlert = (title, message, type, onConfirm = null, confirmLabel = "") => {
+    alertRef.current = { title, message, type: type || (title === "Éxito" ? "success" : "error"), onConfirm, confirmLabel };
+    setAlertVisible(true);
+  };
+
   // Estados para validación de métodos de pago
   const [paymentMethodModalVisible, setPaymentMethodModalVisible] =
     useState(false);
@@ -79,7 +87,7 @@ const ShopDos = () => {
       setLoading(true);
       const token = await AsyncStorage.getItem("userToken");
       if (!token) {
-        Alert.alert("Error", "No se encontró información de autenticación");
+        showAlert("Error", "No se encontró información de autenticación");
         return;
       }
       const activar = !userData.tienda_estado;
@@ -106,7 +114,7 @@ const ShopDos = () => {
       }));
     } catch (error) {
       console.error(error);
-      Alert.alert("Error", "No se pudo actualizar el estado de la tienda");
+      showAlert("Error", "No se pudo actualizar el estado de la tienda");
     } finally {
       setLoading(false);
     }
@@ -157,7 +165,7 @@ const ShopDos = () => {
 
   const handleEditCategory = async () => {
     if (!newCategoryName.trim()) {
-      Alert.alert("Error", "El nombre de la categoría no puede estar vacío");
+      showAlert("Error", "El nombre de la categoría no puede estar vacío");
       return;
     }
 
@@ -165,7 +173,7 @@ const ShopDos = () => {
     try {
       const token = await AsyncStorage.getItem("userToken");
       if (!token) {
-        Alert.alert("Error", "No se encontró token de autenticación");
+        showAlert("Error", "No se encontró token de autenticación");
         return;
       }
 
@@ -193,18 +201,15 @@ const ShopDos = () => {
               : cat
           )
         );
-        Alert.alert("Éxito", "Categoría actualizada correctamente");
+        showAlert("Éxito", "Categoría actualizada correctamente");
         setEditModalVisible(false);
       } else {
         const errorData = await response.json();
-        Alert.alert(
-          "Error",
-          errorData.message || "No se pudo actualizar la categoría"
-        );
+        showAlert("Error", errorData.message || "No se pudo actualizar la categoría");
       }
     } catch (error) {
       console.error("Error al actualizar categoría:", error);
-      Alert.alert("Error", "Ocurrió un problema al actualizar la categoría");
+      showAlert("Error", "Ocurrió un problema al actualizar la categoría");
     } finally {
       setIsProcessing(false);
     }
@@ -215,7 +220,7 @@ const ShopDos = () => {
     try {
       const token = await AsyncStorage.getItem("userToken");
       if (!token) {
-        Alert.alert("Error", "No se encontró token de autenticación");
+        showAlert("Error", "No se encontró token de autenticación");
         return;
       }
 
@@ -235,18 +240,15 @@ const ShopDos = () => {
         setCategories(
           categories.filter((cat) => cat.id !== selectedCategory.id)
         );
-        Alert.alert("Éxito", "Categoría eliminada correctamente");
+        showAlert("Éxito", "Categoría eliminada correctamente");
         setDeleteModalVisible(false);
       } else {
         const errorData = await response.json();
-        Alert.alert(
-          "Error",
-          errorData.message || "No se pudo eliminar la categoría"
-        );
+        showAlert("Error", errorData.message || "No se pudo eliminar la categoría");
       }
     } catch (error) {
       console.error("Error al eliminar categoría:", error);
-      Alert.alert("Error", "Ocurrió un problema al eliminar la categoría");
+      showAlert("Error", "Ocurrió un problema al eliminar la categoría");
     } finally {
       setIsProcessing(false);
     }
@@ -311,7 +313,7 @@ const ShopDos = () => {
       }
 
       if (!token || !userData) {
-        Alert.alert("Error", "No se encontró información de autenticación");
+        showAlert("Error", "No se encontró información de autenticación");
         return;
       }
 
@@ -450,7 +452,7 @@ const ShopDos = () => {
       console.log(currentStatus + " - " + productId)
       const token = await AsyncStorage.getItem("userToken");
       if (!token) {
-        Alert.alert("Error", "No se encontró información de autenticación");
+        showAlert("Error", "No se encontró información de autenticación");
         return;
       }
       const url = currentStatus
@@ -469,11 +471,11 @@ const ShopDos = () => {
       if (data.status) {
         refreshCategories()
       } else {
-        Alert.alert("Error", "No se pudo cambiar el estado del producto.");
+        showAlert("Error", "No se pudo cambiar el estado del producto.");
       }
     } catch (error) {
       console.error("Error al cambiar estado del producto:", error);
-      Alert.alert("Error", "Ocurrió un error inesperado.");
+      showAlert("Error", "Ocurrió un error inesperado.");
     }
   };
 
@@ -483,7 +485,7 @@ const ShopDos = () => {
     try {
       const token = await AsyncStorage.getItem("userToken");
       if (!token) {
-        Alert.alert("Error", "No se encontró token de autenticación");
+        showAlert("Error", "No se encontró token de autenticación");
         setIsLoading(false);
         return;
       }
@@ -517,7 +519,7 @@ const ShopDos = () => {
     try {
       const token = await AsyncStorage.getItem("userToken");
       if (!token) {
-        Alert.alert("Error", "No se encontró token de autenticación");
+        showAlert("Error", "No se encontró token de autenticación");
         setIsLoadingProducts(false);
         return;
       }
@@ -616,10 +618,7 @@ const ShopDos = () => {
       const { status } = await Location.requestForegroundPermissionsAsync();
 
       if (status !== "granted") {
-        Alert.alert(
-          "Permiso denegado",
-          "Necesitamos permiso para acceder a tu ubicación para guardar la ubicación de tu tienda."
-        );
+        showAlert("Permiso denegado", "Necesitamos permiso para acceder a tu ubicación para guardar la ubicación de tu tienda.");
         setIsLocationLoading(false);
         return null;
       }
@@ -637,10 +636,7 @@ const ShopDos = () => {
       return location.coords;
     } catch (error) {
       console.error("Error obteniendo ubicación:", error);
-      Alert.alert(
-        "Error",
-        "No pudimos obtener tu ubicación. Por favor, intenta de nuevo."
-      );
+      showAlert("Error", "No pudimos obtener tu ubicación. Por favor, intenta de nuevo.");
       setIsLocationLoading(false);
       return null;
     }
@@ -663,7 +659,7 @@ const ShopDos = () => {
       }
     } catch (error) {
       console.error("Error al obtener ubicación para el mapa:", error);
-      Alert.alert("Error", "No pudimos obtener tu ubicación actual");
+      showAlert("Error", "No pudimos obtener tu ubicación actual");
     } finally {
       setMapLoading(false);
     }
@@ -682,7 +678,7 @@ const ShopDos = () => {
       // Get user ID from storage
       const userData = await AsyncStorage.getItem("userData");
       if (!userData) {
-        Alert.alert("Error", "No se encontraron datos de usuario.");
+        showAlert("Error", "No se encontraron datos de usuario.");
         setIsLocationLoading(false);
         return;
       }
@@ -700,7 +696,7 @@ const ShopDos = () => {
       // Get token for API call
       const token = await AsyncStorage.getItem("userToken");
       if (!token) {
-        Alert.alert("Error", "No se encontró token de autenticación.");
+        showAlert("Error", "No se encontró token de autenticación.");
         setIsLocationLoading(false);
         return;
       }
@@ -723,16 +719,13 @@ const ShopDos = () => {
       const data = await response.json();
 
       if (response.ok) {
-        Alert.alert("Éxito", "Ubicación de la tienda guardada correctamente.");
+        showAlert("Éxito", "Ubicación de la tienda guardada correctamente.");
       } else {
-        Alert.alert(
-          "Error",
-          data.message || "No se pudo guardar la ubicación."
-        );
+        showAlert("Error", data.message || "No se pudo guardar la ubicación.");
       }
     } catch (error) {
       console.error("Error guardando ubicación:", error);
-      Alert.alert("Error", "Ocurrió un problema al guardar la ubicación.");
+      showAlert("Error", "Ocurrió un problema al guardar la ubicación.");
     } finally {
       setIsLocationLoading(false);
     }
@@ -749,66 +742,38 @@ const ShopDos = () => {
   };
 
   // Función para eliminar un producto
-  const handleDeleteProduct = async (productId) => {
-    Alert.alert(
-      "Confirmar eliminación",
-      "¿Estás seguro que deseas eliminar este producto?",
-      [
-        {
-          text: "Cancelar",
-          style: "cancel",
-        },
-        {
-          text: "Eliminar",
-          style: "destructive",
-          onPress: async () => {
-            try {
-              setDeletingProductId(productId);
-              const token = await AsyncStorage.getItem("userToken");
-              if (!token) {
-                Alert.alert("Error", "No se encontró token de autenticación");
-                setDeletingProductId(null);
-                return;
-              }
+  const eliminarProducto = async (productId) => {
+    try {
+      setDeletingProductId(productId);
+      const token = await AsyncStorage.getItem("userToken");
+      if (!token) {
+        showAlert("Error", "No se encontró token de autenticación");
+        setDeletingProductId(null);
+        return;
+      }
+      const response = await fetch(getApiUrl(`productos/${productId}`), {
+        method: "DELETE",
+        headers: { Accept: "application/json", Authorization: `Bearer ${token}` },
+      });
+      if (response.ok) {
+        setProducts(products.filter((p) => p.id !== productId));
+        showAlert("Éxito", "Producto eliminado correctamente", "success");
+      } else {
+        const errorText = await response.text();
+        let errorMsg = "No se pudo eliminar el producto";
+        try { const errorData = JSON.parse(errorText); errorMsg = errorData.message || errorMsg; } catch (e) {}
+        showAlert("Error", errorMsg);
+      }
+    } catch (error) {
+      console.error("Error al eliminar producto:", error);
+      showAlert("Error", "Ocurrió un error al eliminar el producto");
+    } finally {
+      setDeletingProductId(null);
+    }
+  };
 
-              const response = await fetch(
-                getApiUrl(`productos/${productId}`),
-                {
-                  method: "DELETE",
-                  headers: {
-                    Accept: "application/json",
-                    Authorization: `Bearer ${token}`,
-                  },
-                }
-              );
-
-              if (response.ok) {
-                setProducts(products.filter((p) => p.id !== productId));
-                Alert.alert("Éxito", "Producto eliminado correctamente");
-              } else {
-                const errorText = await response.text();
-                let errorMsg = "No se pudo eliminar el producto";
-
-                try {
-                  // Intentar parsear respuesta como JSON
-                  const errorData = JSON.parse(errorText);
-                  errorMsg = errorData.message || errorMsg;
-                } catch (e) {
-                  console.error("Error al parsear respuesta:", errorText);
-                }
-
-                Alert.alert("Error", errorMsg);
-              }
-            } catch (error) {
-              console.error("Error al eliminar producto:", error);
-              Alert.alert("Error", "Ocurrió un error al eliminar el producto");
-            } finally {
-              setDeletingProductId(null);
-            }
-          },
-        },
-      ]
-    );
+  const handleDeleteProduct = (productId) => {
+    showAlert("Confirmar eliminación", "¿Estás seguro que deseas eliminar este producto?", "confirm", () => eliminarProducto(productId), "Eliminar");
   };
 
   // Modifica el useEffect existente para incluir nuestra nueva función
@@ -846,7 +811,7 @@ const ShopDos = () => {
   const refreshCategories = () => {
     fetchCategories();
     fetchProducts();
-    Alert.alert("Actualizando", "Actualizando categorías y productos...");
+    showAlert("Actualizando", "Actualizando categorías y productos...", "info");
   };
 
   // Actualizar datos al regresar a esta pantalla
@@ -877,7 +842,22 @@ const ShopDos = () => {
     );
   }
   return (
+    <>
     <ScrollView style={styles.container}>
+
+      {/* Header del comercio */}
+      <View style={styles.shopHeader}>
+        <View style={styles.shopHeaderLeft}>
+          <Image
+            source={profileImageUrl ? { uri: profileImageUrl } : require("../../assets/images/nuevo-icono.jpeg")}
+            style={styles.shopHeaderAvatar}
+          />
+          <View style={{ marginLeft: 10 }}>
+            <Text style={styles.shopHeaderTitle}>{establishmentName}</Text>
+            <Text style={styles.shopHeaderSubtitle}>Panel de administración</Text>
+          </View>
+        </View>
+      </View>
 
       {/* Modal de validación de métodos de pago */}
       <Modal
@@ -935,7 +915,7 @@ const ShopDos = () => {
                 style={styles.closeButton}
                 onPress={() => setRatingsModalVisible(false)}
               >
-                <Ionicons name="close" size={24} color="#000" />
+                <Ionicons name="close" size={24} color="#FFF" />
               </TouchableOpacity>
             </View>
 
@@ -1019,7 +999,7 @@ const ShopDos = () => {
                 style={styles.closeButton}
                 onPress={() => setModalVisible(false)}
               >
-                <Ionicons name="close" size={24} color="#000" />
+                <Ionicons name="close" size={24} color="#FFF" />
               </TouchableOpacity>
             </View>
 
@@ -1101,7 +1081,7 @@ const ShopDos = () => {
                 style={styles.closeButton}
                 onPress={() => setEditModalVisible(false)}
               >
-                <Ionicons name="close" size={24} color="#000" />
+                <Ionicons name="close" size={24} color="#FFF" />
               </TouchableOpacity>
             </View>
 
@@ -1145,7 +1125,7 @@ const ShopDos = () => {
                 style={styles.closeButton}
                 onPress={() => setDeleteModalVisible(false)}
               >
-                <Ionicons name="close" size={24} color="#000" />
+                <Ionicons name="close" size={24} color="#FFF" />
               </TouchableOpacity>
             </View>
 
@@ -1168,12 +1148,12 @@ const ShopDos = () => {
               </TouchableOpacity>
 
               <TouchableOpacity
-                style={styles.cancelButton}
+                style={styles.deleteButton}
                 onPress={handleDeleteCategory}
                 disabled={isProcessing}
               >
                 {isProcessing ? (
-                  <ActivityIndicator size="small" color="#1C1C1E" />
+<ActivityIndicator size="small" color="#FFF" />
                 ) : (
                   <Text style={styles.deleteButtonText}>Eliminar</Text>
                 )}
@@ -1182,31 +1162,6 @@ const ShopDos = () => {
           </View>
         </View>
       </Modal>
-      <View style={styles.headerBar}>
-        <TouchableOpacity onPress={showLocationModal}>
-          <Ionicons
-            name="location-outline"
-            size={25}
-            color="#333333"
-            style={styles.icon}
-          />
-        </TouchableOpacity>
-        <View style={styles.establishmentInfo}>
-          <Text style={styles.locationTextUno}>{establishmentName}</Text>
-          {globalCategory && (
-            <Text style={styles.categoryTypeText}>
-              {globalCategory.tipo_categoria === "productos"
-                ? "🛒 Productos"
-                : "🔧 Servicios"}
-            </Text>
-          )}
-        </View>
-        <Image
-          source={{ uri: profileImageUrl }}
-          style={styles.avatar}
-          onError={() => console.log("Error al cargar la imagen de perfil")}
-        />
-      </View>
       <TouchableOpacity
         style={styles.ratingsSection}
         onPress={() => setRatingsModalVisible(true)}
@@ -1224,62 +1179,44 @@ const ShopDos = () => {
         </View>
       </TouchableOpacity>
       {userData && (
-        <View
-          style={{
-            alignItems: "center",
-            justifyContent: "center",
-            padding: 16,
-            backgroundColor: "#F0F0F0",
-            borderRadius: 12,
-            shadowColor: "#000",
-            shadowOffset: { width: 0, height: 2 },
-            shadowOpacity: 0.1,
-            shadowRadius: 4,
-            elevation: 3,
-            marginBottom: 5,
-            marginHorizontal: 10
-          }}
-        >
-          <Text style={{ fontSize: 16, fontWeight: "bold", color: "#1C1C1E", marginBottom: 8 }}>
-            {userData.tienda_estado ? "Tu negocio está activo" : "Tu negocio está inactivo"}
-          </Text>
-
+        <View style={styles.shopStatusCard}>
+          <View style={styles.shopStatusLeft}>
+            <View style={[styles.shopStatusDot, { backgroundColor: userData.tienda_estado ? "#4CAF50" : "#999" }]} />
+            <View style={{ flex: 1 }}>
+              <Text style={styles.shopStatusTitle}>
+                {userData.tienda_estado ? "Negocio activo" : "Negocio inactivo"}
+              </Text>
+              <Text style={styles.shopStatusHint}>
+                {userData.tienda_estado ? "Tus productos son visibles" : "Toca para activar tu tienda"}
+              </Text>
+            </View>
+          </View>
           <Switch
-            trackColor={{
-              false: "#ccc",
-              true: "#fa6205",
-            }}
-            thumbColor={!!userData.tienda_estado ? "#ffffff" : "#f4f3f4"}
-            ios_backgroundColor="#3e3e3e"
+            trackColor={{ false: "#DDD", true: "#fa6205" }}
+            thumbColor="#FFF"
+            ios_backgroundColor="#DDD"
             onValueChange={toggleTienda}
             value={!!userData.tienda_estado}
             disabled={loading}
           />
-
-          <Text style={{ fontSize: 12, color: "#1C1C1E", marginTop: 8 }}>
-            Toca el interruptor para {userData.tienda_estado ? "desactivar" : "activar"} tu tienda
-          </Text>
         </View>
       )}
 
       <View style={styles.mainButtons}>
-        <View style={styles.mainButton}>
-          <TouchableOpacity onPress={handleBannerPress}>
-            <Image
-              source={require("../../assets/images/banner_comercio.png")}
-              style={styles.mainButtonImg}
-              progressiveRenderingEnabled={true}
-              fadeDuration={300}
-            />
-          </TouchableOpacity>
-        </View>
+        <TouchableOpacity onPress={handleBannerPress}>
+          <Image
+            source={require("../../assets/images/imagen-solicitar-rider.jpeg")}
+            style={styles.requestRiderBanner}
+            resizeMode="cover"
+          />
+        </TouchableOpacity>
       </View>
       <View style={styles.buttonContainer}>
         <TouchableOpacity
           style={styles.refreshButton}
           onPress={refreshCategories}
         >
-          <Ionicons name="refresh" size={20} color="#000" />
+          <Ionicons name="refresh" size={20} color="#FFF" />
         </TouchableOpacity>
 
         <TouchableOpacity
@@ -1288,10 +1225,10 @@ const ShopDos = () => {
           disabled={isLocationLoading}
         >
           {isLocationLoading ? (
-            <ActivityIndicator size="small" color="#1C1C1E" />
+            <ActivityIndicator size="small" color="#FFF" />
           ) : (
             <View style={{ flexDirection: "row", alignItems: "center" }}>
-              <Ionicons name="location" size={20} color="#1C1C1E" />
+              <Ionicons name="location" size={20} color="#FFF" />
               <Text style={styles.saveLocationText}>Guardar ubicación</Text>
             </View>
           )}
@@ -1304,7 +1241,7 @@ const ShopDos = () => {
             style={styles.createProfileButton}
             onPress={() => navigation.navigate("CrearPerfil")}
           >
-            <Ionicons name="person-add" size={20} color="#000" />
+            <Ionicons name="person-add" size={20} color="#FFF" />
             <Text style={styles.createProfileText}>Crear Perfil</Text>
           </TouchableOpacity>
         </View>
@@ -1324,88 +1261,48 @@ const ShopDos = () => {
 
               return (
                 <View key={category.id} style={styles.section}>
-                  <View>
-                    <Text style={styles.sectionTitle}>{category.nombre}</Text>
-                    <View
-                      style={{
-                        flexDirection: "row",
-                        marginTop: 5,
-                        marginBottom: 20,
-                      }}
-                    >
-                      <View style={{ flexDirection: "row", width: "30%" }}>
-                        <TouchableOpacity
-                          style={styles.categoryActionButton}
-                          onPress={() => showEditCategoryModal(category)}
-                        >
-                          <Ionicons name="pencil" size={16} color="#fa6205" />
-                        </TouchableOpacity>
-                        <TouchableOpacity
-                          style={[
-                            styles.categoryActionButton,
-                            styles.deleteActionButton,
-                          ]}
-                          onPress={() => showDeleteCategoryModal(category)}
-                        >
-                          <Ionicons name="trash" size={16} color="#ff4d4d" />
-                        </TouchableOpacity>
-                      </View>
-
-                      <View
-                        style={{
-                          flexDirection: "row",
-                          width: "70%",
-                          justifyContent: "flex-end",
-                        }}
+                  {/* Header de categoría */}
+                  <View style={styles.categoryHeader}>
+                    <View style={styles.categoryTitleRow}>
+                      <View style={styles.categoryDot} />
+                      <Text style={styles.sectionTitle}>{category.nombre}</Text>
+                    </View>
+                    <View style={styles.categoryActions}>
+                      <TouchableOpacity
+                        style={styles.actionBtnSmall}
+                        onPress={() => showEditCategoryModal(category)}
                       >
-                        <TouchableOpacity
-                          style={styles.createProductButton}
-                          onPress={() =>
-                            navigation.navigate("ProductoDos", {
-                              categoria_id: category.id,
-                              categoria_nombre: category.nombre,
-                            })
-                          }
-                        >
-                          <Text style={styles.createProductButtonText}>
-                            Producto
-                          </Text>
-                          <FontAwesome
-                            name="plus"
-                            size={16}
-                            color="#000"
-                            style={{ marginLeft: 5 }}
-                          />
-                        </TouchableOpacity>
-                        {/* Botón Servicio - Solo mostrar para categorías de servicios */}
-                        {globalCategory &&
-                          globalCategory.tipo_categoria === "servicios" && (
-                            <TouchableOpacity
-                              style={[
-                                styles.createProductButton,
-                                { marginLeft: 10 },
-                              ]}
-                              onPress={() =>
-                                navigation.navigate("ServiciosProducto", {
-                                  categoria_id: category.id,
-                                  categoria_nombre: category.nombre,
-                                })
-                              }
-                            >
-                              <Text style={styles.createProductButtonText}>
-                                Servicio
-                              </Text>
-                              <FontAwesome
-                                name="plus"
-                                size={16}
-                                color="#000"
-                                style={{ marginLeft: 5 }}
-                              />
-                            </TouchableOpacity>
-                          )}
-                      </View>
+                        <Ionicons name="pencil" size={16} color="#FFF" />
+                      </TouchableOpacity>
+                      <TouchableOpacity
+                        style={[styles.actionBtnSmall, styles.actionBtnDelete]}
+                        onPress={() => showDeleteCategoryModal(category)}
+                      >
+                        <Ionicons name="trash" size={16} color="#FFF" />
+                      </TouchableOpacity>
                     </View>
                   </View>
+
+                  {/* Botones de agregar */}
+                  <View style={styles.categoryAddRow}>
+                    <TouchableOpacity
+                      style={styles.createProductButton}
+                      onPress={() => navigation.navigate("ProductoDos", { categoria_id: category.id, categoria_nombre: category.nombre })}
+                    >
+                      <Text style={styles.createProductButtonText}>Producto</Text>
+                      <FontAwesome name="plus" size={14} color="#FFF" style={{ marginLeft: 5 }} />
+                    </TouchableOpacity>
+                    {globalCategory && globalCategory.tipo_categoria === "servicios" && (
+                      <TouchableOpacity
+                        style={[styles.createProductButton, { marginLeft: 8 }]}
+                        onPress={() => navigation.navigate("ServiciosProducto", { categoria_id: category.id, categoria_nombre: category.nombre })}
+                      >
+                        <Text style={styles.createProductButtonText}>Servicio</Text>
+                        <FontAwesome name="plus" size={14} color="#FFF" style={{ marginLeft: 5 }} />
+                      </TouchableOpacity>
+                    )}
+                  </View>
+
                   {/* Servicios en la misma categoría - Solo mostrar para categorías de servicios */}
                   {globalCategory &&
                     globalCategory.tipo_categoria === "servicios" &&
@@ -1440,7 +1337,7 @@ const ShopDos = () => {
                                     navigation.navigate("EditarServicio", { serviceId: service.id })
                                   }
                                 >
-                                  <Ionicons name="pencil" size={16} color="#fa6205" />
+                                  <Ionicons name="pencil" size={14} color="#FFF" />
                                 </TouchableOpacity>
 
                                 <TouchableOpacity
@@ -1449,9 +1346,9 @@ const ShopDos = () => {
                                   disabled={deletingProductId === service.id}
                                 >
                                   {deletingProductId === service.id ? (
-                                    <ActivityIndicator size="small" color="#ff4d4d" />
+                                    <ActivityIndicator size="small" color="#FFF" />
                                   ) : (
-                                    <Ionicons name="trash" size={16} color="#ff4d4d" />
+                                    <Ionicons name="trash" size={14} color="#FFF" />
                                   )}
                                 </TouchableOpacity>
                               </View>
@@ -1516,7 +1413,7 @@ const ShopDos = () => {
                                     })
                                   }
                                 >
-                                  <Ionicons name="pencil" size={16} color="#fa6205" />
+                                  <Ionicons name="pencil" size={14} color="#FFF" />
                                 </TouchableOpacity>
 
                                 <View style={styles.switchContainer}>
@@ -1540,9 +1437,9 @@ const ShopDos = () => {
                                   disabled={deletingProductId === product.id}
                                 >
                                   {deletingProductId === product.id ? (
-                                    <ActivityIndicator size="small" color="#ff4d4d" />
+                                    <ActivityIndicator size="small" color="#FFF" />
                                   ) : (
-                                    <Ionicons name="trash" size={16} color="#ff4d4d" />
+                                    <Ionicons name="trash" size={14} color="#FFF" />
                                   )}
                                 </TouchableOpacity>
                               </View>
@@ -1594,6 +1491,16 @@ const ShopDos = () => {
         </View>
       )}
     </ScrollView>
+
+      <AlertaModal
+        visible={alertVisible}
+        tipo={alertRef.current.type}
+        mensaje={alertRef.current.message}
+        onCerrar={() => { setAlertVisible(false); }}
+        onPrimary={alertRef.current.onConfirm ? () => { setAlertVisible(false); alertRef.current.onConfirm(); } : undefined}
+        primaryLabel={alertRef.current.confirmLabel || undefined}
+      />
+    </>
   );
 };
 
@@ -1829,15 +1736,55 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   categoryActionButton: {
-    backgroundColor: "#ECECEC",
+    backgroundColor: "#fa6205",
     padding: 8,
-    borderRadius: 5,
-    borderWidth: 1,
-    borderColor: "#fa6205",
-    marginRight: 10,
+    borderRadius: 8,
+    marginRight: 8,
+    justifyContent: "center",
+    alignItems: "center",
+    width: 34,
+    height: 34,
   },
   deleteActionButton: {
-    borderColor: "#ff4d4d",
+    backgroundColor: "#FF3B30",
+    borderWidth: 0,
+  },
+  categoryHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 10,
+  },
+  categoryTitleRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    flex: 1,
+  },
+  categoryDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: "#fa6205",
+    marginRight: 10,
+  },
+  categoryActions: {
+    flexDirection: "row",
+  },
+  actionBtnSmall: {
+    backgroundColor: "#fa6205",
+    width: 30,
+    height: 30,
+    borderRadius: 8,
+    justifyContent: "center",
+    alignItems: "center",
+    marginLeft: 6,
+  },
+  actionBtnDelete: {
+    backgroundColor: "#FF3B30",
+  },
+  categoryAddRow: {
+    flexDirection: "row",
+    marginBottom: 14,
   },
   inputContainer: {
     marginVertical: 15,
@@ -1866,7 +1813,7 @@ const styles = StyleSheet.create({
     marginTop: 15,
   },
   saveButtonText: {
-    color: "#000",
+    color: "#FFF",
     fontSize: 16,
     fontFamily: "Montserrat_700Bold",
   },
@@ -1885,19 +1832,19 @@ const styles = StyleSheet.create({
     borderColor: "#DDD",
   },
   cancelButtonText: {
-    color: "#1C1C1E",
+    color: "#666",
     fontSize: 16,
     fontFamily: "Montserrat_700Bold",
   },
   deleteButton: {
-    backgroundColor: "#ff4d4d",
+    backgroundColor: "#FF3B30",
     padding: 15,
     borderRadius: 25,
     alignItems: "center",
     width: "48%",
   },
   deleteButtonText: {
-    color: "#1C1C1E",
+    color: "#FFF",
     fontSize: 16,
     fontFamily: "Montserrat_700Bold",
   },
@@ -1920,8 +1867,9 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    paddingHorizontal: 10,
+    paddingHorizontal: 14,
     marginTop: 10,
+    marginBottom: 16,
   },
   refreshButton: {
     backgroundColor: "#fa6205",
@@ -1944,7 +1892,7 @@ const styles = StyleSheet.create({
     elevation: 3,
   },
   saveLocationText: {
-    color: "#000",
+    color: "#FFF",
     fontFamily: "Montserrat_700Bold",
     fontSize: 12,
     marginLeft: 8,
@@ -1970,7 +1918,7 @@ const styles = StyleSheet.create({
     shadowRadius: 3.84,
   },
   createProfileText: {
-    color: "#000",
+    color: "#FFF",
     fontFamily: "Montserrat_700Bold",
     fontSize: 16,
     marginLeft: 8,
@@ -2100,7 +2048,7 @@ const styles = StyleSheet.create({
     borderRadius: 20,
   },
   createProductButtonText: {
-    color: "#000",
+    color: "#FFF",
     fontSize: 12,
     fontFamily: "Montserrat_700Bold",
   },
@@ -2139,7 +2087,38 @@ const styles = StyleSheet.create({
   },
   container: {
     flex: 1,
-    backgroundColor: "#F2F2F7",
+    backgroundColor: '#F2F2F7',
+  },
+  shopHeader: {
+    backgroundColor: "#fa6205",
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    paddingTop: 50,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+  shopHeaderLeft: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  shopHeaderAvatar: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    borderWidth: 2,
+    borderColor: "#FFF",
+  },
+  shopHeaderTitle: {
+    fontSize: 17,
+    fontFamily: "Montserrat_700Bold",
+    color: "#FFF",
+  },
+  shopHeaderSubtitle: {
+    fontSize: 11,
+    fontFamily: "Montserrat_400Regular",
+    color: "rgba(255,255,255,0.7)",
+    marginTop: 1,
   },
   headerBar: {
     flexDirection: "row",
@@ -2221,30 +2200,36 @@ const styles = StyleSheet.create({
     flexDirection: "row",
   },
   item: {
-    width: 180,
-    backgroundColor: "#F0F0F0",
-    borderRadius: 10,
+    width: 165,
+    backgroundColor: "#FFF",
+    borderRadius: 12,
     padding: 10,
     marginRight: 10,
     alignItems: "center",
     marginBottom: 10,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.08,
+    shadowRadius: 3,
+    elevation: 2,
   },
   itemImage: {
-    width: 160,
-    height: 100,
-    borderRadius: 10,
+    width: 145,
+    height: 90,
+    borderRadius: 8,
   },
   itemPrice: {
     color: "#fa6205",
-    fontSize: 16,
+    fontSize: 15,
     marginTop: 5,
     fontFamily: "Montserrat_700Bold",
   },
   itemName: {
     color: "#1C1C1E",
-    fontSize: 14,
-    marginTop: 5,
-    fontFamily: "Montserrat_400Regular",
+    fontSize: 13,
+    marginTop: 4,
+    fontFamily: "Montserrat_600SemiBold",
+    textAlign: "center",
   },
   addButton: {
     backgroundColor: "#fa6205",
@@ -2320,30 +2305,33 @@ const styles = StyleSheet.create({
     fontFamily: "Montserrat_400Regular",
   },
   noImagePlaceholder: {
-    backgroundColor: "#333",
+    backgroundColor: "#F0F0F0",
     justifyContent: "center",
     alignItems: "center",
   },
   itemActions: {
     flexDirection: "row",
-    justifyContent: "space-between",
+    justifyContent: "center",
     width: "100%",
-    marginTop: 10,
+    marginTop: 8,
     alignItems: "center",
+    gap: 8,
   },
   editButton: {
-    backgroundColor: "#ECECEC",
-    padding: 8,
-    borderRadius: 5,
-    borderWidth: 1,
-    borderColor: "#fa6205",
+    backgroundColor: "#fa6205",
+    width: 30,
+    height: 30,
+    borderRadius: 6,
+    justifyContent: "center",
+    alignItems: "center",
   },
   deleteButton: {
-    backgroundColor: "#ECECEC",
-    padding: 8,
-    borderRadius: 5,
-    borderWidth: 1,
-    borderColor: "#ff4d4d",
+    backgroundColor: "#FF3B30",
+    width: 30,
+    height: 30,
+    borderRadius: 6,
+    justifyContent: "center",
+    alignItems: "center",
   },
   switchContainer: {
     alignItems: "center",
@@ -2392,19 +2380,46 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   mainButtons: {
-    width: "95%",
-    marginHorizontal: 10
+    paddingHorizontal: 14,
+    marginBottom: 14,
   },
-  mainButton: {
+  requestRiderBanner: {
     width: "100%",
-    height: 130,
-    borderRadius: 15,
-    position: "relative",
-    overflow: "hidden",
+    height: 140,
+    borderRadius: 14,
   },
-  mainButtonImg: {
-    width: "100%",
-    height: 130,
+  shopStatusCard: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    backgroundColor: "#FFF",
+    borderRadius: 14,
+    padding: 14,
+    marginHorizontal: 14,
+    marginBottom: 14,
+  },
+  shopStatusLeft: {
+    flexDirection: "row",
+    alignItems: "center",
+    flex: 1,
+  },
+  shopStatusDot: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    backgroundColor: "#fa6205",
+    marginRight: 10,
+  },
+  shopStatusTitle: {
+    fontSize: 15,
+    fontFamily: "Montserrat_700Bold",
+    color: "#1C1C1E",
+  },
+  shopStatusHint: {
+    fontSize: 12,
+    fontFamily: "Montserrat_400Regular",
+    color: "#888",
+    marginTop: 2,
   },
   scrollHelpContainer: {
     flexDirection: 'row',     // Los alinea uno al lado del otro

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   View,
   Text,
@@ -24,6 +24,7 @@ import { useFonts } from "expo-font";
 import { useNavigation } from "@react-navigation/native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { BASE_URL } from "../../constants/url";
+import AlertaModal from "../../components/ErrorModal";
 
 const { width } = Dimensions.get("window");
 
@@ -55,6 +56,14 @@ const WalletRider = () => {
   const [riderType, setRiderType] = useState("");
   const [freePackageAvailable, setFreePackageAvailable] = useState(null);
   const [loadingFreePackageCheck, setLoadingFreePackageCheck] = useState(false);
+
+  // Sistema de alertas
+  const [alertVisible, setAlertVisible] = useState(false);
+  const alertRef = useRef({ title: "", message: "", type: "info", onConfirm: null, confirmLabel: "" });
+  const showAlert = (title, message, type = "info", onConfirm = null, confirmLabel = "") => {
+    alertRef.current = { title, message, type, onConfirm, confirmLabel };
+    setAlertVisible(true);
+  };
 
   const navigation = useNavigation();
   const [paymentProcessing, setPaymentProcessing] = useState(false);
@@ -253,10 +262,7 @@ const WalletRider = () => {
       }
     } catch (error) {
       console.error("Error al obtener suscripciones:", error);
-      Alert.alert(
-        "Error",
-        "No se pudieron cargar los paquetes disponibles. Intenta de nuevo más tarde."
-      );
+      showAlert("Error", "No se pudieron cargar los paquetes disponibles. Intenta de nuevo más tarde.");
       // Establecer paquetes por defecto para no mostrar una pantalla vacía
       setPackages([
         {
@@ -287,7 +293,7 @@ const WalletRider = () => {
   // Update the payWithMercadoPago function
   const payWithMercadoPago = async () => {
     if (!selectedPackage) {
-      Alert.alert("Error", "No se ha seleccionado ningún paquete");
+      showAlert("Error", "No se ha seleccionado ningún paquete");
       return;
     }
 
@@ -351,38 +357,17 @@ const WalletRider = () => {
       }
 
       // Show alert message before opening browser
-      Alert.alert(
-        "Redirección a Mercado Pago",
-        "Serás redirigido al sitio de Mercado Pago para completar tu pago. Vuelve a la aplicación cuando hayas finalizado.",
-        [
-          {
-            text: "Cancelar",
-            style: "cancel",
-          },
-          {
-            text: "Continuar",
-            onPress: async () => {
-              // Set processing state to true to show "procesando" indicator
-              setPaymentProcessing(true);
-
-              // Open the URL in browser
-              await Linking.openURL(paymentUrl);
-
-              // Set a timeout to show the payment complete message after 20 seconds
-              setTimeout(() => {
-                setPaymentProcessing(false);
-                setPaymentComplete(true);
-              }, 20000); // 20 seconds
-            },
-          },
-        ]
-      );
+      showAlert("Redirección a Mercado Pago", "Serás redirigido al sitio de Mercado Pago para completar tu pago. Vuelve a la aplicación cuando hayas finalizado.", "confirm", async () => {
+        setPaymentProcessing(true);
+        await Linking.openURL(paymentUrl);
+        setTimeout(() => {
+          setPaymentProcessing(false);
+          setPaymentComplete(true);
+        }, 20000);
+      }, "Continuar");
     } catch (error) {
       console.error("Error al iniciar pago con Mercado Pago:", error);
-      Alert.alert(
-        "Error",
-        "No se pudo iniciar el pago con Mercado Pago. Intente nuevamente."
-      );
+      showAlert("Error", "No se pudo iniciar el pago con Mercado Pago. Intente nuevamente.");
       setLoading(false);
       setPaymentProcessing(false);
     }
@@ -539,14 +524,7 @@ const WalletRider = () => {
     <SafeAreaView style={styles.safeContainer}>
       {/* Header */}
       <View style={styles.headerBar}>
-        <TouchableOpacity
-          onPress={() => navigation.goBack()}
-          style={styles.backButton}
-        >
-          <Ionicons name="arrow-back" size={25} color="#333333" />
-        </TouchableOpacity>
         <Text style={styles.headerTitle}>Billetera de Rider</Text>
-        <View style={styles.placeholder}></View>
       </View>
 
       {/* Main Content */}
@@ -618,7 +596,7 @@ const WalletRider = () => {
             getUserTypeAndCheckFreePackage(); // Agregar esta línea
           }}
         >
-          <Ionicons name="sync" size={16} color="#1C1C1E" />
+          <Ionicons name="sync" size={16} color="#FFF" />
           <Text style={styles.refreshButtonText}>Consultar suscripciones</Text>
         </TouchableOpacity>
 
@@ -653,7 +631,7 @@ const WalletRider = () => {
 
               <View style={styles.buyButtonContainer}>
                 <TouchableOpacity
-                  style={[styles.buyButton, { backgroundColor: pkg.color }]}
+                  style={[styles.buyButton, { backgroundColor: "#fa6205" }]}
                   onPress={() => handlePackageSelect(pkg)}
                 >
                   <Text style={styles.buyButtonText}>Comprar Ahora</Text>
@@ -676,7 +654,7 @@ const WalletRider = () => {
           style={styles.refreshButton}
           onPress={fetchSubscriptions}
         >
-          <Ionicons name="refresh" size={16} color="#1C1C1E" />
+          <Ionicons name="refresh" size={16} color="#FFF" />
           <Text style={styles.refreshButtonText}>Actualizar paquetes</Text>
         </TouchableOpacity>
 
@@ -852,6 +830,21 @@ const WalletRider = () => {
           </View>
         </View>
       </Modal>
+
+      <AlertaModal
+        visible={alertVisible}
+        tipo={alertRef.current.type}
+        mensaje={alertRef.current.message}
+        onCerrar={() => {
+          setAlertVisible(false);
+          if (!alertRef.current.onConfirm && alertRef.current.confirmLabel) return;
+        }}
+        onPrimary={alertRef.current.onConfirm ? () => {
+          setAlertVisible(false);
+          alertRef.current.onConfirm();
+        } : undefined}
+        primaryLabel={alertRef.current.confirmLabel || undefined}
+      />
     </SafeAreaView>
   );
 };
@@ -890,7 +883,7 @@ const styles = StyleSheet.create({
   },
   headerBar: {
     flexDirection: "row",
-    justifyContent: "space-between",
+    justifyContent: "center",
     alignItems: "center",
     backgroundColor: "#fa6205",
     padding: 15,
@@ -902,7 +895,7 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 22,
     fontFamily: "Montserrat_700Bold",
-    color: "#333333",
+    color: "#FFFFFF",
   },
   placeholder: {
     width: 35,
@@ -1073,7 +1066,7 @@ const styles = StyleSheet.create({
   buyButtonText: {
     fontFamily: "Montserrat_600SemiBold",
     fontSize: 14,
-    color: "#1C1C1E",
+    color: "#FFF",
   },
   infoText: {
     fontFamily: "Montserrat_400Regular",
@@ -1085,7 +1078,7 @@ const styles = StyleSheet.create({
   },
   refreshButton: {
     flexDirection: "row",
-    backgroundColor: "#DDD",
+    backgroundColor: "#fa6205",
     paddingVertical: 10,
     paddingHorizontal: 15,
     borderRadius: 20,
@@ -1096,12 +1089,12 @@ const styles = StyleSheet.create({
   refreshButtonText: {
     fontFamily: "Montserrat_400Regular",
     fontSize: 14,
-    color: "#1C1C1E",
+    color: "#FFF",
     marginLeft: 8,
   },
   // Estilos para el botón de suscripción gratuita para riders
   freeSubscriptionButton: {
-    backgroundColor: "#FF6B6B", // Color llamativo para riders
+    backgroundColor: "#fa6205",
     borderRadius: 15,
     marginHorizontal: 16,
     marginBottom: 20,
@@ -1129,13 +1122,13 @@ const styles = StyleSheet.create({
   freeSubscriptionTitle: {
     fontFamily: "Montserrat_700Bold",
     fontSize: 16,
-    color: "#1C1C1E",
+    color: "#FFF",
     marginBottom: 2,
   },
   freeSubscriptionSubtitle: {
     fontFamily: "Montserrat_400Regular",
     fontSize: 13,
-    color: "#1C1C1E",
+    color: "#FFF",
     opacity: 0.9,
   },
   // Estilos para el modal de suscripción gratuita
@@ -1321,7 +1314,7 @@ const styles = StyleSheet.create({
   mercadoPagoButtonText: {
     fontFamily: "Montserrat_600SemiBold",
     fontSize: 16,
-    color: "#1C1C1E",
+    color: "#FFF",
   },
   loadingPayment: {
     alignItems: "center",
@@ -1371,7 +1364,7 @@ const styles = StyleSheet.create({
   doneButtonText: {
     fontFamily: "Montserrat_600SemiBold",
     fontSize: 16,
-    color: "#1C1C1E",
+    color: "#FFF",
   },
   // Estilos para suscripciones activas
   activeSubscriptionsContainer: {

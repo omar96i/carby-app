@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import { Entypo, FontAwesome } from "@expo/vector-icons";
 import {
   View,
@@ -20,7 +20,8 @@ import {
   Montserrat_300Light,
 } from "@expo-google-fonts/montserrat";
 import { useFonts } from "expo-font";
-import { useNavigation, useRoute } from "@react-navigation/native";
+import { useNavigation, useRoute, useFocusEffect } from "@react-navigation/native";
+import AlertaModal from "../../components/ErrorModal";
 import * as ImagePicker from "expo-image-picker";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { BASE_URL } from "../../constants/url";
@@ -47,6 +48,18 @@ const EditarProducto = () => {
   const [isLoadingProduct, setIsLoadingProduct] = useState(true);
   const [originalImageUrl, setOriginalImageUrl] = useState(null);
 
+  useFocusEffect(useCallback(() => {
+    navigation.getParent()?.setOptions({ tabBarStyle: { display: "none" } });
+    return () => navigation.getParent()?.setOptions({ tabBarStyle: { backgroundColor: '#FFF', height: 56, borderTopWidth: 1, borderTopColor: '#F0F0F0', display: 'flex' } });
+  }, [navigation]));
+
+  const [alertVisible, setAlertVisible] = useState(false);
+  const [alertData, setAlertData] = useState({ title: "", message: "", type: "info", onConfirm: null });
+  const showAlert = (title, message, type, onConfirm) => {
+    setAlertData({ title, message, type: type || (title === "Éxito" ? "success" : "error"), onConfirm });
+    setAlertVisible(true);
+  };
+
   // Estados para adicionales
   const [adicionales, setAdicionales] = useState([]);
   const [loadingAdicionales, setLoadingAdicionales] = useState(false);
@@ -66,10 +79,7 @@ const EditarProducto = () => {
       const { status } =
         await ImagePicker.requestMediaLibraryPermissionsAsync();
       if (status !== "granted") {
-        Alert.alert(
-          "Permiso requerido",
-          "Se necesita permiso para acceder a la galería"
-        );
+        showAlert("Permiso requerido", "Se necesita permiso para acceder a la galería");
       }
 
       // Cargar datos del producto
@@ -84,7 +94,7 @@ const EditarProducto = () => {
       const token = await AsyncStorage.getItem("userToken");
 
       if (!token) {
-        Alert.alert("Error", "No se encontró el token de autenticación");
+        showAlert("Error", "No se encontró el token de autenticación");
         setIsLoadingProduct(false);
         return;
       }
@@ -119,15 +129,12 @@ const EditarProducto = () => {
           setOriginalImageUrl(imageUrl);
         }
       } else {
-        Alert.alert(
-          "Error",
-          data.message || "No se pudo obtener la información del producto"
-        );
+        showAlert("Error", data.message || "No se pudo obtener la información del producto");
         navigation.goBack();
       }
     } catch (error) {
       console.error("Error al cargar producto:", error);
-      Alert.alert("Error", "Ocurrió un error al cargar los datos del producto");
+      showAlert("Error", "Ocurrió un error al cargar los datos del producto");
       navigation.goBack();
     } finally {
       setIsLoadingProduct(false);
@@ -236,7 +243,7 @@ const EditarProducto = () => {
   // Función para crear o editar adicional
   const handleAdicionalSubmit = async () => {
     if (!adicionalNombre || !adicionalDescripcion || !adicionalPrecio) {
-      Alert.alert("Error", "Todos los campos son obligatorios");
+      showAlert("Error", "Todos los campos son obligatorios");
       return;
     }
 
@@ -245,7 +252,7 @@ const EditarProducto = () => {
       const token = await AsyncStorage.getItem("userToken");
 
       if (!token) {
-        Alert.alert("Error", "No se encontró el token de autenticación");
+        showAlert("Error", "No se encontró el token de autenticación");
         return;
       }
 
@@ -294,25 +301,17 @@ const EditarProducto = () => {
         const responseData = await response.json();
         console.log("Respuesta del servidor:", responseData);
 
-        Alert.alert(
-          "Éxito",
-          editingAdicional
-            ? "Adicional actualizado correctamente"
-            : "Adicional creado correctamente"
-        );
+        showAlert("Éxito", editingAdicional ? "Adicional actualizado correctamente" : "Adicional creado correctamente", "success");
         closeAdicionalModal();
         await fetchAdicionales(); // Recargar la lista con la nueva ruta
       } else {
         const errorData = await response.json().catch(() => ({}));
         console.log("Error del servidor:", errorData);
-        Alert.alert(
-          "Error",
-          errorData.message || "No se pudo guardar el adicional"
-        );
+        showAlert("Error", errorData.message || "No se pudo guardar el adicional");
       }
     } catch (error) {
       console.error("Error al guardar adicional:", error);
-      Alert.alert("Error", "Ocurrió un error al guardar el adicional");
+      showAlert("Error", "Ocurrió un error al guardar el adicional");
     } finally {
       setLoadingAdicional(false);
     }
@@ -320,57 +319,29 @@ const EditarProducto = () => {
 
   // Función para eliminar adicional - RUTA CORREGIDA
   const eliminarAdicional = (adicional) => {
-    Alert.alert(
-      "Confirmar eliminación",
-      `¿Estás seguro de que quieres eliminar "${adicional.nombre}"?`,
-      [
-        { text: "Cancelar", style: "cancel" },
-        {
-          text: "Eliminar",
-          style: "destructive",
-          onPress: async () => {
-            try {
-              const token = await AsyncStorage.getItem("userToken");
-
-              if (!token) {
-                Alert.alert(
-                  "Error",
-                  "No se encontró el token de autenticación"
-                );
-                return;
-              }
-
-              // RUTA CORREGIDA: DELETE producto-adicionales/{id}
-              const response = await fetch(
-                `${BASE_URL}producto-adicionales/${adicional.id}`,
-                {
-                  method: "DELETE",
-                  headers: {
-                    Accept: "application/json",
-                    Authorization: `Bearer ${token}`,
-                  },
-                }
-              );
-
-              if (response.ok) {
-                Alert.alert("Éxito", "Adicional eliminado correctamente");
-                await fetchAdicionales(); // Recargar la lista
-              } else {
-                const errorData = await response.json().catch(() => ({}));
-                console.log("Error al eliminar adicional:", errorData);
-                Alert.alert(
-                  "Error",
-                  errorData.message || "No se pudo eliminar el adicional"
-                );
-              }
-            } catch (error) {
-              console.error("Error al eliminar adicional:", error);
-              Alert.alert("Error", "Ocurrió un error al eliminar el adicional");
-            }
-          },
-        },
-      ]
-    );
+    showAlert("Confirmar eliminación", `¿Estás seguro de que quieres eliminar "${adicional.nombre}"?`, "confirm", async () => {
+      try {
+        const token = await AsyncStorage.getItem("userToken");
+        if (!token) {
+          showAlert("Error", "No se encontró el token de autenticación");
+          return;
+        }
+        const response = await fetch(`${BASE_URL}producto-adicionales/${adicional.id}`, {
+          method: "DELETE",
+          headers: { Accept: "application/json", Authorization: `Bearer ${token}` },
+        });
+        if (response.ok) {
+          showAlert("Éxito", "Adicional eliminado correctamente", "success");
+          loadAdicionales();
+        } else {
+          const errorData = await response.json().catch(() => ({}));
+          showAlert("Error", errorData.message || "No se pudo eliminar el adicional");
+        }
+      } catch (error) {
+        console.error("Error al eliminar adicional:", error);
+        showAlert("Error", "Ocurrió un error al eliminar el adicional");
+      }
+    }, "Eliminar");
   };
 
   if (!fontsLoaded || isLoadingProduct) {
@@ -378,11 +349,11 @@ const EditarProducto = () => {
       <View style={styles.loadingContainer}>
         <ActivityIndicator size="large" color="#fa6205" />
         <Text style={styles.loadingText}>Cargando producto...</Text>
-      </View>
-    );
-  }
+    </View>
+  );
+}
 
-  // Image picker function
+// Image picker function
   const pickImage = async () => {
     let result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
@@ -399,7 +370,7 @@ const EditarProducto = () => {
   // Form submission for updating the product
   const handleSubmit = async () => {
     if (!nombre || !precio || !descripcion) {
-      Alert.alert("Error", "Nombre, precio y descripción son obligatorios");
+      showAlert("Error", "Nombre, precio y descripción son obligatorios");
       return;
     }
 
@@ -409,7 +380,7 @@ const EditarProducto = () => {
       const token = await AsyncStorage.getItem("userToken");
 
       if (!token) {
-        Alert.alert("Error", "No se encontró el token de autenticación");
+        showAlert("Error", "No se encontró el token de autenticación");
         setLoading(false);
         return;
       }
@@ -442,19 +413,16 @@ const EditarProducto = () => {
       });
 
       if (response.ok) {
-        Alert.alert("Éxito", "Producto actualizado correctamente");
+        showAlert("Éxito", "Producto actualizado correctamente", "success", () => navigation.goBack());
         navigation.goBack();
       } else {
         console.log(response.json().catch())
         const errorData = await response.json().catch(() => ({}));
-        Alert.alert(
-          "Error",
-          errorData.message || "No se pudo actualizar el producto"
-        );
+        showAlert("Error", errorData.message || "No se pudo actualizar el producto");
       }
     } catch (error) {
       console.error("Error al actualizar producto:", error);
-      Alert.alert("Error", "Ocurrió un error al actualizar el producto");
+      showAlert("Error", "Ocurrió un error al actualizar el producto");
     } finally {
       setLoading(false);
     }
@@ -493,25 +461,26 @@ const EditarProducto = () => {
           style={styles.editButton}
           onPress={() => openAdicionalModal(item)}
         >
-          <Ionicons name="pencil" size={20} color="#fa6205" />
+          <Ionicons name="pencil" size={16} color="#FFF" />
         </TouchableOpacity>
         <TouchableOpacity
           style={styles.deleteButton}
           onPress={() => eliminarAdicional(item)}
         >
-          <Ionicons name="trash" size={20} color="#FF6B6B" />
+          <Ionicons name="trash" size={16} color="#FFF" />
         </TouchableOpacity>
       </View>
     </View>
   );
 
   return (
+    <>
     <View style={styles.container}>
       <ScrollView>
         {/* Header */}
         <View style={styles.header}>
           <TouchableOpacity onPress={() => navigation.goBack()}>
-            <Ionicons name="arrow-back" size={24} color="black" />
+            <Ionicons name="arrow-back" size={24} color="#FFF" />
           </TouchableOpacity>
           <Text style={styles.headerText}>
             Editar Producto - {categoria_nombre}
@@ -597,7 +566,7 @@ const EditarProducto = () => {
               style={styles.addAdicionalButton}
               onPress={() => openAdicionalModal()}
             >
-              <Ionicons name="add" size={24} color="#000" />
+              <Ionicons name="add" size={24} color="#FFF" />
               <Text style={styles.addAdicionalText}>Agregar</Text>
             </TouchableOpacity>
           </View>
@@ -730,7 +699,7 @@ const EditarProducto = () => {
                   disabled={loadingAdicional}
                 >
                   {loadingAdicional ? (
-                    <ActivityIndicator size="small" color="#000" />
+<ActivityIndicator size="small" color="#FFF" />
                   ) : (
                     <Text style={styles.modalSaveText}>
                       {editingAdicional ? "Actualizar" : "Crear"}
@@ -743,6 +712,17 @@ const EditarProducto = () => {
         </View>
       </Modal>
     </View>
+
+      <AlertaModal
+        visible={alertVisible}
+        tipo={alertData.type}
+        mensaje={alertData.message}
+        onCerrar={() => {
+          setAlertVisible(false);
+          if (alertData.onConfirm) alertData.onConfirm();
+        }}
+      />
+    </>
   );
 };
 
@@ -774,7 +754,7 @@ const styles = StyleSheet.create({
   headerText: {
     fontSize: 16,
     fontWeight: "bold",
-    color: "black",
+    color: "#FFF",
     fontFamily: "Montserrat_700Bold",
   },
   imagePickerContainer: {
@@ -813,9 +793,11 @@ const styles = StyleSheet.create({
     marginTop: 15,
   },
   input: {
-    backgroundColor: "#ECECEC",
-    borderRadius: 8,
-    padding: 12,
+    backgroundColor: "#FFF",
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: "#DDD",
+    padding: 14,
     fontSize: 16,
     color: "#1C1C1E",
     fontFamily: "Montserrat_400Regular",
@@ -841,7 +823,7 @@ const styles = StyleSheet.create({
     marginBottom: 30,
   },
   buttonText: {
-    color: "#000",
+    color: "#FFF",
     fontSize: 20,
     fontWeight: "bold",
     fontFamily: "Montserrat_700Bold",
@@ -871,9 +853,10 @@ const styles = StyleSheet.create({
     borderRadius: 20,
   },
   addAdicionalText: {
-    color: "#000",
+    color: "#FFF",
     fontFamily: "Montserrat_700Bold",
-    marginLeft: 5,
+    fontSize: 14,
+    marginLeft: 8,
   },
   loadingAdicionales: {
     flexDirection: "row",
@@ -953,15 +936,23 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   editButton: {
-    backgroundColor: "#333",
-    padding: 8,
-    borderRadius: 20,
+    backgroundColor: "#fa6205",
+    padding: 7,
+    borderRadius: 6,
     marginRight: 8,
+    width: 30,
+    height: 30,
+    justifyContent: "center",
+    alignItems: "center",
   },
   deleteButton: {
-    backgroundColor: "#333",
-    padding: 8,
-    borderRadius: 20,
+    backgroundColor: "#FF3B30",
+    padding: 7,
+    borderRadius: 6,
+    width: 30,
+    height: 30,
+    justifyContent: "center",
+    alignItems: "center",
   },
   // Estilos para el modal
   modalOverlay: {
@@ -971,7 +962,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   modalContent: {
-    backgroundColor: "#ECECEC",
+    backgroundColor: "#FFF",
     borderRadius: 15,
     width: "90%",
     maxHeight: "80%",
@@ -1008,7 +999,7 @@ const styles = StyleSheet.create({
   modalPlaceholder: {
     width: "100%",
     height: "100%",
-    backgroundColor: "#333",
+    backgroundColor: "#F0F0F0",
     justifyContent: "center",
     alignItems: "center",
     borderRadius: 10,
@@ -1029,8 +1020,10 @@ const styles = StyleSheet.create({
     marginTop: 15,
   },
   modalInput: {
-    backgroundColor: "#333",
-    borderRadius: 8,
+    backgroundColor: "#F5F5F5",
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: "#DDD",
     padding: 12,
     fontSize: 16,
     color: "#1C1C1E",
@@ -1047,7 +1040,7 @@ const styles = StyleSheet.create({
     paddingBottom: 40
   },
   modalCancelButton: {
-    backgroundColor: "#666",
+    backgroundColor: "#DDD",
     paddingVertical: 12,
     paddingHorizontal: 20,
     borderRadius: 8,
@@ -1055,7 +1048,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   modalCancelText: {
-    color: "#1C1C1E",
+    color: "#666",
     fontFamily: "Montserrat_700Bold",
   },
   modalSaveButton: {
@@ -1067,7 +1060,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   modalSaveText: {
-    color: "#000",
+    color: "#FFF",
     fontFamily: "Montserrat_700Bold",
   },
   modalHelperText: {

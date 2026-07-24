@@ -404,7 +404,7 @@ const ChatScreen = ({ tripId }) => {
 
       <View style={styles.inputContainer}>
         <TouchableOpacity style={styles.iconButton} onPress={handlePickImageAndSend}>
-          <FontAwesome name="camera" size={24} color="black" />
+          <FontAwesome name="camera" size={22} color="#fa6205" />
         </TouchableOpacity>
 
         <TextInput
@@ -421,8 +421,8 @@ const ChatScreen = ({ tripId }) => {
         >
           <FontAwesome
             name={isLoading ? "circle-o-notch" : "paper-plane"}
-            size={24}
-            color="#1C1C1E"
+            size={20}
+            color="#FFF"
           />
         </TouchableOpacity>
       </View>
@@ -431,10 +431,10 @@ const ChatScreen = ({ tripId }) => {
 };
 
 const styles = StyleSheet.create({
-  container: {
+    container: {
     flex: 1,
     padding: 10,
-    backgroundColor: "#F5F5F5",
+    backgroundColor: "#F2F2F7",
     marginBottom: 70,
     borderRadius: 20,
   },
@@ -480,12 +480,12 @@ const styles = StyleSheet.create({
     maxWidth: '85%',
   },
   myMessageContainer: {
-    alignSelf: 'flex-end', // Mensajes del usuario a la derecha
-    backgroundColor: "#fa6205", // Verde para mensajes del usuario
+    alignSelf: 'flex-end',
+    backgroundColor: "#fa6205",
   },
   otherMessageContainer: {
-    alignSelf: 'flex-start', // Mensajes del rider a la izquierda
-    backgroundColor: "white", // Blanco para mensajes del rider
+    alignSelf: 'flex-start',
+    backgroundColor: "#FFF",
   },
   messageHeader: {
     flexDirection: 'row',
@@ -498,7 +498,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   myUserName: {
-    color: "#1C1C1E", // Texto blanco para mensajes del usuario (sobre fondo verde)
+    color: "#FFF",
   },
   otherUserName: {
     color: "#333", // Texto oscuro para mensajes del rider (sobre fondo blanco)
@@ -531,7 +531,7 @@ const styles = StyleSheet.create({
     marginTop: 5,
   },
   myMessageText: {
-    color: "#1C1C1E", // Texto blanco para mensajes del usuario
+    color: "#FFF",
   },
   otherMessageText: {
     color: "#333", // Texto oscuro para mensajes del rider
@@ -539,18 +539,20 @@ const styles = StyleSheet.create({
   inputContainer: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "white",
+    backgroundColor: "#FFF",
     borderRadius: 30,
     paddingHorizontal: 10,
     paddingVertical: 5,
     marginTop: 10,
+    borderWidth: 1,
+    borderColor: '#E0E0E0',
   },
   input: {
     flex: 1,
     paddingHorizontal: 10,
   },
   sendButton: {
-    backgroundColor: "green",
+    backgroundColor: "#fa6205",
     padding: 10,
     borderRadius: 30,
     marginLeft: 5,

@@ -573,7 +573,7 @@ export default function HomeDelivery() {
       {!isEnabled && (
         <View style={styles.offlineContainer}>
           <TouchableOpacity style={styles.bigConnectButton} onPress={toggleConnection} disabled={checkingSubscription}>
-            {checkingSubscription ? <ActivityIndicator size="large" color="#000" /> : <Text style={styles.connectText}>CONECTARSE</Text>}
+            {checkingSubscription ? <ActivityIndicator size="large" color="#FFF" /> : <Text style={styles.connectText}>CONECTARSE</Text>}
           </TouchableOpacity>
           <Text style={styles.offlineLabel}>Estás desconectado</Text>
         </View>
@@ -583,7 +583,7 @@ export default function HomeDelivery() {
       {isEnabled && (
         <View style={styles.bottomSheetContainer}>
           <TouchableOpacity style={styles.powerBtn} onPress={toggleConnection}>
-            <Ionicons name="power" size={20} color="#1C1C1E" />
+            <Ionicons name="power" size={20} color="#FFF" />
           </TouchableOpacity>
 
           {currentTrip ? (
@@ -606,7 +606,7 @@ export default function HomeDelivery() {
                   <View>
                     <Text style={styles.serviceType}>{currentTrip.tipo_servicio || "Delivery"}</Text>
                     <View style={styles.distanceBadge}>
-                      <Ionicons name="navigate" size={12} color="#000" />
+                      <Ionicons name="navigate" size={12} color="#FFF" />
                       <Text style={styles.distanceBadgeText}>{distanceFromMe ? `${distanceFromMe} km para llegar` : "..."}</Text>
                     </View>
                   </View>
@@ -693,8 +693,8 @@ export default function HomeDelivery() {
                 <MaterialCommunityIcons name="close-circle" size={50} color="#FF4757" />
                 <Text style={[styles.modalTitle, { color: '#FF4757' }]}>No se pudo aceptar</Text>
                 <Text style={styles.modalText}>{acceptErrorMsg}</Text>
-                <TouchableOpacity style={[styles.modalActionBtn, { backgroundColor: "#ECECEC", borderWidth: 1, borderColor: '#FF4757', marginTop: 10 }]} onPress={closeAcceptModal}>
-                  <Text style={[styles.modalActionText, { color: '#FF4757' }]}>Cerrar</Text>
+                <TouchableOpacity style={[styles.modalActionBtn, { backgroundColor: "#FFF", borderWidth: 1.5, borderColor: '#fa6205', marginTop: 10 }]} onPress={closeAcceptModal}>
+                  <Text style={[styles.modalActionText, { color: '#fa6205' }]}>Cerrar</Text>
                 </TouchableOpacity>
               </>
             )}
@@ -747,7 +747,7 @@ export default function HomeDelivery() {
                         <View style={styles.miniPointRow}><View style={[styles.miniDot, { backgroundColor: '#FF4757' }]} /><Text style={styles.miniPointText} numberOfLines={1}>{info.destino}</Text></View>
                       </View>
                       <TouchableOpacity style={styles.recoverBtn} onPress={() => handleRestore(item.id)}>
-                        <MaterialCommunityIcons name="restore" size={24} color="#000" />
+                        <MaterialCommunityIcons name="restore" size={24} color="#FFF" />
                       </TouchableOpacity>
                     </View>
                   );
@@ -788,12 +788,12 @@ const styles = StyleSheet.create({
 
   rejectedListBtn: { backgroundColor: 'rgba(255, 255, 255, 0.95)', paddingHorizontal: 15, height: 54, borderRadius: 27, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: '#DDD', flexDirection: 'row' },
   rejectedBadge: { position: 'absolute', top: -5, right: -5, backgroundColor: '#FF4757', width: 20, height: 20, borderRadius: 10, justifyContent: 'center', alignItems: 'center', zIndex: 2 },
-  rejectedBadgeText: { color: '#1C1C1E', fontSize: 10, fontFamily: 'Montserrat_700Bold' },
+  rejectedBadgeText: { color: '#FFF', fontSize: 10, fontFamily: 'Montserrat_700Bold' },
   rejectedListText: { color: '#1C1C1E', marginLeft: 8, fontFamily: 'Montserrat_600SemiBold', fontSize: 12 },
 
   offlineContainer: { position: 'absolute', bottom: 50, width: '100%', alignItems: 'center', zIndex: 20 },
   bigConnectButton: { width: 80, height: 80, borderRadius: 40, backgroundColor: '#fa6205', justifyContent: 'center', alignItems: 'center', shadowColor: "#fa6205", shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0.8, shadowRadius: 20, elevation: 10, marginBottom: 15 },
-  connectText: { color: '#000', fontFamily: 'Montserrat_700Bold', fontSize: 10 },
+  connectText: { color: '#FFF', fontFamily: 'Montserrat_700Bold', fontSize: 10 },
   offlineLabel: { color: '#1C1C1E', fontFamily: 'Montserrat_500Medium', backgroundColor: 'rgba(0,0,0,0.1)', paddingHorizontal: 12, paddingVertical: 4, borderRadius: 12 },
 
   bottomSheetContainer: { position: 'absolute', bottom: 30, left: 20, right: 20, zIndex: 20 },
@@ -810,7 +810,7 @@ const styles = StyleSheet.create({
   tripHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 15 },
   serviceType: { color: '#888', fontFamily: 'Montserrat_700Bold', fontSize: 12, textTransform: 'uppercase', letterSpacing: 1 },
   distanceBadge: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#fa6205', paddingHorizontal: 8, paddingVertical: 2, borderRadius: 6, marginTop: 5, alignSelf: 'flex-start' },
-  distanceBadgeText: { color: '#000', fontFamily: 'Montserrat_700Bold', fontSize: 11, marginLeft: 4 },
+  distanceBadgeText: { color: '#FFF', fontFamily: 'Montserrat_700Bold', fontSize: 11, marginLeft: 4 },
   tripPrice: { color: '#1C1C1E', fontFamily: 'Montserrat_700Bold', fontSize: 26 },
   pointsContainer: { marginBottom: 20 },
   pointRow: { flexDirection: 'row', alignItems: 'center', marginVertical: 2 },
@@ -822,7 +822,7 @@ const styles = StyleSheet.create({
   rejectBtn: { width: 50, height: 50, borderRadius: 25, backgroundColor: '#F0F0F0', justifyContent: 'center', alignItems: 'center', borderWidth: 1, borderColor: '#FF4757', marginRight: 15 },
   acceptBtnContainer: { flex: 1, height: 50, borderRadius: 25, justifyContent: 'center', alignItems: 'center', backgroundColor: "#ECECEC", overflow: 'hidden', borderWidth: 1, borderColor: '#fa6205' },
   acceptBtnProgress: { position: 'absolute', left: 0, top: 0, bottom: 0, backgroundColor: '#fa6205' },
-  acceptText: { color: '#000', fontFamily: 'Montserrat_700Bold', fontSize: 16, zIndex: 10, textShadowColor: 'rgba(255, 255, 255, 0.5)', textShadowOffset: { width: 0, height: 0 }, textShadowRadius: 3 },
+  acceptText: { color: '#FFF', fontFamily: 'Montserrat_700Bold', fontSize: 16, zIndex: 10 },
 
   searchingCard: { backgroundColor: '#FFFFFF', borderRadius: 24, padding: 30, alignItems: 'center', borderWidth: 1, borderColor: '#DDD' },
   searchingText: { color: '#1C1C1E', fontFamily: 'Montserrat_600SemiBold', fontSize: 16, marginTop: 15 },
@@ -834,12 +834,12 @@ const styles = StyleSheet.create({
   modalText: { color: '#333', textAlign: 'center', marginBottom: 20, fontFamily: 'Montserrat_400Regular' },
   modalButtons: { flexDirection: 'row', marginTop: 20, width: '100%', justifyContent: 'space-between' },
   modalButton: { paddingVertical: 10, paddingHorizontal: 20, borderRadius: 20, minWidth: 100, alignItems: 'center' },
-  cancelButton: { backgroundColor: "#ECECEC", borderWidth: 1, borderColor: '#DDD' },
-  cancelButtonText: { color: '#1C1C1E', fontFamily: 'Montserrat_600SemiBold' },
+  cancelButton: { backgroundColor: "#FFF", borderWidth: 1.5, borderColor: '#fa6205' },
+  cancelButtonText: { color: '#fa6205', fontFamily: 'Montserrat_600SemiBold' },
   subscribeButton: { backgroundColor: '#fa6205' },
-  subscribeButtonText: { color: '#000', fontFamily: 'Montserrat_700Bold' },
+  subscribeButtonText: { color: '#FFF', fontFamily: 'Montserrat_700Bold' },
   modalActionBtn: { backgroundColor: '#fa6205', paddingHorizontal: 30, paddingVertical: 12, borderRadius: 25 },
-  modalActionText: { color: '#000', fontFamily: 'Montserrat_700Bold' },
+  modalActionText: { color: '#FFF', fontFamily: 'Montserrat_700Bold' },
 
   modalFullOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.9)', justifyContent: 'flex-end' },
   rejectedListContainer: { backgroundColor: '#FFFFFF', borderTopLeftRadius: 25, borderTopRightRadius: 25, padding: 20, maxHeight: '70%' },

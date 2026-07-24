@@ -372,7 +372,7 @@ export default function ChatComercioRider({ route, navigation }) {
             style={styles.botonVolver}
             onPress={() => navigation.goBack()}
           >
-            <FontAwesome name="arrow-left" size={20} color="#1C1C1E" />
+            <FontAwesome name="arrow-left" size={20} color="#FFF" />
           </TouchableOpacity>
 
           <View style={styles.infoPedido}>
@@ -421,7 +421,7 @@ export default function ChatComercioRider({ route, navigation }) {
             <FontAwesome
               name={enviando ? "clock-o" : "send"}
               size={20}
-              color="#1C1C1E"
+              color="#FFF"
             />
           </TouchableOpacity>
         </View>
@@ -458,12 +458,12 @@ const styles = StyleSheet.create({
     width: 40,
   },
   textoPedido: {
-    color: '#1C1C1E',
+    color: '#FFF',
     fontSize: 16,
     fontWeight: 'bold',
   },
   textoRider: {
-    color: '#1C1C1E',
+    color: '#FFF',
     fontSize: 14,
     opacity: 0.9,
   },
@@ -511,7 +511,7 @@ const styles = StyleSheet.create({
     lineHeight: 20,
   },
   textoMio: {
-    color: '#1C1C1E',
+    color: '#FFF',
   },
   textoOtro: {
     color: '#333',
@@ -542,8 +542,7 @@ const styles = StyleSheet.create({
   },
   textInput: {
     flex: 1,
-    borderWidth: 1,
-    borderColor: '#e0e0e0',
+    backgroundColor: '#F5F5F5',
     borderRadius: 20,
     paddingHorizontal: 15,
     paddingVertical: 10,

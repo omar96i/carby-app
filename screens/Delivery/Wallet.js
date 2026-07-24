@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   View,
   Text,
@@ -26,6 +26,7 @@ import { useFonts } from "expo-font";
 import { useNavigation } from "@react-navigation/native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { BASE_URL } from "../../constants/url";
+import AlertaModal from "../../components/ErrorModal";
 import * as ImagePicker from "expo-image-picker";
 
 const { width } = Dimensions.get("window");
@@ -63,6 +64,13 @@ const Wallet = () => {
   const [userType, setUserType] = useState("");
   const [freePackageAvailable, setFreePackageAvailable] = useState(null);
   const [loadingFreePackageCheck, setLoadingFreePackageCheck] = useState(false);
+
+  const [alertVisible, setAlertVisible] = useState(false);
+  const [alertData, setAlertData] = useState({ title: "", message: "", type: "info", onConfirm: null });
+  const showAlert = (title, message, type, onConfirm) => {
+    setAlertData({ title, message, type: type || (title === "Éxito" ? "success" : "error"), onConfirm });
+    setAlertVisible(true);
+  };
 
   const totaldia = totalPermittedSales - totalConsumed;
   const navigation = useNavigation();
@@ -317,7 +325,7 @@ const Wallet = () => {
       }
     } catch (error) {
       console.error("Error al tomar foto:", error);
-      Alert.alert("Error", "No se pudo tomar la foto. Intente nuevamente.");
+      showAlert("Error", "No se pudo tomar la foto. Intente nuevamente.");
     }
   };
 
@@ -331,7 +339,7 @@ const Wallet = () => {
   // Nueva función para manejar el pago por link
   const handlePaymentLink = async () => {
     if (!selectedPackage) {
-      Alert.alert("Error", "No se ha seleccionado ningún paquete");
+      showAlert("Error", "No se ha seleccionado ningún paquete");
       return;
     }
 
@@ -437,7 +445,7 @@ const Wallet = () => {
       }
     } catch (error) {
       console.error("Error en proceso de pago:", error);
-      Alert.alert("Error", "No se pudo procesar el pago. Intente nuevamente.");
+      showAlert("Error", "No se pudo procesar el pago. Intente nuevamente.");
       setLoading(false);
     }
   };
@@ -445,12 +453,12 @@ const Wallet = () => {
   // Función para enviar la suscripción con el comprobante
   const submitPaymentProof = async () => {
     if (!paymentImage) {
-      Alert.alert("Error", "Por favor cargue un comprobante de pago");
+      showAlert("Error", "Por favor cargue un comprobante de pago");
       return;
     }
 
     if (!selectedPackage) {
-      Alert.alert("Error", "No se ha seleccionado ningún paquete");
+      showAlert("Error", "No se ha seleccionado ningún paquete");
       return;
     }
 
@@ -636,13 +644,13 @@ const Wallet = () => {
   const getStatusColor = (status) => {
     switch (status) {
       case "aprobado":
-        return "#fa6205"; // Verde
+        return "#fa6205";
       case "pendiente":
-        return "#F39C12"; // Amarillo
+        return "#F39C12";
       case "rechazado":
-        return "#E74C3C"; // Rojo
+        return "#E74C3C";
       default:
-        return "#95A5A6"; // Gris
+        return "#95A5A6";
     }
   };
 
@@ -698,7 +706,7 @@ const Wallet = () => {
   // Función para reclamar suscripción gratuita
   const claimFreeSubscription = async () => {
     if (!freePackageAvailable) {
-      Alert.alert("Error", "No hay paquete gratuito disponible");
+      showAlert("Error", "No hay paquete gratuito disponible");
       return;
     }
 
@@ -770,27 +778,9 @@ const Wallet = () => {
     <SafeAreaView style={styles.safeContainer}>
       {/* Header */}
       <View style={styles.headerBar}>
-        <TouchableOpacity
-          onPress={() => navigation.goBack()}
-          style={styles.backButton}
-        >
-          <Ionicons name="arrow-back" size={25} color="#333333" />
-        </TouchableOpacity>
         <Text style={styles.headerTitle}>Mi Billetera</Text>
-        <View style={styles.placeholder}></View>
       </View>
-      <TouchableOpacity
-        style={styles.refreshButton}
-        onPress={() => {
-          fetchSubscriptions();
-          fetchActiveSubscriptions();
-          fetchUserStoreStatus();
-          getUserTypeAndCheckFreePackage(); // Agregar esta línea
-        }}
-      >
-        <Ionicons name="refresh" size={16} color="#1C1C1E" />
-        <Text style={styles.refreshButtonText}>Actualizar datos</Text>
-      </TouchableOpacity>
+
       {/* Loading indicator para verificación de paquete gratuito */}
       {loadingFreePackageCheck && (
         <View style={styles.loadingFreePackageContainer}>
@@ -818,7 +808,7 @@ const Wallet = () => {
             <FontAwesome5
               name="gift"
               size={20}
-              color="#1C1C1E"
+              color="#FFF"
               style={styles.giftIcon}
             />
             <View style={styles.freeSubscriptionTextContainer}>
@@ -829,7 +819,7 @@ const Wallet = () => {
                 {freePackageAvailable?.nombre || "Paquete gratuito disponible"}
               </Text>
             </View>
-            <Ionicons name="arrow-forward" size={20} color="#1C1C1E" />
+            <Ionicons name="arrow-forward" size={20} color="#FFF" />
           </View>
         </TouchableOpacity>
       )}
@@ -1174,6 +1164,16 @@ const Wallet = () => {
           </View>
         </View>
       </Modal>
+
+      <AlertaModal
+        visible={alertVisible}
+        tipo={alertData.type}
+        mensaje={alertData.message}
+        onCerrar={() => {
+          setAlertVisible(false);
+          if (alertData.onConfirm) alertData.onConfirm();
+        }}
+      />
     </SafeAreaView>
   );
 };
@@ -1192,22 +1192,16 @@ const styles = StyleSheet.create({
   },
   headerBar: {
     flexDirection: "row",
-    justifyContent: "space-between",
+    justifyContent: "center",
     alignItems: "center",
     backgroundColor: "#fa6205",
     padding: 15,
-    marginTop: 30,
-  },
-  backButton: {
-    padding: 5,
+    paddingTop: Platform.OS === "android" ? 45 : 15,
   },
   headerTitle: {
-    fontSize: 22,
+    fontSize: 20,
     fontFamily: "Montserrat_700Bold",
-    color: "#333333",
-  },
-  placeholder: {
-    width: 35,
+    color: "#FFF",
   },
   container: {
     flex: 1,
@@ -1216,7 +1210,7 @@ const styles = StyleSheet.create({
     padding: 16,
   },
   balanceCard: {
-    backgroundColor: "#333",
+    backgroundColor: "#FFF",
     borderRadius: 15,
     padding: 20,
     marginBottom: 20,
@@ -1237,7 +1231,7 @@ const styles = StyleSheet.create({
   balanceSubtitle: {
     fontFamily: "Montserrat_400Regular",
     fontSize: 14,
-    color: "#ccc",
+    color: "#888",
     textAlign: "center",
   },
   // Nuevos estilos para la organización de datos
@@ -1280,7 +1274,7 @@ const styles = StyleSheet.create({
   detailLabel: {
     fontFamily: "Montserrat_400Regular",
     fontSize: 12,
-    color: "#ccc",
+    color: "#888",
     flex: 1,
   },
   detailValue: {
@@ -1304,11 +1298,11 @@ const styles = StyleSheet.create({
   loadingSubscriptionsText: {
     fontFamily: "Montserrat_400Regular",
     fontSize: 16,
-    color: "#ccc",
+    color: "#888",
     marginTop: 10,
   },
   noSubscriptionsContainer: {
-    backgroundColor: "#333",
+    backgroundColor: "#FFF",
     borderRadius: 12,
     padding: 25,
     marginBottom: 25,
@@ -1317,7 +1311,7 @@ const styles = StyleSheet.create({
   noSubscriptionsText: {
     fontFamily: "Montserrat_600SemiBold",
     fontSize: 16,
-    color: "#ccc",
+    color: "#888",
     textAlign: "center",
     marginTop: 15,
     marginBottom: 5,
@@ -1325,11 +1319,11 @@ const styles = StyleSheet.create({
   noSubscriptionsSubText: {
     fontFamily: "Montserrat_400Regular",
     fontSize: 14,
-    color: "#999",
+    color: "#666",
     textAlign: "center",
   },
   subscriptionCard: {
-    backgroundColor: "#333",
+    backgroundColor: "#FFF",
     borderRadius: 12,
     padding: 16,
     marginBottom: 15,
@@ -1355,7 +1349,7 @@ const styles = StyleSheet.create({
   statusText: {
     fontFamily: "Montserrat_600SemiBold",
     fontSize: 12,
-    color: "#1C1C1E",
+    color: "#FFF",
   },
   subscriptionDetails: {
     marginBottom: 12,
@@ -1371,7 +1365,7 @@ const styles = StyleSheet.create({
   detailText: {
     fontFamily: "Montserrat_500Medium",
     fontSize: 14,
-    color: "#ccc",
+    color: "#888",
   },
   viewReceiptButton: {
     flexDirection: "row",
@@ -1398,11 +1392,11 @@ const styles = StyleSheet.create({
   loadingPackagesText: {
     fontFamily: "Montserrat_400Regular",
     fontSize: 16,
-    color: "#ccc",
+    color: "#888",
     marginTop: 10,
   },
   noPackagesContainer: {
-    backgroundColor: "#333",
+    backgroundColor: "#FFF",
     borderRadius: 12,
     padding: 20,
     marginBottom: 16,
@@ -1411,11 +1405,11 @@ const styles = StyleSheet.create({
   noPackagesText: {
     fontFamily: "Montserrat_400Regular",
     fontSize: 16,
-    color: "#ccc",
+    color: "#888",
     textAlign: "center",
   },
   packageCard: {
-    backgroundColor: "#333",
+    backgroundColor: "#FFF",
     borderRadius: 12,
     padding: 16,
     marginBottom: 16,
@@ -1456,7 +1450,7 @@ const styles = StyleSheet.create({
   packageDescription: {
     fontFamily: "Montserrat_400Regular",
     fontSize: 14,
-    color: "#ccc",
+    color: "#888",
     marginBottom: 15,
   },
   buyButtonContainer: {
@@ -1475,14 +1469,14 @@ const styles = StyleSheet.create({
   infoText: {
     fontFamily: "Montserrat_400Regular",
     fontSize: 14,
-    color: "#999",
+    color: "#666",
     textAlign: "center",
     marginTop: 15,
     marginBottom: 15,
   },
   refreshButton: {
     flexDirection: "row",
-    backgroundColor: "#DDD",
+    backgroundColor: "#fa6205",
     paddingVertical: 10,
     paddingHorizontal: 15,
     borderRadius: 20,
@@ -1494,13 +1488,12 @@ const styles = StyleSheet.create({
   refreshButtonText: {
     fontFamily: "Montserrat_400Regular",
     fontSize: 14,
-    color: "#1C1C1E",
+    color: "#FFF",
     marginLeft: 8,
   },
   // Estilos para el botón de suscripción gratuita
   freeSubscriptionButton: {
-    backgroundColor: "linear-gradient(45deg, #FF6B6B, #fa6205)",
-    backgroundColor: "#FF6B6B", // Fallback para gradiente
+    backgroundColor: "#fa6205",
     borderRadius: 15,
     marginHorizontal: 16,
     marginBottom: 20,
@@ -1528,13 +1521,13 @@ const styles = StyleSheet.create({
   freeSubscriptionTitle: {
     fontFamily: "Montserrat_700Bold",
     fontSize: 16,
-    color: "#1C1C1E",
+    color: "#FFF",
     marginBottom: 2,
   },
   freeSubscriptionSubtitle: {
     fontFamily: "Montserrat_400Regular",
     fontSize: 13,
-    color: "#1C1C1E",
+    color: "#FFF",
     opacity: 0.9,
   },
   // Estilos para el modal de suscripción gratuita

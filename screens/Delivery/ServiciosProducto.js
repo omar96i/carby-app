@@ -6,6 +6,7 @@ import { useNavigation, useRoute } from '@react-navigation/native';
 import * as ImagePicker from 'expo-image-picker';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { BASE_URL } from '../../constants/url';
+import AlertaModal from '../../components/ErrorModal';
 
 const ServiciosProducto = () => {
   const navigation = useNavigation();
@@ -24,11 +25,19 @@ const ServiciosProducto = () => {
   const [loading, setLoading] = useState(false);
   const [descripcion, setDescripcion] = useState('');
 
+  const [alertVisible, setAlertVisible] = useState(false);
+  const [alertData, setAlertData] = useState({});
+
+  const showAlert = (title, message, type, onConfirm, primaryLabel) => {
+    setAlertData({ title, message, type: type || (title === "Éxito" ? "success" : "error"), onConfirm: onConfirm || null, primaryLabel: primaryLabel || null });
+    setAlertVisible(true);
+  };
+
   useEffect(() => {
     (async () => {
       const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
       if (status !== 'granted') {
-        Alert.alert('Permiso requerido', 'Se necesita permiso para acceder a la galería');
+        showAlert('Permiso requerido', 'Se necesita permiso para acceder a la galería');
       }
     })();
   }, []);
@@ -47,14 +56,14 @@ const ServiciosProducto = () => {
 
   const handleSubmit = async () => {
     if (!nombre || !precio || !tiempo || !foto || !descripcion) {
-      Alert.alert('Error', 'Todos los campos son obligatorios');
+      showAlert('Error', 'Todos los campos son obligatorios');
       return;
     }
     try {
       setLoading(true);
       const token = await AsyncStorage.getItem('userToken');
       if (!token) {
-        Alert.alert('Error', 'No se encontró el token de autenticación');
+        showAlert('Error', 'No se encontró el token de autenticación');
         setLoading(false);
         return;
       }
@@ -93,18 +102,18 @@ const ServiciosProducto = () => {
         const data = await response.json();
         console.log('Respuesta servidor JSON:', data);
         if (response.ok) {
-          Alert.alert('Éxito', 'Servicio creado correctamente');
+          showAlert('Éxito', 'Servicio creado correctamente', 'success');
           navigation.navigate('ShopDos');
         } else {
-          Alert.alert('Error', data.message || 'No se pudo crear el servicio');
+          showAlert('Error', data.message || 'No se pudo crear el servicio');
         }
       } else {
         const text = await response.text();
         console.log('Respuesta servidor texto:', text);
-        Alert.alert('Error', 'El servidor devolvió una respuesta inesperada');
+        showAlert('Error', 'El servidor devolvió una respuesta inesperada');
       }
     } catch (error) {
-      Alert.alert('Error', 'Ocurrió un error al crear el servicio: ' + error.message);
+      showAlert('Error', 'Ocurrió un error al crear el servicio: ' + error.message);
     } finally {
       setLoading(false);
     }
@@ -120,7 +129,7 @@ const ServiciosProducto = () => {
         <ScrollView contentContainerStyle={{ flexGrow: 1 }} keyboardShouldPersistTaps="handled">
           <View style={styles.header}>
             <TouchableOpacity onPress={() => navigation.goBack()}>
-              <Ionicons name="arrow-back" size={24} color="black" />
+              <Ionicons name="arrow-back" size={24} color="#FFF" />
             </TouchableOpacity>
             <Text style={styles.headerText}>
               {categoria_nombre ? `Nuevo servicio - ${categoria_nombre}` : 'Nuevo servicio'}
@@ -177,13 +186,23 @@ const ServiciosProducto = () => {
           </View>
           <TouchableOpacity style={styles.myButton} onPress={handleSubmit} disabled={loading}>
             {loading ? (
-              <ActivityIndicator size="small" color="#000" />
+              <ActivityIndicator size="small" color="#FFF" />
             ) : (
               <Text style={styles.buttonText}>Guardar Servicio</Text>
             )}
           </TouchableOpacity>
         </ScrollView>
       </KeyboardAvoidingView>
+
+      <AlertaModal
+        visible={alertVisible}
+        mensaje={alertData.message}
+        onCerrar={() => setAlertVisible(false)}
+        titulo={alertData.title}
+        tipo={alertData.type}
+        onPrimary={alertData.onConfirm}
+        primaryLabel={alertData.primaryLabel || "Entendido"}
+      />
     </View>
   );
 };
@@ -191,7 +210,7 @@ const ServiciosProducto = () => {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#F2F2F7' },
   header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', backgroundColor: '#fa6205', padding: 15, marginTop: 60 },
-  headerText: { fontSize: 16, fontWeight: 'bold', color: 'black', fontFamily: 'Montserrat_700Bold' },
+  headerText: { fontSize: 16, fontWeight: 'bold', color: '#FFF', fontFamily: 'Montserrat_700Bold' },
   imagePickerContainer: { width: '100%', height: 250, marginVertical: 20 },
   productImage: { width: '100%', height: '100%', resizeMode: 'cover' },
   placeholderContainer: { width: '100%', height: '100%', backgroundColor: '#ECECEC', justifyContent: 'center', alignItems: 'center', borderWidth: 1, borderStyle: 'dashed', borderColor: '#fa6205' },
@@ -200,7 +219,7 @@ const styles = StyleSheet.create({
   inputLabel: { fontSize: 16, color: '#1C1C1E', fontFamily: 'Montserrat_700Bold', marginBottom: 5, marginTop: 15 },
   input: { backgroundColor: '#ECECEC', borderRadius: 8, padding: 12, fontSize: 16, color: '#1C1C1E', fontFamily: 'Montserrat_400Regular' },
   myButton: { backgroundColor: '#fa6205', paddingVertical: 14, paddingHorizontal: 60, borderRadius: 15, alignItems: 'center', justifyContent: 'center', alignSelf: 'center', elevation: 5, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.25, shadowRadius: 3.84, marginVertical: 20, marginBottom: 30 },
-  buttonText: { color: '#000', fontSize: 20, fontWeight: 'bold', fontFamily: 'Montserrat_700Bold' },
+  buttonText: { color: '#FFF', fontSize: 20, fontWeight: 'bold', fontFamily: 'Montserrat_700Bold' },
 });
 
 export default ServiciosProducto;

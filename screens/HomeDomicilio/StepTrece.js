@@ -22,6 +22,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as Location from "expo-location";
 import { BASE_URL } from "../../constants/url";
 import ChatScreen from "../../components/ChatScreen";
+import AlertaModal from "../../components/ErrorModal";
 
 const { height } = Dimensions.get("window");
 
@@ -57,6 +58,14 @@ export default function StepTrece({ route }) {
 
   const [infoModalVisible, setInfoModalVisible] = useState(false);
   const [hasShownInfoModal, setHasShownInfoModal] = useState(false);
+
+  const [alertVisible, setAlertVisible] = useState(false);
+  const [alertData, setAlertData] = useState({});
+
+  const showAlert = (title, message, type, onConfirm, primaryLabel) => {
+    setAlertData({ title, message, type: type || (title === "Éxito" ? "success" : "error"), onConfirm: onConfirm || null, primaryLabel: primaryLabel || null });
+    setAlertVisible(true);
+  };
 
   let [fontsLoaded] = useFonts({
     Inter_400Regular,
@@ -241,9 +250,9 @@ export default function StepTrece({ route }) {
       });
 
       if (!response.ok) throw new Error("Error al notificar");
-      Alert.alert("Notificación enviada", `Se ha notificado al ${from === 'comercio' ? 'comercio' : 'cliente'} exitosamente.`);
+      showAlert("Éxito", `Se ha notificado al ${from === 'comercio' ? 'comercio' : 'cliente'} exitosamente.`);
     } catch (error) {
-      Alert.alert("Error", "No se pudo enviar la notificación");
+      showAlert("Error", "No se pudo enviar la notificación");
     }
   };
 
@@ -256,9 +265,9 @@ export default function StepTrece({ route }) {
             const url = `https://www.google.com/maps/dir/?api=1&origin=${userLocation?.latitude},${userLocation?.longitude}&destination=${dropoff.lat},${dropoff.lng}&waypoints=${pickup?.lat},${pickup?.lng}&travelmode=driving`;
             Linking.openURL(url);
         } else {
-            Alert.alert("Error", "Coordenadas incompletas");
+            showAlert("Error", "Coordenadas incompletas");
         }
-    } catch (e) { Alert.alert("Error", "No se puede abrir mapas"); }
+    } catch (e) { showAlert("Error", "No se puede abrir mapas"); }
   };
 
   const approvePayment = async () => {
@@ -274,12 +283,12 @@ export default function StepTrece({ route }) {
       if (response.ok) {
           setPaymentApproved(true);
           setTripData(prev => ({ ...prev, estado_pago: "aprobado" }));
-          Alert.alert("Éxito", "Pago aprobado correctamente");
+          showAlert("Éxito", "Pago aprobado correctamente");
       } else {
-          Alert.alert("Error", "No se pudo aprobar el pago");
+          showAlert("Error", "No se pudo aprobar el pago");
       }
     } catch (error) {
-      Alert.alert("Error", "Problema de conexión");
+      showAlert("Error", "Problema de conexión");
     } finally {
       setApprovingPayment(false);
     }
@@ -306,7 +315,7 @@ export default function StepTrece({ route }) {
         }, 1500);
 
       } catch (error) {
-        Alert.alert("Error", "Error al finalizar en servidor");
+        showAlert("Error", "Error al finalizar en servidor");
       }
     } else {
       setPinError(true);
@@ -322,12 +331,12 @@ export default function StepTrece({ route }) {
               body: JSON.stringify({ estado: 'cancelado' }),
           });
           navigation.goBack();
-          Alert.alert("Cancelado", "Carrera cancelada.");
-      } catch (e) { Alert.alert("Error", "No se pudo cancelar"); }
+          showAlert("Cancelado", "Carrera cancelada.");
+      } catch (e) { showAlert("Error", "No se pudo cancelar"); }
   };
 
   const submitRating = async () => {
-    if (rating === 0) return Alert.alert("Error", "Selecciona estrellas");
+    if (rating === 0) return showAlert("Error", "Selecciona estrellas");
     setIsSubmittingRating(true);
     try {
         const token = await AsyncStorage.getItem("userToken");
@@ -339,9 +348,9 @@ export default function StepTrece({ route }) {
         if (response.ok) {
             setRatingModalVisible(false);
             setHasRated(true);
-            Alert.alert("Éxito", "Calificación enviada");
+            showAlert("Éxito", "Calificación enviada");
         }
-    } catch (e) { Alert.alert("Error", "Error enviando calificación"); }
+    } catch (e) { showAlert("Error", "Error enviando calificación"); }
     finally { setIsSubmittingRating(false); }
   };
 
@@ -396,7 +405,7 @@ export default function StepTrece({ route }) {
             </MapView>
 
             <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
-                <Ionicons name="arrow-back" size={24} color="#000" />
+                <Ionicons name="arrow-back" size={24} color="#FFF" />
             </TouchableOpacity>
 
             <TouchableOpacity style={styles.floatNavButton} onPress={navigateWithGoogleMaps}>
@@ -421,7 +430,7 @@ export default function StepTrece({ route }) {
                         <Text style={styles.userName}>{tripData?.usuario?.nombre_completo || "Usuario"}</Text>
                         <Text style={styles.userPhone}>{tripData?.usuario?.numero_telefono || "Sin teléfono"}</Text>
                         <TouchableOpacity style={[styles.ratingBtnSmall, hasRated && {backgroundColor: '#444'}]} onPress={() => setRatingModalVisible(true)} disabled={hasRated}>
-                            <FontAwesome name="star" size={12} color={hasRated ? "#AAA" : "#000"} />
+                            <FontAwesome name="star" size={12} color={hasRated ? "#AAA" : "#FFF"} />
                             <Text style={[styles.ratingBtnText, hasRated && {color: '#AAA'}]}>{hasRated ? "Calificado" : "Calificar"}</Text>
                         </TouchableOpacity>
                     </View>
@@ -456,7 +465,7 @@ export default function StepTrece({ route }) {
                 <View style={styles.notifyContainer}>
                     {tripData?.pedido_id && (
                          <TouchableOpacity style={styles.notifyBtn} onPress={() => handleNotifyArrival('comercio')}>
-                             <MaterialIcons name="store" size={20} color="#000" />
+                             <MaterialIcons name="store" size={20} color="#FFF" />
                              <Text style={styles.notifyBtnText}>Llegué al Comercio</Text>
                          </TouchableOpacity>
                     )}
@@ -467,9 +476,9 @@ export default function StepTrece({ route }) {
                 </View>
 
                 <View style={styles.actionsGrid}>
-                    <TouchableOpacity style={styles.actionItem} onPress={() => setShowChat(true)}>
-                        <Ionicons name="chatbubble-ellipses" size={24} color="#1C1C1E" />
-                        <Text style={styles.actionText}>Chat</Text>
+                    <TouchableOpacity style={[styles.actionItem, {backgroundColor: '#fa6205', borderWidth: 1, borderColor: '#fa6205'}]} onPress={() => setShowChat(true)}>
+                        <Ionicons name="chatbubble-ellipses" size={24} color="#FFF" />
+                        <Text style={[styles.actionText, {color: '#FFF'}]}>Chat</Text>
                     </TouchableOpacity>
 
                     {!paymentApproved ? (
@@ -489,12 +498,12 @@ export default function StepTrece({ route }) {
                     <Text style={styles.warningText}>Verifica el pago en el chat antes de aprobar.</Text>
                 )}
 
-                <TouchableOpacity style={styles.finishBtn} onPress={() => setModalVisible(true)}>
+                    <TouchableOpacity style={styles.finishBtn} onPress={() => setModalVisible(true)}>
                     <Text style={styles.finishBtnText}>FINALIZAR CARRERA</Text>
-                    <MaterialCommunityIcons name="flag-checkered" size={22} color="#000" />
+                    <MaterialCommunityIcons name="flag-checkered" size={22} color="#FFF" />
                 </TouchableOpacity>
 
-                <TouchableOpacity style={styles.cancelLink} onPress={() => Alert.alert("Cancelar", "¿Confirmas cancelar?", [{text: "No"}, {text: "Sí", onPress: () => cancelarCarrera(tripData.id)}])}>
+                <TouchableOpacity style={styles.cancelLink} onPress={() => showAlert("Cancelar", "¿Confirmas cancelar?", "confirm", () => cancelarCarrera(tripData.id), "Sí, cancelar")}>
                     <Text style={styles.cancelLinkText}>Cancelar servicio</Text>
                 </TouchableOpacity>
 
@@ -520,7 +529,7 @@ export default function StepTrece({ route }) {
                                     <Text style={{color: '#1C1C1E'}}>Cancelar</Text>
                                 </TouchableOpacity>
                                 <TouchableOpacity style={styles.modalBtnVerify} onPress={verifyPin}>
-                                    <Text style={{color: '#000', fontWeight: 'bold'}}>Verificar</Text>
+                                    <Text style={{color: '#FFF', fontWeight: 'bold'}}>Verificar</Text>
                                 </TouchableOpacity>
                             </View>
                         </>
@@ -551,7 +560,7 @@ export default function StepTrece({ route }) {
                             <Text style={{color: '#1C1C1E'}}>Cancelar</Text>
                          </TouchableOpacity>
                          <TouchableOpacity style={styles.modalBtnVerify} onPress={submitRating} disabled={isSubmittingRating}>
-                            <Text style={{color: '#000', fontWeight: 'bold'}}>{isSubmittingRating ? "Enviando..." : "Enviar"}</Text>
+                            <Text style={{color: '#FFF', fontWeight: 'bold'}}>{isSubmittingRating ? "Enviando..." : "Enviar"}</Text>
                          </TouchableOpacity>
                     </View>
                 </View>
@@ -565,21 +574,36 @@ export default function StepTrece({ route }) {
                     <Text style={styles.modalTitle}>Usuario Nuevo</Text>
                     <Text style={styles.modalSub}>Recuerda solicitar el pago por adelantado si el usuario no tiene calificaciones previas.</Text>
                     <TouchableOpacity style={styles.modalBtnVerify} onPress={closeInfoModal}>
-                        <Text style={{color: '#000', fontWeight: 'bold'}}>Entendido</Text>
+                        <Text style={{color: '#FFF', fontWeight: 'bold'}}>Entendido</Text>
                     </TouchableOpacity>
                 </View>
             </View>
         </Modal>
 
         {showChat && (
-            <View style={styles.chatOverlay}>
+                <View style={styles.chatOverlay}>
                 <View style={styles.chatHeaderOverlay}>
-                    <Text style={{color: '#1C1C1E', fontSize: 18, fontWeight: 'bold'}}>Chat</Text>
-                    <TouchableOpacity onPress={() => setShowChat(false)}><Ionicons name="close" size={24} color="#1C1C1E"/></TouchableOpacity>
+                    <View style={{flexDirection: 'row', alignItems: 'center'}}>
+                        <View style={{width: 32, height: 32, borderRadius: 8, backgroundColor: '#FFF', justifyContent: 'center', alignItems: 'center', marginRight: 10}}>
+                            <Ionicons name="chatbubble-ellipses" size={18} color="#fa6205" />
+                        </View>
+                        <Text style={{color: '#FFF', fontSize: 18, fontFamily: 'Inter_700Bold'}}>Chat</Text>
+                    </View>
+                    <TouchableOpacity onPress={() => setShowChat(false)}><Ionicons name="close" size={24} color="#FFF"/></TouchableOpacity>
                 </View>
                 <ChatScreen tripId={activeId} />
             </View>
         )}
+
+        <AlertaModal
+          visible={alertVisible}
+          mensaje={alertData.message}
+          onCerrar={() => setAlertVisible(false)}
+          titulo={alertData.title}
+          tipo={alertData.type}
+          onPrimary={alertData.onConfirm}
+          primaryLabel={alertData.primaryLabel || "Entendido"}
+        />
     </View>
   );
 }
@@ -591,7 +615,7 @@ const styles = StyleSheet.create({
   mapContainer: { height: height * 0.45, width: '100%' },
   dotMarker: { width: 14, height: 14, borderRadius: 7, borderWidth: 2, borderColor: '#FFF' },
   backButton: { position: 'absolute', top: 40, left: 20, backgroundColor: '#fa6205', padding: 8, borderRadius: 20, elevation: 5 },
-  floatNavButton: { position: 'absolute', bottom: 20, right: 20, backgroundColor: '#ECECEC', paddingVertical: 10, paddingHorizontal: 15, borderRadius: 25, flexDirection: 'row', alignItems: 'center', borderWidth: 1, borderColor: '#fa6205', elevation: 5 },
+  floatNavButton: { position: 'absolute', bottom: 60, right: 20, backgroundColor: '#ECECEC', paddingVertical: 10, paddingHorizontal: 15, borderRadius: 25, flexDirection: 'row', alignItems: 'center', borderWidth: 1, borderColor: '#fa6205', elevation: 5 },
   floatNavText: { color: '#1C1C1E', marginLeft: 8, fontFamily: 'Inter_700Bold' },
   bottomSheet: { flex: 1, backgroundColor: '#F2F2F7', marginTop: -20, borderTopLeftRadius: 25, borderTopRightRadius: 25, paddingHorizontal: 20, paddingTop: 25 },
   userCard: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#FFFFFF', padding: 15, borderRadius: 15, marginBottom: 15, borderWidth: 1, borderColor: '#DDD' },
@@ -600,7 +624,7 @@ const styles = StyleSheet.create({
   userName: { color: '#1C1C1E', fontSize: 16, fontFamily: 'Inter_700Bold' },
   userPhone: { color: '#888', fontSize: 12 },
   ratingBtnSmall: { backgroundColor: '#fa6205', flexDirection: 'row', alignSelf: 'flex-start', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 10, marginTop: 5, alignItems: 'center' },
-  ratingBtnText: { color: '#000', fontSize: 10, fontWeight: 'bold', marginLeft: 4 },
+  ratingBtnText: { color: '#FFF', fontSize: 10, fontWeight: 'bold', marginLeft: 4 },
   routeCard: { backgroundColor: '#FFFFFF', padding: 15, borderRadius: 15, marginBottom: 15, borderWidth: 1, borderColor: '#DDD' },
   timelineRow: { flexDirection: 'row', alignItems: 'center' },
   dot: { width: 8, height: 8, borderRadius: 4, marginRight: 10 },
@@ -615,13 +639,13 @@ const styles = StyleSheet.create({
   notifyContainer: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 15 },
   notifyBtn: { flex: 1, backgroundColor: '#fa6205', padding: 12, borderRadius: 12, alignItems: 'center', justifyContent: 'center', marginHorizontal: 2, flexDirection: 'row' },
   notifyBtnSec: { backgroundColor: '#ECECEC', borderWidth: 1, borderColor: '#fa6205' },
-  notifyBtnText: { color: '#000', fontWeight: 'bold', fontSize: 12, marginLeft: 5 },
+  notifyBtnText: { color: '#FFF', fontWeight: 'bold', fontSize: 12, marginLeft: 5 },
   actionsGrid: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 10 },
   actionItem: { width: '48%', backgroundColor: '#F0F0F0', padding: 10, borderRadius: 12, alignItems: 'center', justifyContent: 'center', minHeight: 70 },
   actionText: { color: '#1C1C1E', fontSize: 12, marginTop: 5, textAlign: 'center', fontWeight: '500' },
   warningText: { color: '#888', fontSize: 10, textAlign: 'center', marginBottom: 15 },
   finishBtn: { backgroundColor: '#fa6205', flexDirection: 'row', justifyContent: 'center', alignItems: 'center', paddingVertical: 16, borderRadius: 15, marginBottom: 10, elevation: 4 },
-  finishBtnText: { color: '#000', fontSize: 16, fontFamily: 'Inter_700Bold', marginRight: 8 },
+  finishBtnText: { color: '#FFF', fontSize: 16, fontFamily: 'Inter_700Bold', marginRight: 8 },
   cancelLink: { alignItems: 'center', padding: 10 },
   cancelLinkText: { color: '#FF4757', textDecorationLine: 'underline' },
   modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.85)', justifyContent: 'center', alignItems: 'center' },
@@ -634,5 +658,5 @@ const styles = StyleSheet.create({
   modalBtnCancel: { flex: 1, padding: 12, alignItems: 'center', backgroundColor: '#ECECEC', borderRadius: 10, marginRight: 5 },
   modalBtnVerify: { flex: 1, padding: 12, alignItems: 'center', backgroundColor: '#fa6205', borderRadius: 10, marginLeft: 5 },
   chatOverlay: { position: 'absolute', top: 0, bottom: 0, left: 0, right: 0, backgroundColor: '#F2F2F7', zIndex: 100 },
-  chatHeaderOverlay: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 15, paddingTop: 40, backgroundColor: '#FFFFFF' }
+  chatHeaderOverlay: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 15, paddingTop: 40, backgroundColor: '#fa6205' }
 });

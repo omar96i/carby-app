@@ -35,6 +35,7 @@ import { useNavigation, useFocusEffect } from "@react-navigation/native";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { BASE_URL } from "../constants/url";
+import AlertaModal from "../components/ErrorModal";
 import * as Location from "expo-location";
 import { useNotification } from "../context/NotificationContext";
 
@@ -157,6 +158,14 @@ export default function Pedidos({ route }) {
 
   const { expoPushToken, notification } = useNotification();
 
+  // Sistema de alertas con modal
+  const [alertVisible, setAlertVisible] = useState(false);
+  const alertRef = useRef({ title: "", message: "", type: "info", onConfirm: null, confirmLabel: "" });
+  const showAlert = (title, message, type = "info", onConfirm = null, confirmLabel = "") => {
+    alertRef.current = { title, message, type, onConfirm, confirmLabel };
+    setAlertVisible(true);
+  };
+
 
   useEffect(() => {
     if (notification) {
@@ -260,7 +269,7 @@ export default function Pedidos({ route }) {
         carrera: item.carrera,
         conductor: item.carrera?.conductor
       });
-      Alert.alert("Error", "No se encontró información del conductor asignado");
+      showAlert("Error", "No se encontró información del conductor asignado");
       return;
     }
 
@@ -305,19 +314,19 @@ export default function Pedidos({ route }) {
 
     // Validar que es un rider.moto
     if (tipoUsuario !== "rider.moto") {
-      Alert.alert("Error", "Esta función solo está disponible para riders de moto");
+      showAlert("Error", "Esta función solo está disponible para riders de moto");
       return;
     }
 
     // Validar que existe pedido_id en la carrera
     if (!item.es_carrera || !item.pedido_id) {
-      Alert.alert("Error", "No se encontró información del pedido asociado a esta carrera");
+      showAlert("Error", "No se encontró información del pedido asociado a esta carrera");
       return;
     }
 
     try {
       // Mostrar indicador de carga
-      Alert.alert("Cargando", "Obteniendo información del comercio...");
+      showAlert("Cargando", "Obteniendo información del comercio...", "info");
 
       let comercioInfo = item.comercio || item.pedido?.comercio;
 
@@ -327,7 +336,7 @@ export default function Pedidos({ route }) {
 
         const token = await AsyncStorage.getItem("userToken");
         if (!token) {
-          Alert.alert("Error", "No se encontró token de autenticación");
+          showAlert("Error", "No se encontró token de autenticación");
           return;
         }
 
@@ -382,7 +391,7 @@ export default function Pedidos({ route }) {
           pedidoComercioId: item.pedido?.comercio_id,
           pedidoCompleto: item.pedido
         });
-        Alert.alert("Error", "No se pudo obtener la información del comercio");
+        showAlert("Error", "No se pudo obtener la información del comercio");
         return;
       }
 
@@ -414,7 +423,7 @@ export default function Pedidos({ route }) {
 
     } catch (error) {
       console.error("Error al obtener información del comercio:", error);
-      Alert.alert("Error", "Ocurrió un error al cargar la información del comercio");
+      showAlert("Error", "Ocurrió un error al cargar la información del comercio");
     }
   };
 
@@ -1345,14 +1354,14 @@ export default function Pedidos({ route }) {
       const data = await response.json();
 
       if (response.ok && data.status) {
-        Alert.alert("✅ Pago aprobado", "El pago fue aprobado exitosamente.");
+        showAlert("Éxito", "El pago fue aprobado exitosamente.", "success");
         // Aquí puedes actualizar estado o recargar datos si es necesario
       } else {
-        Alert.alert("Error", "No se pudo aprobar el pago. Intenta nuevamente.");
+        showAlert("Error", "No se pudo aprobar el pago. Intenta nuevamente.");
       }
     } catch (error) {
       console.error(error);
-      Alert.alert("Error", "Ocurrió un problema al aprobar el pago.");
+      showAlert("Error", "Ocurrió un problema al aprobar el pago.");
     }
   };
 
@@ -1908,7 +1917,7 @@ export default function Pedidos({ route }) {
 
       if (!token) {
         console.error("No se encontró token de autenticación");
-        Alert.alert("Error", "No se encontró el token de usuario.");
+        showAlert("Error", "No se encontró el token de usuario.");
         return;
       }
 
@@ -1938,18 +1947,18 @@ export default function Pedidos({ route }) {
           console.warn("No se pudo parsear el error como JSON");
         }
 
-        Alert.alert("Error", errorMessage);
+        showAlert("Error", errorMessage);
         return;
       }
 
       const data = JSON.parse(responseText);
-      Alert.alert("Éxito", data.message);
+      showAlert("Éxito", data.message, "success");
       fetchPedidos();
       console.log("Pedido actualizado:", data.pedido);
 
     } catch (error) {
       console.error("Error al aceptar el pedido:", error);
-      Alert.alert("Error", "Ocurrió un error al aceptar el pedido.");
+      showAlert("Error", "Ocurrió un error al aceptar el pedido.");
     }
   };
 
@@ -1961,7 +1970,7 @@ export default function Pedidos({ route }) {
 
       if (!token) {
         console.error("No se encontró token de autenticación");
-        Alert.alert("Error", "No se encontró el token de usuario.");
+        showAlert("Error", "No se encontró el token de usuario.");
         return;
       }
       const response = await fetch(`${BASE_URL}carreras/${idCarrera}`, {
@@ -1980,15 +1989,15 @@ export default function Pedidos({ route }) {
 
       if (!response.ok) {
         console.error('Error al cancelar carrera:', data);
-        Alert.alert('Error', 'No se pudo cancelar la carrera. Intenta de nuevo.');
+        showAlert('Error', 'No se pudo cancelar la carrera. Intenta de nuevo.');
         return;
       }
 
-      Alert.alert('Cancelado', 'La carrera ha sido cancelada exitosamente.');
+      showAlert('Cancelado', 'La carrera ha sido cancelada exitosamente.', 'success');
       // Aquí puedes hacer un refresh de la lista o navegación si aplica
     } catch (error) {
       console.error('Error inesperado:', error);
-      Alert.alert('Error', 'Hubo un problema al cancelar la carrera.');
+      showAlert('Error', 'Hubo un problema al cancelar la carrera.');
     }
   };
 
@@ -2317,13 +2326,13 @@ export default function Pedidos({ route }) {
     }
 
     // Formatear método de pago para mostrar
-    let metodoPagoLabel = "Efectivo";
+    let metodoPagoLabel = "EFECTIVO";
     switch (item.metodo_pago) {
       case "mercadopago":
-        metodoPagoLabel = "Mercado Pago";
+        metodoPagoLabel = "MERCADO PAGO";
         break;
       case "qr":
-        metodoPagoLabel = "Código QR";
+        metodoPagoLabel = "QR";
         break;
     }
 
@@ -2540,7 +2549,7 @@ export default function Pedidos({ route }) {
                 </Text>
                 <View style={styles.statusContainer}>
                   <Text style={[styles.statusChip, styles.statusPago]}>
-                    {item.metodo_pago || "Efectivo"}
+                    {metodoPagoLabel}
                   </Text>
                   <Text style={[styles.statusChip, styles.statusActivo]}>
                     {obtenerTextoEstado(item.estado)}
@@ -2719,7 +2728,7 @@ export default function Pedidos({ route }) {
                 </Text>
                 <View style={styles.statusContainer}>
                   <Text style={[styles.statusChip, styles.statusPago]}>
-                    {item.metodo_pago || "Efectivo"}
+                    {metodoPagoLabel}
                   </Text>
                   {item.estado === 'pendiente' ? (
                     <Animated.Text
@@ -2902,14 +2911,7 @@ export default function Pedidos({ route }) {
                   {!(["cancelado", "completado", "entregado"].includes(item.estado)) && (
                     <TouchableOpacity
                       onPress={() =>
-                        Alert.alert(
-                          "Confirmar cancelación",
-                          "¿Estás seguro de que quieres cancelar esta carrera?",
-                          [
-                            { text: "No", style: "cancel" },
-                            { text: "Sí", onPress: () => cancelarCarrera(item.id) },
-                          ]
-                        )
+                        showAlert("Confirmar cancelación", "¿Estás seguro de que quieres cancelar esta carrera?", "confirm", () => cancelarCarrera(item.id), "Sí, cancelar")
                       }
                     >
                       <Text style={styles.cancelarTexto}>Cancelar</Text>
@@ -2993,7 +2995,7 @@ export default function Pedidos({ route }) {
                 </Text>
                 <View style={styles.statusContainer}>
                   <Text style={[styles.statusChip, styles.statusPago]}>
-                    {item.metodo_pago || "Efectivo"}
+                    {metodoPagoLabel}
                   </Text>
                   <Text
                     style={[
@@ -3236,7 +3238,7 @@ export default function Pedidos({ route }) {
                 </Text>
                 <View style={styles.statusContainer}>
                   <Text style={[styles.statusChip, styles.statusPago]}>
-                    {item.metodo_pago || "Efectivo"}
+                    {metodoPagoLabel}
                   </Text>
                   <Text
                     style={[
@@ -3534,19 +3536,7 @@ export default function Pedidos({ route }) {
               <TouchableOpacity
                 style={[styles.evidenceButton, { backgroundColor: '#fa6205', marginTop: 8 }]}
                 onPress={() => {
-                  Alert.alert(
-                    'Aprobar pago',
-                    '¿Estás seguro de que deseas aprobar este pago?',
-                    [
-                      { text: 'Cancelar', style: 'cancel' },
-                      {
-                        text: 'Aprobar',
-                        onPress: () => aprobarPago(item),
-                        style: 'default',
-                      },
-                    ],
-                    { cancelable: true }
-                  );
+                  showAlert('Aprobar pago', '¿Estás seguro de que deseas aprobar este pago?', 'confirm', () => aprobarPago(item), 'Aprobar');
                 }}
               >
                 <FontAwesome name="check-circle" size={16} color="#1C1C1E" />
@@ -3634,6 +3624,17 @@ export default function Pedidos({ route }) {
       console.error("Error al parsear datos_generales:", error);
     }
 
+    // Formatear método de pago
+    let metodoPagoLabel = "EFECTIVO";
+    switch (item.metodo_pago) {
+      case "mercadopago":
+        metodoPagoLabel = "MERCADO PAGO";
+        break;
+      case "qr":
+        metodoPagoLabel = "QR";
+        break;
+    }
+
     // Determinar si se puede calificar la reserva
     const puedeCalificar =
       item.estado === "completado" &&
@@ -3650,7 +3651,7 @@ export default function Pedidos({ route }) {
           <Text style={styles.reservaClienteNombre}>{clienteNombre}</Text>
           <View style={styles.statusContainer}>
             <Text style={[styles.statusChip, styles.statusPago]}>
-              {item.metodo_pago || "Efectivo"}
+              {metodoPagoLabel}
             </Text>
             <Text
               style={[
@@ -3765,11 +3766,11 @@ export default function Pedidos({ route }) {
                     </View>
                     <Text style={styles.productPrice}>
                       {"$"}
-                      {parseFloat(
+                      {Math.floor(parseFloat(
                         reservaItem.user_servicio?.precio ||
                         reservaItem.precio ||
                         0
-                      ).toFixed(2)}
+                      )).toLocaleString()}
                     </Text>
                   </View>
 
@@ -3816,9 +3817,9 @@ export default function Pedidos({ route }) {
                               </View>
                               <Text style={styles.additionalPrice}>
                                 +{"$"}
-                                {parseFloat(
+                                {Math.floor(parseFloat(
                                   adicional.user_servicio_adicional?.precio || 0
-                                ).toFixed(2)}
+                                )).toLocaleString()}
                               </Text>
                             </View>
                           )
@@ -4134,7 +4135,7 @@ export default function Pedidos({ route }) {
                     disabled={calificacion === 0 || enviandoCalificacion}
                   >
                     {enviandoCalificacion ? (
-                      <ActivityIndicator size="small" color="#000" />
+                      <ActivityIndicator size="small" color="#FFF" />
                     ) : (
                       <Text style={styles.enviarButtonText}>
                         Enviar calificación
@@ -4249,7 +4250,7 @@ export default function Pedidos({ route }) {
                   Todos los perfiles
                 </Text>
                 {!filtroPerfilSeleccionado && (
-                  <FontAwesome name="check" size={16} color="#fa6205" />
+                  <FontAwesome name="check" size={16} color="#FFF" />
                 )}
               </TouchableOpacity>
 
@@ -4298,7 +4299,7 @@ export default function Pedidos({ route }) {
                     {perfil}
                   </Text>
                   {filtroPerfilSeleccionado === perfil && (
-                    <FontAwesome name="check" size={16} color="#fa6205" />
+                    <FontAwesome name="check" size={16} color="#FFF" />
                   )}
                 </TouchableOpacity>
               ))}
@@ -4587,7 +4588,7 @@ export default function Pedidos({ route }) {
                     style={styles.clearDateButton}
                     onPress={() => setFiltroFechaInicio(null)}
                   >
-                    <FontAwesome name="times" size={14} color="#ff4757" />
+                    <FontAwesome name="times" size={14} color="#fa6205" />
                   </TouchableOpacity>
                 )}
               </View>
@@ -4607,7 +4608,7 @@ export default function Pedidos({ route }) {
                     style={styles.clearDateButton}
                     onPress={() => setFiltroFechaFin(null)}
                   >
-                    <FontAwesome name="times" size={14} color="#ff4757" />
+                    <FontAwesome name="times" size={14} color="#fa6205" />
                   </TouchableOpacity>
                 )}
               </View>
@@ -4722,6 +4723,22 @@ export default function Pedidos({ route }) {
 
         />
       )}
+
+      {/* Modal de alertas unificado */}
+      <AlertaModal
+        visible={alertVisible}
+        tipo={alertRef.current.type}
+        mensaje={alertRef.current.message}
+        onCerrar={() => {
+          setAlertVisible(false);
+          if (!alertRef.current.onConfirm && alertRef.current.confirmLabel) return;
+        }}
+        onPrimary={alertRef.current.onConfirm ? () => {
+          setAlertVisible(false);
+          alertRef.current.onConfirm();
+        } : undefined}
+        primaryLabel={alertRef.current.confirmLabel || undefined}
+      />
     </SafeAreaView>
   );
 }
@@ -4741,7 +4758,7 @@ const styles = StyleSheet.create({
   },
   calificacionModal: {
     width: "100%",
-    backgroundColor: "#ECECEC",
+    backgroundColor: "#FFF",
     borderRadius: 15,
     padding: 20,
     alignItems: "center",
@@ -4801,7 +4818,7 @@ const styles = StyleSheet.create({
   },
   // Estilos para el botón de calificación
   ratingButton: {
-    backgroundColor: "#007AFF",
+    backgroundColor: "#fa6205",
     paddingHorizontal: 20,
     paddingVertical: 12,
     borderRadius: 8,
@@ -4809,7 +4826,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   ratingButtonText: {
-    color: "#1C1C1E",
+    color: "#FFF",
     fontFamily: "Montserrat_700Bold",
     fontSize: 16,
   },
@@ -4825,7 +4842,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   chatButtonText: {
-    color: "#1C1C1E",
+    color: "#FFF",
     fontFamily: "Montserrat_700Bold",
     fontSize: 16,
     marginLeft: 8,
@@ -4842,7 +4859,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   evidenceButtonText: {
-    color: "#1C1C1E",
+    color: "#FFF",
     fontFamily: "Montserrat_700Bold",
     fontSize: 16,
     marginLeft: 8,
@@ -4851,7 +4868,7 @@ const styles = StyleSheet.create({
   evidenceModalContainer: {
     width: "95%",
     maxHeight: "85%",
-    backgroundColor: "#ECECEC",
+    backgroundColor: "#FFF",
     borderRadius: 15,
     padding: 0,
     shadowColor: "#000",
@@ -4990,7 +5007,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#666",
   },
   enviarButtonText: {
-    color: "#000",
+    color: "#FFF",
     fontFamily: "Montserrat_700Bold",
     fontSize: 16,
   },
@@ -5041,7 +5058,7 @@ const styles = StyleSheet.create({
     color: "#1C1C1E",
   },
   activeTabText: {
-    color: "#F2F2F7",
+    color: "#FFF",
   },
   cardHeader: {
     flexDirection: "row",
@@ -5069,7 +5086,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   acceptButtonText: {
-    color: "#000",
+    color: "#FFF",
     fontFamily: "Montserrat_700Bold",
     fontSize: 16,
   },
@@ -5094,7 +5111,7 @@ const styles = StyleSheet.create({
   productQuantityText: {
     fontFamily: "Montserrat_700Bold",
     fontSize: 12,
-    color: "#333",
+    color: "#FFF",
   },
   productInfo: {
     flex: 1,
@@ -5134,7 +5151,7 @@ const styles = StyleSheet.create({
   },
   statusPago: {
     backgroundColor: "#fa6205",
-    color: "#333",
+    color: "#FFF",
   },
   statusPendiente: {
     backgroundColor: "#FFE5C4",
@@ -5142,11 +5159,11 @@ const styles = StyleSheet.create({
   },
   statusActivo: {
     backgroundColor: "#fa6205",
-    color: "#1C1C1E",
+    color: "#FFF",
   },
   statusCompletado: {
-    backgroundColor: "#007AFF",
-    color: "#1C1C1E",
+    backgroundColor: "#fa6205",
+    color: "#FFF",
   },
   statusOtro: {
     backgroundColor: "#999",
@@ -5261,7 +5278,7 @@ const styles = StyleSheet.create({
     marginTop: 10,
   },
   retryButtonText: {
-    color: "#000",
+    color: "#FFF",
     fontFamily: "Montserrat_700Bold",
   },
   emptyContainer: {
@@ -5578,13 +5595,13 @@ const styles = StyleSheet.create({
     marginLeft: 8,
     padding: 4,
     borderRadius: 4,
-    backgroundColor: "#ffe6e6",
+    backgroundColor: "#FFF0E0",
   },
   clearFiltersButton: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#ff6b6b",
+    backgroundColor: "#fa6205",
     borderRadius: 8,
     padding: 12,
     marginTop: 8,
@@ -5592,14 +5609,14 @@ const styles = StyleSheet.create({
   clearFiltersText: {
     fontSize: 13,
     fontFamily: "Montserrat_700Bold",
-    color: "#1C1C1E",
+    color: "#FFF",
     marginLeft: 6,
   },
   // Estilos para el modal de selección de perfil
   profileSelectorModal: {
     width: "90%",
     maxHeight: "70%",
-    backgroundColor: "#ECECEC",
+    backgroundColor: "#FFF",
     borderRadius: 15,
     padding: 0,
     shadowColor: "#000",
@@ -5627,7 +5644,7 @@ const styles = StyleSheet.create({
     backgroundColor: "transparent",
   },
   profileOptionSelected: {
-    backgroundColor: "#404040",
+    backgroundColor: "#fa6205",
     borderRadius: 8,
     marginVertical: 2,
   },
@@ -5639,7 +5656,7 @@ const styles = StyleSheet.create({
   },
   profileOptionTextSelected: {
     fontFamily: "Montserrat_700Bold",
-    color: "#fa6205",
+    color: "#FFF",
   },
   emptyProfilesContainer: {
     paddingVertical: 30,
@@ -5653,10 +5670,10 @@ const styles = StyleSheet.create({
   },
   cancelarTexto: {
     fontSize: 12,
-    color: "#e74c3c", // rojo discreto
+    color: "#fa6205",
     fontFamily: "Montserrat_500Medium",
     borderWidth: 1,
-    borderColor: "#e74c3c",
+    borderColor: "#fa6205",
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 4,
@@ -5671,14 +5688,14 @@ const styles = StyleSheet.create({
   verDetallesTexto: {
     fontSize: 18,
     fontWeight: '900',
-    color: '#1C1C1E', // azul suave
+    color: '#FFF',
     fontFamily: 'Montserrat_500Medium',
     paddingHorizontal: 30,
     paddingVertical: 10,
     borderRadius: 4,
     borderWidth: 1,
-    backgroundColor: '#3498db',
-    borderColor: '#3498db',
+    backgroundColor: '#fa6205',
+    borderColor: '#fa6205',
   },
   // Estilos para el botón de chat con rider
   chatRiderButton: {
@@ -5692,7 +5709,7 @@ const styles = StyleSheet.create({
     marginTop: 5,
   },
   chatRiderButtonText: {
-    color: "#1C1C1E",
+    color: "#FFF",
     fontSize: 14,
     fontFamily: "Montserrat_700Bold",
   },

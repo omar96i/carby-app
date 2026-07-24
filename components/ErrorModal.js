@@ -1,7 +1,7 @@
 import React from 'react';
 import { Modal, View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 
-const AlertaModal = ({ visible, mensaje, onCerrar, titulo = "Atención" }) => {
+const AlertaModal = ({ visible, mensaje, onCerrar, titulo = "Atención", tipo = "error", onPrimary, primaryLabel = "Entendido" }) => {
     return (
         <Modal
             transparent
@@ -11,12 +11,19 @@ const AlertaModal = ({ visible, mensaje, onCerrar, titulo = "Atención" }) => {
         >
             <View style={styles.fondo}>
                 <View style={styles.modal}>
-                    <Text style={styles.titulo}>⚠ ¡Algo salió mal!</Text>
+                    <Text style={styles.titulo}>{tipo === "success" ? "¡Listo!" : tipo === "confirm" ? "¿Estás seguro?" : tipo === "info" ? "Información" : "⚠ ¡Algo salió mal!"}</Text>
                     <Text style={styles.mensaje}>{mensaje}</Text>
 
-                    <TouchableOpacity onPress={onCerrar} style={styles.boton}>
-                        <Text style={styles.botonTexto}>Entendido</Text>
-                    </TouchableOpacity>
+                    <View style={styles.botones}>
+                        {onPrimary && (
+                            <TouchableOpacity onPress={onPrimary} style={[styles.boton, styles.botonPrimario]}>
+                                <Text style={styles.botonTexto}>{primaryLabel}</Text>
+                            </TouchableOpacity>
+                        )}
+                        <TouchableOpacity onPress={onCerrar} style={[styles.boton, onPrimary && styles.botonSecundario]}>
+                            <Text style={[styles.botonTexto, onPrimary && styles.botonSecundarioTexto]}>{onPrimary ? "Volver" : "Entendido"}</Text>
+                        </TouchableOpacity>
+                    </View>
                 </View>
             </View>
         </Modal>
@@ -59,6 +66,19 @@ const styles = StyleSheet.create({
     },
     botonTexto: {
         fontWeight: 'bold',
+    },
+    botones: {
+        flexDirection: 'row',
+    },
+    botonPrimario: {
+        flex: 1,
+    },
+    botonSecundario: {
+        backgroundColor: '#DDD',
+        flex: 1,
+    },
+    botonSecundarioTexto: {
+        color: '#666',
     },
 });
 

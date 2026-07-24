@@ -1,8 +1,8 @@
-import React, { useEffect, useState, useMemo } from 'react';
-import { View, Text, StyleSheet, FlatList, Image, TouchableOpacity, ActivityIndicator } from 'react-native';
+import React, { useEffect, useState, useMemo, useCallback } from 'react';
+import { View, Text, StyleSheet, FlatList, Image, TouchableOpacity, ActivityIndicator, Platform } from 'react-native';
 import { Montserrat_400Regular, Montserrat_700Bold, Montserrat_300Light, Montserrat_600SemiBold } from '@expo-google-fonts/montserrat';
 import { useFonts } from 'expo-font';
-import { useNavigation, useRoute } from "@react-navigation/native";
+import { useNavigation, useRoute, useFocusEffect } from "@react-navigation/native";
 import { BASE_URL } from "../../constants/url";
 import { FontAwesome, Ionicons } from '@expo/vector-icons';
 
@@ -11,6 +11,11 @@ const Categorias = () => {
   const route = useRoute();
   const { categoryId, categoryName = "Categoría", subcategories = [], establishments = [], establishmentsSedes = [] } = route.params || {};
   const [loading, setLoading] = useState(false);
+
+  useFocusEffect(useCallback(() => {
+    navigation.getParent()?.setOptions({ tabBarStyle: { display: "none" } });
+    return () => navigation.getParent()?.setOptions({ tabBarStyle: { backgroundColor: '#FFF', height: 56, borderTopWidth: 1, borderTopColor: '#F0F0F0', display: 'flex' } });
+  }, [navigation]));
 
   const [fontsLoaded] = useFonts({
     Montserrat_400Regular,
@@ -174,7 +179,7 @@ const Categorias = () => {
           onPress={handlePress}
         >
           <Text style={styles.buttonText}>Ver</Text>
-          <Ionicons name="arrow-forward" size={16} color="#000" />
+          <Ionicons name="arrow-forward" size={16} color="#FFF" />
         </TouchableOpacity>
       </TouchableOpacity>
     );
@@ -184,7 +189,7 @@ const Categorias = () => {
     <View style={styles.container}>
       <View style={styles.headerContainer}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-          <Ionicons name="arrow-back" size={24} color="#1C1C1E" />
+          <Ionicons name="arrow-back" size={24} color="#FFF" />
         </TouchableOpacity>
         <Text style={styles.title}>{categoryName}</Text>
         <View style={{ width: 24 }} />
@@ -226,21 +231,20 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 20,
-    marginTop: 50,
-    marginBottom: 20,
-  },
-  backButton: {
-    padding: 5,
+    paddingVertical: 14,
+    backgroundColor: '#fa6205',
+    paddingTop: Platform.OS === 'android' ? 50 : 14,
   },
   title: {
-    fontSize: 22,
-    color: '#fa6205',
+    fontSize: 20,
+    color: '#FFF',
     fontFamily: 'Montserrat_700Bold',
     textTransform: 'uppercase',
     letterSpacing: 1,
   },
   listContent: {
     paddingHorizontal: 15,
+    paddingTop: 12,
     paddingBottom: 30,
   },
   card: {
@@ -251,12 +255,12 @@ const styles = StyleSheet.create({
     padding: 12,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#333',
+    borderColor: '#F0F0F0',
     shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
     shadowRadius: 4,
-    elevation: 3,
+    elevation: 2,
   },
   imageContainer: {
     shadowColor: "#000",
@@ -318,7 +322,7 @@ const styles = StyleSheet.create({
   },
   buttonText: {
     fontSize: 12,
-    color: '#000000',
+    color: '#FFF',
     fontFamily: 'Montserrat_700Bold',
   },
   emptyContainer: {

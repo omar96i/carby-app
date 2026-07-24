@@ -1,5 +1,6 @@
-import React, { useEffect, useState, useRef } from "react";
-import { useNavigation } from "@react-navigation/native";
+import React, { useEffect, useState, useRef, useCallback } from "react";
+import { useNavigation, useFocusEffect } from "@react-navigation/native";
+import AlertaModal from "../../components/ErrorModal";
 import {
   View,
   Text,
@@ -11,7 +12,8 @@ import {
   Image,
   TextInput,
   ActivityIndicator,
-  Animated
+  Animated,
+  Platform
 } from "react-native";
 import Icon1 from "react-native-vector-icons/Entypo";
 import IconMC from "react-native-vector-icons/AntDesign";
@@ -29,7 +31,7 @@ import Modal from "react-native-modal";
 import { GOOGLE_MAPS_API_KEY } from "../../constants/Keys";
 import { Ionicons } from "@expo/vector-icons";
 import * as Location from "expo-location";
-import MapView, { Marker } from "react-native-maps";
+import MapView, { Marker, Polyline } from "react-native-maps";
 import { useNotification } from "../../context/NotificationContext";
 
 export default function SelectLocationScreen() {
@@ -42,10 +44,14 @@ export default function SelectLocationScreen() {
   });
   const [distance, setDistance] = useState(null);
   const [totalPrice, setTotalPrice] = useState("");
+  const totalPriceRaw = useRef(0);
   const [vehicleType, setVehicleType] = useState(null); // "moto", "mototaxi", or "taxi"
   const [serviceCategory, setServiceCategory] = useState(null);
   const [pickupAddress, setPickupAddress] = useState("");
   const [deliveryAddress, setDeliveryAddress] = useState("");
+  const [pickupCoord, setPickupCoord] = useState(null);
+  const [deliveryCoord, setDeliveryCoord] = useState(null);
+  const [routeCoords, setRouteCoords] = useState([]);
   const [observations, setObservations] = useState("");
   const [paymentMethod, setPaymentMethod] = useState(null);
   const [isModalVisible, setModalVisible] = useState(false);
@@ -78,14 +84,20 @@ export default function SelectLocationScreen() {
 
   // Estado para la creación de la carrera
   const [isCreatingRide, setIsCreatingRide] = useState(false);
+  // Collapsible bottom sheet
+  const [isSheetExpanded, setIsSheetExpanded] = useState(true);
+  const sheetAnimation = useRef(new Animated.Value(1)).current;
+  const toggleSheet = useCallback(() => {
+    const toValue = isSheetExpanded ? 0 : 1;
+    Animated.timing(sheetAnimation, { toValue, duration: 250, useNativeDriver: false }).start();
+    setIsSheetExpanded(!isSheetExpanded);
+  }, [isSheetExpanded, sheetAnimation]);
   /////
-  const [mapModalVisible, setMapModalVisible] = useState(false);
-  const [selectedLocation, setSelectedLocation] = useState(null);
   const [mapRegion, setMapRegion] = useState({
     latitude: -12.046374,
     longitude: -77.042793,
-    latitudeDelta: 0.05,
-    longitudeDelta: 0.05,
+    latitudeDelta: 0.01,
+    longitudeDelta: 0.01,
   });
   const [isLocationPickup, setIsLocationPickup] = useState(true);
   const [mapSearchQuery, setMapSearchQuery] = useState("");
@@ -119,6 +131,21 @@ export default function SelectLocationScreen() {
 
     getUserRole();
   }, []);
+
+  // Ocultar la barra de tabs inferior cuando esta pantalla está enfocada
+  useFocusEffect(
+    useCallback(() => {
+      const tabNav = navigation.getParent();
+      if (tabNav) {
+        tabNav.setOptions({ tabBarStyle: { display: "none" } });
+      }
+      return () => {
+        navigation.getParent()?.setOptions({
+          tabBarStyle: { backgroundColor: '#FFF', height: 56, borderTopWidth: 1, borderTopColor: '#F0F0F0', display: 'flex' },
+        });
+      };
+    }, [navigation])
+  );
 
   useEffect(() => {
     // Precargar la ubicación del usuario en segundo plano
@@ -191,6 +218,108 @@ export default function SelectLocationScreen() {
 
     loadRecentsIfEmpty();
   }, [mapSearchQuery]);
+
+  // Centrar mapa y asignar recogida automáticamente a la ubicación del usuario
+  useEffect(() => {
+    if (userLocation) {
+      setMapRegion({
+        latitude: userLocation.latitude,
+        longitude: userLocation.longitude,
+        latitudeDelta: 0.01,
+        longitudeDelta: 0.01,
+      });
+      setIgnoreNextRegionChange(true);
+      getAddressFromCoordinates(userLocation.latitude, userLocation.longitude).then((addr) => {
+        if (addr && !pickupAddress) {
+          setPickupAddress(addr);
+          setPickupCoord({ latitude: userLocation.latitude, longitude: userLocation.longitude });
+        }
+      });
+    }
+  }, [userLocation]);
+
+  // Ajustar mapa para mostrar ambos pines
+  const fitMapBetween = useCallback((p1, p2) => {
+    const midLat = (p1.latitude + p2.latitude) / 2;
+    const midLng = (p1.longitude + p2.longitude) / 2;
+    const latDelta = Math.max(Math.abs(p1.latitude - p2.latitude) * 1.6, 0.01);
+    const lngDelta = Math.max(Math.abs(p1.longitude - p2.longitude) * 1.6, 0.01);
+    setIgnoreNextRegionChange(true);
+    const doFit = () => {
+      if (mapRef.current) {
+        mapRef.current.animateToRegion({
+          latitude: midLat,
+          longitude: midLng,
+          latitudeDelta: latDelta,
+          longitudeDelta: lngDelta,
+        }, 800);
+      } else {
+        setTimeout(doFit, 200);
+      }
+    };
+    doFit();
+  }, []);
+
+  // Ajustar mapa cuando cambian las coordenadas
+  useEffect(() => {
+    if (pickupCoord && deliveryCoord) {
+      const timer = setTimeout(() => fitMapBetween(pickupCoord, deliveryCoord), 400);
+      return () => clearTimeout(timer);
+    } else if (pickupCoord && mapRef.current) {
+      setIgnoreNextRegionChange(true);
+      mapRef.current.animateToRegion({
+        ...pickupCoord,
+        latitudeDelta: 0.01,
+        longitudeDelta: 0.01,
+      }, 500);
+    } else if (deliveryCoord && mapRef.current) {
+      setIgnoreNextRegionChange(true);
+      mapRef.current.animateToRegion({
+        ...deliveryCoord,
+        latitudeDelta: 0.01,
+        longitudeDelta: 0.01,
+      }, 500);
+    }
+  }, [pickupCoord, deliveryCoord, fitMapBetween]);
+
+  // Obtener ruta entre pickup y delivery para dibujar polyline
+  const fetchRoute = async (origin, destination) => {
+    try {
+      const url = `https://maps.googleapis.com/maps/api/directions/json?origin=${origin.latitude},${origin.longitude}&destination=${destination.latitude},${destination.longitude}&key=${GOOGLE_MAPS_API_KEY}`;
+      const resp = await fetch(url);
+      const data = await resp.json();
+      if (data.routes && data.routes.length > 0) {
+        const points = data.routes[0].overview_polyline.points;
+        const decoded = decodePolyline(points);
+        setRouteCoords(decoded);
+      }
+    } catch (e) {
+      console.error("Error fetching route:", e);
+    }
+  };
+
+  useEffect(() => {
+    if (pickupCoord && deliveryCoord) {
+      fetchRoute(pickupCoord, deliveryCoord);
+    } else {
+      setRouteCoords([]);
+    }
+  }, [pickupCoord, deliveryCoord]);
+
+  const decodePolyline = (encoded) => {
+    const points = [];
+    let index = 0, lat = 0, lng = 0;
+    while (index < encoded.length) {
+      let b, shift = 0, result = 0;
+      do { b = encoded.charCodeAt(index++) - 63; result |= (b & 0x1f) << shift; shift += 5; } while (b >= 0x20);
+      lat += (result & 1) ? ~(result >> 1) : (result >> 1);
+      shift = 0; result = 0;
+      do { b = encoded.charCodeAt(index++) - 63; result |= (b & 0x1f) << shift; shift += 5; } while (b >= 0x20);
+      lng += (result & 1) ? ~(result >> 1) : (result >> 1);
+      points.push({ latitude: lat / 1e5, longitude: lng / 1e5 });
+    }
+    return points;
+  };
 
   const searchMapLocation = async (query, userLat, userLng) => {
     setMapSearchQuery(query);
@@ -370,6 +499,22 @@ export default function SelectLocationScreen() {
   };
 
 
+  // Geocodifica un place_id de Google Places a coordenadas
+  const geocodePlaceId = async (placeId) => {
+    try {
+      const url = `https://maps.googleapis.com/maps/api/geocode/json?place_id=${placeId}&key=${GOOGLE_MAPS_API_KEY}`;
+      const response = await fetch(url);
+      const data = await response.json();
+      if (data.status === "OK" && data.results.length > 0) {
+        const loc = data.results[0].geometry.location;
+        return { latitude: loc.lat, longitude: loc.lng };
+      }
+    } catch (e) {
+      console.error("Error geocodificando place_id:", e);
+    }
+    return null;
+  };
+
   // Añade esta función para seleccionar una ubicación desde los resultados de búsqueda
 
   const getAddressFromCoordinates = async (latitude, longitude) => {
@@ -400,75 +545,34 @@ export default function SelectLocationScreen() {
     }
   };
 
-  const confirmSelectedLocation = async () => {
-    if (selectedLocation) {
-      const address = await getAddressFromCoordinates(
-        selectedLocation.latitude,
-        selectedLocation.longitude
-      );
 
-      if (isLocationPickup) {
-        setPickupAddress(address);
-      } else {
-        setDeliveryAddress(address);
-      }
+  // Modo pin: cuando el usuario quiere seleccionar manualmente en el mapa
+  const [pinMode, setPinMode] = useState(false);
 
-      setMapModalVisible(false);
-      setSelectedLocation(null);
-    } else {
-      Alert.alert("Error", "Por favor selecciona una ubicación en el mapa");
-    }
+  // Modifica la función openLocationPicker para activar el modo pin en el mapa principal
+  const openLocationPicker = async (isPickup) => {
+    setIsLocationPickup(isPickup);
+    setPinMode(true);
+    setMapSearchResults([]);
+    setMapSearchQuery("");
   };
 
-
-  // Modifica la función openLocationPicker para usar ubicación precargada
-  const openLocationPicker = async (isPickup) => {
-    // Mostrar modal inmediatamente, sin esperar por geocodificación
-    setIsLocationPickup(isPickup);
-    setMapModalVisible(true);
-
-    // Usar ubicación precargada si está disponible (acceso instantáneo)
-    if (userLocationRef.current) {
-      setMapRegion({
-        latitude: userLocationRef.current.latitude,
-        longitude: userLocationRef.current.longitude,
-        latitudeDelta: 0.01,
-        longitudeDelta: 0.01,
-      });
+  // Confirmar la ubicación central del mapa en modo pin
+  const confirmPinLocation = async () => {
+    const { latitude, longitude } = mapRegion;
+    const address = await getAddressFromCoordinates(latitude, longitude);
+    if (isLocationPickup) {
+      setPickupAddress(address);
+      setPickupCoord({ latitude, longitude });
     } else {
-      // Caso de respaldo: usar coordenadas predeterminadas
-      setMapRegion({
-        latitude: -12.046374,
-        longitude: -77.042793,
-        latitudeDelta: 0.01,
-        longitudeDelta: 0.01,
-      });
-
-      // Intentar obtener ubicación en segundo plano
-      setTimeout(() => {
-        Location.requestForegroundPermissionsAsync().then(({ status }) => {
-          if (status === "granted") {
-            Location.getCurrentPositionAsync({
-              accuracy: Location.Accuracy.Balanced,
-            })
-              .then((location) => {
-                setMapRegion({
-                  latitude: location.coords.latitude,
-                  longitude: location.coords.longitude,
-                  latitudeDelta: 0.01,
-                  longitudeDelta: 0.01,
-                });
-              })
-              .catch((error) => {
-                console.log(
-                  "Error obteniendo ubicación en segundo plano:",
-                  error
-                );
-              });
-          }
-        });
-      }, 100);
+      setDeliveryAddress(address);
+      setDeliveryCoord({ latitude, longitude });
     }
+    setPinMode(false);
+  };
+
+  const cancelPinMode = () => {
+    setPinMode(false);
   };
   const [fontsLoaded] = useFonts({
     MontserratRegular: Montserrat_400Regular,
@@ -553,7 +657,7 @@ export default function SelectLocationScreen() {
         }),
         punto_recogida: JSON.stringify(puntoRecogidaCoords),
         destino: JSON.stringify(destinoCoords),
-        costo: parseFloat(totalPrice),
+        costo: totalPriceRaw.current,
         distancia: distanceInKm,
         estado: "pendiente",
         metodo_pago: paymentMethod === "tarjeta" ? "Nequi o Bancolombia" : "Efectivo",
@@ -1059,8 +1163,10 @@ export default function SelectLocationScreen() {
           calculatedPrice = Math.max(calculatedPrice, MINIMUM_FARE);
 
           // Redondear a 2 decimales
-          const finalPrice = parseFloat(calculatedPrice.toFixed(2));
-          setTotalPrice(finalPrice.toFixed(2));
+          const finalPrice = parseFloat(calculatedPrice.toFixed(0));
+          totalPriceRaw.current = finalPrice;
+          const formattedPrice = finalPrice.toLocaleString("es-CO");
+          setTotalPrice(formattedPrice);
 
           console.log(
             `Precio calculado: $ ${finalPrice} (Base: $ ${basePrice} + ${distance.toFixed(
@@ -1099,8 +1205,10 @@ export default function SelectLocationScreen() {
             basePrice + estimatedDistance * pricePerKm + servicePrice;
           estimatedPrice = Math.max(estimatedPrice, 5.0); // Tarifa mínima
 
-          const finalPrice = parseFloat(estimatedPrice.toFixed(2));
-          setTotalPrice(finalPrice.toFixed(2));
+          const finalPrice = parseFloat(estimatedPrice.toFixed(0));
+          totalPriceRaw.current = finalPrice;
+          const formattedPrice = finalPrice.toLocaleString("es-CO");
+          setTotalPrice(formattedPrice);
 
           console.log(
             `Usando precio estimado: $ ${finalPrice} (Base: $ ${basePrice} + distancia estimada de ${estimatedDistance} km + Servicio: $ ${servicePrice})`
@@ -1213,14 +1321,18 @@ export default function SelectLocationScreen() {
     }
   };
 
-  const selectPickupAddress = (item) => {
+  const selectPickupAddress = async (item) => {
     setPickupAddress(item.description);
     setShowPickupSuggestions(false);
+    const coords = await geocodePlaceId(item.place_id);
+    if (coords) setPickupCoord(coords);
   };
 
-  const selectDeliveryAddress = (item) => {
+  const selectDeliveryAddress = async (item) => {
     setDeliveryAddress(item.description);
     setShowDeliverySuggestions(false);
+    const coords = await geocodePlaceId(item.place_id);
+    if (coords) setDeliveryCoord(coords);
   };
   // Cargar precios al montar el componente
   useEffect(() => {
@@ -1554,812 +1666,268 @@ export default function SelectLocationScreen() {
   // Luego, actualiza los modales para darles contenido real
   return (
     <SafeAreaView style={styles.safeContainer}>
-      <ScrollView style={styles.scrollView}>
-        <View style={styles.container}>
-          <Text style={styles.title}>Solicita tu transporte</Text>
+      {/* MAPA - siempre visible como fondo */}
+      <View style={styles.mapHero}>
+        <MapView
+          ref={mapRef}
+          style={styles.mapFull}
+          region={mapRegion}
+          showsUserLocation={true}
+          showsMyLocationButton={false}
+          loadingIndicatorColor="#fa6205"
+          onRegionChangeComplete={(region) => {
+            if (!ignoreNextRegionChange) setMapRegion(region);
+            else setIgnoreNextRegionChange(false);
+          }}
+        >
+          {pickupCoord && <Marker coordinate={pickupCoord} pinColor="#fa6205" title="Recogida" />}
+          {deliveryCoord && <Marker coordinate={deliveryCoord} pinColor="#FF4757" title="Destino" />}
+          {routeCoords.length > 0 && (
+            <Polyline coordinates={routeCoords} strokeWidth={4} strokeColor="#fa6205" />
+          )}
+        </MapView>
 
-          {/* Paso 1: Selección de tipo de vehículo (siempre visible) */}
-          <Text style={styles.sectionTitle}>Seleccione el tipo de vehículo</Text>
-          <View style={styles.vehicleOptions}>
-            {userRole === "comercio" ? (
-              // Mostrar solo moto
-              <TouchableOpacity
-                style={[
-                  styles.vehicleButton,
-                  vehicleType === "moto" && styles.vehicleButtonSelected,
-                ]}
-                onPress={() => handleVehicleSelect("moto")}
-              >
-                <Text style={[ // <-- CAMBIO AQUÍ
-                  styles.vehicleButtonText,
-                  vehicleType === "moto" && styles.selectedVehicleButtonText,
-                ]}>
-                  <MaterialCommunityIcons
-                    name="motorbike"
-                    size={24}
-                    color={vehicleType === "moto" ? "#000" : "#fa6205"} // <-- CAMBIO AQUÍ
-                  />
-                  {' Moto'}
-                </Text>
-                {/* Este ícono parece estar fuera de lugar, pero lo mantengo por si tiene un propósito */}
-                <MaterialCommunityIcons name="chevron-down" size={20} color={vehicleType === "moto" ? "#000" : "#333"} />
-              </TouchableOpacity>
-            ) : (
-              // Mostrar las 3 opciones
-              <>
-                <TouchableOpacity
-                  style={[
-                    styles.vehicleButton,
-                    vehicleType === "taxi" && styles.vehicleButtonSelected,
-                  ]}
-                  onPress={() => handleVehicleSelect("taxi")}
-                >
-                  <Text style={[ // <-- CAMBIO AQUÍ
-                    styles.vehicleButtonText,
-                    vehicleType === "taxi" && styles.selectedVehicleButtonText,
-                  ]}>
-                    <MaterialCommunityIcons
-                      name="taxi"
-                      size={24}
-                      color={vehicleType === "taxi" ? "#000" : "#fa6205"} // <-- CAMBIO AQUÍ
-                    />
-                    {' Taxi'}
-                  </Text>
-                </TouchableOpacity>
-
-                <TouchableOpacity
-                  style={[
-                    styles.vehicleButton,
-                    vehicleType === "moto" && styles.vehicleButtonSelected,
-                  ]}
-                  onPress={() => handleVehicleSelect("moto")}
-                >
-                  <Text style={[ // <-- CAMBIO AQUÍ
-                    styles.vehicleButtonText,
-                    vehicleType === "moto" && styles.selectedVehicleButtonText,
-                  ]}>
-                    <MaterialCommunityIcons
-                      name="motorbike"
-                      size={24}
-                      color={vehicleType === "moto" ? "#000" : "#fa6205"} // <-- CAMBIO AQUÍ
-                    />
-                    {' Moto'}
-                  </Text>
-                </TouchableOpacity>
-
-                <TouchableOpacity
-                  style={[
-                    styles.vehicleButton,
-                    vehicleType === "mototaxi" && styles.vehicleButtonSelected,
-                  ]}
-                  onPress={() => handleVehicleSelect("mototaxi")}
-                >
-                  <Text style={[ // <-- CAMBIO AQUÍ
-                    styles.vehicleButtonText,
-                    vehicleType === "mototaxi" && styles.selectedVehicleButtonText,
-                  ]}>
-                    <MaterialCommunityIcons
-                      name="rickshaw"
-                      size={24}
-                      color={vehicleType === "mototaxi" ? "#000" : "#fa6205"} // <-- CAMBIO AQUÍ
-                    />
-                    {' Mototaxi'}
-                  </Text>
-                </TouchableOpacity>
-              </>
-            )}
-          </View>
-
-          {!vehicleType && (
-            <Animated.View style={[
-              styles.promptCard,
-              { transform: [{ scale: pulseAnimation }] } // Aplicamos la animación aquí
-            ]}>
-              <MaterialCommunityIcons
-                name="hand-pointing-up"
-                size={28}
-                color="#1C1C1E"
-                style={styles.promptIcon}
+        {/* Pills editables de recogida/destino */}
+        <View style={styles.mapOverlay}>
+          <View style={styles.mapPillGroup}>
+            <View style={styles.mapSearchPill}>
+              <Ionicons name="location" size={18} color="#fa6205" />
+              <TextInput
+                style={styles.mapSearchInputInline}
+                placeholder="¿Dónde te recogemos?"
+                placeholderTextColor="#999"
+                value={pickupAddress}
+                onChangeText={(text) => searchPickupAddress(text)}
+                onFocus={() => setShowPickupSuggestions(true)}
               />
-              <Text style={styles.promptText}>
-                ¡Elige tu vehículo para empezar!
-              </Text>
-            </Animated.View>
-          )}
-
-          {/* Paso 2: Mostrar servicios disponibles SOLO si se seleccionó un tipo de vehículo */}
-          {vehicleType && (
-            <View>
-              <Text style={styles.sectionTitle}>Servicios disponibles</Text>
-              {isLoadingServices ? (
-                <View style={styles.loadingContainer}>
-                  <ActivityIndicator size="large" color="#fa6205" />
-                  <Text style={styles.loadingText}>Cargando servicios...</Text>
-                </View>
-              ) : availableServices.length > 0 ? (
-                <View style={styles.servicesContainer}>
-                  {availableServices.map((service) => (
-                    <TouchableOpacity
-                      key={service.id}
-                      style={[
-                        styles.serviceButton,
-                        selectedServiceId === service.id.toString() &&
-                        styles.serviceButtonSelected,
-                      ]}
-                      onPress={() => handleServiceSelect(service)}
-                    >
-                      {service.icono ? (
-                        typeof service.icono === "string" ? (
-                          service.icono.startsWith("http") ? (
-                            // Si la URL es completa
-                            <Image
-                              source={{ uri: service.icono }}
-                              style={styles.serviceIcon}
-                              resizeMode="contain"
-                              onError={(e) =>
-                                console.log(
-                                  "Error cargando imagen:",
-                                  e.nativeEvent.error
-                                )
-                              }
-                            />
-                          ) : (
-                            // Si es una ruta relativa, usar la ruta de storage
-                            <Image
-                              source={{
-                                uri: `${BASE_URL.toString().replace("/api", "")}storage/${service.icono}`,
-                              }}
-                              style={styles.serviceIcon}
-                              resizeMode="contain"
-                              onError={(e) =>
-                                console.log(
-                                  "Error cargando imagen storage:",
-                                  e.nativeEvent.error,
-                                  `${BASE_URL.toString().replace("/api", "")}storage/${service.icono}`
-                                )
-                              }
-                            />
-                          )
-                        ) : (
-                          // Si por alguna razón no es un string
-                          <MaterialCommunityIcons
-                            name="package-variant"
-                            size={30}
-                            color="#000"
-                            style={styles.serviceIconDefault}
-                          />
-                        )
-                      ) : (
-                        // Si no hay icono
-                        <MaterialCommunityIcons
-                          name="package-variant"
-                          size={30}
-                          color="#000"
-                          style={styles.serviceIconDefault}
-                        />
-                      )}
-                      <Text style={[
-                        styles.serviceButtonText,
-                        selectedServiceId === service.id.toString() && styles.selectedServiceButtonText
-                      ]}>
-                        {service.nombre}
-                      </Text>
-                    </TouchableOpacity>
-                  ))}
-                </View>
-              ) : (
-                <Text style={styles.noServicesText}>
-                  No hay servicios disponibles para este tipo de vehículo
-                </Text>
-              )}
+              <TouchableOpacity onPress={() => openLocationPicker(true)} style={styles.mapPinBtn}>
+                <Ionicons name="map-outline" size={20} color="#fa6205" />
+              </TouchableOpacity>
             </View>
-          )}
-          <Modal
-            isVisible={mapModalVisible}
-            backdropOpacity={0.7}
-            style={styles.mapModal}
-            onBackdropPress={() => setMapModalVisible(false)}
-          >
-            <View style={styles.mapModalContent}>
-              <View style={styles.mapModalHeader}>
-                <Text style={styles.mapModalTitle}>
-                  {isLocationPickup
-                    ? "Selecciona punto de recogida"
-                    : "Selecciona punto de destino"}
-                </Text>
-                <TouchableOpacity onPress={() => setMapModalVisible(false)}>
-                  <IconMC name="close" size={24} color="#1C1C1E" />
-                </TouchableOpacity>
-              </View>
-
-              {/* Buscador de direcciones */}
-              <View style={styles.mapSearchContainer}>
-                <View style={styles.mapSearchInputContainer}>
-                  <Ionicons
-                    name="search"
-                    size={20}
-                    color="#fa6205"
-                    style={styles.mapSearchIcon}
-                  />
-                  <TextInput
-                    style={styles.mapSearchInput}
-                    placeholder="Buscar dirección..."
-                    placeholderTextColor="rgba(161,161,161,0.8)"
-                    value={mapSearchQuery}
-                    onChangeText={searchMapLocation}
-                  />
-                  {mapSearchQuery.length > 0 && (
-                    <TouchableOpacity
-                      style={styles.mapSearchClearButton}
-                      onPress={() => {
-                        setMapSearchQuery("");
-                        setMapSearchResults([]);
-                      }}
-                    >
-                      <Ionicons name="close-circle" size={20} color="#999" />
-                    </TouchableOpacity>
-                  )}
-                </View>
-
-                {/* Resultados de búsqueda */}
-                {mapSearchResults.map((result) => (
-                  <TouchableOpacity
-                    key={`${result.recent ? "recent-" : "api-"}${result.place_id}`}
-                    style={styles.mapSearchResultItem}
-                    onPress={() =>
-                      selectMapLocation(result.place_id, result.description)
-                    }
-                  >
-                    <Ionicons
-                      name={result.recent ? "time" : "location"}
-                      size={18}
-                      color={result.recent ? "#FF9500" : "#fa6205"}
-                      style={styles.mapSearchResultIcon}
-                    />
-                    <Text style={styles.mapSearchResultText} numberOfLines={2}>
-                      {result.description}
-                    </Text>
+            {showPickupSuggestions && pickupSuggestions.length > 0 && (
+              <View style={styles.suggestionsDropdown}>
+                {pickupSuggestions.map((item) => (
+                  <TouchableOpacity key={item.place_id} onPress={() => selectPickupAddress(item)} style={styles.suggestionItem}>
+                    <Text style={styles.suggestionText}>{item.description}</Text>
                   </TouchableOpacity>
                 ))}
               </View>
+            )}
+          </View>
 
-              <View style={styles.mapContainer}>
-                <MapView
-                  ref={mapRef}
-                  style={styles.map}
-                  region={mapRegion}
-                  liteMode={false}
-                  showsUserLocation={false}
-                  showsMyLocationButton={false}
-                  showsCompass={false}
-                  showsScale={false}
-                  showsTraffic={false}
-                  showsIndoors={false}
-                  showsBuildings={false}
-                  showsPointsOfInterest={false}
-                  toolbarEnabled={false}
-                  loadingEnabled={true}
-                  loadingIndicatorColor="#fa6205"
-                  loadingBackgroundColor="#222"
-                  onRegionChangeComplete={(region) => {
-                    if (ignoreNextRegionChange) {
-                      setIgnoreNextRegionChange(false); // Consumimos el "ignorar"
-                    } else {
-                      setMapRegion(region); // Solo actualiza si no fue un setMapRegion manual
-                    }
-                  }}
-                  onPress={(e) => {
-                    const now = new Date().getTime();
-                    const DOUBLE_PRESS_DELAY = 300;
-
-                    if (lastMapPress && now - lastMapPress < DOUBLE_PRESS_DELAY) {
-                      setSelectedLocation(e.nativeEvent.coordinate);
-
-                      Alert.alert(
-                        "Ubicación seleccionada",
-                        "Punto marcado correctamente en el mapa"
-                      );
-
-                      setLastMapPress(0);
-                    } else {
-                      setLastMapPress(now);
-                    }
-                  }}
-                >
-                  {selectedLocation && (
-                    <Marker
-                      coordinate={{
-                        latitude: selectedLocation.latitude,
-                        longitude: selectedLocation.longitude,
-                      }}
-                      pinColor="#fa6205"
-                    />
-                  )}
-                </MapView>
-
-                {/* Botón para centrar en mi ubicación */}
-                <TouchableOpacity
-                  id="centerLocationBtn"
-                  style={styles.centerLocationButton}
-                  onPress={centerMapOnUserLocation}
-                >
-                  <Ionicons name="locate" size={28} color="#fa6205" />
-                </TouchableOpacity>
-
-                {/* Botón para seleccionar ubicación central */}
-                <TouchableOpacity
-                  style={styles.selectCenterButton}
-                  onPress={() => {
-                    // Seleccionar el centro actual del mapa
-                    setSelectedLocation({
-                      latitude: mapRegion.latitude,
-                      longitude: mapRegion.longitude,
-                    });
-
-                    // Mostrar confirmación visual
-                    Alert.alert(
-                      "Ubicación seleccionada",
-                      "Punto marcado correctamente en el mapa"
-                    );
-                  }}
-                >
-                  <Ionicons name="flag" size={28} color="#fa6205" />
-                </TouchableOpacity>
-
-                <View style={styles.mapPinOverlay}>
-                  <Text style={styles.mapInstructions}>
-                    Mueve el mapa y presiona el botón
-                    <Ionicons name="flag" size={16} color="#fa6205" /> para
-                    seleccionar la ubicación
-                  </Text>
-                </View>
-
-                {/* Indicador central opcional */}
-                <View style={styles.centerMarker}>
-                  <View style={styles.centerMarkerInner} />
-                </View>
-              </View>
-
-              <View style={styles.mapButtonContainer}>
-                <TouchableOpacity
-                  style={[
-                    styles.mapButton,
-                    !selectedLocation && styles.mapButtonDisabled,
-                  ]}
-                  onPress={confirmSelectedLocation}
-                  disabled={!selectedLocation}
-                >
-                  <Text style={styles.mapButtonText}>Confirmar ubicación</Text>
-                </TouchableOpacity>
-              </View>
-            </View>
-          </Modal>
-          {/* Paso 3: Mostrar ubicaciones SOLO si se seleccionó un servicio */}
-          {selectedServiceId ? (
-            <View>
-              <Text style={styles.sectionTitle}>Ingreso de ubicaciones</Text>
-              {/* Dirección de recogida */}
-              <View style={styles.addressContainer}>
-
-                <View style={styles.addressInputContainer}>
-                  <Text style={styles.addressLabel}>
-                    Ingresa dirección de recogida
-                  </Text>
-                  <Text style={styles.mensajeAyuda}>
-                    Ingresa al menos 4 caracteres para ver sugerencias.
-                  </Text>
-                  <View style={styles.locationInputRow}>
-                    <TextInput
-                      style={[styles.addressValue, { flex: 1 }]}
-                      placeholder="Buscar dirección..."
-                      placeholderTextColor="rgba(161, 161, 161, 1)"
-                      value={pickupAddress}
-                      onChangeText={(text) => searchPickupAddress(text)}
-                    />
-                  </View>
-                  <Text style={styles.mensajeAyudaSecundaria2}>
-                    {pickupAddress ?? ''}
-                  </Text>
-                  {locationError && (
-                    <Text style={styles.locationErrorText}>
-                      {locationError}
-                    </Text>
-                  )}
-                  {showPickupSuggestions && (
-                    <View style={styles.suggestionsContainer}>
-                      {isSearchingPickup ? (
-                        <ActivityIndicator
-                          size="small"
-                          color="#000000ff"
-                          style={styles.loadingIndicator}
-                        />
-                      ) : (
-                        pickupSuggestions.map((item) => (
-                          <TouchableOpacity
-                            key={item.place_id}
-                            onPress={() => selectPickupAddress(item)}
-                            style={styles.suggestionItem}
-                          >
-                            <Ionicons
-                              name="location"
-                              size={16}
-                              color="#000"
-                              style={styles.suggestionIcon}
-                            />
-                            <Text style={styles.suggestionText}>
-                              {item.description}
-                            </Text>
-                          </TouchableOpacity>
-                        ))
-                      )}
-                    </View>
-                  )}
-                  {/* --- NUEVO CONTENEDOR DE BOTONES --- */}
-                  <View style={styles.actionsContainer}>
-                    <TouchableOpacity style={styles.actionButton} onPress={() => openLocationPicker(true)}>
-                      <Ionicons name="map-outline" size={18} color="#000" />
-                      <Text style={styles.actionButtonText}>Seleccionar en mapa</Text>
-                    </TouchableOpacity>
-
-                    <TouchableOpacity
-                      style={styles.actionButton}
-                      onPress={() => getCurrentLocation("pickup")}
-                      disabled={isLoadingCurrentLocation}
-                    >
-                      {isLoadingCurrentLocation ? (
-                        <ActivityIndicator size="small" color="#000" />
-                      ) : (
-                        <Ionicons name="locate-outline" size={18} color="#000" />
-                      )}
-                    </TouchableOpacity>
-                  </View>
-                </View>
-              </View>
-              {/* Dirección de entrega */}
-              <View style={styles.addressContainer}>
-                <View style={styles.addressInputContainer}>
-                  <Text style={styles.addressLabel}>
-                    Ingresa dirección de llegada
-                  </Text>
-                  <Text style={styles.mensajeAyuda}>
-                    Ingresa al menos 4 caracteres para ver sugerencias.
-                  </Text>
-                  <View style={styles.locationInputRow}>
-                    <TextInput
-                      style={[styles.addressValue, { flex: 1 }]}
-                      placeholder="Buscar dirección..."
-                      placeholderTextColor="rgba(161, 161, 161, 1)"
-                      value={deliveryAddress}
-                      onChangeText={(text) => searchDeliveryAddress(text)}
-                    />
-                  </View>
-                  <Text style={styles.mensajeAyudaSecundaria2}>
-                    {deliveryAddress ?? ''}
-                  </Text>
-                  {showDeliverySuggestions && (
-                    <View style={styles.suggestionsContainer}>
-                      {isSearchingDelivery ? (
-                        <ActivityIndicator
-                          size="small"
-                          color="#000"
-                          style={styles.loadingIndicator}
-                        />
-                      ) : (
-                        deliverySuggestions.map((item) => (
-                          <TouchableOpacity
-                            key={item.place_id}
-                            onPress={() => selectDeliveryAddress(item)}
-                            style={styles.suggestionItem}
-                          >
-                            <Ionicons
-                              name="location"
-                              size={16}
-                              color="#000"
-                              style={styles.suggestionIcon}
-                            />
-                            <Text style={styles.suggestionText}>
-                              {item.description}
-                            </Text>
-                          </TouchableOpacity>
-                        ))
-                      )}
-                    </View>
-                  )}
-                  {/* --- NUEVO CONTENEDOR DE BOTONES --- */}
-                  <View style={styles.actionsContainer}>
-                    <TouchableOpacity style={styles.actionButton} onPress={() => openLocationPicker(false)}>
-                      <Ionicons name="map-outline" size={18} color="#000" />
-                      <Text style={styles.actionButtonText}>Seleccionar en mapa</Text>
-                    </TouchableOpacity>
-
-                    <TouchableOpacity
-                      style={styles.actionButton}
-                      onPress={() => {
-                        const tempAddr = deliveryAddress;
-                        setDeliveryAddress(pickupAddress);
-                        setPickupAddress(tempAddr);
-                      }}
-                      disabled={isLoadingCurrentLocation}
-                    >
-                      {isLoadingCurrentLocation ? (
-                        <ActivityIndicator size="small" color="#000" />
-                      ) : (
-                        <Ionicons name="swap-vertical" size={18} color="#000" />
-                      )}
-                    </TouchableOpacity>
-                  </View>
-
-                </View>
-              </View>
-              {/* Observaciones */}
-              <View style={styles.observationsContainer}>
-                <Text style={styles.addressLabel}>Observaciones</Text>
-                <TextInput
-                  style={styles.observationsInput}
-                  placeholder="Escribe alguna indicación adicional..."
-                  placeholderTextColor={"#000"}
-                  value={observations}
-                  onChangeText={setObservations}
-                  multiline
-                />
-              </View>
-              {/* Paso 4: Mostrar método de pago SOLO cuando hay un servicio seleccionado */}
-              <Text style={styles.sectionTitle}>Metodo de pago</Text>
-              <View style={styles.paymentContainer}>
-                {/* Opción de efectivo - Solo mostrar si el usuario puede pagar en efectivo */}
-                {!loadingUserSettings &&
-                  userPaymentSettings &&
-                  userPaymentSettings.puede_pagar_efectivo && (
-                    <TouchableOpacity
-                      style={styles.paymentOption}
-                      onPress={() => handlePaymentMethodSelect("efectivo")}
-                    >
-                      <View style={styles.paymentIconContainer}>
-                        <MaterialCommunityIcons
-                          name="cash"
-                          size={24}
-                          color="#1C1C1E"
-                        />
-                      </View>
-                      <Text style={styles.paymentText}>Efectivo</Text>
-                      <View
-                        style={[
-                          styles.radioButton,
-                          paymentMethod === "efectivo" &&
-                          styles.radioButtonSelected,
-                        ]}
-                      >
-                        {paymentMethod === "efectivo" && (
-                          <MaterialCommunityIcons
-                            name="check"
-                            size={20}
-                            color="#fa6205"
-                          />
-                        )}
-                      </View>
-                    </TouchableOpacity>
-                  )}
-                <TouchableOpacity
-                  style={styles.paymentOption}
-                  onPress={() => handlePaymentMethodSelect("tarjeta")}
-                >
-                  <View style={styles.paymentIconContainer}>
-                    <MaterialCommunityIcons
-                      name="credit-card"
-                      size={24}
-                      color="#1C1C1E"
-                    />
-                  </View>
-                  <Text style={styles.paymentText}>{textoPago}</Text>
-                  <View
-                    style={[
-                      styles.radioButton,
-                      paymentMethod === "tarjeta" && styles.radioButtonSelected,
-                    ]}
-                  />
-                </TouchableOpacity>
-                {/* Mostrar indicador de carga mientras se consulta la configuración del usuario */}
-                {loadingUserSettings && (
-                  <View style={styles.loadingPaymentContainer}>
-                    <ActivityIndicator size="small" color="#fa6205" />
-                    <Text style={styles.loadingPaymentText}>
-                      Cargando métodos de pago...
-                    </Text>
-                  </View>
-                )}
-                {/* Mostrar mensaje si no se ha seleccionado método de pago */}
-                {!loadingUserSettings && !paymentMethod && (
-                  <View style={styles.paymentInfoContainer}>
-                    <MaterialCommunityIcons
-                      name="alert-circle-outline"
-                      size={20}
-                      color="#FF9500"
-                    />
-                    <Text style={styles.paymentInfoText}>
-                      Selecciona un método de pago para continuar
-                    </Text>
-                  </View>
-                )}
-              </View>
-              {/* Paso 5: Total y botón de pago SOLO cuando hay un servicio seleccionado */}
-              <View style={styles.footer}>
-                <View style={styles.priceContainer}>
-                  {isCalculatingPrice ? (
-                    <View style={styles.calculatingContainer}>
-                      <ActivityIndicator size="large" color="#fa6205" />
-                      <Text style={styles.calculatingText}>
-                        Calculando precio...
-                      </Text>
-                    </View>
-                  ) : priceError ? (
-                    <Text style={styles.priceError}>{priceError}</Text>
-                  ) : totalPrice ? (
-                    <View>
-                      <Text style={styles.totalPrice}>$ {totalPrice}</Text>
-                      {distanceInKm && (
-                        <View>
-                          <Text style={styles.distanceText}>
-                            {distanceInKm.toFixed(2)} km •
-                            {tariffType === "dia"
-                              ? "Tarifa día"
-                              : tariffType === "noche"
-                                ? "Tarifa noche"
-                                : "Tarifa festivo"}
-                          </Text>
-                          {(vehicleType === "taxi" ||
-                            vehicleType === "mototaxi") && (
-                              <Text style={styles.distanceText}>
-                                Tarifa referencial y negociable
-                              </Text>
-                            )}
-                        </View>
-                      )}
-                    </View>
-                  ) : (
-                    <Text style={styles.totalPricePrompt}></Text>
-                  )}
-                </View>
-                <TouchableOpacity
-                  style={[
-                    styles.payButton,
-                    (!totalPrice ||
-                      isCalculatingPrice ||
-                      isCreatingRide ||
-                      !paymentMethod ||
-                      !pickupAddress.trim() ||
-                      !deliveryAddress.trim()) &&
-                    styles.payButtonDisabled,
-                  ]}
-                  onPress={handleContinue}
-                  disabled={
-                    !totalPrice ||
-                    isCalculatingPrice ||
-                    isCreatingRide ||
-                    !paymentMethod ||
-                    !pickupAddress.trim() ||
-                    !deliveryAddress.trim()
-                  }
-                >
-                  {isCreatingRide ? (
-                    <ActivityIndicator size="small" color="#000" />
-                  ) : (
-                    <Text style={styles.payButtonText}>Solicitar</Text>
-                  )}
-                </TouchableOpacity>
-              </View>
-            </View>
-          ) : vehicleType ? (
-            <View style={styles.serviceRequiredContainer}>
-              <Ionicons
-                name="alert-circle-outline"
-                size={50}
-                color="#FF9500"
-                style={styles.alertIcon}
+          <View style={styles.mapPillGroup}>
+            <View style={styles.mapSearchPill}>
+              <Ionicons name="flag" size={18} color="#FF4757" />
+              <TextInput
+                style={styles.mapSearchInputInline}
+                placeholder="¿A dónde vas?"
+                placeholderTextColor="#999"
+                value={deliveryAddress}
+                onChangeText={(text) => searchDeliveryAddress(text)}
+                onFocus={() => setShowDeliverySuggestions(true)}
               />
-              <Text style={styles.serviceRequiredText}>
-                Por favor selecciona un servicio para continuar
-              </Text>
+              <TouchableOpacity onPress={() => openLocationPicker(false)} style={styles.mapPinBtn}>
+                <Ionicons name="map-outline" size={20} color="#FF4757" />
+              </TouchableOpacity>
             </View>
-          ) : null}
+            {showDeliverySuggestions && deliverySuggestions.length > 0 && (
+              <View style={styles.suggestionsDropdown}>
+                {deliverySuggestions.map((item) => (
+                  <TouchableOpacity key={item.place_id} onPress={() => selectDeliveryAddress(item)} style={styles.suggestionItem}>
+                    <Text style={styles.suggestionText}>{item.description}</Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            )}
+          </View>
         </View>
 
-        {/* Modales y cargadores - siempre disponibles independientemente del estado */}
-        <Modal
-          isVisible={paymentPolicyModalVisible}
-          backdropOpacity={0.7}
-          onBackdropPress={() => setPaymentPolicyModalVisible(false)}
-        >
-          <View style={styles.modalContent}>
-            <TouchableOpacity
-              style={{ position: "absolute", top: 10, right: 10 }}
-              onPress={() => setPaymentPolicyModalVisible(false)}
-            >
-              <IconMC name="close" size={24} color="black" />
+        {/* Pin mode overlay */}
+        {pinMode && (
+          <>
+            <View style={styles.pinCenterOverlay} pointerEvents="none">
+              <View style={styles.pinCenterContent}>
+                <Ionicons name="location" size={38} color="#fa6205" />
+                <Text style={styles.pinHintText}>Mueve el mapa para ajustar el pin</Text>
+              </View>
+            </View>
+
+            <View style={styles.pinActions}>
+              <TouchableOpacity style={styles.pinCancelBtn} onPress={cancelPinMode}>
+                <Text style={styles.pinCancelText}>Cancelar</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.pinConfirmBtn} onPress={confirmPinLocation}>
+                <Text style={styles.pinConfirmText}>Confirmar</Text>
+              </TouchableOpacity>
+            </View>
+
+            {/* Botón centrar ubicación */}
+            <TouchableOpacity style={styles.centerLocationButton} onPress={() => {
+              if (userLocationRef.current && mapRef.current) {
+                mapRef.current.animateToRegion({
+                  ...userLocationRef.current,
+                  latitudeDelta: 0.005,
+                  longitudeDelta: 0.005,
+                }, 500);
+              }
+            }}>
+              <MaterialCommunityIcons name="crosshairs-gps" size={22} color="#1C1C1E" />
             </TouchableOpacity>
+          </>
+        )}
+      </View>
 
-            <MaterialCommunityIcons
-              name="information"
-              size={50}
-              color="#FF9500"
-              style={{ marginBottom: 15 }}
-            />
+      {/* BOTTOM SHEET */}
+      <Animated.View style={[styles.bottomSheet, { maxHeight: sheetAnimation.interpolate({ inputRange: [0, 1], outputRange: [140, 450] }) }]}>
+        {/* Header */}
+        <View style={styles.sheetHeader}>
+          <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+            <Ionicons name="chevron-back" size={22} color="#1C1C1E" />
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.sheetHeaderCenter} onPress={toggleSheet} activeOpacity={0.7}>
+            <View style={styles.dragHandle} />
+            <Text style={styles.title}>Solicita tu transporte</Text>
+          </TouchableOpacity>
+          <TouchableOpacity onPress={toggleSheet} style={styles.chevronBtn} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+            <Ionicons name={isSheetExpanded ? "chevron-down" : "chevron-up"} size={18} color="#888" />
+          </TouchableOpacity>
+        </View>
 
-            <Text style={styles.paymentPolicyTitle}>Información importante</Text>
-            <Text style={styles.paymentPolicyText}>
-              Estimado usuario, por políticas de seguridad para cuentas nuevas, el pago debe realizarse por Nequi o Bancolombia antes de iniciar el servicio. Una vez complete 5 servicios o delivery, podrá pagar al finalizar. Agradecemos su comprensión.
-            </Text>
-
+        <ScrollView contentContainerStyle={styles.bottomSheetContent} showsVerticalScrollIndicator={false} nestedScrollEnabled>
+          {/* Vehicle pills - siempre visibles */}
+          <View style={styles.vehiclePills}>
+            {userRole !== "comercio" && (
+              <TouchableOpacity
+                style={[styles.pill, vehicleType === "taxi" && styles.pillActive]}
+                onPress={() => handleVehicleSelect("taxi")}
+              >
+                <MaterialCommunityIcons name="car" size={18} color={vehicleType === "taxi" ? "#FFF" : "#1C1C1E"} />
+                <Text style={[styles.pillText, vehicleType === "taxi" && styles.pillTextActive]}>Particular</Text>
+              </TouchableOpacity>
+            )}
             <TouchableOpacity
-              style={styles.paymentPolicyButton}
-              onPress={() => setPaymentPolicyModalVisible(false)}
+              style={[styles.pill, vehicleType === "moto" && styles.pillActive]}
+              onPress={() => handleVehicleSelect("moto")}
             >
-              <Text style={styles.paymentPolicyButtonText}>Entendido</Text>
-            </TouchableOpacity>
-          </View>
-        </Modal>
-
-        <Modal
-          isVisible={isModalVisible}
-          backdropOpacity={0.5}
-          onBackdropPress={() => setModalVisible(false)}
-        >
-          <View style={styles.modalContent}>
-            <TouchableOpacity
-              style={{ position: "absolute", top: 10, right: 10 }}
-              onPress={() => setModalVisible(false)}
-            >
-              <IconMC name="close" size={24} color="black" />
-            </TouchableOpacity>
-
-            <Text style={styles.title5}>Solicitud enviada con éxito</Text>
-            <Text style={styles.subtitle5}>
-              Tu solicitud ha sido enviada.{"\n"}
-              Se te asignará un conductor{"\n"}
-              cuando alguien acepte{"\n"}
-              tu servicio en breve.{"\n"}
-            </Text>
-
-            <TouchableOpacity
-              style={styles.button5}
-              onPress={async () => {
-                setModalVisible(false);
-                const carreraId = await AsyncStorage.getItem("carreraId");
-                navigation.navigate("Pedidos", { carreraId });
-              }}
-            >
-              <Text style={styles.buttonText5}>Continuar</Text>
-            </TouchableOpacity>
-          </View>
-        </Modal>
-
-        <Modal
-          isVisible={isErrorModalVisible}
-          backdropOpacity={0.5}
-          onBackdropPress={() => setErrorModalVisible(false)}
-        >
-          <View style={styles.modalContent}>
-            <TouchableOpacity
-              style={{ position: "absolute", top: 10, right: 10 }}
-              onPress={() => setErrorModalVisible(false)}
-            >
-              <IconMC name="close" size={24} color="black" />
-            </TouchableOpacity>
-
-            <Text style={styles.title6}>El Pago no se ha aprobado</Text>
-            <Text style={styles.subtitle6}>
-              Intenta nuevamente para{"\n"}
-              relizar el pago{"\n"}
-            </Text>
-
-            <TouchableOpacity
-              style={styles.button5}
-              onPress={() => setErrorModalVisible(false)}
-            >
-              <Text style={styles.buttonText5}>Intentar nuevamente</Text>
+              <MaterialCommunityIcons name="motorbike" size={18} color={vehicleType === "moto" ? "#FFF" : "#1C1C1E"} />
+              <Text style={[styles.pillText, vehicleType === "moto" && styles.pillTextActive]}>Delivery</Text>
             </TouchableOpacity>
           </View>
-        </Modal>
-      </ScrollView>
+
+          {/* Contenido expandible */}
+          <Animated.View style={{ opacity: sheetAnimation, maxHeight: sheetAnimation.interpolate({ inputRange: [0, 1], outputRange: [0, 2000] }), overflow: "hidden" }}>
+
+            {/* Services */}
+            {vehicleType && (
+              <View>
+                {isLoadingServices ? (
+                  <ActivityIndicator size="small" color="#fa6205" style={{ marginVertical: 10 }} />
+                ) : availableServices.length > 0 ? (
+                  <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.servicesScroll} nestedScrollEnabled>
+                    {availableServices.map((service) => (
+                      <TouchableOpacity
+                        key={service.id}
+                        style={[styles.serviceCard, selectedServiceId === service.id.toString() && styles.serviceCardActive]}
+                        onPress={() => handleServiceSelect(service)}
+                      >
+                        {service.icono ? (
+                          <Image source={{ uri: service.icono.startsWith("http") ? service.icono : `${BASE_URL.toString().replace("/api", "")}storage/${service.icono}` }} style={styles.serviceCardIcon} />
+                        ) : (
+                          <MaterialCommunityIcons name="package-variant" size={24} color="#1C1C1E" />
+                        )}
+                        <Text style={[styles.serviceCardText, selectedServiceId === service.id.toString() && styles.serviceCardTextActive]}>{service.nombre}</Text>
+                      </TouchableOpacity>
+                    ))}
+                  </ScrollView>
+                ) : (
+                  <Text style={styles.noServicesText}>No hay servicios disponibles</Text>
+                )}
+              </View>
+            )}
+
+            {/* Address + Payment + Price - solo si hay servicio seleccionado */}
+            {selectedServiceId ? (
+              <>
+                {/* Observaciones */}
+                <View style={styles.observationsContainer}>
+                  <Text style={styles.addressLabel}>Observaciones</Text>
+                  <TextInput style={styles.observationsInput} placeholder="Indicaciones adicionales..." placeholderTextColor="#999" value={observations} onChangeText={setObservations} multiline />
+                </View>
+
+                {/* Payment */}
+                <Text style={styles.sectionTitle}>Método de pago</Text>
+                <View style={styles.paymentContainer}>
+                  {!loadingUserSettings && userPaymentSettings && userPaymentSettings.puede_pagar_efectivo && (
+                    <TouchableOpacity style={styles.paymentOption} onPress={() => handlePaymentMethodSelect("efectivo")}>
+                      <View style={styles.paymentIconContainer}><MaterialCommunityIcons name="cash" size={20} color="#1C1C1E" /></View>
+                      <Text style={styles.paymentText}>Efectivo</Text>
+                      <View style={[styles.radioButton, paymentMethod === "efectivo" && styles.radioButtonSelected]}>{paymentMethod === "efectivo" && <MaterialCommunityIcons name="check" size={16} color="#FFF" />}</View>
+                    </TouchableOpacity>
+                  )}
+                  <TouchableOpacity style={styles.paymentOption} onPress={() => handlePaymentMethodSelect("tarjeta")}>
+                    <View style={styles.paymentIconContainer}><MaterialCommunityIcons name="credit-card" size={20} color="#1C1C1E" /></View>
+                    <Text style={styles.paymentText}>{textoPago}</Text>
+                    <View style={[styles.radioButton, paymentMethod === "tarjeta" && styles.radioButtonSelected]}>{paymentMethod === "tarjeta" && <MaterialCommunityIcons name="check" size={16} color="#FFF" />}</View>
+                  </TouchableOpacity>
+                  {!loadingUserSettings && !paymentMethod && (
+                    <Text style={styles.paymentInfoText}>Selecciona un método de pago para continuar</Text>
+                  )}
+                </View>
+
+                {/* Price + Solicitar */}
+                <View style={styles.footer}>
+                  <View style={styles.priceContainer}>
+                    {isCalculatingPrice ? (
+                      <ActivityIndicator size="small" color="#fa6205" />
+                    ) : totalPrice ? (
+                      <>
+                        <Text style={styles.totalPrice}>$ {totalPrice}</Text>
+                        {distanceInKm ? <Text style={styles.distanceText}>{distanceInKm.toFixed(2)} km</Text> : null}
+                      </>
+                    ) : (
+                      <Text style={styles.totalPricePrompt}>Ingresa las direcciones</Text>
+                    )}
+                  </View>
+                  <TouchableOpacity
+                    style={[styles.payButton, (!totalPrice || isCalculatingPrice || isCreatingRide || !paymentMethod || !pickupAddress.trim() || !deliveryAddress.trim()) && styles.payButtonDisabled]}
+                    onPress={handleContinue}
+                    disabled={!totalPrice || isCalculatingPrice || isCreatingRide || !paymentMethod || !pickupAddress.trim() || !deliveryAddress.trim()}
+                  >
+                    {isCreatingRide ? <ActivityIndicator size="small" color="#000" /> : <Text style={styles.payButtonText}>Solicitar</Text>}
+                  </TouchableOpacity>
+                </View>
+              </>
+            ) : vehicleType ? (
+              <View style={styles.serviceRequiredContainer}>
+                <Ionicons name="alert-circle-outline" size={24} color="#FF9500" />
+                <Text style={styles.serviceRequiredText}>Selecciona un servicio para continuar</Text>
+              </View>
+            ) : null}
+
+          </Animated.View>
+        </ScrollView>
+      </Animated.View>
+
+      {/* Modal éxito */}
+      <AlertaModal
+        visible={isModalVisible}
+        tipo="success"
+        mensaje="Tu solicitud ha sido enviada. Un conductor la tomará pronto."
+        onCerrar={() => { setModalVisible(false); navigation.goBack(); }}
+        onPrimary={() => {
+          setModalVisible(false);
+          navigation.goBack();
+          setTimeout(() => navigation.getParent()?.navigate("Pedidos"), 200);
+        }}
+        primaryLabel="Ver mis viajes"
+      />
+
+      {/* Modal error */}
+      <AlertaModal
+        visible={isErrorModalVisible}
+        mensaje="No se pudo crear la carrera. Intenta de nuevo."
+        onCerrar={() => setErrorModalVisible(false)}
+      />
 
       {isCreatingRide && (
         <View style={styles.globalLoadingContainer}>
@@ -2376,8 +1944,173 @@ export default function SelectLocationScreen() {
 const styles = StyleSheet.create({
   safeContainer: {
     flex: 1,
-    backgroundColor: "#F2F2F7", // Añadido para un fondo de tema oscuro consistente
+    backgroundColor: "#F2F2F7",
+    paddingTop: Platform.OS === "android" ? 40 : 0,
   },
+  // NUEVOS ESTILOS MAPA + BOTTOM SHEET
+  mapHero: {
+    flex: 1,
+    minHeight: 200,
+  },
+  mapFull: {
+    ...StyleSheet.absoluteFillObject,
+  },
+  mapBackBtn: {
+    position: "absolute",
+    top: 10,
+    left: 12,
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    backgroundColor: "#FFF",
+    justifyContent: "center",
+    alignItems: "center",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.2,
+    shadowRadius: 3,
+    elevation: 4,
+    zIndex: 10,
+  },
+  mapOverlay: {
+    position: "absolute",
+    top: 10,
+    left: 15,
+    right: 15,
+    gap: 8,
+  },
+  mapSearchPill: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#FFFFFF",
+    borderRadius: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 4,
+    elevation: 4,
+  },
+  mapSearchText: {
+    flex: 1,
+    marginLeft: 10,
+    fontSize: 14,
+    fontFamily: "Montserrat_400Regular",
+    color: "#555",
+  },
+  bottomSheet: {
+    backgroundColor: "#F2F2F7",
+  },
+  sheetHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#F2F2F7",
+    paddingHorizontal: 8,
+    paddingTop: 6,
+    paddingBottom: 2,
+  },
+  backBtn: {
+    paddingHorizontal: 6,
+    paddingBottom: 4,
+  },
+  chevronBtn: {
+    paddingHorizontal: 6,
+    paddingBottom: 4,
+  },
+  sheetHeaderCenter: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  dragHandle: {
+    width: 36,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: "#CCC",
+    alignSelf: "center",
+    position: "absolute",
+    top: 6,
+    left: "50%",
+    marginLeft: -18,
+  },
+  bottomSheetContent: {
+    paddingHorizontal: 14,
+    paddingBottom: 20,
+  },
+  vehiclePills: {
+    flexDirection: "row",
+    gap: 8,
+    marginBottom: 8,
+  },
+  pill: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#FFFFFF",
+    borderRadius: 10,
+    paddingVertical: 8,
+    gap: 6,
+    borderWidth: 1.5,
+    borderColor: "#DDD",
+  },
+  pillActive: {
+    backgroundColor: "#fa6205",
+    borderColor: "#fa6205",
+    shadowColor: "#fa6205",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 4,
+  },
+  pillText: {
+    fontSize: 13,
+    fontFamily: "Montserrat_700Bold",
+    color: "#1C1C1E",
+  },
+  pillTextActive: {
+    color: "#FFF",
+  },
+  servicesScroll: {
+    marginBottom: 8,
+    maxHeight: 90,
+  },
+  serviceCard: {
+    backgroundColor: "#FFFFFF",
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    marginRight: 8,
+    alignItems: "center",
+    borderWidth: 1.5,
+    borderColor: "#DDD",
+    minWidth: 72,
+  },
+  serviceCardActive: {
+    backgroundColor: "#fa6205",
+    borderColor: "#fa6205",
+  },
+  serviceCardIcon: {
+    width: 28,
+    height: 28,
+    marginBottom: 4,
+    resizeMode: "contain",
+  },
+  serviceCardText: {
+    fontSize: 11,
+    fontFamily: "Montserrat_600SemiBold",
+    color: "#1C1C1E",
+    textAlign: "center",
+  },
+  serviceCardTextActive: {
+    color: "#FFF",
+  },
+  mapBtn: {
+    padding: 8,
+  },
+  // ESTILOS EXISTENTES
   scrollView: {
     // El fondo se hereda de safeContainer
   },
@@ -2580,20 +2313,106 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     zIndex: 10,
   },
+  // Pin mode manual
+  pinCenterOverlay: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    justifyContent: "center",
+    alignItems: "center",
+    zIndex: 5,
+  },
+  pinCenterContent: {
+    alignItems: "center",
+    marginTop: -19,
+  },
+  pinHintText: {
+    fontSize: 11,
+    fontFamily: "MontserratRegular",
+    color: "#000",
+    backgroundColor: "rgba(255,255,255,0.8)",
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 6,
+    marginTop: 2,
+    overflow: "hidden",
+  },
+  pinActions: {
+    position: "absolute",
+    bottom: 60,
+    left: 20,
+    right: 20,
+    flexDirection: "row",
+    gap: 10,
+    zIndex: 5,
+  },
+  pinCancelBtn: {
+    flex: 1,
+    backgroundColor: "#FFF",
+    borderRadius: 12,
+    paddingVertical: 12,
+    alignItems: "center",
+    borderWidth: 1,
+    borderColor: "#DDD",
+  },
+  pinCancelText: {
+    fontSize: 14,
+    fontFamily: "MontserratBold",
+    color: "#666",
+  },
+  pinConfirmBtn: {
+    flex: 2,
+    backgroundColor: "#fa6205",
+    borderRadius: 12,
+    paddingVertical: 12,
+    alignItems: "center",
+  },
+  pinConfirmText: {
+    fontSize: 14,
+    fontFamily: "MontserratBold",
+    color: "#000",
+  },
+  mapSearchInputInline: {
+    flex: 1,
+    fontSize: 14,
+    fontFamily: "Montserrat_400Regular",
+    color: "#1C1C1E",
+    paddingVertical: 2,
+  },
+  mapPinBtn: {
+    padding: 4,
+  },
+  mapPillGroup: {
+    marginBottom: 0,
+  },
+  suggestionsDropdown: {
+    backgroundColor: "#FFF",
+    borderRadius: 8,
+    marginTop: 4,
+    overflow: "hidden",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
   title: {
-    fontSize: 28,
+    fontSize: 20,
     fontWeight: "bold",
-    marginTop: 40,
-    marginBottom: 20,
+    marginTop: 10,
+    marginBottom: 8,
     fontFamily: "MontserratBold",
     color: "#1C1C1E",
+    textAlign: "center",
   },
   sectionTitle: {
-    fontSize: 18,
-    marginTop: 5,
-    marginBottom: 5,
+    fontSize: 13,
+    marginTop: 4,
+    marginBottom: 4,
     fontFamily: "MontserratRegular",
-    color: "#444",
+    color: "#666",
   },
   vehicleOptions: {
     marginBottom: 20,
@@ -2632,20 +2451,20 @@ const styles = StyleSheet.create({
   },
   serviceRequiredContainer: {
     borderWidth: 1,
-    borderColor: "#FF9500", // Mantenemos el naranja para alertas
-    borderRadius: 15,
-    padding: 20,
-    marginVertical: 20,
+    borderColor: "#FF9500",
+    borderRadius: 10,
+    padding: 10,
+    marginVertical: 8,
     alignItems: "center",
     borderStyle: "dashed",
     backgroundColor: "rgba(255, 149, 0, 0.1)",
   },
   serviceRequiredText: {
     textAlign: "center",
-    marginTop: 10,
+    marginTop: 6,
     fontFamily: "MontserratRegular",
-    fontSize: 16,
-    color: "#FFD38A", // Tono claro de naranja para el texto
+    fontSize: 13,
+    color: "#FF9500",
   },
   alertIcon: {
     marginBottom: 10,
@@ -2698,8 +2517,9 @@ const styles = StyleSheet.create({
   noServicesText: {
     textAlign: "center",
     fontFamily: "MontserratRegular",
-    marginBottom: 20,
-    color: "#1C1C1E",
+    marginBottom: 8,
+    color: "#999",
+    fontSize: 12,
   },
   servicePriceText: {
     color: "#888", // Gris claro
@@ -2740,10 +2560,10 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     borderWidth: 1,
     backgroundColor: "#FFF",
-    borderColor: "#fa6205", // Nuevo verde
-    borderRadius: 15,
-    padding: 15,
-    marginBottom: 15,
+    borderColor: "#fa6205",
+    borderRadius: 12,
+    padding: 10,
+    marginBottom: 8,
     borderStyle: "dashed",
   },
   iconContainer: {
@@ -2755,10 +2575,10 @@ const styles = StyleSheet.create({
     position: "relative",
   },
   addressLabel: {
-    fontSize: 16,
-    marginBottom: 5,
-    fontWeight: "900",
-    fontFamily: "MontserratRegular",
+    fontSize: 14,
+    marginBottom: 0,
+    fontFamily: "Montserrat_600SemiBold",
+    color: "#1C1C1E",
   },
   locationInputRow: {
     flexDirection: "row",
@@ -2776,13 +2596,12 @@ const styles = StyleSheet.create({
     fontFamily: "MontserratRegular",
   },
   observationsContainer: {
-    borderWidth: 1,
-    borderColor: "#fa6205", // Nuevo verde
-    borderRadius: 15,
     backgroundColor: "#FFF",
-    padding: 15,
-    marginBottom: 15,
-    borderStyle: "dashed",
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: "#DDD",
+    padding: 12,
+    marginBottom: 10,
   },
   observationsText: {
     fontFamily: "MontserratRegular",
@@ -2791,9 +2610,9 @@ const styles = StyleSheet.create({
     backgroundColor: "#FFF",
     borderWidth: 1,
     borderColor: "#fa6205",
-    borderRadius: 15,
-    padding: 15,
-    marginBottom: 25,
+    borderRadius: 12,
+    padding: 10,
+    marginBottom: 12,
     borderStyle: "dashed",
   },
   serviceIcon: {
@@ -2810,66 +2629,63 @@ const styles = StyleSheet.create({
   paymentOption: {
     flexDirection: "row",
     alignItems: "center",
-    marginBottom: 15,
+    marginBottom: 8,
   },
   paymentIconContainer: {
     backgroundColor: "#DDD",
-    borderRadius: 8,
-    width: 36,
-    height: 36,
+    borderRadius: 7,
+    width: 30,
+    height: 30,
     justifyContent: "center",
     alignItems: "center",
-    marginRight: 10,
+    marginRight: 8,
   },
   paymentText: {
     flex: 1,
     fontFamily: "MontserratRegular",
     color: "#1C1C1E",
-    fontSize: 16,
+    fontSize: 13,
   },
   radioButton: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
+    width: 20,
+    height: 20,
+    borderRadius: 10,
     borderWidth: 2,
-    borderColor: "#fa6205", // Nuevo verde
+    borderColor: "#fa6205",
     justifyContent: "center",
     alignItems: "center",
   },
   radioButtonSelected: {
-    width: 14,
-    height: 14,
-    borderRadius: 7,
-    backgroundColor: "#fa6205", // Relleno verde
+    backgroundColor: "#fa6205",
   },
   footer: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    marginTop: 20,
-    marginBottom: 40,
+    marginTop: 10,
+    marginBottom: 16,
   },
   priceContainer: {
     flex: 1,
   },
   totalPrice: {
-    fontSize: 32,
+    fontSize: 24,
     fontWeight: "bold",
     fontFamily: "MontserratBold",
     color: "#1C1C1E",
   },
   payButton: {
     backgroundColor: "#fa6205",
-    paddingVertical: 15,
-    paddingHorizontal: 40,
-    borderRadius: 30,
+    paddingVertical: 14,
+    paddingHorizontal: 36,
+    borderRadius: 25,
     justifyContent: "center",
     alignItems: "center",
-    minWidth: 120,
+    minWidth: 130,
   },
   payButtonText: {
-    color: "#000",
-    fontSize: 18,
+    color: "#FFF",
+    fontSize: 16,
     fontWeight: "500",
     fontFamily: "MontserratBold",
   },
@@ -2946,15 +2762,15 @@ const styles = StyleSheet.create({
   },
   addressValue: {
     marginTop: 5,
-    fontSize: 16,
-    paddingHorizontal: 15,
-    paddingVertical: 12,
-    height: 50,
+    fontSize: 14,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    height: 40,
     color: "#1C1C1E",
     backgroundColor: '#FFFFFF',
     borderColor: '#DDD',
     borderWidth: 1,
-    borderRadius: 10,
+    borderRadius: 9,
     fontFamily: "MontserratBold",
   },
   loadingIndicator: {
@@ -2964,16 +2780,18 @@ const styles = StyleSheet.create({
     marginRight: 10,
   },
   observationsInput: {
+    width: "100%",
     fontSize: 14,
-    flex: 1,
     lineHeight: 20,
-    minHeight: 60,
-    borderRadius: 12,
-    backgroundColor: '#FFFFFF',
+    minHeight: 50,
+    maxHeight: 80,
+    borderRadius: 8,
+    backgroundColor: '#F5F5F5',
     color: '#1C1C1E',
     textAlignVertical: "top",
-    fontFamily: "MontserratLight",
+    fontFamily: "MontserratRegular",
     padding: 10,
+    marginTop: 6,
   },
   calculatingContainer: {
     alignItems: "center",
@@ -2989,14 +2807,14 @@ const styles = StyleSheet.create({
     fontFamily: "MontserratRegular",
   },
   totalPricePrompt: {
-    fontSize: 16,
+    fontSize: 13,
     fontFamily: "MontserratRegular",
-    color: "#1C1C1E",
+    color: "#999",
   },
   distanceText: {
-    fontSize: 14,
+    fontSize: 12,
     fontFamily: "MontserratRegular",
-    marginTop: 5,
+    marginTop: 2,
     color: "#777",
   },
   basePriceText: {

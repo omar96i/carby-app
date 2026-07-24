@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import {
   View,
   Text,
@@ -20,7 +20,8 @@ import {
   Montserrat_300Light,
 } from "@expo-google-fonts/montserrat";
 import { useFonts } from "expo-font";
-import { useNavigation, useRoute } from "@react-navigation/native";
+import { useNavigation, useRoute, useFocusEffect } from "@react-navigation/native";
+import AlertaModal from "../../components/ErrorModal";
 import * as Location from "expo-location";
 
 import { BASE_URL } from "../../constants/url";
@@ -35,6 +36,18 @@ export default function CategoriaVertical() {
   const navigation = useNavigation();
   const route = useRoute();
   const tipo = (route.params?.tipo || '').toLowerCase().trim();
+
+  useFocusEffect(useCallback(() => {
+    navigation.getParent()?.setOptions({ tabBarStyle: { display: "none" } });
+    return () => navigation.getParent()?.setOptions({ tabBarStyle: { backgroundColor: '#FFF', height: 56, borderTopWidth: 1, borderTopColor: '#F0F0F0', display: 'flex' } });
+  }, [navigation]));
+
+  const [alertVisible, setAlertVisible] = useState(false);
+  const [alertData, setAlertData] = useState({ title: "", message: "", type: "info", onConfirm: null });
+  const showAlert = (title, message, type, onConfirm) => {
+    setAlertData({ title, message, type: type || (title === "Éxito" ? "success" : "error"), onConfirm });
+    setAlertVisible(true);
+  };
 
   const [fontsLoaded] = useFonts({
     Montserrat_400Regular,
@@ -60,11 +73,7 @@ export default function CategoriaVertical() {
       const { status } = await Location.requestForegroundPermissionsAsync();
 
       if (status !== "granted") {
-        Alert.alert(
-          "Permiso denegado",
-          "Necesitamos permisos de ubicación para mostrar categorías cercanas.",
-          [{ text: "OK" }]
-        );
+        showAlert("Permiso denegado", "Necesitamos permisos de ubicación para mostrar categorías cercanas.");
         return null;
       }
 
@@ -95,10 +104,7 @@ export default function CategoriaVertical() {
       return currentLocation.coords;
     } catch (error) {
       console.error("Error capturando ubicación:", error);
-      Alert.alert(
-        "Error de ubicación",
-        "No pudimos obtener tu ubicación. Se usarán coordenadas predeterminadas."
-      );
+      showAlert("Error de ubicación", "No pudimos obtener tu ubicación. Se usarán coordenadas predeterminadas.");
       return null;
     }
   };
@@ -365,14 +371,7 @@ export default function CategoriaVertical() {
     <SafeAreaView style={styles.safeContainer}>
       {/* Header */}
       <View style={styles.headerBar}>
-        <TouchableOpacity
-          onPress={() => navigation.goBack()}
-          style={styles.backButton}
-        >
-          <Ionicons name="arrow-back" size={25} color="#333333" />
-        </TouchableOpacity>
         <Text style={styles.headerTitle}>Categorías</Text>
-        <View style={styles.placeholder}></View>
       </View>
 
       {/* Main Content */}
@@ -393,6 +392,16 @@ export default function CategoriaVertical() {
           </View>
         )}
       </View>
+
+      <AlertaModal
+        visible={alertVisible}
+        tipo={alertData.type}
+        mensaje={alertData.message}
+        onCerrar={() => {
+          setAlertVisible(false);
+          if (alertData.onConfirm) alertData.onConfirm();
+        }}
+      />
     </SafeAreaView>
   );
 }
@@ -411,22 +420,16 @@ const styles = StyleSheet.create({
   },
   headerBar: {
     flexDirection: "row",
-    justifyContent: "space-between",
+    justifyContent: "center",
     alignItems: "center",
     backgroundColor: "#fa6205",
     padding: 15,
-    marginTop: 30,
-  },
-  backButton: {
-    padding: 5,
+    paddingTop: Platform.OS === "android" ? 45 : 15,
   },
   headerTitle: {
-    fontSize: 22,
+    fontSize: 20,
     fontFamily: "Montserrat_700Bold",
-    color: "#333333",
-  },
-  placeholder: {
-    width: 35, // Same width as back button for balanced header
+    color: "#FFF",
   },
   container: {
     flex: 1,

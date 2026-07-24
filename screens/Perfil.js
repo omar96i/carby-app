@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useEffect, useState, useCallback, useRef } from "react";
 import {
   SafeAreaView,
   View,
@@ -16,6 +16,7 @@ import {
 import { useNavigation, useFocusEffect } from "@react-navigation/native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { BASE_URL } from "../constants/url";
+import AlertaModal from "../components/ErrorModal";
 import {
   Montserrat_400Regular,
   Montserrat_700Bold,
@@ -53,6 +54,13 @@ export default function Perfil() {
   const [supportModalVisible, setSupportModalVisible] = useState(false);
   const [termsChecked, setTermsChecked] = useState(false);
   const [privacyChecked, setPrivacyChecked] = useState(false);
+
+  const [alertVisible, setAlertVisible] = useState(false);
+  const alertRef = useRef({ title: "", message: "", type: "info" });
+  const showAlert = (title, message, type = "error", onConfirm = null) => {
+    alertRef.current = { title, message, type, onConfirm };
+    setAlertVisible(true);
+  };
 
   // Helper function para URL de imágenes
   const getImageUrl = useCallback((photoPath) => {
@@ -176,10 +184,7 @@ export default function Perfil() {
         await ImagePicker.requestMediaLibraryPermissionsAsync();
 
       if (!permissionResult.granted) {
-        Alert.alert(
-          "Permiso denegado",
-          "Se necesita acceso a la galería para cambiar tu foto de perfil"
-        );
+        showAlert("Permiso denegado", "Se necesita acceso a la galería para cambiar tu foto de perfil");
         return;
       }
 
@@ -198,10 +203,7 @@ export default function Perfil() {
       }
     } catch (error) {
       console.error("Error seleccionando imagen:", error);
-      Alert.alert(
-        "Error",
-        "No se pudo seleccionar la imagen. Inténtalo de nuevo."
-      );
+      showAlert("Error", "No se pudo seleccionar la imagen. Inténtalo de nuevo.");
     }
   };
 
@@ -210,7 +212,7 @@ export default function Perfil() {
     try {
       const token = await AsyncStorage.getItem("userToken");
       if (!token) {
-        Alert.alert("Error", "No hay sesión activa");
+        showAlert("Error", "No hay sesión activa");
         return;
       }
 
@@ -219,7 +221,7 @@ export default function Perfil() {
         (await AsyncStorage.getItem("tipoUsuario"));
 
       if (!tipoUsuario) {
-        Alert.alert("Error", "No se pudo determinar el tipo de usuario");
+        showAlert("Error", "No se pudo determinar el tipo de usuario");
         return;
       }
 
@@ -250,7 +252,7 @@ export default function Perfil() {
       try {
         const data = JSON.parse(responseText);
         if (response.ok) {
-          Alert.alert("Éxito", "Foto de perfil actualizada correctamente");
+          showAlert("Éxito", "Foto de perfil actualizada correctamente");
 
           // Actualizar URL de imagen en AsyncStorage
           if (data?.data) {
@@ -267,25 +269,19 @@ export default function Perfil() {
 
           setRefreshTrigger((prev) => prev + 1);
         } else {
-          Alert.alert(
-            "Error",
-            data.message || "No se pudo actualizar la foto de perfil"
-          );
+          showAlert("Error", data.message || "No se pudo actualizar la foto de perfil");
         }
       } catch (e) {
         if (response.ok) {
-          Alert.alert("Éxito", "Foto de perfil actualizada");
+          showAlert("Éxito", "Foto de perfil actualizada");
           setRefreshTrigger((prev) => prev + 1);
         } else {
-          Alert.alert("Error", "No se pudo actualizar la foto de perfil");
+          showAlert("Error", "No se pudo actualizar la foto de perfil");
         }
       }
     } catch (error) {
       console.error("Error subiendo imagen:", error);
-      Alert.alert(
-        "Error",
-        "No se pudo subir la imagen. Verifica tu conexión a internet."
-      );
+      showAlert("Error", "No se pudo subir la imagen. Verifica tu conexión a internet.");
     }
   };
 
@@ -315,7 +311,7 @@ export default function Perfil() {
 
       // Siempre limpia los datos locales
       await AsyncStorage.clear();
-      Alert.alert("Sesión cerrada", "Has cerrado sesión correctamente");
+      showAlert("Éxito", "Has cerrado sesión correctamente", "success");
       navigation.navigate("Login");
     } catch (error) {
       console.error("Error en cerrar sesión:", error);
@@ -323,10 +319,10 @@ export default function Perfil() {
       // Intenta cerrar sesión localmente
       try {
         await AsyncStorage.clear();
-        Alert.alert("Sesión cerrada", "Se cerró sesión localmente");
+        showAlert("Éxito", "Se cerró sesión localmente", "success");
         navigation.navigate("Login");
       } catch (storageError) {
-        Alert.alert("Error", "No se pudo cerrar sesión. Intenta de nuevo.");
+        showAlert("Error", "No se pudo cerrar sesión. Intenta de nuevo.");
       }
     }
   };
@@ -343,10 +339,7 @@ export default function Perfil() {
           message: `¡Únete a YaRiders! Usa mi código de referido: ${codigoReferido}`,
         });
       } else {
-        Alert.alert(
-          "Error",
-          "No hay un código de referido disponible para compartir"
-        );
+        showAlert("Error", "No hay un código de referido disponible para compartir");
       }
     } catch (error) {
       console.error("Error compartiendo código:", error);
@@ -358,7 +351,7 @@ export default function Perfil() {
     try {
       const token = await AsyncStorage.getItem("userToken");
       if (!token) {
-        Alert.alert("Error", "No hay sesión activa");
+        showAlert("Error", "No hay sesión activa");
         return;
       }
 
@@ -373,19 +366,12 @@ export default function Perfil() {
       // });
 
       // Para esta versión, solo mostramos un mensaje
-      Alert.alert(
-        "Cuenta desactivada",
-        "Su cuenta ha sido desactivada. Se eliminará en 7 días.",
-        [{ text: "OK", onPress: () => navigation.navigate("Login") }]
-      );
+      showAlert("Cuenta desactivada", "Su cuenta ha sido desactivada. Se eliminará en 7 días.", "success", () => navigation.navigate("Login"));
 
       await AsyncStorage.clear();
     } catch (error) {
       console.error("Error desactivando cuenta:", error);
-      Alert.alert(
-        "Error",
-        "No se pudo desactivar la cuenta. Inténtalo de nuevo."
-      );
+      showAlert("Error", "No se pudo desactivar la cuenta. Inténtalo de nuevo.");
     }
   };
 
@@ -421,7 +407,7 @@ export default function Perfil() {
       setPremiosReferidos(data);
     } catch (error) {
       console.error("Error obteniendo premios por referidos:", error);
-      Alert.alert("Error", "No se pudieron cargar los premios por referidos");
+      showAlert("Error", "No se pudieron cargar los premios por referidos");
     } finally {
       setLoadingPremios(false);
     }
@@ -499,14 +485,6 @@ export default function Perfil() {
             </View>
           </Modal>
 
-          {/* Botón Atrás */}
-          <TouchableOpacity
-            onPress={() => navigation.goBack()}
-            style={styles.backButton}
-          >
-            <FontAwesome name="arrow-left" size={24} color="#1C1C1E" />
-          </TouchableOpacity>
-
           {/* Foto de perfil */}
           <View style={styles.imageContainer}>
             {imageUrl && !imageError ? (
@@ -519,23 +497,16 @@ export default function Perfil() {
                 }}
               />
             ) : (
-              <View
-                style={[
-                  styles.image,
-                  {
-                    backgroundColor: "#555",
-                    justifyContent: "center",
-                    alignItems: "center",
-                  },
-                ]}
-              >
-                <Icon3 name="user" size={80} color="#fa6205" />
+              <View style={styles.avatarInitials}>
+                <Text style={styles.avatarInitialsText}>
+                  {((userInfo?.data?.nombre_completo || "Usuario")).split(" ").slice(0, 2).map(w => w[0]).join("").toUpperCase()}
+                </Text>
               </View>
             )}
 
             {/* Botón para editar foto */}
             <TouchableOpacity style={styles.editIcon} onPress={pickImage}>
-              <Icon4 name="pencil-circle" size={40} color="green" />
+              <Icon4 name="pencil-circle" size={40} color="#1C1C1E" />
             </TouchableOpacity>
           </View>
 
@@ -652,7 +623,7 @@ export default function Perfil() {
                   Para cualquier consulta o ayuda, contáctanos al siguiente
                   libro de reclamaciones en
                 </Text>
-                <Text style={styles.emailText}>www.yariders.com</Text>
+                <Text style={styles.emailText}>carbycol.com</Text>
 
                 <View style={styles.modalButtons}>
                   <TouchableOpacity
@@ -671,151 +642,87 @@ export default function Perfil() {
               </View>
             </View>
           </Modal>
-          {/* Tarjeta de opciones */}
-          <View style={styles.card1}>
-            <TouchableOpacity
-              onPress={() => navigation.navigate("StepDiecisiete")}
-            >
-              <View style={styles.row}>
-                <Icon3
-                  name="users"
-                  size={25}
-                  color="#202020"
-                  style={styles.icon2}
-                />
-                <Text style={styles.label}>Cuenta</Text>
+          {/* Menú Cuenta */}
+          <View style={styles.menuCard}>
+            <Text style={styles.menuSection}>CUENTA</Text>
+            <TouchableOpacity style={styles.menuRow} onPress={() => navigation.navigate("StepDiecisiete")}>
+              <View style={styles.menuLeft}>
+                <Icon3 name="user" size={20} color="#888" />
+                <Text style={styles.menuText}>Datos Personales</Text>
               </View>
+              <Icon3 name="chevron-right" size={20} color="#888" />
             </TouchableOpacity>
-
-            <View style={styles.row}>
-              <Icon3
-                name="map-pin"
-                size={25}
-                color="#F2F2F7"
-                style={styles.icon2}
-              />
-              <Text style={styles.label}>
-                Dirección:
-                {userInfo?.data?.departamento && userInfo?.data?.ciudad
-                  ? `${userInfo.data.departamento}, ${userInfo.data.ciudad}`
-                  : userInfo?.data?.departamento
-                  ? userInfo.data.departamento
-                  : userInfo?.data?.ciudad
-                  ? userInfo.data.ciudad
-                  : userInfo?.data?.direccion_principal
-                  ? userInfo.data.direccion_principal
-                  : "No disponible"}
-              </Text>
+            <View style={styles.menuRow}>
+              <View style={styles.menuLeft}>
+                <Icon3 name="map-pin" size={20} color="#888" />
+                <Text style={styles.menuText}>
+                  Dirección: {userInfo?.data?.ciudad || userInfo?.data?.direccion_principal || "No disponible"}
+                </Text>
+              </View>
             </View>
-
-            <TouchableOpacity onPress={() => setSupportModalVisible(true)}>
-              <View style={styles.row}>
-                <Icon3
-                  name="help-circle"
-                  size={25}
-                  color="#F2F2F7"
-                  style={styles.icon2}
-                />
-                <Text style={styles.label}>Soporte</Text>
+            <TouchableOpacity style={styles.menuRow} onPress={() => navigation.navigate("MetodosPago")}>
+              <View style={styles.menuLeft}>
+                <MaterialIcons name="payments" size={20} color="#888" />
+                <Text style={styles.menuText}>Métodos de pago</Text>
               </View>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              onPress={() => navigation.navigate("MetodosPago")}
-            >
-              <View style={styles.row}>
-                <MaterialIcons
-                  name="payments"
-                  size={25}
-                  color="#202020"
-                  style={styles.icon2}
-                />
-                <Text style={styles.label}>Crear Métodos de pago</Text>
-              </View>
-            </TouchableOpacity>
-
-            <TouchableOpacity onPress={() => setModalVisible(true)}>
-              <View style={styles.row}>
-                <Icon3
-                  name="settings"
-                  size={25}
-                  color="#202020"
-                  style={styles.icon2}
-                />
-                <Text style={styles.label}>Desactivar o Eliminar cuenta</Text>
-              </View>
+              <Icon3 name="chevron-right" size={20} color="#888" />
             </TouchableOpacity>
           </View>
 
-          {/* Botón cerrar sesión */}
-          <TouchableOpacity style={styles.button} onPress={cerrarSesion}>
-            <Icon3
-              name="log-out"
-              size={20}
-              color="#202020"
-              style={styles.icon}
-            />
-            <Text style={styles.buttonText}>Cerrar sesión</Text>
-          </TouchableOpacity>
-        </View>
-        <View style={styles.termsContainer}>
-          <View style={styles.termRow}>
-            <TouchableOpacity
-              style={styles.linkContainer}
-              onPress={() =>
-                Linking.openURL(
-                  "https://app.yariders.com/terminos-y-condiciones/"
-                )
-              }
-            >
-              <Text style={styles.linkText}>Términos y Condiciones</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.checkboxContainer}
-              onPress={toggleTermsCheck}
-            >
-              <View
-                style={[
-                  styles.checkbox,
-                  termsChecked && styles.checkboxChecked,
-                ]}
-              >
-                {termsChecked && (
-                  <Icon3 name="check" size={16} color="#F2F2F7" />
-                )}
+          {/* Menú Ajustes */}
+          <View style={styles.menuCard}>
+            <Text style={styles.menuSection}>AJUSTES & SOPORTE</Text>
+            <TouchableOpacity style={styles.menuRow} onPress={() => setSupportModalVisible(true)}>
+              <View style={styles.menuLeft}>
+                <Icon3 name="help-circle" size={20} color="#888" />
+                <Text style={styles.menuText}>Contacta soporte</Text>
               </View>
+              <Icon3 name="chevron-right" size={20} color="#888" />
+            </TouchableOpacity>
+            <TouchableOpacity style={[styles.menuRow, { borderBottomWidth: 0 }]} onPress={() => setModalVisible(true)}>
+              <View style={styles.menuLeft}>
+                <Icon3 name="settings" size={20} color="#888" />
+                <Text style={styles.menuText}>Desactivar cuenta</Text>
+              </View>
+              <Icon3 name="chevron-right" size={20} color="#888" />
             </TouchableOpacity>
           </View>
 
-          <View style={styles.termRow}>
-            <TouchableOpacity
-              style={styles.linkContainer}
-              onPress={() =>
-                Linking.openURL(
-                  "https://app.yariders.com/politica-de-privacidad/"
-                )
-              }
-            >
-              <Text style={styles.linkText}>Privacidad de Datos</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.checkboxContainer}
-              onPress={togglePrivacyCheck}
-            >
-              <View
-                style={[
-                  styles.checkbox,
-                  privacyChecked && styles.checkboxChecked,
-                ]}
-              >
-                {privacyChecked && (
-                  <Icon3 name="check" size={16} color="#F2F2F7" />
-                )}
-              </View>
+          {/* Legal & Logout */}
+          <View style={styles.legalSection}>
+            <View style={styles.legalRow}>
+              <TouchableOpacity onPress={() => Linking.openURL("https://carbycol.com/terminos-y-condiciones/")}>
+                <Text style={styles.legalText}>Términos y Condiciones</Text>
+              </TouchableOpacity>
+              <TouchableOpacity onPress={toggleTermsCheck} style={[styles.check, termsChecked && styles.checkActive]}>
+                {termsChecked && <Icon3 name="check" size={12} color="#000" />}
+              </TouchableOpacity>
+            </View>
+            <View style={styles.legalRow}>
+              <TouchableOpacity onPress={() => Linking.openURL("https://carbycol.com/politica-de-privacidad/")}>
+                <Text style={styles.legalText}>Privacidad de Datos</Text>
+              </TouchableOpacity>
+              <TouchableOpacity onPress={togglePrivacyCheck} style={[styles.check, privacyChecked && styles.checkActive]}>
+                {privacyChecked && <Icon3 name="check" size={12} color="#000" />}
+              </TouchableOpacity>
+            </View>
+            <TouchableOpacity style={styles.logoutBtn} onPress={cerrarSesion}>
+              <Icon3 name="log-out" size={18} color="#FF4757" style={{ marginRight: 8 }} />
+              <Text style={styles.logoutText}>Cerrar sesión</Text>
             </TouchableOpacity>
           </View>
         </View>
       </ScrollView>
+
+      <AlertaModal
+        visible={alertVisible}
+        tipo={alertRef.current.type}
+        mensaje={alertRef.current.message}
+        onCerrar={() => {
+          setAlertVisible(false);
+          if (alertRef.current.onConfirm) alertRef.current.onConfirm();
+        }}
+      />
     </SafeAreaView>
   );
 }
@@ -823,8 +730,8 @@ export default function Perfil() {
 const styles = StyleSheet.create({
   safeContainer: {
     flex: 1,
-    backgroundColor: "#FFFFFF",
-    paddingTop: Platform.OS === "android" ? 50 : 40,
+    backgroundColor: "#F2F2F7",
+    paddingTop: Platform.OS === "android" ? 40 : 0,
   },
   container: {
     padding: 20,
@@ -848,6 +755,21 @@ const styles = StyleSheet.create({
     position: "absolute",
     bottom: -10,
     right: 10,
+  },
+  avatarInitials: {
+    width: 160,
+    height: 160,
+    borderRadius: 80,
+    borderWidth: 3,
+    borderColor: "#fa6205",
+    backgroundColor: "#fa6205",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  avatarInitialsText: {
+    fontSize: 50,
+    fontFamily: "Montserrat_700Bold",
+    color: "#FFF",
   },
   // Estilos para la información del usuario
   sectionTitle3: {
@@ -879,66 +801,124 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   button1: {
-    backgroundColor: "#fff5ee",
-    padding: 15,
-    borderRadius: 20,
+    backgroundColor: "#FFF",
+    padding: 14,
+    borderRadius: 14,
     alignItems: "center",
     justifyContent: "center",
     width: "47%",
-    minHeight: 80,
+    minHeight: 75,
+    borderWidth: 1,
+    borderColor: "#F0F0F0",
   },
   title1: {
     fontFamily: "Montserrat_700Bold",
-    color: "#000000",
+    color: "#fa6205",
     fontSize: 14,
     textAlign: "center",
   },
   subtitle1: {
-    color: "#888",
+    color: "#999",
     fontFamily: "Montserrat_300Light",
     fontSize: 12,
     marginTop: 5,
   },
   // Estilos para la tarjeta de opciones
-  card1: {
-    backgroundColor: "#fa6205",
-    borderRadius: 25,
-    padding: 15,
-    marginVertical: 25,
+  // Menú moderno
+  menuCard: {
+    backgroundColor: "#FFF",
+    borderRadius: 14,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    marginBottom: 16,
   },
-  row: {
+  menuSection: {
+    fontSize: 11,
+    fontFamily: "Montserrat_600SemiBold",
+    color: "#999",
+    marginBottom: 6,
+    marginTop: 6,
+    letterSpacing: 0.5,
+  },
+  menuRow: {
     flexDirection: "row",
     alignItems: "center",
-    marginBottom: 20,
+    justifyContent: "space-between",
+    paddingVertical: 14,
+    borderBottomWidth: 1,
+    borderBottomColor: "#F0F0F0",
   },
-  icon2: {
-    marginRight: 15,
-  },
-  label: {
-    fontSize: 16,
-    color: "#202020",
-    fontFamily: "Montserrat_400Regular",
-  },
-  // Botón de cerrar sesión
-  button: {
+  menuLeft: {
     flexDirection: "row",
-    //alignItems: "center",
-    //justifyContent: "center",
-    backgroundColor: "#fa6205",
-    paddingVertical: 12,
-    paddingHorizontal: 20,
-    borderRadius: 15,
-    marginBottom: 40,
+    alignItems: "center",
+    gap: 12,
+    flex: 1,
   },
-  icon: {
-    marginRight: 10,
-  },
-  buttonText: {
-    color: "#202020",
-    fontSize: 16,
+  menuText: {
+    fontSize: 15,
     fontFamily: "Montserrat_400Regular",
+    color: "#1C1C1E",
   },
-  // Estilos para el botón Atrás
+  // Legal & Logout
+  legalSection: {
+    paddingHorizontal: 16,
+    marginTop: 8,
+  },
+  legalRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 14,
+  },
+  legalText: {
+    fontSize: 13,
+    fontFamily: "Montserrat_400Regular",
+    color: "#888",
+  },
+  check: {
+    width: 20,
+    height: 20,
+    borderRadius: 4,
+    borderWidth: 1.5,
+    borderColor: "#DDD",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  checkActive: {
+    backgroundColor: "#fa6205",
+    borderColor: "#fa6205",
+  },
+  logoutBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: 12,
+    marginTop: 10,
+  },
+  logoutText: {
+    fontSize: 15,
+    fontFamily: "Montserrat_500Medium",
+    color: "#FF4757",
+  },
+  // Header
+  headerBar: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    backgroundColor: "#fa6205",
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    paddingTop: Platform.OS === "android" ? 50 : 14,
+  },
+  headerBackBtn: {
+    padding: 4,
+  },
+  headerTitle: {
+    fontSize: 18,
+    fontFamily: "Montserrat_700Bold",
+    color: "#FFF",
+  },
+  // Estilo antiguo del botón Atrás (mantenido por si acaso)
   backButton: {
     position: "absolute",
     top: 10,

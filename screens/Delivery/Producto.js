@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   View,
   Text,
@@ -20,7 +20,7 @@ import {
   Montserrat_300Light,
 } from "@expo-google-fonts/montserrat";
 import { useFonts } from "expo-font";
-import { useNavigation, useRoute } from "@react-navigation/native";
+import { useNavigation, useRoute, useFocusEffect } from "@react-navigation/native";
 import { BASE_URL } from "../../constants/url";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
@@ -31,6 +31,12 @@ const Producto = () => {
   const navigation = useNavigation();
   const route = useRoute();
   const { product } = route.params || {};
+
+  useFocusEffect(useCallback(() => {
+    navigation.getParent()?.setOptions({ tabBarStyle: { display: "none" } });
+    return () => navigation.getParent()?.setOptions({ tabBarStyle: { backgroundColor: '#FFF', height: 56, borderTopWidth: 1, borderTopColor: '#F0F0F0', display: 'flex' } });
+  }, [navigation]));
+
   const [modalVisible, setModalVisible] = useState(false);
   const [addedQuantity, setAddedQuantity] = useState(0);
   const [addedProductName, setAddedProductName] = useState("");
@@ -167,7 +173,7 @@ const Producto = () => {
           {/* Overlay gradiente para el botón de atrás */}
           <View style={styles.headerOverlay}>
              <TouchableOpacity style={styles.backButtonCircle} onPress={() => navigation.goBack()}>
-                <Ionicons name="arrow-back" size={24} color="#1C1C1E" />
+                <Ionicons name="arrow-back" size={24} color="#FFF" />
              </TouchableOpacity>
           </View>
         </View>
@@ -196,7 +202,7 @@ const Producto = () => {
                 <Text style={styles.sectionTitle}>Cantidad</Text>
                 <View style={styles.quantityPill}>
                     <TouchableOpacity onPress={decreaseQuantity} style={styles.qtyBtn}>
-                        <Ionicons name="remove" size={22} color={quantity > 1 ? "#fff" : "#555"} />
+                        <Ionicons name="remove" size={22} color={quantity > 1 ? "#1C1C1E" : "#999"} />
                     </TouchableOpacity>
                     <Text style={styles.qtyText}>{quantity}</Text>
                     <TouchableOpacity onPress={increaseQuantity} style={styles.qtyBtn}>
@@ -223,7 +229,7 @@ const Producto = () => {
                                 <View style={styles.adicionalLeft}>
                                      {/* Checkbox Circular */}
                                     <View style={[styles.checkbox, isSelected && styles.checkboxSelected]}>
-                                        {isSelected && <Ionicons name="checkmark" size={14} color="#000" />}
+                                        {isSelected && <Ionicons name="checkmark" size={14} color="#FFF" />}
                                     </View>
 
                                     {adicional.file ? (
@@ -243,14 +249,14 @@ const Producto = () => {
                                             onPress={(e) => { e.stopPropagation(); updateAdicionalQuantity(adicional.id, -1); }}
                                             style={styles.miniQtyBtn}
                                         >
-                                            <Ionicons name="remove" size={16} color="#000" />
+                                            <Ionicons name="remove" size={16} color="#1C1C1E" />
                                         </TouchableOpacity>
                                         <Text style={styles.miniQtyText}>{isSelected.quantity}</Text>
                                         <TouchableOpacity 
                                             onPress={(e) => { e.stopPropagation(); updateAdicionalQuantity(adicional.id, 1); }}
                                             style={styles.miniQtyBtn}
                                         >
-                                            <Ionicons name="add" size={16} color="#000" />
+                                            <Ionicons name="add" size={16} color="#1C1C1E" />
                                         </TouchableOpacity>
                                     </View>
                                 )}
@@ -286,7 +292,7 @@ const Producto = () => {
         <View style={styles.modalOverlay}>
           <View style={styles.modalContainer}>
             <View style={styles.successIconCircle}>
-              <Ionicons name="checkmark" size={40} color="#000" />
+              <Ionicons name="checkmark" size={40} color="#FFF" />
             </View>
             <Text style={styles.modalTitle}>¡Listo!</Text>
             <Text style={styles.modalText}>{addedQuantity} {addedProductName} añadido.</Text>
@@ -367,15 +373,16 @@ const styles = StyleSheet.create({
     lineHeight: 20,
   },
   priceTag: {
-    backgroundColor: 'rgba(164, 255, 0, 0.15)',
+    backgroundColor: 'rgba(250, 98, 5, 0.12)',
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: 'rgba(164, 255, 0, 0.3)',
+    borderColor: 'rgba(250, 98, 5, 0.3)',
     marginLeft: 10,
   },
   priceTagText: {
+    color: '#fa6205',
     color: '#fa6205',
     fontFamily: 'Montserrat_700Bold',
     fontSize: 16,
@@ -406,7 +413,7 @@ const styles = StyleSheet.create({
   },
   quantityPill: {
     flexDirection: 'row',
-    backgroundColor: '#333',
+    backgroundColor: '#F0F0F0',
     borderRadius: 25,
     alignItems: 'center',
     paddingHorizontal: 5,
@@ -418,14 +425,14 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#444',
+    backgroundColor: '#FFF',
     justifyContent: 'center',
     alignItems: 'center',
   },
   qtyText: {
     color: '#1C1C1E',
-    fontSize: 20,
     fontFamily: 'Montserrat_700Bold',
+    fontSize: 18,
   },
 
   // --- ADICIONALES ---
@@ -445,7 +452,7 @@ const styles = StyleSheet.create({
   },
   adicionalCardSelected: {
     borderColor: '#fa6205',
-    backgroundColor: 'rgba(164, 255, 0, 0.05)',
+    backgroundColor: 'rgba(250, 98, 5, 0.06)',
   },
   adicionalLeft: {
     flexDirection: 'row',
@@ -556,13 +563,13 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
   },
   addToCartText: {
-    color: '#000',
+    color: '#FFF',
     fontSize: 16,
     fontFamily: 'Montserrat_700Bold',
     marginRight: 10,
   },
   cartIconCircle: {
-    backgroundColor: '#000',
+    backgroundColor: '#FFF',
     width: 28,
     height: 28,
     borderRadius: 14,
@@ -572,15 +579,15 @@ const styles = StyleSheet.create({
 
   // --- MODAL ---
   modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.8)', justifyContent: 'center', alignItems: 'center' },
-  modalContainer: { width: '80%', backgroundColor: '#ECECEC', borderRadius: 20, padding: 25, alignItems: 'center' },
+  modalContainer: { width: '80%', backgroundColor: '#FFF', borderRadius: 20, padding: 25, alignItems: 'center' },
   successIconCircle: { width: 70, height: 70, borderRadius: 35, backgroundColor: '#fa6205', justifyContent: 'center', alignItems: 'center', marginBottom: 15 },
   modalTitle: { color: '#1C1C1E', fontFamily: 'Montserrat_700Bold', fontSize: 20, marginBottom: 10 },
-  modalText: { color: '#ccc', fontFamily: 'Montserrat_400Regular', textAlign: 'center', marginBottom: 20 },
+  modalText: { color: '#666', fontFamily: 'Montserrat_400Regular', textAlign: 'center', marginBottom: 20 },
   modalActions: { width: '100%' },
   btnPrimary: { backgroundColor: '#fa6205', padding: 15, borderRadius: 30, alignItems: 'center', marginBottom: 10 },
-  btnPrimaryText: { fontFamily: 'Montserrat_700Bold', color: '#000' },
+  btnPrimaryText: { fontFamily: 'Montserrat_700Bold', color: '#FFF' },
   btnSecondary: { padding: 10, alignItems: 'center', marginBottom: 5 },
-  btnSecondaryText: { fontFamily: 'Montserrat_600SemiBold', color: '#1C1C1E' },
+  btnSecondaryText: { fontFamily: 'Montserrat_600SemiBold', color: '#666' },
 });
 
 export default Producto;

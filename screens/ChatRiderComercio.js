@@ -432,7 +432,7 @@ export default function ChatRiderComercio({ route }) {
           style={styles.backButton}
           onPress={() => navigation.goBack()}
         >
-          <FontAwesome name="arrow-left" size={20} color="#1C1C1E" />
+          <FontAwesome name="arrow-left" size={20} color="#FFF" />
         </TouchableOpacity>
 
         <View style={styles.headerInfo}>
@@ -505,9 +505,9 @@ export default function ChatRiderComercio({ route }) {
             disabled={!mensaje.trim() || enviando}
           >
             {enviando ? (
-              <ActivityIndicator size="small" color="#1C1C1E" />
+              <ActivityIndicator size="small" color="#FFF" />
             ) : (
-              <FontAwesome name="send" size={20} color="#1C1C1E" />
+              <FontAwesome name="send" size={20} color="#FFF" />
             )}
           </TouchableOpacity>
         </View>
@@ -532,7 +532,7 @@ const styles = StyleSheet.create({
     fontFamily: 'Montserrat_400Regular',
   },
   header: {
-    backgroundColor: '#222222',
+    backgroundColor: '#fa6205',
     flexDirection: 'row',
     alignItems: 'center',
     padding: 15,
@@ -551,7 +551,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   headerTitle: {
-    color: '#1C1C1E',
+    color: '#FFF',
     fontSize: 16,
     fontFamily: 'Montserrat_700Bold',
   },
@@ -596,7 +596,7 @@ const styles = StyleSheet.create({
     fontFamily: 'Montserrat_400Regular',
   },
   mensajeTextoEnviado: {
-    color: '#000',
+    color: '#FFF',
   },
   mensajeTextoRecibido: {
     color: '#333',
@@ -607,7 +607,7 @@ const styles = StyleSheet.create({
     alignSelf: 'flex-end',
   },
   mensajeHoraEnviada: {
-    color: '#006600',
+    color: 'rgba(255,255,255,0.7)',
   },
   mensajeHoraRecibida: {
     color: '#777',
@@ -687,6 +687,6 @@ const styles = StyleSheet.create({
   },
   retryText: {
     fontFamily: 'Montserrat_600SemiBold',
-    color: '#000',
+    color: '#FFF',
   }
 });

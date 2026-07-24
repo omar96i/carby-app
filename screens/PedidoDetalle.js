@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import {
   View,
   Text,
@@ -9,7 +9,6 @@ import {
   StatusBar,
   Image,
   ActivityIndicator,
-  Alert,
   Modal,
   TextInput,
   KeyboardAvoidingView,
@@ -17,7 +16,7 @@ import {
   Dimensions,
 } from "react-native";
 import { Ionicons, FontAwesome, MaterialIcons } from "@expo/vector-icons";
-import { useNavigation, useRoute } from "@react-navigation/native";
+import { useNavigation, useRoute, useFocusEffect } from "@react-navigation/native";
 import {
   Montserrat_400Regular,
   Montserrat_700Bold,
@@ -26,6 +25,7 @@ import {
 import { useFonts } from "expo-font";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { BASE_URL } from "../constants/url";
+import AlertaModal from "../components/ErrorModal";
 import * as ImagePicker from "expo-image-picker";
 import { manipulateAsync, SaveFormat } from "expo-image-manipulator";
 
@@ -38,6 +38,19 @@ const { width, height } = Dimensions.get("window");
 const PedidoDetalle = () => {
   const navigation = useNavigation();
   const route = useRoute();
+
+  useFocusEffect(useCallback(() => {
+    navigation.getParent()?.setOptions({ tabBarStyle: { display: "none" } });
+    return () => navigation.getParent()?.setOptions({ tabBarStyle: { backgroundColor: '#FFF', height: 56, borderTopWidth: 1, borderTopColor: '#F0F0F0', display: 'flex' } });
+  }, [navigation]));
+
+  const [alertVisible, setAlertVisible] = useState(false);
+  const [alertData, setAlertData] = useState({ title: "", message: "", type: "info", onConfirm: null, primaryLabel: null });
+  const showAlert = (title, message, type, onConfirm, primaryLabel) => {
+    setAlertData({ title, message, type: type || (title === "Éxito" ? "success" : "error"), onConfirm: onConfirm || null, primaryLabel: primaryLabel || null });
+    setAlertVisible(true);
+  };
+
   const { pedidoId, pedidoData } = route.params || {};
   const [qrImageUrl, setQrImageUrl] = useState(null);
   // Estados principales
@@ -218,13 +231,10 @@ const PedidoDetalle = () => {
     } catch (error) {
       if (error.name === "AbortError") {
         console.error("Request timeout:", error);
-        Alert.alert(
-          "Error",
-          "La solicitud tardó demasiado tiempo. Verifica tu conexión a internet."
-        );
+        showAlert("Error", "La solicitud tardó demasiado tiempo. Verifica tu conexión a internet.");
       } else {
         console.error("Error fetching pedido details:", error);
-        Alert.alert("Error", "No se pudieron cargar los detalles del pedido");
+        showAlert("Error", "No se pudieron cargar los detalles del pedido");
       }
     } finally {
       setLoading(false);
@@ -314,10 +324,7 @@ const PedidoDetalle = () => {
         await ImagePicker.requestMediaLibraryPermissionsAsync();
 
       if (status !== "granted") {
-        Alert.alert(
-          "Permisos requeridos",
-          "Necesitamos acceso a tu galería para cargar la evidencia de pago."
-        );
+        showAlert("Permisos requeridos", "Necesitamos acceso a tu galería para cargar la evidencia de pago.", "info");
         return;
       }
 
@@ -338,17 +345,14 @@ const PedidoDetalle = () => {
       }
     } catch (error) {
       console.error("Error selecting evidence image:", error);
-      Alert.alert("Error", "No se pudo seleccionar la imagen.");
+      showAlert("Error", "No se pudo seleccionar la imagen.");
     }
   };
 
   // Subir evidencia de pago
   const uploadEvidence = async () => {
     if (!evidenceImage) {
-      Alert.alert(
-        "Error",
-        "Por favor selecciona una imagen como evidencia de pago."
-      );
+      showAlert("Error", "Por favor selecciona una imagen como evidencia de pago.");
       return;
     }
 
@@ -384,7 +388,7 @@ const PedidoDetalle = () => {
       }
 
       setEvidenceUploaded(true);
-      Alert.alert("Éxito", "La evidencia de pago fue cargada correctamente");
+      showAlert("Éxito", "La evidencia de pago fue cargada correctamente");
 
       setTimeout(() => {
         setShowEvidenceModal(false);
@@ -392,7 +396,7 @@ const PedidoDetalle = () => {
       }, 1500);
     } catch (error) {
       console.error("Error uploading evidence:", error);
-      Alert.alert("Error", "No se pudo cargar la evidencia: " + error.message);
+      showAlert("Error", "No se pudo cargar la evidencia: " + error.message);
     } finally {
       setUploadingEvidence(false);
     }
@@ -405,7 +409,7 @@ const PedidoDetalle = () => {
         await ImagePicker.requestMediaLibraryPermissionsAsync();
 
       if (status !== "granted") {
-        Alert.alert("Permisos requeridos", "Necesitamos acceso a tu galería.");
+        showAlert("Permisos requeridos", "Necesitamos acceso a tu galería.", "info");
         return;
       }
 
@@ -426,7 +430,7 @@ const PedidoDetalle = () => {
       }
     } catch (error) {
       console.error("Error selecting chat image:", error);
-      Alert.alert("Error", "No se pudo seleccionar la imagen.");
+      showAlert("Error", "No se pudo seleccionar la imagen.");
     }
   };
 
@@ -481,11 +485,11 @@ const PedidoDetalle = () => {
         }
       }
       navigation.goBack()
-      Alert.alert("Éxito", "El pedido ha sido cancelado correctamente.");
+      showAlert("Éxito", "El pedido ha sido cancelado correctamente.");
       // Si quieres actualizar la vista, puedes llamar a alguna función aquí (como refetch o navigation)
     } catch (error) {
       console.error(error);
-      Alert.alert("Error", "No se pudo cancelar el pedido. Intenta nuevamente.");
+      showAlert("Error", "No se pudo cancelar el pedido. Intenta nuevamente.");
     }
   };
 
@@ -493,10 +497,7 @@ const PedidoDetalle = () => {
   // Enviar mensaje del chat
   const sendChatMessage = async () => {
     if (!newMessage.trim() && !chatImage) {
-      Alert.alert(
-        "Error",
-        "Por favor escribe un mensaje o selecciona una imagen."
-      );
+      showAlert("Error", "Por favor escribe un mensaje o selecciona una imagen.");
       return;
     }
 
@@ -776,7 +777,7 @@ const PedidoDetalle = () => {
         userMessage += `\n\nDetalles técnicos: ${errorDetails}\nError completo: ${error.message}`;
       }
 
-      Alert.alert("Error al enviar mensaje", userMessage);
+      showAlert("Error al enviar mensaje", userMessage);
     } finally {
       setSendingMessage(false);
     }
@@ -976,18 +977,22 @@ const PedidoDetalle = () => {
       messageUserId.toString() === currentUserId.toString();
 
     // Extraer el contenido del mensaje
+    let parsedMessage = null;
     let messageContent = "";
+    let imageUrl = message.image_url || null;
     try {
       // Intentar parsear el mensaje como JSON
       if (message.message && typeof message.message === "string") {
-        const parsedMessage = JSON.parse(message.message);
-        messageContent =
-          parsedMessage.content || parsedMessage.text || message.message;
+        parsedMessage = JSON.parse(message.message);
+        if (parsedMessage.type === "file") {
+          imageUrl = parsedMessage.content;
+        } else {
+          messageContent = parsedMessage.content || parsedMessage.text || message.message;
+        }
       } else {
         messageContent = message.message || "";
       }
     } catch (error) {
-      // Si no es JSON válido, usar el mensaje tal como está
       console.log("Error parseando mensaje:", error);
       messageContent = message.message || "";
     }
@@ -998,7 +1003,8 @@ const PedidoDetalle = () => {
       currentUserId: message.currentUserId,
       isMyMessage,
       rawMessage: message.message,
-      parsedContent: messageContent
+      parsedContent: messageContent,
+      imageUrl
     });
 
     return (
@@ -1016,17 +1022,19 @@ const PedidoDetalle = () => {
               "Comercio"}
           </Text>
         )}
-        <Text
-          style={[
-            styles.messageText,
-            isMyMessage ? styles.myMessageText : styles.otherMessageText,
-          ]}
-        >
-          {messageContent}
-        </Text>
-        {message.image_url && (
+        {messageContent ? (
+          <Text
+            style={[
+              styles.messageText,
+              isMyMessage ? styles.myMessageText : styles.otherMessageText,
+            ]}
+          >
+            {messageContent}
+          </Text>
+        ) : null}
+        {imageUrl && (
           <Image
-            source={{ uri: message.image_url }}
+            source={{ uri: getImageUrl(imageUrl) }}
             style={styles.messageImage}
             resizeMode="cover"
           />
@@ -1181,14 +1189,11 @@ const PedidoDetalle = () => {
 
       {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity
-          onPress={() => navigation.goBack()}
-          style={styles.headerBackButton}
-        >
-          <Ionicons name="arrow-back" size={24} color="#1C1C1E" />
+        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.headerBackButton}>
+          <Ionicons name="arrow-back" size={24} color="#FFF" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Pedido #{pedido.id}</Text>
-
+        <View style={{ width: 36 }} />
       </View>
 
       <ScrollView
@@ -1279,33 +1284,17 @@ const PedidoDetalle = () => {
         {/* Información del establecimiento */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Establecimiento</Text>
-          <Text style={styles.establishmentName}>
-            {pedido.comercio?.establecimiento_nombre ||
-              "Comercio no disponible"}
-          </Text>
-          <TouchableOpacity
-            style={[
-              styles.headerActionButton,
-              {
-                backgroundColor: '#fa6205',
-                paddingVertical: 12,
-                marginTop: 10,
-                borderRadius: 6,
-                alignItems: 'center',
-                justifyContent: 'center',
-                width: '50%',
-                marginLeft: 0, // puedes ajustar según contexto
-              },
-            ]}
-            onPress={() => {
-              setShowChatModal(true);
-              loadChatMessages();
-            }}
-          >
-            <Text style={{ color: '#000', fontWeight: 'bold', textAlign: 'center' }}>
-              Chat con el comercio
+          <View style={styles.establishmentRow}>
+            <Text style={styles.establishmentName}>
+              {pedido.comercio?.establecimiento_nombre || "Comercio no disponible"}
             </Text>
-          </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.chatIconBtn}
+              onPress={() => { setShowChatModal(true); loadChatMessages(); }}
+            >
+              <Ionicons name="chatbubble-outline" size={22} color="#FFF" />
+            </TouchableOpacity>
+          </View>
         </View>
 
         {/* Productos */}
@@ -1377,16 +1366,13 @@ const PedidoDetalle = () => {
                 style={styles.actionButton}
                 onPress={() => {
                   if (pedido.estado === "pendiente") {
-                    Alert.alert(
-                      "Pedido pendiente",
-                      "El restaurante aún no ha aceptado tu pedido. No puedes subir un comprobante de pago hasta que sea aceptado."
-                    );
+                    showAlert("Pedido pendiente", "El restaurante aún no ha aceptado tu pedido. No puedes subir un comprobante de pago hasta que sea aceptado.", "info");
                     return;
                   }
                   setShowEvidenceModal(true);
                 }}
               >
-                <MaterialIcons name="file-upload" size={24} color="#1C1C1E" />
+                <MaterialIcons name="file-upload" size={24} color="#FFF" />
                 <Text style={styles.actionButtonText}>
                   Cargar evidencia de pago
                 </Text>
@@ -1402,16 +1388,12 @@ const PedidoDetalle = () => {
               <TouchableOpacity
                 style={styles.cancelButtonOutline}
                 onPress={() => {
-                  Alert.alert(
+                  showAlert(
                     "Confirmar cancelación",
                     "¿Estás seguro de que quieres cancelar este pedido?",
-                    [
-                      { text: "No", style: "cancel" },
-                      {
-                        text: "Sí",
-                        onPress: () => cancelarPedido(pedido.id, pedido.carrera?.id),
-                      },
-                    ]
+                    "confirm",
+                    () => cancelarPedido(pedido.id, pedido.carrera?.id),
+                    "Sí, cancelar"
                   );
                 }}
               >
@@ -1506,10 +1488,10 @@ const PedidoDetalle = () => {
                 disabled={!evidenceImage || uploadingEvidence || evidenceUploaded}
               >
                 {uploadingEvidence ? (
-                  <ActivityIndicator size="small" color="black" />
+                  <ActivityIndicator size="small" color="#FFF" />
                 ) : evidenceUploaded ? (
                   <View style={styles.uploadedIndicator}>
-                    <Ionicons name="checkmark-circle" size={20} color="black" />
+                    <Ionicons name="checkmark-circle" size={20} color="#FFF" />
                     <Text style={styles.uploadButtonText}>¡Enviado!</Text>
                   </View>
                 ) : (
@@ -1534,7 +1516,7 @@ const PedidoDetalle = () => {
               onPress={() => setShowChatModal(false)}
               style={styles.chatBackButton}
             >
-              <Ionicons name="arrow-back" size={24} color="#1C1C1E" />
+              <Ionicons name="arrow-back" size={24} color="#FFF" />
             </TouchableOpacity>
             <Text style={styles.chatTitle}>Chat del pedido #{pedido.id}</Text>
           </View>
@@ -1610,15 +1592,25 @@ const PedidoDetalle = () => {
                 disabled={sendingMessage}
               >
                 {sendingMessage ? (
-                  <ActivityIndicator size="small" color="black" />
+                  <ActivityIndicator size="small" color="#FFF" />
                 ) : (
-                  <Ionicons name="send" size={20} color="black" />
+                  <Ionicons name="send" size={20} color="#FFF" />
                 )}
               </TouchableOpacity>
             </View>
           </KeyboardAvoidingView>
         </SafeAreaView>
       </Modal>
+
+      <AlertaModal
+        visible={alertVisible}
+        mensaje={alertData.message}
+        onCerrar={() => setAlertVisible(false)}
+        titulo={alertData.title}
+        tipo={alertData.type}
+        onPrimary={alertData.onConfirm}
+        primaryLabel={alertData.primaryLabel || "Entendido"}
+      />
     </SafeAreaView>
   );
 };
@@ -1667,7 +1659,7 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 18,
     fontFamily: "MontserratBold",
-    color: "black",
+    color: "#FFF",
     flex: 1,
     textAlign: "center",
   },
@@ -1698,7 +1690,7 @@ const styles = StyleSheet.create({
   },
   statusBadge: {
     backgroundColor: "#fa6205",
-    color: "black",
+    color: "#FFF",
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 15,
@@ -1725,6 +1717,21 @@ const styles = StyleSheet.create({
     color: "#1C1C1E",
     fontSize: 16,
     fontFamily: "MontserratRegular",
+    flex: 1,
+  },
+  establishmentRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  chatIconBtn: {
+    backgroundColor: '#fa6205',
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginLeft: 12,
   },
   productsContainer: {
     marginTop: 10,
@@ -1866,7 +1873,7 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   actionButtonText: {
-    color: "black",
+    color: "#FFF",
     fontSize: 16,
     fontFamily: "MontserratBold",
     marginLeft: 10,
@@ -1881,7 +1888,7 @@ const styles = StyleSheet.create({
     borderRadius: 25,
   },
   backButtonText: {
-    color: "black",
+    color: "#FFF",
     fontSize: 16,
     fontFamily: "MontserratBold",
   },
@@ -1949,7 +1956,7 @@ const styles = StyleSheet.create({
     borderRadius: 20,
   },
   changeImageText: {
-    color: "black",
+    color: "#FFF",
     fontSize: 14,
     fontFamily: "MontserratBold",
   },
@@ -1958,15 +1965,17 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
   },
   cancelButton: {
-    backgroundColor: "#DDD",
+    backgroundColor: "#FFF",
     flex: 1,
     marginRight: 10,
     paddingVertical: 12,
     borderRadius: 8,
     alignItems: "center",
+    borderWidth: 1.5,
+    borderColor: "#fa6205",
   },
   cancelButtonText: {
-    color: "#1C1C1E",
+    color: "#fa6205",
     fontSize: 16,
     fontFamily: "MontserratBold",
   },
@@ -1979,7 +1988,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   uploadButtonText: {
-    color: "black",
+    color: "#FFF",
     fontSize: 16,
     fontFamily: "MontserratBold",
   },
@@ -2008,7 +2017,7 @@ const styles = StyleSheet.create({
     marginRight: 15,
   },
   chatTitle: {
-    color: "black",
+    color: "#FFF",
     fontSize: 18,
     fontFamily: "MontserratBold",
     flex: 1,
@@ -2024,7 +2033,7 @@ const styles = StyleSheet.create({
     marginTop: 50,
   },
   noChatMessages: {
-    color: "#ccc",
+    color: "#999",
     fontSize: 16,
     fontFamily: "MontserratRegular",
     textAlign: "center",
@@ -2041,8 +2050,10 @@ const styles = StyleSheet.create({
     alignSelf: "flex-end",
   },
   otherMessage: {
-    backgroundColor: "#ECECEC",
+    backgroundColor: "#FFF",
     alignSelf: "flex-start",
+    borderWidth: 1,
+    borderColor: "#E0E0E0",
   },
   senderName: {
     fontSize: 12,
@@ -2056,7 +2067,7 @@ const styles = StyleSheet.create({
     lineHeight: 20,
   },
   myMessageText: {
-    color: "black",
+    color: "#FFF",
   },
   otherMessageText: {
     color: "#1C1C1E",
@@ -2076,11 +2087,13 @@ const styles = StyleSheet.create({
     color: "rgba(0,0,0,0.7)",
   },
   otherMessageTime: {
-    color: "rgba(255,255,255,0.7)",
+    color: "rgba(0,0,0,0.4)",
   },
   chatInputContainer: {
-    backgroundColor: "#ECECEC",
+    backgroundColor: "#FFF",
     padding: 15,
+    borderTopWidth: 1,
+    borderTopColor: "#E0E0E0",
   },
   selectedChatImageContainer: {
     position: "relative",
@@ -2109,7 +2122,7 @@ const styles = StyleSheet.create({
   },
   chatInput: {
     flex: 1,
-    backgroundColor: "#D8D8D8",
+    backgroundColor: "#F5F5F5",
     borderRadius: 20,
     paddingHorizontal: 15,
     paddingVertical: 10,

@@ -24,6 +24,7 @@ import {
 import { useNavigation } from "@react-navigation/native";
 import { BASE_URL } from "../../constants/url";
 import DateTimePicker from "@react-native-community/datetimepicker";
+import AlertaModal from "../../components/ErrorModal";
 
 export default function CrearPerfil() {
   const navigation = useNavigation();
@@ -92,7 +93,7 @@ export default function CrearPerfil() {
       const userData = await AsyncStorage.getItem("userData");
 
       if (!token || !userData) {
-        Alert.alert("Error", "No se encontró información de autenticación");
+        showAlert("Error", "No se encontró información de autenticación");
         return;
       }
 
@@ -128,10 +129,7 @@ export default function CrearPerfil() {
         await ImagePicker.requestMediaLibraryPermissionsAsync();
 
       if (status !== "granted") {
-        Alert.alert(
-          "Permisos requeridos",
-          "Se necesitan permisos para acceder a la galería de fotos."
-        );
+        showAlert("Permisos requeridos", "Se necesitan permisos para acceder a la galería de fotos.");
         return;
       }
 
@@ -147,22 +145,22 @@ export default function CrearPerfil() {
       }
     } catch (error) {
       console.error("Error al seleccionar imagen:", error);
-      Alert.alert("Error", "No se pudo seleccionar la imagen");
+      showAlert("Error", "No se pudo seleccionar la imagen");
     }
   };
 
   // Función para crear el perfil
   const createProfile = async () => {
     if (!nombre.trim()) {
-      Alert.alert("Error", "El nombre del perfil es obligatorio");
+      showAlert("Error", "El nombre del perfil es obligatorio");
       return;
     }
     if (!descripcion.trim()) {
-      Alert.alert("Error", "La descripción del perfil es obligatoria");
+      showAlert("Error", "La descripción del perfil es obligatoria");
       return;
     }
     if (!selectedImage) {
-      Alert.alert("Error", "Debes seleccionar una imagen para el perfil");
+      showAlert("Error", "Debes seleccionar una imagen para el perfil");
       return;
     }
 
@@ -171,7 +169,7 @@ export default function CrearPerfil() {
       const token = await AsyncStorage.getItem("userToken");
       const userData = await AsyncStorage.getItem("userData");
       if (!token || !userData) {
-        Alert.alert("Error", "No se encontró información de autenticación");
+        showAlert("Error", "No se encontró información de autenticación");
         setIsSubmitting(false);
         return;
       }
@@ -199,32 +197,24 @@ export default function CrearPerfil() {
 
       const responseJson = await response.json();
       if (response.ok) {
-        Alert.alert("Éxito", "Perfil creado correctamente", [
-          {
-            text: "OK",
-            onPress: () => {
-              setNombre("");
-              setDescripcion("");
-              setSelectedImage(null);
-              fetchExistingProfiles();
-              setActiveTab("perfiles"); // Switch to profiles tab after creation
-            },
-          },
-        ]);
+        showAlert("Éxito", "Perfil creado correctamente", "success", () => {
+          setNombre("");
+          setDescripcion("");
+          setSelectedImage(null);
+          fetchExistingProfiles();
+          setActiveTab("perfiles");
+        }, "OK");
       } else {
         let errorMessage = responseJson.message || "No se pudo crear el perfil";
         if (responseJson.errors) {
           const errors = Object.values(responseJson.errors).flat();
           errorMessage = errors.join("\n");
         }
-        Alert.alert("Error", errorMessage);
+        showAlert("Error", errorMessage);
       }
     } catch (error) {
       console.error("Error al crear perfil:", error);
-      Alert.alert(
-        "Error",
-        "Ocurrió un error al crear el perfil. Inténtalo de nuevo."
-      );
+      showAlert("Error", "Ocurrió un error al crear el perfil. Inténtalo de nuevo.");
     } finally {
       setIsSubmitting(false);
     }
@@ -243,14 +233,14 @@ export default function CrearPerfil() {
   // Guardar cambios de perfil
   const handleEditProfile = async () => {
     if (!editNombre.trim() || !editDescripcion.trim()) {
-      Alert.alert("Error", "Todos los campos son obligatorios");
+      showAlert("Error", "Todos los campos son obligatorios");
       return;
     }
     setEditIsSubmitting(true);
     try {
       const token = await AsyncStorage.getItem("userToken");
       if (!token) {
-        Alert.alert("Error", "No autenticado");
+        showAlert("Error", "No autenticado");
         setEditIsSubmitting(false);
         return;
       }
@@ -271,14 +261,14 @@ export default function CrearPerfil() {
       );
       const data = await response.json();
       if (response.ok) {
-        Alert.alert("Éxito", "Perfil actualizado correctamente");
+        showAlert("Éxito", "Perfil actualizado correctamente");
         setEditModalVisible(false);
         fetchExistingProfiles();
       } else {
-        Alert.alert("Error", data.message || "No se pudo actualizar el perfil");
+        showAlert("Error", data.message || "No se pudo actualizar el perfil");
       }
     } catch (error) {
-      Alert.alert("Error", "Ocurrió un error al editar el perfil");
+      showAlert("Error", "Ocurrió un error al editar el perfil");
     } finally {
       setEditIsSubmitting(false);
     }
@@ -286,44 +276,34 @@ export default function CrearPerfil() {
 
   // Eliminar perfil
   const handleDeleteProfile = async (profileId) => {
-    Alert.alert(
-      "Eliminar perfil",
-      "¿Estás seguro de que deseas eliminar este perfil?",
-      [
-        { text: "Cancelar", style: "cancel" },
-        {
-          text: "Eliminar",
-          style: "destructive",
-          onPress: async () => {
-            try {
-              const token = await AsyncStorage.getItem("userToken");
-              if (!token) {
-                Alert.alert("Error", "No autenticado");
-                return;
-              }
-              const response = await fetch(
-                `${BASE_URL}user-perfil/${profileId}`,
-                {
-                  method: "DELETE",
-                  headers: {
-                    Accept: "application/json",
-                    Authorization: `Bearer ${token}`,
-                  },
-                }
-              );
-              if (response.ok) {
-                Alert.alert("Eliminado", "Perfil eliminado correctamente");
-                fetchExistingProfiles();
-              } else {
-                Alert.alert("Error", "No se pudo eliminar el perfil");
-              }
-            } catch (error) {
-              Alert.alert("Error", "Ocurrió un error al eliminar el perfil");
-            }
-          },
-        },
-      ]
-    );
+    const doDelete = async () => {
+      try {
+        const token = await AsyncStorage.getItem("userToken");
+        if (!token) {
+          showAlert("Error", "No autenticado");
+          return;
+        }
+        const response = await fetch(
+          `${BASE_URL}user-perfil/${profileId}`,
+          {
+            method: "DELETE",
+            headers: {
+              Accept: "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+        if (response.ok) {
+          showAlert("Eliminado", "Perfil eliminado correctamente");
+          fetchExistingProfiles();
+        } else {
+          showAlert("Error", "No se pudo eliminar el perfil");
+        }
+      } catch (error) {
+        showAlert("Error", "Ocurrió un error al eliminar el perfil");
+      }
+    };
+    showAlert("Eliminar perfil", "¿Estás seguro de que deseas eliminar este perfil?", "confirm", doDelete, "Eliminar");
   };
 
   // --------- FUNCIONALIDAD HORARIO ---------
@@ -380,7 +360,7 @@ export default function CrearPerfil() {
     try {
       const token = await AsyncStorage.getItem("userToken");
       if (!token) {
-        Alert.alert("Error", "No autenticado");
+        showAlert("Error", "No autenticado");
         setIsHorarioSubmitting(false);
         return;
       }
@@ -399,14 +379,14 @@ export default function CrearPerfil() {
         }),
       });
       if (response.ok) {
-        Alert.alert("Éxito", "Horario guardado correctamente");
+        showAlert("Éxito", "Horario guardado correctamente");
         setHorarioModalVisible(false);
       } else {
         const data = await response.json();
-        Alert.alert("Error", data.message || "No se pudo guardar el horario");
+        showAlert("Error", data.message || "No se pudo guardar el horario");
       }
     } catch (error) {
-      Alert.alert("Error", "Ocurrió un error al guardar el horario");
+      showAlert("Error", "Ocurrió un error al guardar el horario");
     } finally {
       setIsHorarioSubmitting(false);
     }
@@ -426,7 +406,7 @@ export default function CrearPerfil() {
     try {
       const token = await AsyncStorage.getItem("userToken");
       if (!token) {
-        Alert.alert("Error", "No autenticado");
+        showAlert("Error", "No autenticado");
         setIsHorarioSubmitting(false);
         return;
       }
@@ -447,62 +427,57 @@ export default function CrearPerfil() {
         }
       );
       if (response.ok) {
-        Alert.alert("Éxito", "Horario actualizado correctamente");
+        showAlert("Éxito", "Horario actualizado correctamente");
         setHorarioEditId(null);
         await fetchHorarios(horarioPerfilId);
       } else {
         const data = await response.json();
-        Alert.alert(
-          "Error",
-          data.message || "No se pudo actualizar el horario"
-        );
+        showAlert("Error", data.message || "No se pudo actualizar el horario");
       }
     } catch (error) {
-      Alert.alert("Error", "Ocurrió un error al editar el horario");
+      showAlert("Error", "Ocurrió un error al editar el horario");
     } finally {
       setIsHorarioSubmitting(false);
     }
   };
 
   const handleEliminarHorario = async (id) => {
-    Alert.alert(
-      "Eliminar horario",
-      "¿Estás seguro de que deseas eliminar este horario?",
-      [
-        { text: "Cancelar", style: "cancel" },
-        {
-          text: "Eliminar",
-          style: "destructive",
-          onPress: async () => {
-            try {
-              const token = await AsyncStorage.getItem("userToken");
-              if (!token) return;
-              const response = await fetch(
-                `${BASE_URL}user-perfil-disponibilidad/${id}`,
-                {
-                  method: "DELETE",
-                  headers: {
-                    Accept: "application/json",
-                    Authorization: `Bearer ${token}`,
-                  },
-                }
-              );
-              if (response.ok) {
-                Alert.alert("Eliminado", "Horario eliminado correctamente");
-                await fetchHorarios(horarioPerfilId);
-              } else {
-                Alert.alert("Error", "No se pudo eliminar el horario");
-              }
-            } catch (error) {
-              Alert.alert("Error", "Ocurrió un error al eliminar el horario");
-            }
-          },
-        },
-      ]
-    );
+    const doDelete = async () => {
+      try {
+        const token = await AsyncStorage.getItem("userToken");
+        if (!token) return;
+        const response = await fetch(
+          `${BASE_URL}user-perfil-disponibilidad/${id}`,
+          {
+            method: "DELETE",
+            headers: {
+              Accept: "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+        if (response.ok) {
+          showAlert("Eliminado", "Horario eliminado correctamente");
+          await fetchHorarios(horarioPerfilId);
+        } else {
+          showAlert("Error", "No se pudo eliminar el horario");
+        }
+      } catch (error) {
+        showAlert("Error", "Ocurrió un error al eliminar el horario");
+      }
+    };
+    showAlert("Eliminar horario", "¿Estás seguro de que deseas eliminar este horario?", "confirm", doDelete, "Eliminar");
   };
 
   // ---------------------------------------------------
+
+  const [alertVisible, setAlertVisible] = useState(false);
+  const [alertData, setAlertData] = useState({});
+
+  const showAlert = (title, message, type, onConfirm, primaryLabel) => {
+    setAlertData({ title, message, type: type || (title === "Éxito" ? "success" : "error"), onConfirm: onConfirm || null, primaryLabel: primaryLabel || null });
+    setAlertVisible(true);
+  };
 
   if (!fontsLoaded) {
     return (
@@ -519,7 +494,7 @@ export default function CrearPerfil() {
           style={styles.backButton}
           onPress={() => navigation.goBack()}
         >
-          <Ionicons name="arrow-back" size={24} color="#1C1C1E" />
+          <Ionicons name="arrow-back" size={24} color="#FFF" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Gestión de Perfiles</Text>
         <View style={styles.placeholder} />
@@ -629,7 +604,7 @@ export default function CrearPerfil() {
                             justifyContent: "center",
                           }}
                         >
-                          <Text style={{ color: "#222", fontWeight: "bold" }}>
+                          <Text style={{ color: "#FFF", fontWeight: "bold" }}>
                             Horario
                           </Text>
                         </TouchableOpacity>
@@ -651,7 +626,7 @@ export default function CrearPerfil() {
                   style={styles.createFirstProfileButton}
                   onPress={() => setActiveTab("crear")}
                 >
-                  <Ionicons name="add" size={20} color="#000" />
+                  <Ionicons name="add" size={20} color="#FFF" />
                   <Text style={styles.createFirstProfileText}>
                     Crear mi primer perfil
                   </Text>
@@ -742,10 +717,10 @@ export default function CrearPerfil() {
               disabled={isSubmitting}
             >
               {isSubmitting ? (
-                <ActivityIndicator size="small" color="#000" />
+                <ActivityIndicator size="small" color="#FFF" />
               ) : (
                 <View style={{ flexDirection: "row", alignItems: "center" }}>
-                  <Ionicons name="add" size={20} color="#000" />
+                  <Ionicons name="add" size={20} color="#FFF" />
                   <Text style={styles.createButtonText}>Crear Perfil</Text>
                 </View>
               )}
@@ -771,13 +746,13 @@ export default function CrearPerfil() {
         >
           <View
             style={{
-              backgroundColor: "#222",
-              borderRadius: 10,
-              padding: 20,
+              backgroundColor: "#FFF",
+              borderRadius: 16,
+              padding: 24,
               width: "85%",
             }}
           >
-            <Text style={[styles.sectionTitle, { marginBottom: 10 }]}>
+            <Text style={[styles.sectionTitle, { marginBottom: 16 }]}>
               Editar Perfil
             </Text>
             <Text style={styles.inputLabel}>Nombre</Text>
@@ -809,7 +784,7 @@ export default function CrearPerfil() {
                   { backgroundColor: "#DDD", marginRight: 10 },
                 ]}
               >
-                <Text style={[styles.createButtonText, { color: "#1C1C1E" }]}>
+                <Text style={[styles.createButtonText, { color: "#666" }]}>
                   Cancelar
                 </Text>
               </TouchableOpacity>
@@ -819,7 +794,7 @@ export default function CrearPerfil() {
                 disabled={editIsSubmitting}
               >
                 {editIsSubmitting ? (
-                  <ActivityIndicator size="small" color="#000" />
+                  <ActivityIndicator size="small" color="#FFF" />
                 ) : (
                   <Text style={styles.createButtonText}>Guardar</Text>
                 )}
@@ -846,14 +821,14 @@ export default function CrearPerfil() {
         >
           <View
             style={{
-              backgroundColor: "#222",
-              borderRadius: 10,
-              padding: 20,
+              backgroundColor: "#FFF",
+              borderRadius: 16,
+              padding: 24,
               width: "85%",
             }}
           >
             <ScrollView showsVerticalScrollIndicator={false}>
-              <Text style={[styles.sectionTitle, { marginBottom: 10 }]}>
+              <Text style={[styles.sectionTitle, { marginBottom: 16 }]}>
                 Agregar Horario
               </Text>
               {/* Lista de horarios existentes */}
@@ -871,7 +846,7 @@ export default function CrearPerfil() {
                           >
                             {diasSemana[h.dia_semana]?.label || "Día"}:
                           </Text>
-                          {h.hora_inicio} - {h.hora_fin}
+                          {" "}{h.hora_inicio} - {h.hora_fin}
                         </Text>
                       </View>
                       <View style={styles.horarioButtons}>
@@ -921,7 +896,7 @@ export default function CrearPerfil() {
                   >
                     <Text
                       style={{
-                        color: diaSemana === d.value ? "#222" : "#fff",
+                        color: diaSemana === d.value ? "#FFF" : "#1C1C1E",
                         fontWeight: diaSemana === d.value ? "bold" : "normal",
                       }}
                     >
@@ -949,7 +924,6 @@ export default function CrearPerfil() {
                       setShowInicioPicker(false);
                     }
                     if (selectedDate) {
-                      // Asegurar que la fecha tenga los minutos exactos
                       const newDate = new Date(selectedDate);
                       setHoraInicio(newDate);
                     }
@@ -981,7 +955,7 @@ export default function CrearPerfil() {
                     <Text
                       style={[
                         styles.createButtonText,
-                        { color: "#1C1C1E", fontSize: 14 },
+                        { color: "#666", fontSize: 14 },
                       ]}
                     >
                       Cancelar
@@ -1016,7 +990,6 @@ export default function CrearPerfil() {
                       setShowFinPicker(false);
                     }
                     if (selectedDate) {
-                      // Asegurar que la fecha tenga los minutos exactos
                       const newDate = new Date(selectedDate);
                       setHoraFin(newDate);
                     }
@@ -1048,7 +1021,7 @@ export default function CrearPerfil() {
                     <Text
                       style={[
                         styles.createButtonText,
-                        { color: "#1C1C1E", fontSize: 14 },
+                        { color: "#666", fontSize: 14 },
                       ]}
                     >
                       Cancelar
@@ -1078,7 +1051,7 @@ export default function CrearPerfil() {
                     { backgroundColor: "#DDD", marginRight: 10 },
                   ]}
                 >
-                  <Text style={[styles.createButtonText, { color: "#1C1C1E" }]}>
+                  <Text style={[styles.createButtonText, { color: "#666" }]}>
                     Cancelar
                   </Text>
                 </TouchableOpacity>
@@ -1089,7 +1062,7 @@ export default function CrearPerfil() {
                     disabled={isHorarioSubmitting}
                   >
                     {isHorarioSubmitting ? (
-                      <ActivityIndicator size="small" color="#000" />
+                      <ActivityIndicator size="small" color="#FFF" />
                     ) : (
                       <Text style={styles.createButtonText}>
                         Guardar Cambios
@@ -1103,7 +1076,7 @@ export default function CrearPerfil() {
                     disabled={isHorarioSubmitting}
                   >
                     {isHorarioSubmitting ? (
-                      <ActivityIndicator size="small" color="#000" />
+                      <ActivityIndicator size="small" color="#FFF" />
                     ) : (
                       <Text style={styles.createButtonText}>Guardar</Text>
                     )}
@@ -1114,6 +1087,16 @@ export default function CrearPerfil() {
           </View>
         </View>
       </Modal>
+
+      <AlertaModal
+        visible={alertVisible}
+        mensaje={alertData.message}
+        onCerrar={() => setAlertVisible(false)}
+        titulo={alertData.title}
+        tipo={alertData.type}
+        onPrimary={alertData.onConfirm}
+        primaryLabel={alertData.primaryLabel || "Entendido"}
+      />
     </SafeAreaView>
   );
 }
@@ -1133,7 +1116,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    backgroundColor: "#F0F0F0",
+    backgroundColor: "#fa6205",
     paddingHorizontal: 20,
     paddingVertical: 15,
     paddingTop: 50,
@@ -1142,7 +1125,7 @@ const styles = StyleSheet.create({
     padding: 5,
   },
   headerTitle: {
-    color: "#1C1C1E",
+    color: "#FFF",
     fontSize: 18,
     fontFamily: "Montserrat_700Bold",
   },
@@ -1175,7 +1158,7 @@ const styles = StyleSheet.create({
     fontFamily: "Montserrat_700Bold",
   },
   activeTabText: {
-    color: "#000",
+    color: "#FFF",
   },
   // Profiles tab container
   profilesTabContainer: {
@@ -1213,7 +1196,7 @@ const styles = StyleSheet.create({
     marginTop: 24,
   },
   createFirstProfileText: {
-    color: "#000",
+    color: "#FFF",
     fontSize: 16,
     fontFamily: "Montserrat_700Bold",
     marginLeft: 8,
@@ -1283,7 +1266,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   changeImageText: {
-    color: "#1C1C1E",
+    color: "#FFF",
     fontSize: 12,
     fontFamily: "Montserrat_400Regular",
     marginTop: 5,
@@ -1323,7 +1306,7 @@ const styles = StyleSheet.create({
     opacity: 0.6,
   },
   createButtonText: {
-    color: "#000",
+    color: "#FFF",
     fontSize: 16,
     fontFamily: "Montserrat_700Bold",
     marginLeft: 8,

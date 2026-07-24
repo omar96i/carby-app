@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   View,
   Text,
@@ -20,6 +20,7 @@ import {
 import { useFonts } from "expo-font";
 import { useNavigation } from "@react-navigation/native";
 import { BASE_URL } from "../../constants/url";
+import AlertaModal from "../../components/ErrorModal";
 
 export default function CategoriesScreen() {
   const navigation = useNavigation();
@@ -32,6 +33,13 @@ export default function CategoriesScreen() {
   const [checkingSubscription, setCheckingSubscription] = useState(false);
   const [subscriptionModalVisible, setSubscriptionModalVisible] = useState(false);
   const [hasActiveSubscription, setHasActiveSubscription] = useState(false);
+
+  const [alertVisible, setAlertVisible] = useState(false);
+  const alertRef = useRef({ title: "", message: "", type: "info" });
+  const showAlert = (title, message, type) => {
+    alertRef.current = { title, message, type: type || (title === "Éxito" ? "success" : "error") };
+    setAlertVisible(true);
+  };
 
   // Cargar categorías existentes al montar el componente
   useEffect(() => {
@@ -52,6 +60,7 @@ export default function CategoriesScreen() {
       </View>
     );
   }
+
   
   // Función para verificar si el usuario tiene suscripciones activas
   const checkActiveSubscriptions = async () => {
@@ -126,7 +135,7 @@ export default function CategoriesScreen() {
     try {
       const token = await AsyncStorage.getItem("userToken");
       if (!token) {
-        Alert.alert("Error", "No se encontró token de autenticación");
+        showAlert("Error", "No se encontró token de autenticación");
         return;
       }
 
@@ -144,14 +153,14 @@ export default function CategoriesScreen() {
       }
     } catch (error) {
       console.error("Error al cargar categorías:", error);
-      Alert.alert("Error", "No se pudieron cargar las categorías");
+      showAlert("Error", "No se pudieron cargar las categorías");
     }
   };
 
   // Función para crear nueva categoría
   const createCategory = async () => {
     if (!categoryName.trim()) {
-      Alert.alert("Error", "El nombre de la categoría no puede estar vacío");
+      showAlert("Error", "El nombre de la categoría no puede estar vacío");
       return;
     }
 
@@ -160,7 +169,7 @@ export default function CategoriesScreen() {
     try {
       const token = await AsyncStorage.getItem("userToken");
       if (!token) {
-        Alert.alert("Error", "No se encontró token de autenticación");
+        showAlert("Error", "No se encontró token de autenticación");
         setIsLoading(false);
         return;
       }
@@ -182,39 +191,16 @@ export default function CategoriesScreen() {
       console.log("Respuesta:", data);
 
       if (data.status && data.categoria) {
-        Alert.alert(
-          "Éxito",
-          "Categoría creada satisfactoriamente",
-          [
-            {
-              text: "OK",
-              onPress: () => {
-                setModalVisible(false);
-                setCategoryName("");
-                fetchCategories(); // Refrescar la lista de categorías
-              },
-            },
-          ]
-        );
+        showAlert("Éxito", "Categoría creada satisfactoriamente", "success");
       } else {
-        Alert.alert(
-          "Creación exitosa", 
-          data.message || "Categoría registrada correctamente",
-          [
-            {
-              text: "OK",
-              onPress: () => {
-                setModalVisible(false);
-                setCategoryName("");
-                fetchCategories(); // Refrescar la lista de categorías
-              },
-            },
-          ]
-        );
+        showAlert("Éxito", data.message || "Categoría registrada correctamente", "success");
       }
+      setModalVisible(false);
+      setCategoryName("");
+      fetchCategories();
     } catch (error) {
       console.error("Error al crear categoría:", error);
-      Alert.alert("Error", "No se pudo crear la categoría");
+      showAlert("Error", "No se pudo crear la categoría");
     } finally {
       setIsLoading(false);
     }
@@ -228,6 +214,7 @@ export default function CategoriesScreen() {
   );
 
   return (
+    <>
     <View style={styles.container}>
       {/* Lista de categorías 
          {categories.length > 0 ? (
@@ -249,10 +236,10 @@ export default function CategoriesScreen() {
         disabled={checkingSubscription}
       >
         {checkingSubscription ? (
-          <ActivityIndicator size="small" color="#000" />
+          <ActivityIndicator size="small" color="#FFF" />
         ) : (
           <View style={{ flexDirection: "row", alignItems: "center" }}>
-            <FontAwesome name="plus" size={20} color="#000" />
+            <FontAwesome name="plus" size={20} color="#FFF" />
             <Text style={styles.createButtonText}>Crear Categoría</Text>
           </View>
         )}
@@ -294,7 +281,7 @@ export default function CategoriesScreen() {
                 disabled={isLoading}
               >
                 {isLoading ? (
-                  <ActivityIndicator size="small" color="#000" />
+                  <ActivityIndicator size="small" color="#FFF" />
                 ) : (
                   <Text style={styles.buttonCreateText}>Crear</Text>
                 )}
@@ -342,6 +329,14 @@ export default function CategoriesScreen() {
         </View>
       </Modal>
     </View>
+
+      <AlertaModal
+        visible={alertVisible}
+        tipo={alertRef.current.type}
+        mensaje={alertRef.current.message}
+        onCerrar={() => setAlertVisible(false)}
+      />
+    </>
   );
 }
 
@@ -391,7 +386,7 @@ const styles = StyleSheet.create({
     marginVertical: 5,
   },
   createButtonText: {
-    color: "#000",
+    color: "#FFF",
     fontFamily: "Montserrat_700Bold",
     fontSize: 16,
     marginLeft: 10,
@@ -404,7 +399,7 @@ const styles = StyleSheet.create({
   },
   modalView: {
     width: "85%",
-    backgroundColor: "#333",
+    backgroundColor: "#FFF",
     borderRadius: 15,
     padding: 25,
     shadowColor: "#000",
@@ -430,8 +425,10 @@ const styles = StyleSheet.create({
     fontFamily: "Montserrat_400Regular",
   },
   input: {
-    backgroundColor: "#fff",
-    borderRadius: 8,
+    backgroundColor: "#FFF",
+    borderRadius: 10,
+    borderWidth: 1.5,
+    borderColor: "#DDD",
     paddingHorizontal: 15,
     paddingVertical: 12,
     fontSize: 16,
@@ -450,20 +447,20 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   buttonCancel: {
-    backgroundColor: "#666",
+    backgroundColor: "#DDD",
   },
   buttonCreate: {
     backgroundColor: "#fa6205",
   },
   buttonCancelText: {
-    color: "#1C1C1E",
+    color: "#666",
     fontFamily: "Montserrat_700Bold",
     fontSize: 16,
   },
   buttonCreateText: {
-    color: "#000",
+    color: "#FFF",
     fontFamily: "Montserrat_700Bold",
-    fontSize: 16,
+    fontSize: 14,
   },
   // Nuevos estilos para el modal de suscripción
   subscriptionIconContainer: {
