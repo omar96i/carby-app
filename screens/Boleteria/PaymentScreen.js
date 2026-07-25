@@ -6,7 +6,6 @@ import {
     Text,
     TouchableOpacity,
     StyleSheet,
-    Alert,
     ActivityIndicator,
     Animated, // Importamos Animated para la barra de progreso
 } from 'react-native';
@@ -14,6 +13,7 @@ import { WebView } from 'react-native-webview';
 import { API_SECRET_TOKEN } from '../../utils/token'
 import { BASE_URL } from "../../constants/url";
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import AlertaModal from "../../components/ErrorModal";
 
 // 2. DEFINICIÓN DEL COMPONENTE
 const PaymentScreen = ({ route, navigation }) => {
@@ -22,6 +22,13 @@ const PaymentScreen = ({ route, navigation }) => {
     const [paymentUrl, setPaymentUrl] = useState('');
     const progressAnimation = useRef(new Animated.Value(0)).current;
     const [cliente, setCliente] = useState(null);
+    const [alertVisible, setAlertVisible] = useState(false);
+    const [alertData, setAlertData] = useState({ message: "", type: "info", onPrimary: null, primaryLabel: "" });
+
+    const showAlert = (message, type = "info", onPrimary = null, primaryLabel = null) => {
+        setAlertData({ message, type, onPrimary, primaryLabel });
+        setAlertVisible(true);
+    };
 
     useEffect(() => {
         const setupPurchase = async () => {
@@ -84,11 +91,7 @@ const PaymentScreen = ({ route, navigation }) => {
 
             } catch (error) {
                 console.error("Error al preparar la compra:", error);
-                Alert.alert(
-                    "Error",
-                    error.message || "Ocurrió un problema al preparar tu compra.",
-                    [{ text: "Volver", onPress: () => navigation.goBack() }]
-                );
+                showAlert(error.message || "Ocurrió un problema al preparar tu compra.", "confirm", () => navigation.goBack(), "Volver");
             }
         };
 
@@ -137,7 +140,7 @@ const PaymentScreen = ({ route, navigation }) => {
             setUiState('validation_complete');
         } catch (error) {
             console.error("Error al validar pagos:", error);
-            Alert.alert("Error", "No se pudo completar la validación.");
+            showAlert("No se pudo completar la validación.", "error");
             setUiState('summary');
         }
     };
@@ -236,6 +239,14 @@ const PaymentScreen = ({ route, navigation }) => {
     return (
         <SafeAreaView style={styles.safeArea}>
             {renderContent()}
+            <AlertaModal
+              visible={alertVisible}
+              mensaje={alertData.message}
+              tipo={alertData.type}
+              onCerrar={() => setAlertVisible(false)}
+              onPrimary={alertData.onPrimary}
+              primaryLabel={alertData.primaryLabel}
+            />
         </SafeAreaView>
     );
 };

@@ -5,7 +5,6 @@ import {
   Text,
   StyleSheet,
   TouchableOpacity,
-  Alert,
   Platform,
   Image,
   ScrollView,
@@ -36,6 +35,7 @@ import IconMCC from "react-native-vector-icons/EvilIcons";
 import Icon3 from "react-native-vector-icons/Feather";
 import Icon4 from "react-native-vector-icons/MaterialCommunityIcons";
 import * as ImagePicker from "expo-image-picker";
+import AlertaModal from "../../components/ErrorModal";
 
 const { width } = Dimensions.get("window");
 
@@ -63,6 +63,13 @@ export default function PerfilUsuario() {
   const [supportModalVisible, setSupportModalVisible] = useState(false);
   const [termsChecked, setTermsChecked] = useState(false);
   const [privacyChecked, setPrivacyChecked] = useState(false);
+  const [alertVisible, setAlertVisible] = useState(false);
+  const [alertData, setAlertData] = useState({ message: "", type: "info", onPrimary: null, primaryLabel: "" });
+
+  const showAlert = (message, type = "info", onPrimary = null, primaryLabel = null) => {
+    setAlertData({ message, type, onPrimary, primaryLabel });
+    setAlertVisible(true);
+  };
   // Estados para referidos (estaban en tu lógica pero no en tu JSX, los he reintegrado visualmente)
   const [codigoReferido, setCodigoReferido] = useState("Cargando...");
   const [premiosModalVisible, setPremiosModalVisible] = useState(false);
@@ -178,7 +185,7 @@ export default function PerfilUsuario() {
       }
     } catch (error) {
       console.error("Error selecting image:", error);
-      Alert.alert("Error", "No se pudo seleccionar la imagen.");
+      showAlert("No se pudo seleccionar la imagen.", "error");
     }
   };
 
@@ -215,20 +222,20 @@ export default function PerfilUsuario() {
       try {
         const data = JSON.parse(responseText);
         if (response.ok) {
-          Alert.alert("✅ Éxito", "Foto de perfil actualizada.");
+          showAlert("Foto de perfil actualizada.", "success");
           setRefreshTrigger((prev) => prev + 1);
         } else {
-          Alert.alert("❌ Error", data.message || "No se pudo actualizar.");
+          showAlert(data.message || "No se pudo actualizar.", "error");
         }
       } catch (e) {
         if (response.ok) {
-            Alert.alert("✅ Éxito", "Foto de perfil actualizada.");
+            showAlert("Foto de perfil actualizada.", "success");
             setRefreshTrigger((prev) => prev + 1);
         }
       }
     } catch (error) {
       console.error("❌ Error subiendo la imagen:", error);
-      Alert.alert("Error", "No se pudo subir la imagen.");
+      showAlert("No se pudo subir la imagen.", "error");
     }
   };
 
@@ -237,7 +244,7 @@ export default function PerfilUsuario() {
       const token = await AsyncStorage.getItem("userToken");
       if (!token) {
         await AsyncStorage.clear();
-        navigation.navigate("Login");
+        navigation.reset({ index: 0, routes: [{ name: "Login" }] });
         return;
       }
       // Intento de logout en servidor (best effort)
@@ -252,20 +259,15 @@ export default function PerfilUsuario() {
       } catch (e) {}
 
       await AsyncStorage.clear();
-      navigation.navigate("Login");
+      navigation.reset({ index: 0, routes: [{ name: "Login" }] });
     } catch (error) {
       await AsyncStorage.clear();
-      navigation.navigate("Login");
+      navigation.reset({ index: 0, routes: [{ name: "Login" }] });
     }
   };
 
   const handleDeactivateAccount = async () => {
-    // Lógica placeholder original
-    Alert.alert(
-      "Cuenta desactivada",
-      "Su cuenta ha sido desactivada. Se eliminará en 7 días.",
-      [{ text: "OK", onPress: () => navigation.navigate("Login") }]
-    );
+    showAlert("Su cuenta ha sido desactivada. Se eliminará en 7 días.", "info", () => navigation.reset({ index: 0, routes: [{ name: "Login" }] }), "OK");
     await AsyncStorage.clear();
   };
 
@@ -411,7 +413,7 @@ export default function PerfilUsuario() {
         <View style={styles.legalContainer}>
             {/* Términos */}
             <View style={styles.legalRow}>
-                <TouchableOpacity onPress={() => Linking.openURL("https://app.yariders.com/terminos-y-condiciones/")}>
+                <TouchableOpacity onPress={() => Linking.openURL("https://carbycol.com/terminos-y-condiciones/")}>
                     <Text style={styles.linkText}>Términos y Condiciones</Text>
                 </TouchableOpacity>
                 <TouchableOpacity onPress={toggleTermsCheck} style={[styles.checkbox, termsChecked && styles.checkboxActive]}>
@@ -421,7 +423,7 @@ export default function PerfilUsuario() {
 
             {/* Privacidad */}
             <View style={styles.legalRow}>
-                <TouchableOpacity onPress={() => Linking.openURL("https://app.yariders.com/politica-de-privacidad/")}>
+                <TouchableOpacity onPress={() => Linking.openURL("https://carbycol.com/politica-de-privacidad/")}>
                     <Text style={styles.linkText}>Privacidad de Datos</Text>
                 </TouchableOpacity>
                 <TouchableOpacity onPress={togglePrivacyCheck} style={[styles.checkbox, privacyChecked && styles.checkboxActive]}>
@@ -468,8 +470,8 @@ export default function PerfilUsuario() {
             <Text style={styles.modalBody}>
                 Para consultas o reclamos, visita nuestro sitio web:
             </Text>
-            <TouchableOpacity onPress={() => Linking.openURL("https://www.yariders.com")}>
-                <Text style={styles.linkUrl}>www.yariders.com</Text>
+            <TouchableOpacity onPress={() => Linking.openURL("https://carbycol.com")}>
+                <Text style={styles.linkUrl}>carbycol.com</Text>
             </TouchableOpacity>
             <TouchableOpacity style={[styles.btnPrimary, {marginTop: 20}]} onPress={() => setSupportModalVisible(false)}>
                 <Text style={styles.btnPrimaryText}>Cerrar</Text>
@@ -518,6 +520,14 @@ export default function PerfilUsuario() {
         </View>
       </Modal>
 
+      <AlertaModal
+        visible={alertVisible}
+        mensaje={alertData.message}
+        tipo={alertData.type}
+        onCerrar={() => setAlertVisible(false)}
+        onPrimary={alertData.onPrimary}
+        primaryLabel={alertData.primaryLabel}
+      />
     </SafeAreaView>
   );
 }

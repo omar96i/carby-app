@@ -7,13 +7,14 @@ import {
   StyleSheet,
   TouchableOpacity,
   SafeAreaView,
-  Alert,
   ScrollView,
   Image,
   TextInput,
   ActivityIndicator,
   Animated,
-  Platform
+  Platform,
+  Dimensions,
+  Keyboard
 } from "react-native";
 import Icon1 from "react-native-vector-icons/Entypo";
 import IconMC from "react-native-vector-icons/AntDesign";
@@ -30,6 +31,7 @@ import LocationSection from "../../components/LocationSection";
 import Modal from "react-native-modal";
 import { GOOGLE_MAPS_API_KEY } from "../../constants/Keys";
 import { Ionicons } from "@expo/vector-icons";
+import { LinearGradient } from "expo-linear-gradient";
 import * as Location from "expo-location";
 import MapView, { Marker, Polyline } from "react-native-maps";
 import { useNotification } from "../../context/NotificationContext";
@@ -84,15 +86,55 @@ export default function SelectLocationScreen() {
 
   // Estado para la creación de la carrera
   const [isCreatingRide, setIsCreatingRide] = useState(false);
-  // Collapsible bottom sheet
-  const [isSheetExpanded, setIsSheetExpanded] = useState(true);
-  const sheetAnimation = useRef(new Animated.Value(1)).current;
-  const toggleSheet = useCallback(() => {
-    const toValue = isSheetExpanded ? 0 : 1;
-    Animated.timing(sheetAnimation, { toValue, duration: 250, useNativeDriver: false }).start();
-    setIsSheetExpanded(!isSheetExpanded);
-  }, [isSheetExpanded, sheetAnimation]);
-  /////
+  // Altura del mapa
+  const screenH = Dimensions.get("window").height;
+  const [mapHeight, setMapHeight] = useState(screenH * 0.35);
+  useEffect(() => {
+    if (pinMode) return;
+    const inputActive = showPickupSuggestions || showDeliverySuggestions;
+    if (inputActive) {
+      setMapHeight(screenH * 0.10);
+    } else if (totalPrice) {
+      setMapHeight(screenH * 0.28);
+    } else {
+      setMapHeight(screenH * 0.35);
+    }
+  }, [pinMode, showPickupSuggestions, showDeliverySuggestions, totalPrice]);
+  // Auto-scroll del sheet cuando aparecen sugerencias
+  useEffect(() => {
+    if ((showPickupSuggestions || showDeliverySuggestions) && sheetScrollRef.current) {
+      setTimeout(() => {
+        sheetScrollRef.current?.scrollTo({ y: 120, animated: true });
+      }, 100);
+    }
+  }, [showPickupSuggestions, showDeliverySuggestions]);
+
+  // Alerta modal unificada
+  const [alertVisible, setAlertVisible] = useState(false);
+  const [alertData, setAlertData] = useState({ message: "", type: "error", onPrimary: null, primaryLabel: null });
+  const showAlert = (message, type = "error", onPrimary = null, primaryLabel = null) => {
+    setAlertData({ message, type, onPrimary, primaryLabel });
+    setAlertVisible(true);
+  };
+  // Retroceder o salir de la pantalla
+  function goBack() {
+    navigation.goBack();
+  }
+  // Reiniciar toda la selección
+  function resetAll() {
+    setVehicleType(null);
+    setSelectedServiceId(null);
+    setServiceDetails({ nombre_servicio: "", precio_kilometro: 0 });
+    setPaymentMethod(null);
+    setObservations("");
+    setModalVisible(false);
+    setPickupAddress("");
+    setDeliveryAddress("");
+    setPickupCoord(null);
+    setDeliveryCoord(null);
+    setRouteCoords([]);
+    setTotalPrice("");
+  }
   const [mapRegion, setMapRegion] = useState({
     latitude: -12.046374,
     longitude: -77.042793,
@@ -110,6 +152,9 @@ export default function SelectLocationScreen() {
   const [ignoreNextRegionChange, setIgnoreNextRegionChange] = useState(false);
 
   const [userRole, setUserRole] = useState('usuario');
+
+  // Dropdown del selector de método de pago (paso service)
+  const [showPaymentDropdown, setShowPaymentDropdown] = useState(false);
 
   // Nuevo estado para el modal de política de pago
   const [paymentPolicyModalVisible, setPaymentPolicyModalVisible] = useState(false);
@@ -369,17 +414,14 @@ export default function SelectLocationScreen() {
 
   // Añadir esta variable de referencia al inicio del componente
   const searchTimeout = useRef(null);
+  const sheetScrollRef = useRef(null);
   // Optimiza la función centerMapOnUserLocation para respuesta inmediata
   // Versión corregida de centerMapOnUserLocation para React Native
   const centerMapOnUserLocation = async () => {
     try {
-      Alert.alert("Ubicándote...", "", [{ text: "OK", style: "cancel" }], {
-        cancelable: true,
-      });
-
       Location.requestForegroundPermissionsAsync().then(({ status }) => {
         if (status !== "granted") {
-          Alert.alert("Permiso denegado", "No se pudo acceder a tu ubicación.");
+          showAlert("Permiso denegado: no se pudo acceder a tu ubicación.");
           return;
         }
 
@@ -444,7 +486,7 @@ export default function SelectLocationScreen() {
                 });
               })
               .catch((err) => {
-                Alert.alert("Error", "No se pudo obtener tu ubicación actual.");
+                showAlert("No se pudo obtener tu ubicación actual.");
               });
           });
       });
@@ -555,6 +597,13 @@ export default function SelectLocationScreen() {
     setPinMode(true);
     setMapSearchResults([]);
     setMapSearchQuery("");
+    if (mapRef.current) {
+      mapRef.current.animateToRegion({
+        ...mapRegion,
+        latitudeDelta: 0.05,
+        longitudeDelta: 0.05,
+      }, 500);
+    }
   };
 
   // Confirmar la ubicación central del mapa en modo pin
@@ -701,10 +750,7 @@ export default function SelectLocationScreen() {
     } catch (error) {
       console.error("Error al crear carrera:", error);
       setErrorModalVisible(true);
-      Alert.alert(
-        "Error",
-        "No se pudo crear la carrera. Por favor, intenta nuevamente."
-      );
+      setErrorModalVisible(true);
       return null;
     } finally {
       setIsCreatingRide(false);
@@ -1093,10 +1139,7 @@ export default function SelectLocationScreen() {
           "Google Maps API Key inválida o con restricciones:",
           data.error_message
         );
-        Alert.alert(
-          "Problema con la API",
-          "Hay un problema con el acceso a los servicios de mapas. Contacta al soporte técnico."
-        );
+        showAlert("Hay un problema con el acceso a los servicios de mapas. Contacta al soporte técnico.");
         return false;
       }
       return true;
@@ -1322,6 +1365,7 @@ export default function SelectLocationScreen() {
   };
 
   const selectPickupAddress = async (item) => {
+    Keyboard.dismiss();
     setPickupAddress(item.description);
     setShowPickupSuggestions(false);
     const coords = await geocodePlaceId(item.place_id);
@@ -1329,6 +1373,7 @@ export default function SelectLocationScreen() {
   };
 
   const selectDeliveryAddress = async (item) => {
+    Keyboard.dismiss();
     setDeliveryAddress(item.description);
     setShowDeliverySuggestions(false);
     const coords = await geocodePlaceId(item.place_id);
@@ -1504,28 +1549,19 @@ export default function SelectLocationScreen() {
   const handleContinue = async () => {
     // Validar que se hayan ingresado ambas direcciones
     if (!pickupAddress.trim() || !deliveryAddress.trim()) {
-      Alert.alert(
-        "Direcciones requeridas",
-        "Por favor ingresa tanto la dirección de recogida como la dirección de destino."
-      );
+      showAlert("Por favor ingresa tanto la dirección de recogida como la dirección de destino.");
       return;
     }
 
     // Validar que se haya seleccionado un método de pago
     if (!paymentMethod) {
-      Alert.alert(
-        "Método de pago requerido",
-        "Por favor selecciona un método de pago antes de continuar."
-      );
+      showAlert("Por favor selecciona un método de pago antes de continuar.");
       return;
     }
 
     // Validar que haya un precio calculado
     if (!totalPrice) {
-      Alert.alert(
-        "Error de cálculo",
-        "No se ha podido calcular el precio del servicio. Por favor verifica las direcciones ingresadas."
-      );
+      showAlert("No se ha podido calcular el precio del servicio. Por favor verifica las direcciones ingresadas.");
       return;
     }
 
@@ -1548,6 +1584,15 @@ export default function SelectLocationScreen() {
     setSelectedServiceId(null);
     setServiceDetails({ nombre_servicio: "", precio_kilometro: 0 });
 
+    // Selection bounce animation
+    const idx = type === "taxi" ? 0 : 1;
+    if (providerCardAnims[idx]) {
+      Animated.sequence([
+        Animated.spring(providerCardAnims[idx], { toValue: 0.92, useNativeDriver: true, friction: 8 }),
+        Animated.spring(providerCardAnims[idx], { toValue: 1, useNativeDriver: true, friction: 4, tension: 120 }),
+      ]).start();
+    }
+
     // Fetch services for the selected vehicle type
     fetchServicesByVehicleType(type);
   };
@@ -1568,6 +1613,15 @@ export default function SelectLocationScreen() {
       nombre_servicio: service.nombre || "",
       precio_kilometro: service.precio || 0,
     });
+
+    // Selection bounce animation
+    const idx = availableServices.findIndex(s => s.id.toString() === service.id.toString());
+    if (idx >= 0 && serviceCardAnims[idx]) {
+      Animated.sequence([
+        Animated.spring(serviceCardAnims[idx], { toValue: 0.92, useNativeDriver: true, friction: 8 }),
+        Animated.spring(serviceCardAnims[idx], { toValue: 1, useNativeDriver: true, friction: 4, tension: 120 }),
+      ]).start();
+    }
 
     // Store service info in AsyncStorage con verificaciones
     AsyncStorage.setItem("selectedServiceId", service.id.toString());
@@ -1594,10 +1648,7 @@ export default function SelectLocationScreen() {
       userPaymentSettings &&
       !userPaymentSettings.puede_pagar_efectivo
     ) {
-      Alert.alert(
-        "Método no disponible",
-        "El pago en efectivo no está disponible para tu cuenta. Por favor selecciona otro método de pago."
-      );
+      showAlert("El pago en efectivo no está disponible para tu cuenta. Por favor selecciona otro método de pago.");
       return;
     }
 
@@ -1641,19 +1692,82 @@ export default function SelectLocationScreen() {
     return () => clearInterval(intervalId);
   }, []);
 
+  // --- ANIMACIONES ---
+  const sheetEntryAnim = useRef(new Animated.Value(1)).current;
+  const providerCardAnims = useRef([0, 1].map(() => new Animated.Value(0))).current;
+  const serviceCardAnims = useRef([]);
+  const priceAnim = useRef(new Animated.Value(1)).current;
+  const priceFadeAnim = useRef(new Animated.Value(0)).current;
+  const [priceHighlight, setPriceHighlight] = useState(false);
+  const shimmerAnim = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    Animated.timing(sheetEntryAnim, {
+      toValue: 0,
+      duration: 500,
+      useNativeDriver: true,
+    }).start();
+  }, []);
+
+  useEffect(() => {
+    Animated.stagger(120, providerCardAnims.map(anim =>
+      Animated.spring(anim, { toValue: 1, useNativeDriver: true, friction: 6, tension: 80 })
+    )).start();
+  }, []);
+
+  useEffect(() => {
+    if (vehicleType && availableServices.length > 0) {
+      const anims = availableServices.map((_, i) => {
+        if (!serviceCardAnims[i]) serviceCardAnims[i] = new Animated.Value(0);
+        return serviceCardAnims[i];
+      });
+      Animated.stagger(80, anims.map(anim =>
+        Animated.spring(anim, { toValue: 1, useNativeDriver: true, friction: 6, tension: 80 })
+      )).start();
+    }
+  }, [vehicleType, availableServices.length]);
+
+  const isButtonActive = selectedServiceId && paymentMethod && totalPrice && !isCalculatingPrice && !isCreatingRide;
+
+  useEffect(() => {
+    if (isButtonActive) {
+      Animated.timing(priceFadeAnim, { toValue: 1, duration: 300, useNativeDriver: true }).start();
+      const loop = Animated.loop(
+        Animated.sequence([
+          Animated.timing(shimmerAnim, { toValue: 1, duration: 500, useNativeDriver: true }),
+          Animated.delay(4500),
+          Animated.timing(shimmerAnim, { toValue: 0, duration: 0, useNativeDriver: true }),
+        ])
+      );
+      loop.start();
+      return () => loop.stop();
+    } else {
+      shimmerAnim.setValue(0);
+    }
+  }, [isButtonActive]);
+
+  useEffect(() => {
+    if (totalPrice) {
+      Animated.sequence([
+        Animated.timing(priceAnim, { toValue: 1.2, duration: 100, useNativeDriver: true }),
+        Animated.spring(priceAnim, { toValue: 1, useNativeDriver: true, friction: 3, tension: 120 }),
+      ]).start();
+      setPriceHighlight(true);
+      const timer = setTimeout(() => setPriceHighlight(false), 400);
+      return () => clearTimeout(timer);
+    }
+  }, [totalPrice]);
+
   const pulseAnimation = useRef(new Animated.Value(1)).current;
 
   useEffect(() => {
-    // Crea un bucle de animación infinito
     Animated.loop(
       Animated.sequence([
-        // Aumenta el tamaño a 1.05
         Animated.timing(pulseAnimation, {
           toValue: 1.05,
           duration: 700,
           useNativeDriver: true,
         }),
-        // Vuelve al tamaño original
         Animated.timing(pulseAnimation, {
           toValue: 1,
           duration: 700,
@@ -1663,11 +1777,16 @@ export default function SelectLocationScreen() {
     ).start();
   }, []);
 
-  // Luego, actualiza los modales para darles contenido real
+  const shimmerInterpolation = shimmerAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [-80, 360],
+  });
+
+  // Render principal
   return (
     <SafeAreaView style={styles.safeContainer}>
-      {/* MAPA - siempre visible como fondo */}
-      <View style={styles.mapHero}>
+      {/* MAPA */}
+      <View style={[styles.mapHero, pinMode ? { flex: 1 } : { height: mapHeight }]}>
         <MapView
           ref={mapRef}
           style={styles.mapFull}
@@ -1680,65 +1799,37 @@ export default function SelectLocationScreen() {
             else setIgnoreNextRegionChange(false);
           }}
         >
-          {pickupCoord && <Marker coordinate={pickupCoord} pinColor="#fa6205" title="Recogida" />}
-          {deliveryCoord && <Marker coordinate={deliveryCoord} pinColor="#FF4757" title="Destino" />}
+          {pickupCoord && (
+            <Marker coordinate={pickupCoord} anchor={{ x: 0.5, y: 0.5 }}>
+              <View style={styles.markerPickup}>
+                <View style={styles.markerPickupInner} />
+              </View>
+            </Marker>
+          )}
+          {deliveryCoord && (
+            <Marker coordinate={deliveryCoord} anchor={{ x: 0.5, y: 0.5 }}>
+              <View style={styles.markerDest}>
+                <View style={styles.markerDestGlow} />
+                <View style={styles.markerDestInner} />
+              </View>
+            </Marker>
+          )}
           {routeCoords.length > 0 && (
-            <Polyline coordinates={routeCoords} strokeWidth={4} strokeColor="#fa6205" />
+            <>
+              <Polyline coordinates={routeCoords} strokeWidth={6} strokeColor="rgba(250,98,5,0.15)" />
+              <Polyline coordinates={routeCoords} strokeWidth={3} strokeColor="#fa6205" />
+            </>
           )}
         </MapView>
 
-        {/* Pills editables de recogida/destino */}
-        <View style={styles.mapOverlay}>
-          <View style={styles.mapPillGroup}>
-            <View style={styles.mapSearchPill}>
-              <Ionicons name="location" size={18} color="#fa6205" />
-              <TextInput
-                style={styles.mapSearchInputInline}
-                placeholder="¿Dónde te recogemos?"
-                placeholderTextColor="#999"
-                value={pickupAddress}
-                onChangeText={(text) => searchPickupAddress(text)}
-                onFocus={() => setShowPickupSuggestions(true)}
-              />
-              <TouchableOpacity onPress={() => openLocationPicker(true)} style={styles.mapPinBtn}>
-                <Ionicons name="map-outline" size={20} color="#fa6205" />
-              </TouchableOpacity>
-            </View>
-            {showPickupSuggestions && pickupSuggestions.length > 0 && (
-              <View style={styles.suggestionsDropdown}>
-                {pickupSuggestions.map((item) => (
-                  <TouchableOpacity key={item.place_id} onPress={() => selectPickupAddress(item)} style={styles.suggestionItem}>
-                    <Text style={styles.suggestionText}>{item.description}</Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
-            )}
-          </View>
-
-          <View style={styles.mapPillGroup}>
-            <View style={styles.mapSearchPill}>
-              <Ionicons name="flag" size={18} color="#FF4757" />
-              <TextInput
-                style={styles.mapSearchInputInline}
-                placeholder="¿A dónde vas?"
-                placeholderTextColor="#999"
-                value={deliveryAddress}
-                onChangeText={(text) => searchDeliveryAddress(text)}
-                onFocus={() => setShowDeliverySuggestions(true)}
-              />
-              <TouchableOpacity onPress={() => openLocationPicker(false)} style={styles.mapPinBtn}>
-                <Ionicons name="map-outline" size={20} color="#FF4757" />
-              </TouchableOpacity>
-            </View>
-            {showDeliverySuggestions && deliverySuggestions.length > 0 && (
-              <View style={styles.suggestionsDropdown}>
-                {deliverySuggestions.map((item) => (
-                  <TouchableOpacity key={item.place_id} onPress={() => selectDeliveryAddress(item)} style={styles.suggestionItem}>
-                    <Text style={styles.suggestionText}>{item.description}</Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
-            )}
+        {/* Top bar */}
+        <View style={styles.topBar}>
+          <TouchableOpacity style={styles.topBackBtn} onPress={goBack}>
+            <Ionicons name="arrow-back" size={20} color="#1C1C1E" />
+          </TouchableOpacity>
+          <View style={styles.brandPill}>
+            <View style={styles.brandDot} />
+            <Text style={styles.brandText}>CarBy</Text>
           </View>
         </View>
 
@@ -1752,160 +1843,330 @@ export default function SelectLocationScreen() {
               </View>
             </View>
 
-            <View style={styles.pinActions}>
-              <TouchableOpacity style={styles.pinCancelBtn} onPress={cancelPinMode}>
-                <Text style={styles.pinCancelText}>Cancelar</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.pinConfirmBtn} onPress={confirmPinLocation}>
-                <Text style={styles.pinConfirmText}>Confirmar</Text>
-              </TouchableOpacity>
-            </View>
-
-            {/* Botón centrar ubicación */}
-            <TouchableOpacity style={styles.centerLocationButton} onPress={() => {
-              if (userLocationRef.current && mapRef.current) {
-                mapRef.current.animateToRegion({
-                  ...userLocationRef.current,
-                  latitudeDelta: 0.005,
-                  longitudeDelta: 0.005,
-                }, 500);
-              }
-            }}>
+            <TouchableOpacity
+              style={styles.centerLocationButton}
+              onPress={() => {
+                if (userLocationRef.current && mapRef.current) {
+                  mapRef.current.animateToRegion({
+                    ...userLocationRef.current,
+                    latitudeDelta: 0.005,
+                    longitudeDelta: 0.005,
+                  }, 500);
+                }
+              }}
+            >
               <MaterialCommunityIcons name="crosshairs-gps" size={22} color="#1C1C1E" />
             </TouchableOpacity>
           </>
         )}
+
       </View>
 
       {/* BOTTOM SHEET */}
-      <Animated.View style={[styles.bottomSheet, { maxHeight: sheetAnimation.interpolate({ inputRange: [0, 1], outputRange: [140, 450] }) }]}>
-        {/* Header */}
-        <View style={styles.sheetHeader}>
-          <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-            <Ionicons name="chevron-back" size={22} color="#1C1C1E" />
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.sheetHeaderCenter} onPress={toggleSheet} activeOpacity={0.7}>
-            <View style={styles.dragHandle} />
-            <Text style={styles.title}>Solicita tu transporte</Text>
-          </TouchableOpacity>
-          <TouchableOpacity onPress={toggleSheet} style={styles.chevronBtn} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-            <Ionicons name={isSheetExpanded ? "chevron-down" : "chevron-up"} size={18} color="#888" />
-          </TouchableOpacity>
-        </View>
+      <Animated.View style={[styles.sheet, pinMode && styles.sheetPin, !pinMode && { transform: [{ translateY: sheetEntryAnim.interpolate({ inputRange: [0, 1], outputRange: [0, 600] }) }] }]}>
+        <View style={styles.dragHandle} />
 
-        <ScrollView contentContainerStyle={styles.bottomSheetContent} showsVerticalScrollIndicator={false} nestedScrollEnabled>
-          {/* Vehicle pills - siempre visibles */}
-          <View style={styles.vehiclePills}>
-            {userRole !== "comercio" && (
-              <TouchableOpacity
-                style={[styles.pill, vehicleType === "taxi" && styles.pillActive]}
-                onPress={() => handleVehicleSelect("taxi")}
-              >
-                <MaterialCommunityIcons name="car" size={18} color={vehicleType === "taxi" ? "#FFF" : "#1C1C1E"} />
-                <Text style={[styles.pillText, vehicleType === "taxi" && styles.pillTextActive]}>Particular</Text>
-              </TouchableOpacity>
-            )}
-            <TouchableOpacity
-              style={[styles.pill, vehicleType === "moto" && styles.pillActive]}
-              onPress={() => handleVehicleSelect("moto")}
-            >
-              <MaterialCommunityIcons name="motorbike" size={18} color={vehicleType === "moto" ? "#FFF" : "#1C1C1E"} />
-              <Text style={[styles.pillText, vehicleType === "moto" && styles.pillTextActive]}>Delivery</Text>
+        {pinMode ? (
+          <View style={styles.pinActionBar}>
+            <TouchableOpacity style={styles.pinBtnCancel} onPress={cancelPinMode}>
+              <Text style={styles.pinBtnCancelText}>Cancelar</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.primaryBtn} onPress={confirmPinLocation}>
+              <Ionicons name="checkmark" size={20} color="#FFF" style={{ marginRight: 8 }} />
+              <Text style={styles.primaryBtnText}>Confirmar ubicación</Text>
             </TouchableOpacity>
           </View>
+        ) : (
+        <>
+        <ScrollView
+          style={styles.sheetScroll}
+          contentContainerStyle={styles.sheetContent}
+          showsVerticalScrollIndicator={false}
+          nestedScrollEnabled
+          keyboardShouldPersistTaps="handled"
+          ref={sheetScrollRef}
+        >
+          {/* TRIP CARD */}
+          <View>
+            <Text style={styles.displayTitle}>Solicita tu transporte</Text>
+            <Text style={styles.displaySubtitle}>Completa los datos para tu pedido.</Text>
 
-          {/* Contenido expandible */}
-          <Animated.View style={{ opacity: sheetAnimation, maxHeight: sheetAnimation.interpolate({ inputRange: [0, 1], outputRange: [0, 2000] }), overflow: "hidden" }}>
-
-            {/* Services */}
-            {vehicleType && (
-              <View>
-                {isLoadingServices ? (
-                  <ActivityIndicator size="small" color="#fa6205" style={{ marginVertical: 10 }} />
-                ) : availableServices.length > 0 ? (
-                  <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.servicesScroll} nestedScrollEnabled>
-                    {availableServices.map((service) => (
-                      <TouchableOpacity
-                        key={service.id}
-                        style={[styles.serviceCard, selectedServiceId === service.id.toString() && styles.serviceCardActive]}
-                        onPress={() => handleServiceSelect(service)}
-                      >
-                        {service.icono ? (
-                          <Image source={{ uri: service.icono.startsWith("http") ? service.icono : `${BASE_URL.toString().replace("/api", "")}storage/${service.icono}` }} style={styles.serviceCardIcon} />
-                        ) : (
-                          <MaterialCommunityIcons name="package-variant" size={24} color="#1C1C1E" />
-                        )}
-                        <Text style={[styles.serviceCardText, selectedServiceId === service.id.toString() && styles.serviceCardTextActive]}>{service.nombre}</Text>
-                      </TouchableOpacity>
-                    ))}
-                  </ScrollView>
-                ) : (
-                  <Text style={styles.noServicesText}>No hay servicios disponibles</Text>
-                )}
-              </View>
-            )}
-
-            {/* Address + Payment + Price - solo si hay servicio seleccionado */}
-            {selectedServiceId ? (
-              <>
-                {/* Observaciones */}
-                <View style={styles.observationsContainer}>
-                  <Text style={styles.addressLabel}>Observaciones</Text>
-                  <TextInput style={styles.observationsInput} placeholder="Indicaciones adicionales..." placeholderTextColor="#999" value={observations} onChangeText={setObservations} multiline />
+            <View style={styles.tripCard}>
+              <View style={styles.tripConnector} />
+              <View style={styles.tripField}>
+                <View style={styles.tripDotOuter} />
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.tripFieldLabel}>Recogida</Text>
+                  <TextInput
+                    style={styles.tripFieldInput}
+                    placeholder="¿Dónde te recogemos?"
+                    placeholderTextColor="#999"
+                    value={pickupAddress}
+                    onChangeText={(text) => searchPickupAddress(text)}
+                    onFocus={() => setShowPickupSuggestions(true)}
+                    onBlur={() => setTimeout(() => setShowPickupSuggestions(false), 200)}
+                  />
                 </View>
-
-                {/* Payment */}
-                <Text style={styles.sectionTitle}>Método de pago</Text>
-                <View style={styles.paymentContainer}>
-                  {!loadingUserSettings && userPaymentSettings && userPaymentSettings.puede_pagar_efectivo && (
-                    <TouchableOpacity style={styles.paymentOption} onPress={() => handlePaymentMethodSelect("efectivo")}>
-                      <View style={styles.paymentIconContainer}><MaterialCommunityIcons name="cash" size={20} color="#1C1C1E" /></View>
-                      <Text style={styles.paymentText}>Efectivo</Text>
-                      <View style={[styles.radioButton, paymentMethod === "efectivo" && styles.radioButtonSelected]}>{paymentMethod === "efectivo" && <MaterialCommunityIcons name="check" size={16} color="#FFF" />}</View>
+                <TouchableOpacity onPress={() => openLocationPicker(true)} style={styles.tripMapBtn}>
+                  <Ionicons name="map-outline" size={18} color="#1C1C1E" />
+                </TouchableOpacity>
+              </View>
+              {showPickupSuggestions && pickupSuggestions.length > 0 && (
+                <View style={styles.tripSuggestions}>
+                  {pickupSuggestions.map((item) => (
+                    <TouchableOpacity key={item.place_id} onPress={() => selectPickupAddress(item)} style={styles.tripSuggestionItem}>
+                      <Ionicons name="location-outline" size={16} color="#888" style={{ marginRight: 8 }} />
+                      <Text style={styles.suggestionText} numberOfLines={2}>{item.description}</Text>
                     </TouchableOpacity>
-                  )}
-                  <TouchableOpacity style={styles.paymentOption} onPress={() => handlePaymentMethodSelect("tarjeta")}>
-                    <View style={styles.paymentIconContainer}><MaterialCommunityIcons name="credit-card" size={20} color="#1C1C1E" /></View>
-                    <Text style={styles.paymentText}>{textoPago}</Text>
-                    <View style={[styles.radioButton, paymentMethod === "tarjeta" && styles.radioButtonSelected]}>{paymentMethod === "tarjeta" && <MaterialCommunityIcons name="check" size={16} color="#FFF" />}</View>
-                  </TouchableOpacity>
-                  {!loadingUserSettings && !paymentMethod && (
-                    <Text style={styles.paymentInfoText}>Selecciona un método de pago para continuar</Text>
-                  )}
+                  ))}
                 </View>
-
-                {/* Price + Solicitar */}
-                <View style={styles.footer}>
-                  <View style={styles.priceContainer}>
-                    {isCalculatingPrice ? (
-                      <ActivityIndicator size="small" color="#fa6205" />
-                    ) : totalPrice ? (
-                      <>
-                        <Text style={styles.totalPrice}>$ {totalPrice}</Text>
-                        {distanceInKm ? <Text style={styles.distanceText}>{distanceInKm.toFixed(2)} km</Text> : null}
-                      </>
-                    ) : (
-                      <Text style={styles.totalPricePrompt}>Ingresa las direcciones</Text>
-                    )}
-                  </View>
-                  <TouchableOpacity
-                    style={[styles.payButton, (!totalPrice || isCalculatingPrice || isCreatingRide || !paymentMethod || !pickupAddress.trim() || !deliveryAddress.trim()) && styles.payButtonDisabled]}
-                    onPress={handleContinue}
-                    disabled={!totalPrice || isCalculatingPrice || isCreatingRide || !paymentMethod || !pickupAddress.trim() || !deliveryAddress.trim()}
-                  >
-                    {isCreatingRide ? <ActivityIndicator size="small" color="#000" /> : <Text style={styles.payButtonText}>Solicitar</Text>}
-                  </TouchableOpacity>
+              )}
+              <View style={styles.tripField}>
+                <View style={[styles.tripDotOuter, styles.tripDotDest]} />
+                <View style={{ flex: 1 }}>
+                  <Text style={[styles.tripFieldLabel, styles.tripFieldLabelDest]}>Destino final</Text>
+                  <TextInput
+                    style={styles.tripFieldInput}
+                    placeholder="¿A dónde vas?"
+                    placeholderTextColor="#999"
+                    value={deliveryAddress}
+                    onChangeText={(text) => searchDeliveryAddress(text)}
+                    onFocus={() => setShowDeliverySuggestions(true)}
+                    onBlur={() => setTimeout(() => setShowDeliverySuggestions(false), 200)}
+                  />
                 </View>
-              </>
-            ) : vehicleType ? (
-              <View style={styles.serviceRequiredContainer}>
-                <Ionicons name="alert-circle-outline" size={24} color="#FF9500" />
-                <Text style={styles.serviceRequiredText}>Selecciona un servicio para continuar</Text>
+                <TouchableOpacity onPress={() => openLocationPicker(false)} style={styles.tripMapBtn}>
+                  <Ionicons name="map-outline" size={18} color="#fa6205" />
+                </TouchableOpacity>
               </View>
-            ) : null}
+              {showDeliverySuggestions && deliverySuggestions.length > 0 && (
+                <View style={styles.tripSuggestions}>
+                  {deliverySuggestions.map((item) => (
+                    <TouchableOpacity key={item.place_id} onPress={() => selectDeliveryAddress(item)} style={styles.tripSuggestionItem}>
+                      <Ionicons name="location-outline" size={16} color="#888" style={{ marginRight: 8 }} />
+                      <Text style={styles.suggestionText} numberOfLines={2}>{item.description}</Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              )}
+            </View>
 
-          </Animated.View>
+            <Text style={styles.tripHelpText}>Toca el ícono del mapa para elegir el punto exacto.</Text>
+          </View>
+
+          {/* PROVIDER (ride-option style) */}
+          <View style={styles.sectionSpacer}>
+            <Text style={styles.sectionTitle}>Elige tu tipo de vehículo</Text>
+            <View style={styles.providerList}>
+              {userRole !== "comercio" && (
+                <Animated.View style={{ transform: [{ scale: providerCardAnims[0] }], opacity: providerCardAnims[0] }}>
+                  <TouchableOpacity
+                    style={[styles.providerCard, vehicleType === "taxi" && styles.providerCardActive]}
+                    onPress={() => handleVehicleSelect("taxi")}
+                    activeOpacity={0.9}
+                  >
+                    <View style={[styles.providerIconBox, vehicleType === "taxi" && styles.providerIconBoxActive]}>
+                      <MaterialCommunityIcons
+                        name="car"
+                        size={26}
+                        color={vehicleType === "taxi" ? "#fa6205" : "#1C1C1E"}
+                      />
+                    </View>
+                    <View style={styles.providerInfo}>
+                      <View style={styles.providerNameRow}>
+                        <Text style={styles.providerName}>Particular</Text>
+                        <View style={styles.providerPassengerBadge}>
+                          <Ionicons name="people" size={10} color="#1C1C1E" />
+                          <Text style={styles.providerPassengerText}>4</Text>
+                        </View>
+                      </View>
+                      <Text style={styles.providerTagline}>Transporte de personas</Text>
+                    </View>
+                    <View style={styles.providerPriceCol}>
+                      {vehicleType === "taxi" && (
+                        <View style={styles.providerCheckBadge}>
+                          <Text style={styles.providerCheckText}>Elegido</Text>
+                        </View>
+                      )}
+                    </View>
+                  </TouchableOpacity>
+                </Animated.View>
+              )}
+              <Animated.View style={{ transform: [{ scale: providerCardAnims[1] }], opacity: providerCardAnims[1] }}>
+                <TouchableOpacity
+                  style={[styles.providerCard, vehicleType === "moto" && styles.providerCardActive]}
+                  onPress={() => handleVehicleSelect("moto")}
+                  activeOpacity={0.9}
+                >
+                  <View style={[styles.providerIconBox, vehicleType === "moto" && styles.providerIconBoxActive]}>
+                    <MaterialCommunityIcons
+                      name="motorbike"
+                      size={26}
+                      color={vehicleType === "moto" ? "#fa6205" : "#1C1C1E"}
+                    />
+                  </View>
+                  <View style={styles.providerInfo}>
+                    <View style={styles.providerNameRow}>
+                      <Text style={styles.providerName}>Delivery</Text>
+                      <View style={styles.providerPassengerBadge}>
+                        <Ionicons name="person" size={10} color="#1C1C1E" />
+                        <Text style={styles.providerPassengerText}>1</Text>
+                      </View>
+                    </View>
+                    <Text style={styles.providerTagline}>Mensajería y envío de paquetes</Text>
+                  </View>
+                    <View style={styles.providerPriceCol}>
+                      {vehicleType === "moto" && (
+                        <View style={styles.providerCheckBadge}>
+                          <Text style={styles.providerCheckText}>Elegido</Text>
+                        </View>
+                      )}
+                    </View>
+                </TouchableOpacity>
+              </Animated.View>
+            </View>
+          </View>
+
+          {/* SERVICE */}
+          {vehicleType && (
+          <View style={{ marginTop: 16 }}>
+            <View style={styles.serviceCards}>
+              {isLoadingServices ? (
+                <ActivityIndicator size="small" color="#fa6205" style={{ marginVertical: 16 }} />
+              ) : availableServices.length > 0 ? (
+                availableServices.map((service, i) => {
+                  const selected = selectedServiceId === service.id.toString();
+                  const cardAnim = serviceCardAnims[i] || new Animated.Value(1);
+                  if (!serviceCardAnims[i]) serviceCardAnims[i] = cardAnim;
+                  return (
+                    <Animated.View key={service.id} style={{ transform: [{ scale: cardAnim }], opacity: cardAnim }}>
+                    <TouchableOpacity
+                      style={[styles.serviceCard, selected && styles.serviceCardActive]}
+                      onPress={() => handleServiceSelect(service)}
+                    >
+                      <View style={[styles.serviceCardIcon, selected ? styles.serviceCardIconActive : null]}>
+                        {service.icono ? (
+                          <Image source={{ uri: service.icono.startsWith("http") ? service.icono : `${BASE_URL.toString().replace("/api", "")}storage/${service.icono}` }} style={styles.serviceCardImg} />
+                        ) : (
+                          <MaterialCommunityIcons name="package-variant-closed" size={20} color={selected ? "#FFF" : "#fa6205"} />
+                        )}
+                      </View>
+                      <View style={{ flex: 1 }}>
+                        <Text style={styles.serviceCardName}>{service.nombre}</Text>
+                        <Text style={styles.serviceCardDetail}>Precio/km: ${(service.precio || 0).toLocaleString()}</Text>
+                      </View>
+                      {selected && <Ionicons name="checkmark-circle" size={22} color="#fa6205" />}
+                    </TouchableOpacity>
+                    </Animated.View>
+                  );
+                })
+              ) : (
+                <Text style={styles.noServicesText}>No hay servicios disponibles</Text>
+              )}
+            </View>
+
+            {/* Observaciones */}
+            <Text style={styles.sectionLabel}>OBSERVACIONES</Text>
+            <TextInput
+              style={styles.observationsInput}
+              placeholder="Indicaciones adicionales..."
+              placeholderTextColor="#999"
+              value={observations}
+              onChangeText={setObservations}
+              multiline
+            />
+
+          </View>
+          )}
         </ScrollView>
+
+        {/* FOOTER ACTION BAR */}
+        <View style={styles.footerBar}>
+          {selectedServiceId && (
+          <View style={styles.biddingArea}>
+            <View style={styles.biddingHeader}>
+              <Text style={styles.biddingLabel}>Tu oferta de precio</Text>
+              <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
+                <Text style={styles.biddingSuggested}>Sugerido:</Text>
+                <Text style={[styles.biddingSuggestedValue, priceHighlight && { color: "#fa6205" }]}>$ {totalPrice}</Text>
+              </View>
+            </View>
+            <View style={styles.biddingControls}>
+              <TouchableOpacity style={styles.biddingBtn} activeOpacity={0.7}>
+                <Ionicons name="remove" size={20} color="#1C1C1E" />
+              </TouchableOpacity>
+              <View style={styles.biddingPriceRow}>
+                <Text style={styles.biddingDollarSign}>$</Text>
+                <Animated.Text style={[styles.biddingPrice, { transform: [{ scale: priceAnim }] }, priceHighlight && { color: "#fa6205" }]}>
+                  {totalPrice}
+                </Animated.Text>
+              </View>
+              <TouchableOpacity style={[styles.biddingBtn, styles.biddingBtnPlus]} activeOpacity={0.7}>
+                <Ionicons name="add" size={20} color="#FFFFFF" />
+              </TouchableOpacity>
+            </View>
+          </View>
+          )}
+
+          {selectedServiceId && (
+          <TouchableOpacity style={styles.footerPaymentSelector} onPress={() => setShowPaymentDropdown(true)} activeOpacity={0.7}>
+            <View style={styles.footerPaymentIcon}>
+              <MaterialCommunityIcons
+                name={paymentMethod === "efectivo" ? "cash" : "credit-card"}
+                size={18}
+                color={paymentMethod ? "#fa6205" : "#888"}
+              />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={[styles.footerPaymentLabel, !paymentMethod && { color: "#888" }]}>
+                {paymentMethod === "efectivo" ? "Efectivo" : paymentMethod === "tarjeta" ? textoPago : "Método de pago"}
+              </Text>
+            </View>
+            <Ionicons name="chevron-down" size={18} color="#888" />
+          </TouchableOpacity>
+          )}
+
+          <TouchableOpacity
+            style={[styles.primaryBtn, { overflow: "hidden" }, (!selectedServiceId || !paymentMethod || !totalPrice || isCalculatingPrice || isCreatingRide) && styles.primaryBtnDisabled]}
+            disabled={!selectedServiceId || !paymentMethod || !totalPrice || isCalculatingPrice || isCreatingRide}
+            onPress={handleContinue}
+          >
+            {isCreatingRide ? (
+              <ActivityIndicator size="small" color="#FFF" />
+            ) : (
+              <Animated.View style={{ flexDirection: "row", alignItems: "center", transform: [{ scale: isButtonActive ? pulseAnimation : 1 }] }}>
+                <Text style={styles.primaryBtnText}>
+                  {totalPrice ? `Ofrecer $ ${totalPrice}` : "Solicitar transporte"}
+                </Text>
+                <Ionicons name="arrow-forward" size={20} color="#FFF" style={{ marginLeft: 8 }} />
+              </Animated.View>
+            )}
+                {isButtonActive && (
+            <Animated.View
+              pointerEvents="none"
+              style={{
+                position: "absolute",
+                top: 0,
+                bottom: 0,
+                left: 0,
+                width: 120,
+                zIndex: 1,
+                transform: [{ translateX: shimmerInterpolation }, { skewX: "-20deg" }],
+              }}
+            >
+              <LinearGradient
+                colors={["transparent", "rgba(255,255,255,0.35)", "transparent"]}
+                locations={[0, 0.5, 1]}
+                style={{ flex: 1 }}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+              />
+            </Animated.View>
+            )}
+          </TouchableOpacity>
+        </View>
+        </>
+        )}
       </Animated.View>
 
       {/* Modal éxito */}
@@ -1929,6 +2190,64 @@ export default function SelectLocationScreen() {
         onCerrar={() => setErrorModalVisible(false)}
       />
 
+      {/* Modal alertas (reemplazo de Alert.alert) */}
+      <AlertaModal
+        visible={alertVisible}
+        tipo={alertData.type}
+        mensaje={alertData.message}
+        onCerrar={() => setAlertVisible(false)}
+        onPrimary={alertData.onPrimary}
+        primaryLabel={alertData.primaryLabel}
+      />
+
+      {/* Payment Modal */}
+      <Modal
+        isVisible={showPaymentDropdown}
+        onBackdropPress={() => setShowPaymentDropdown(false)}
+        style={styles.paymentModal}
+        backdropOpacity={0.4}
+        animationIn="slideInUp"
+        animationOut="slideOutDown"
+        animationInTiming={400}
+        animationOutTiming={300}
+        useNativeDriverForBackdrop
+      >
+        <View style={styles.paymentModalSheet}>
+          <View style={styles.paymentModalHandle} />
+          <Text style={styles.paymentModalTitle}>Método de pago</Text>
+          <View style={styles.paymentModalOptions}>
+            {!loadingUserSettings && userPaymentSettings && userPaymentSettings.puede_pagar_efectivo && (
+              <TouchableOpacity
+                style={[styles.paymentModalOption, paymentMethod === "efectivo" && styles.paymentModalOptionActive]}
+                onPress={() => { handlePaymentMethodSelect("efectivo"); setShowPaymentDropdown(false); }}
+              >
+                <MaterialCommunityIcons name="cash" size={20} color="#1C1C1E" />
+                <View style={{ flex: 1, marginLeft: 12 }}>
+                  <Text style={styles.paymentModalOptionText}>Efectivo</Text>
+                  <Text style={styles.paymentModalOptionSub}>Paga al recibir</Text>
+                </View>
+                {paymentMethod === "efectivo" && (
+                  <Ionicons name="checkmark-circle" size={22} color="#fa6205" />
+                )}
+              </TouchableOpacity>
+            )}
+            <TouchableOpacity
+              style={[styles.paymentModalOption, paymentMethod === "tarjeta" && styles.paymentModalOptionActive]}
+              onPress={() => { handlePaymentMethodSelect("tarjeta"); setShowPaymentDropdown(false); }}
+            >
+              <MaterialCommunityIcons name="credit-card" size={20} color="#1C1C1E" />
+              <View style={{ flex: 1, marginLeft: 12 }}>
+                <Text style={styles.paymentModalOptionText}>{textoPago}</Text>
+                <Text style={styles.paymentModalOptionSub}>Pago digital</Text>
+              </View>
+              {paymentMethod === "tarjeta" && (
+                <Ionicons name="checkmark-circle" size={22} color="#fa6205" />
+              )}
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
       {isCreatingRide && (
         <View style={styles.globalLoadingContainer}>
           <View style={styles.globalLoadingContent}>
@@ -1944,1027 +2263,980 @@ export default function SelectLocationScreen() {
 const styles = StyleSheet.create({
   safeContainer: {
     flex: 1,
-    backgroundColor: "#F2F2F7",
+    backgroundColor: "#F5F0E8",
     paddingTop: Platform.OS === "android" ? 40 : 0,
   },
-  // NUEVOS ESTILOS MAPA + BOTTOM SHEET
+  // --- MAPA ---
+  markerPickup: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    backgroundColor: "#FFFFFF",
+    justifyContent: "center",
+    alignItems: "center",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 4,
+  },
+  markerPickupInner: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    backgroundColor: "#1C1C1E",
+  },
+  markerDest: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  markerDestGlow: {
+    position: "absolute",
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: "rgba(250,98,5,0.25)",
+    shadowColor: "#fa6205",
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.5,
+    shadowRadius: 8,
+    elevation: 6,
+  },
+  markerDestInner: {
+    width: 14,
+    height: 14,
+    borderRadius: 7,
+    backgroundColor: "#fa6205",
+    borderWidth: 2,
+    borderColor: "#FFFFFF",
+  },
   mapHero: {
-    flex: 1,
-    minHeight: 200,
+    width: "100%",
+    overflow: "hidden",
+    backgroundColor: "#E5E0D8",
   },
   mapFull: {
     ...StyleSheet.absoluteFillObject,
   },
-  mapBackBtn: {
+  topBar: {
     position: "absolute",
-    top: 10,
-    left: 12,
-    width: 38,
-    height: 38,
-    borderRadius: 19,
-    backgroundColor: "#FFF",
+    top: Platform.OS === "android" ? 36 : 4,
+    left: 0,
+    right: 0,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: 16,
+    zIndex: 20,
+  },
+  topBackBtn: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: "rgba(255,255,255,0.95)",
     justifyContent: "center",
     alignItems: "center",
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.2,
+    shadowOpacity: 0.15,
     shadowRadius: 3,
     elevation: 4,
-    zIndex: 10,
   },
-  mapOverlay: {
-    position: "absolute",
-    top: 10,
-    left: 15,
-    right: 15,
-    gap: 8,
-  },
-  mapSearchPill: {
+  brandPill: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#FFFFFF",
-    borderRadius: 12,
+    backgroundColor: "rgba(255,255,255,0.95)",
     paddingHorizontal: 14,
-    paddingVertical: 12,
+    paddingVertical: 8,
+    borderRadius: 20,
     shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
+    shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.15,
-    shadowRadius: 4,
+    shadowRadius: 3,
     elevation: 4,
   },
-  mapSearchText: {
-    flex: 1,
-    marginLeft: 10,
-    fontSize: 14,
-    fontFamily: "Montserrat_400Regular",
-    color: "#555",
-  },
-  bottomSheet: {
-    backgroundColor: "#F2F2F7",
-  },
-  sheetHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "#F2F2F7",
-    paddingHorizontal: 8,
-    paddingTop: 6,
-    paddingBottom: 2,
-  },
-  backBtn: {
-    paddingHorizontal: 6,
-    paddingBottom: 4,
-  },
-  chevronBtn: {
-    paddingHorizontal: 6,
-    paddingBottom: 4,
-  },
-  sheetHeaderCenter: {
-    flex: 1,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  dragHandle: {
-    width: 36,
-    height: 4,
-    borderRadius: 2,
-    backgroundColor: "#CCC",
-    alignSelf: "center",
-    position: "absolute",
-    top: 6,
-    left: "50%",
-    marginLeft: -18,
-  },
-  bottomSheetContent: {
-    paddingHorizontal: 14,
-    paddingBottom: 20,
-  },
-  vehiclePills: {
-    flexDirection: "row",
-    gap: 8,
-    marginBottom: 8,
-  },
-  pill: {
-    flex: 1,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: "#FFFFFF",
-    borderRadius: 10,
-    paddingVertical: 8,
-    gap: 6,
-    borderWidth: 1.5,
-    borderColor: "#DDD",
-  },
-  pillActive: {
+  brandDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
     backgroundColor: "#fa6205",
-    borderColor: "#fa6205",
-    shadowColor: "#fa6205",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 4,
-    elevation: 4,
+    marginRight: 6,
   },
-  pillText: {
-    fontSize: 13,
-    fontFamily: "Montserrat_700Bold",
-    color: "#1C1C1E",
-  },
-  pillTextActive: {
-    color: "#FFF",
-  },
-  servicesScroll: {
-    marginBottom: 8,
-    maxHeight: 90,
-  },
-  serviceCard: {
-    backgroundColor: "#FFFFFF",
-    borderRadius: 10,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    marginRight: 8,
-    alignItems: "center",
-    borderWidth: 1.5,
-    borderColor: "#DDD",
-    minWidth: 72,
-  },
-  serviceCardActive: {
-    backgroundColor: "#fa6205",
-    borderColor: "#fa6205",
-  },
-  serviceCardIcon: {
-    width: 28,
-    height: 28,
-    marginBottom: 4,
-    resizeMode: "contain",
-  },
-  serviceCardText: {
+  brandText: {
     fontSize: 11,
-    fontFamily: "Montserrat_600SemiBold",
+    fontFamily: "MontserratSemiBold",
     color: "#1C1C1E",
-    textAlign: "center",
-  },
-  serviceCardTextActive: {
-    color: "#FFF",
-  },
-  mapBtn: {
-    padding: 8,
-  },
-  // ESTILOS EXISTENTES
-  scrollView: {
-    // El fondo se hereda de safeContainer
-  },
-  container: {
-    flex: 1,
-    padding: 20,
+    letterSpacing: 1,
   },
 
-  ///
-  // Estilos del mapa y búsqueda
-  mapSearchContainer: {
-    padding: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: "#DDD", // Borde claro sobre fondo oscuro
-  },
-  mapSearchInputContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    borderRadius: 8,
-    paddingHorizontal: 10,
-  },
-  mapSearchIcon: {
-    marginRight: 5,
-  },
-  mapSearchInput: {
-    flex: 1,
-    marginTop: 5,
-    fontSize: 16,
-    paddingHorizontal: 15,
-    paddingVertical: 12,
-    height: 50,
-    color: "#1C1C1E",
-    backgroundColor: '#FFFFFF',
-    borderColor: '#DDD',
-    borderWidth: 1,
-    borderRadius: 10,
-    fontFamily: "MontserratBold",
-  },
-  mapSearchClearButton: {
-    padding: 5,
-  },
-  mapSearchResultsContainer: {
-    backgroundColor: "#FFFFFF", // Fondo blanco para los resultados
-    borderRadius: 8,
-    marginTop: 8,
-    maxHeight: 200,
-    borderWidth: 1,
-    borderColor: "#DDDDDD",
-  },
-  mapSearchResultsScroll: {
-    maxHeight: 200,
-  },
-  mapSearchResultItem: {
-    flexDirection: "row",
-    alignItems: "center",
-    padding: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: "#DDDDDD",
-  },
-  mapSearchResultIcon: {
-    marginRight: 10,
-  },
-  mapSearchResultText: {
-    fontSize: 14,
-    fontFamily: "MontserratRegular",
-    flex: 1,
-    color: "#000000", // Texto negro sobre fondo blanco
-  },
-  // Estilos del modal del mapa
-  mapModal: {
-    margin: 0,
-    justifyContent: "flex-end",
-  },
-  mapModalContent: {
-    backgroundColor: "#F2F2F7", // Fondo oscuro para el modal
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    height: "100%",
-    width: "100%",
-  },
-  mapModalHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    padding: 15,
-    borderBottomWidth: 1,
-    borderBottomColor: "#DDD",
-  },
-  mapModalTitle: {
-    fontSize: 18,
-    fontFamily: "MontserratBold",
-    color: "#1C1C1E",
-  },
-  mapContainer: {
-    flex: 1,
-    position: "relative",
-  },
-  map: {
-    width: "100%",
-    height: "100%",
-  },
-  mapPinOverlay: {
-    position: "absolute",
-    top: 10,
-    left: 0,
-    right: 0,
-    alignItems: "center",
-  },
-  mapInstructions: {
-    backgroundColor: "rgba(230, 230, 230, 0.9)", // Fondo claro para las instrucciones
-    padding: 8,
-    color: "#000000", // Texto negro
-    marginHorizontal: 5,
-    borderRadius: 8,
-    fontSize: 14,
-    fontFamily: "MontserratRegular",
-  },
-  mapButtonContainer: {
-    padding: 15,
-    backgroundColor: "#F2F2F7", // Para que coincida con el fondo del modal
-  },
-  mapButton: {
-    backgroundColor: "#fa6205", // Nuevo verde
-    paddingVertical: 15,
-    borderRadius: 30,
-    alignItems: "center",
-  },
-  mapButtonDisabled: {
-    backgroundColor: "#555",
-    opacity: 0.7,
-  },
-  mapButtonText: {
-    color: "#000", // Texto negro para buen contraste con el nuevo verde
-    fontSize: 16,
-    fontFamily: "MontserratBold",
-  },
-  selectCenterButton: {
-    position: "absolute",
-    bottom: 20,
-    left: 20,
-    backgroundColor: "#ECECEC", // Botón oscuro
-    borderRadius: 30,
-    padding: 12,
-    elevation: 5,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 4,
-    zIndex: 10,
-  },
-  centerMarker: {
-    position: "absolute",
-    top: "50%",
-    left: "50%",
-    width: 20,
-    height: 20,
-    marginLeft: -10,
-    marginTop: -10,
-    borderRadius: 10,
-    backgroundColor: "rgba(250, 98, 5, 0.5)", // Nuevo verde con transparencia
-    borderWidth: 2,
-    borderColor: "#fa6205", // Nuevo verde
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  centerMarkerInner: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: "#fa6205", // Nuevo verde
-  },
-  mapSearchResultsContainerInline: {
-    backgroundColor: "#FFFFFF",
-    borderRadius: 8,
-    marginTop: 8,
-    maxHeight: 200,
-    borderWidth: 1,
-    borderColor: "#DDDDDD",
-  },
-  mapSearchResultsScrollInline: {
-    maxHeight: 200,
-  },
-  fullLoadingContainer: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: "#FFFFFF",
-  },
-  centerLocationButton: {
-    position: "absolute",
-    bottom: 20,
-    right: 20,
-    backgroundColor: "#ECECEC",
-    borderRadius: 30,
-    padding: 12,
-    elevation: 5,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 4,
-    zIndex: 10,
-  },
-  // Pin mode manual
-  pinCenterOverlay: {
-    position: "absolute",
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    justifyContent: "center",
-    alignItems: "center",
-    zIndex: 5,
-  },
-  pinCenterContent: {
-    alignItems: "center",
-    marginTop: -19,
-  },
-  pinHintText: {
-    fontSize: 11,
-    fontFamily: "MontserratRegular",
-    color: "#000",
-    backgroundColor: "rgba(255,255,255,0.8)",
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 6,
-    marginTop: 2,
-    overflow: "hidden",
-  },
-  pinActions: {
-    position: "absolute",
-    bottom: 60,
-    left: 20,
-    right: 20,
-    flexDirection: "row",
-    gap: 10,
-    zIndex: 5,
-  },
-  pinCancelBtn: {
-    flex: 1,
-    backgroundColor: "#FFF",
-    borderRadius: 12,
-    paddingVertical: 12,
-    alignItems: "center",
-    borderWidth: 1,
-    borderColor: "#DDD",
-  },
-  pinCancelText: {
-    fontSize: 14,
-    fontFamily: "MontserratBold",
-    color: "#666",
-  },
-  pinConfirmBtn: {
-    flex: 2,
-    backgroundColor: "#fa6205",
-    borderRadius: 12,
-    paddingVertical: 12,
-    alignItems: "center",
-  },
-  pinConfirmText: {
-    fontSize: 14,
-    fontFamily: "MontserratBold",
-    color: "#000",
-  },
-  mapSearchInputInline: {
-    flex: 1,
-    fontSize: 14,
-    fontFamily: "Montserrat_400Regular",
-    color: "#1C1C1E",
-    paddingVertical: 2,
-  },
-  mapPinBtn: {
-    padding: 4,
-  },
-  mapPillGroup: {
-    marginBottom: 0,
-  },
+  // --- Sugerencias ---
   suggestionsDropdown: {
+    marginTop: 6,
     backgroundColor: "#FFF",
-    borderRadius: 8,
-    marginTop: 4,
-    overflow: "hidden",
+    borderRadius: 12,
+    paddingVertical: 4,
+    maxHeight: 180,
+    borderWidth: 1,
+    borderColor: "#F0EDE8",
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  title: {
-    fontSize: 20,
-    fontWeight: "bold",
-    marginTop: 10,
-    marginBottom: 8,
-    fontFamily: "MontserratBold",
-    color: "#1C1C1E",
-    textAlign: "center",
-  },
-  sectionTitle: {
-    fontSize: 13,
-    marginTop: 4,
-    marginBottom: 4,
-    fontFamily: "MontserratRegular",
-    color: "#666",
-  },
-  vehicleOptions: {
-    marginBottom: 20,
-  },
-  vehicleButton: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "#FFFFFF",
-    borderRadius: 12,
-    borderWidth: 1.5,
-    borderColor: "#fa6205",
-    marginTop: 10,
-    paddingVertical: 12,
-    justifyContent: "center",
-  },
-  selectedTextVehicle: {
-
-  },
-  vehicleButtonSelected: {
-    backgroundColor: "#fa6205",
-  },
-  mototaxiButton: {
-    backgroundColor: "#fa6205",
-  },
-  taxiButton: {
-    backgroundColor: "#fa6205",
-  },
-  vehicleButtonText: {
-    color: "#1C1C1E", // Texto negro para contraste
-    fontFamily: "MontserratBold",
-    width: "100%",
-    textAlign: 'center',
-  },
-  selectedVehicleButtonText: {
-    color: "#1C1C1E"
-  },
-  serviceRequiredContainer: {
-    borderWidth: 1,
-    borderColor: "#FF9500",
-    borderRadius: 10,
-    padding: 10,
-    marginVertical: 8,
-    alignItems: "center",
-    borderStyle: "dashed",
-    backgroundColor: "rgba(255, 149, 0, 0.1)",
-  },
-  serviceRequiredText: {
-    textAlign: "center",
-    marginTop: 6,
-    fontFamily: "MontserratRegular",
-    fontSize: 13,
-    color: "#FF9500",
-  },
-  alertIcon: {
-    marginBottom: 10,
-  },
-  // Estilos para servicios
-  servicesContainer: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    justifyContent: "space-between",
-    marginBottom: 20,
-  },
-  serviceButton: {
-    backgroundColor: "#FFFFFF",
-    paddingVertical: 14,
-    paddingHorizontal: 15,
-    borderRadius: 12,
-    borderWidth: 1.5,
-    borderColor: "#fa6205",
-    marginBottom: 10,
-    width: "48%",
-    alignItems: "center",
-    justifyContent: "center",
-    minHeight: 90,
-  },
-  serviceButtonSelected: {
-    backgroundColor: "#fa6205", // Nuevo verde para el seleccionado
-    borderWidth: 1,
-    borderColor: "#fa6205",
-  },
-  serviceButtonText: {
-    color: "#1C1C1E",
-    textAlign: "center",
-    fontFamily: "MontserratRegular",
-  },
-  selectedServiceButtonText: {
-    color: "#1C1C1E",
-    textAlign: "center",
-    fontFamily: "MontserratRegular",
-  },
-  loadingContainer: {
-    alignItems: "center",
-    justifyContent: "center",
-    padding: 20,
-  },
-  loadingText: {
-    marginTop: 10,
-    fontFamily: "MontserratRegular",
-    color: "#1C1C1E",
-  },
-  noServicesText: {
-    textAlign: "center",
-    fontFamily: "MontserratRegular",
-    marginBottom: 8,
-    color: "#999",
-    fontSize: 12,
-  },
-  servicePriceText: {
-    color: "#888", // Gris claro
-    fontSize: 14,
-    fontFamily: "MontserratRegular",
-    marginTop: 2,
-  },
-  categoryContainer: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    marginBottom: 10,
-    flexWrap: "wrap",
-  },
-  categoryButton: {
-    backgroundColor: "#FFFFFF",
-    borderWidth: 1.5,
-    borderColor: "#fa6205",
-    paddingVertical: 14,
-    paddingHorizontal: 15,
-    borderRadius: 12,
-    marginBottom: 10,
-  },
-  mandadoButton: { backgroundColor: "#FFFFFF", borderWidth: 1.5, borderColor: "#fa6205" },
-  pagosButton: { backgroundColor: "#FFFFFF", borderWidth: 1.5, borderColor: "#fa6205" },
-  paquetesButton: { backgroundColor: "#FFFFFF", borderWidth: 1.5, borderColor: "#fa6205", flex: 1, marginRight: 10, },
-  personasButton: { backgroundColor: "#FFFFFF", borderWidth: 1.5, borderColor: "#fa6205", flex: 1, },
-  categoryButtonSelected: {
-    backgroundColor: "#fa6205",
-    borderWidth: 1,
-    borderColor: "#fa6205",
-  },
-  categoryButtonText: {
-    color: "#1C1C1E", // Texto blanco, cambiar a negro en el seleccionado
-    textAlign: "center",
-    fontFamily: "MontserratRegular",
-  },
-  addressContainer: {
-    flexDirection: "row",
-    borderWidth: 1,
-    backgroundColor: "#FFF",
-    borderColor: "#fa6205",
-    borderRadius: 12,
-    padding: 10,
-    marginBottom: 8,
-    borderStyle: "dashed",
-  },
-  iconContainer: {
-    marginRight: 10,
-    justifyContent: "center",
-  },
-  addressInputContainer: {
-    flex: 1,
-    position: "relative",
-  },
-  addressLabel: {
-    fontSize: 14,
-    marginBottom: 0,
-    fontFamily: "Montserrat_600SemiBold",
-    color: "#1C1C1E",
-  },
-  locationInputRow: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  currentLocationButtonTopRight: {
-    marginLeft: 8,
-    padding: 8,
-    borderRadius: 20,
-  },
-  locationErrorText: {
-    color: "#FF3B30", // Mantenemos el rojo para errores
-    fontSize: 12,
-    marginTop: 4,
-    fontFamily: "MontserratRegular",
-  },
-  observationsContainer: {
-    backgroundColor: "#FFF",
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: "#DDD",
-    padding: 12,
-    marginBottom: 10,
-  },
-  observationsText: {
-    fontFamily: "MontserratRegular",
-  },
-  paymentContainer: {
-    backgroundColor: "#FFF",
-    borderWidth: 1,
-    borderColor: "#fa6205",
-    borderRadius: 12,
-    padding: 10,
-    marginBottom: 12,
-    borderStyle: "dashed",
-  },
-  serviceIcon: {
-    width: 40,
-    height: 40,
-    marginBottom: 6,
-    alignSelf: "center",
-    backgroundColor: "transparent",
-  },
-  serviceIconDefault: {
-    alignSelf: "center",
-    marginBottom: 6,
-  },
-  paymentOption: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: 8,
-  },
-  paymentIconContainer: {
-    backgroundColor: "#DDD",
-    borderRadius: 7,
-    width: 30,
-    height: 30,
-    justifyContent: "center",
-    alignItems: "center",
-    marginRight: 8,
-  },
-  paymentText: {
-    flex: 1,
-    fontFamily: "MontserratRegular",
-    color: "#1C1C1E",
-    fontSize: 13,
-  },
-  radioButton: {
-    width: 20,
-    height: 20,
-    borderRadius: 10,
-    borderWidth: 2,
-    borderColor: "#fa6205",
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  radioButtonSelected: {
-    backgroundColor: "#fa6205",
-  },
-  footer: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginTop: 10,
-    marginBottom: 16,
-  },
-  priceContainer: {
-    flex: 1,
-  },
-  totalPrice: {
-    fontSize: 24,
-    fontWeight: "bold",
-    fontFamily: "MontserratBold",
-    color: "#1C1C1E",
-  },
-  payButton: {
-    backgroundColor: "#fa6205",
-    paddingVertical: 14,
-    paddingHorizontal: 36,
-    borderRadius: 25,
-    justifyContent: "center",
-    alignItems: "center",
-    minWidth: 130,
-  },
-  payButtonText: {
-    color: "#FFF",
-    fontSize: 16,
-    fontWeight: "500",
-    fontFamily: "MontserratBold",
-  },
-  modalContent: {
-    backgroundColor: "#FFFFFF", // Fondo oscuro para modal
-    padding: 30,
-    borderRadius: 20,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  title5: {
-    fontSize: 22,
-    fontWeight: "bold",
-    marginBottom: 10,
-    color: "#1C1C1E",
-    textAlign: "center",
-    fontFamily: "MontserratBold",
-  },
-  subtitle5: {
-    fontSize: 16,
-    color: "#777",
-    marginBottom: 25,
-    textAlign: "center",
-    fontFamily: "MontserratRegular",
-  },
-  title6: {
-    fontSize: 22,
-    fontWeight: "bold",
-    marginBottom: 10,
-    color: "#FF3B30", // Rojo de error
-    textAlign: "center",
-    fontFamily: "MontserratBold",
-  },
-  subtitle6: {
-    fontSize: 16,
-    color: "#777",
-    marginBottom: 25,
-    textAlign: "center",
-    fontFamily: "MontserratRegular",
-  },
-  button5: {
-    backgroundColor: "#fa6205",
-    paddingVertical: 12,
-    paddingHorizontal: 25,
-    borderRadius: 10,
-  },
-  buttonText5: {
-    color: "#000",
-    fontSize: 16,
-    fontWeight: "600",
-    fontFamily: "MontserratBold",
-  },
-  suggestionsContainer: {
-    backgroundColor: "#FFFFFF", // Fondo claro para sugerencias
-    borderRadius: 10,
-    marginTop: 5,
-    maxHeight: 150,
-    overflow: "hidden",
-    borderWidth: 1,
-    borderColor: "#DDDDDD",
+    shadowRadius: 6,
+    elevation: 5,
   },
   suggestionItem: {
     flexDirection: "row",
     alignItems: "center",
     paddingVertical: 10,
-    paddingHorizontal: 15,
+    paddingHorizontal: 12,
     borderBottomWidth: 1,
-    borderBottomColor: "#DDDDDD",
+    borderBottomColor: "#F5F2EC",
   },
   suggestionText: {
-    color: "#000000", // Texto oscuro
-    fontSize: 14,
-    fontFamily: "MontserratRegular",
-  },
-  addressValue: {
-    marginTop: 5,
-    fontSize: 14,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    height: 40,
-    color: "#1C1C1E",
-    backgroundColor: '#FFFFFF',
-    borderColor: '#DDD',
-    borderWidth: 1,
-    borderRadius: 9,
-    fontFamily: "MontserratBold",
-  },
-  loadingIndicator: {
-    padding: 15,
-  },
-  suggestionIcon: {
-    marginRight: 10,
-  },
-  observationsInput: {
-    width: "100%",
-    fontSize: 14,
-    lineHeight: 20,
-    minHeight: 50,
-    maxHeight: 80,
-    borderRadius: 8,
-    backgroundColor: '#F5F5F5',
-    color: '#1C1C1E',
-    textAlignVertical: "top",
-    fontFamily: "MontserratRegular",
-    padding: 10,
-    marginTop: 6,
-  },
-  calculatingContainer: {
-    alignItems: "center",
-  },
-  calculatingText: {
-    marginTop: 5,
-    fontFamily: "MontserratRegular",
-    color: "#1C1C1E",
-  },
-  priceError: {
-    color: "#FF3B30",
-    fontSize: 16,
-    fontFamily: "MontserratRegular",
-  },
-  totalPricePrompt: {
     fontSize: 13,
     fontFamily: "MontserratRegular",
-    color: "#999",
+    color: "#444",
+    flex: 1,
   },
-  distanceText: {
-    fontSize: 12,
-    fontFamily: "MontserratRegular",
-    marginTop: 2,
-    color: "#777",
-  },
-  basePriceText: {
-    fontSize: 14,
-    fontFamily: "MontserratRegular",
-    marginTop: 2,
-    color: "#777",
-  },
-  payButtonDisabled: {
-    backgroundColor: "#555",
-    opacity: 0.7,
-  },
-  loadingPaymentContainer: {
-    flexDirection: "row",
-    alignItems: "center",
+
+  // --- Pin mode ---
+  pinCenterOverlay: {
+    ...StyleSheet.absoluteFillObject,
     justifyContent: "center",
-    padding: 15,
+    alignItems: "center",
+    zIndex: 30,
   },
-  loadingPaymentText: {
-    marginLeft: 10,
+  pinCenterContent: {
+    alignItems: "center",
+    marginTop: -40,
+  },
+  pinHintText: {
+    marginTop: 6,
+    fontSize: 13,
     fontFamily: "MontserratRegular",
     color: "#1C1C1E",
+    backgroundColor: "rgba(255,255,255,0.95)",
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
+    overflow: "hidden",
   },
-  paymentInfoContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "rgba(255, 149, 0, 0.1)",
-    padding: 12,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: "#FF9500",
-    marginTop: 10,
-  },
-  paymentInfoText: {
-    color: "#FF9500",
-    marginLeft: 8,
-    fontFamily: "MontserratRegular",
-    fontSize: 14,
-  },
-  globalLoadingContainer: {
+  pinActions: {
     position: "absolute",
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: "rgba(0,0,0,0.7)",
+    bottom: 20,
+    left: 16,
+    right: 16,
+    flexDirection: "row",
+    gap: 10,
+    zIndex: 30,
+  },
+  pinCancelBtn: {
+    flex: 1,
+    backgroundColor: "#FFF",
+    borderRadius: 30,
+    paddingVertical: 14,
+    alignItems: "center",
+    borderWidth: 1,
+    borderColor: "#E5E5E5",
+  },
+  pinCancelText: {
+    fontSize: 15,
+    fontFamily: "MontserratSemiBold",
+    color: "#1C1C1E",
+  },
+  pinConfirmBtn: {
+    flex: 1,
+    backgroundColor: "#fa6205",
+    borderRadius: 30,
+    paddingVertical: 14,
+    alignItems: "center",
+  },
+  pinConfirmText: {
+    fontSize: 15,
+    fontFamily: "MontserratSemiBold",
+    color: "#FFF",
+  },
+  centerLocationButton: {
+    position: "absolute",
+    bottom: 80,
+    right: 16,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: "#FFF",
     justifyContent: "center",
     alignItems: "center",
-    zIndex: 999,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.15,
+    shadowRadius: 4,
+    elevation: 5,
+    zIndex: 30,
+  },
+
+  // --- BOTTOM SHEET ---
+  sheet: {
+    flex: 1,
+    backgroundColor: "#FFFFFF",
+    marginTop: -24,
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    overflow: "hidden",
+  },
+  sheetPin: {
+    flex: 0,
+    position: "absolute",
+    bottom: 0,
+    left: 0,
+    right: 0,
+  },
+  pinActionBar: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: 24,
+    paddingVertical: 14,
+    gap: 12,
+  },
+  pinBtnCancel: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: 16,
+    borderRadius: 30,
+    borderWidth: 1,
+    borderColor: "#EAE5DC",
+    backgroundColor: "#FFFFFF",
+  },
+  pinBtnCancelText: {
+    fontSize: 16,
+    fontFamily: "MontserratBold",
+    color: "#1C1C1E",
+  },
+  dragHandle: {
+    width: 40,
+    height: 5,
+    borderRadius: 3,
+    backgroundColor: "#E5E0D8",
+    alignSelf: "center",
+    marginTop: 10,
+    marginBottom: 4,
+  },
+  sheetScroll: {
+    flex: 1,
+  },
+  sheetContent: {
+    paddingHorizontal: 24,
+    paddingTop: 12,
+    paddingBottom: 100,
+  },
+
+  // --- Tipografía display ---
+  displayTitle: {
+    fontSize: 32,
+    fontFamily: "MontserratBold",
+    fontStyle: "italic",
+    color: "#1C1C1E",
+    lineHeight: 36,
+  },
+  displayTitleSmall: {
+    fontSize: 26,
+    fontFamily: "MontserratBold",
+    fontStyle: "italic",
+    color: "#1C1C1E",
+    lineHeight: 30,
+  },
+  displaySubtitle: {
+    fontSize: 13,
+    fontFamily: "MontserratRegular",
+    color: "#888888",
+    marginTop: 6,
+    marginBottom: 20,
+  },
+  servicePretitle: {
+    fontSize: 11,
+    fontFamily: "MontserratSemiBold",
+    color: "#fa6205",
+    letterSpacing: 1.5,
+    marginBottom: 4,
+  },
+  sectionLabel: {
+    fontSize: 11,
+    fontFamily: "MontserratSemiBold",
+    color: "#888888",
+    letterSpacing: 1.5,
+    marginTop: 18,
+    marginBottom: 8,
+  },
+
+  // --- Trip step (route-selector style) ---
+  tripCard: {
+    position: "relative",
+    backgroundColor: "#FAFAFA",
+    borderRadius: 20,
+    padding: 16,
+    paddingLeft: 20,
+  },
+  tripConnector: {
+    position: "absolute",
+    left: 26,
+    top: 36,
+    width: 2,
+    height: 36,
+    backgroundColor: "#C9C2B5",
+    borderRadius: 1,
+  },
+  tripField: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    paddingVertical: 8,
+    paddingLeft: 28,
+  },
+  tripDotOuter: {
+    position: "absolute",
+    left: 0,
+    top: 12,
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    borderWidth: 2.5,
+    borderColor: "#1C1C1E",
+    backgroundColor: "#FAFAFA",
+  },
+  tripDotDest: {
+    borderColor: "#fa6205",
+    shadowColor: "#fa6205",
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.4,
+    shadowRadius: 6,
+    elevation: 4,
+  },
+  tripFieldLabel: {
+    fontSize: 9,
+    fontFamily: "MontserratBold",
+    color: "#888888",
+    letterSpacing: 1.5,
+    textTransform: "uppercase",
+  },
+  tripFieldLabelDest: {
+    color: "#fa6205",
+  },
+  tripFieldInput: {
+    fontSize: 14,
+    fontFamily: "MontserratBold",
+    color: "#1C1C1E",
+    padding: 0,
+    marginTop: 2,
+  },
+  tripMapBtn: {
+    width: 34,
+    height: 34,
+    borderRadius: 12,
+    backgroundColor: "#FFFFFF",
+    justifyContent: "center",
+    alignItems: "center",
+    marginLeft: 8,
+    shadowColor: "#C9C2B5",
+    shadowOffset: { width: 2, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  tripSuggestions: {
+    marginTop: 8,
+    backgroundColor: "#FFF",
+    borderRadius: 12,
+    paddingVertical: 4,
+    maxWidth: "100%",
+    borderWidth: 1,
+    borderColor: "#F0EDE8",
+  },
+  tripSuggestionItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: "#F5F2EC",
+  },
+  tripHelpText: {
+    fontSize: 12,
+    fontFamily: "MontserratRegular",
+    color: "#888888",
+    marginTop: 16,
+  },
+
+  // --- Provider step (ride-option style) ---
+  providerList: {
+    marginTop: 8,
+  },
+  providerCard: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "rgba(245,240,232,0.4)",
+    borderRadius: 24,
+    padding: 12,
+    paddingRight: 16,
+    marginBottom: 12,
+    borderWidth: 2,
+    borderColor: "transparent",
+  },
+  providerCardActive: {
+    backgroundColor: "#FFFFFF",
+    borderColor: "#fa6205",
+    shadowColor: "#fa6205",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.12,
+    shadowRadius: 12,
+    elevation: 4,
+  },
+  providerIconBox: {
+    width: 56,
+    height: 56,
+    borderRadius: 18,
+    justifyContent: "center",
+    alignItems: "center",
+    marginRight: 14,
+    backgroundColor: "#FFFFFF",
+    shadowColor: "#C9C2B5",
+    shadowOffset: { width: 3, height: 3 },
+    shadowOpacity: 0.2,
+    shadowRadius: 6,
+    elevation: 3,
+  },
+  providerIconBoxActive: {
+    backgroundColor: "#FFF0E5",
+    shadowOpacity: 0.3,
+  },
+  providerInfo: {
+    flex: 1,
+    justifyContent: "center",
+  },
+  providerNameRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+  providerName: {
+    fontSize: 18,
+    fontFamily: "MontserratBold",
+    color: "#1C1C1E",
+  },
+  providerPassengerBadge: {
+    backgroundColor: "rgba(0,0,0,0.06)",
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 4,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 3,
+  },
+  providerPassengerText: {
+    fontSize: 10,
+    fontFamily: "MontserratBold",
+    color: "#1C1C1E",
+  },
+  providerTagline: {
+    fontSize: 12,
+    fontFamily: "MontserratBold",
+    color: "#888888",
+    marginTop: 4,
+  },
+  providerPriceCol: {
+    flexDirection: "column",
+    alignItems: "flex-end",
+    marginLeft: 8,
+  },
+  providerPrice: {
+    fontSize: 22,
+    fontFamily: "MontserratBold",
+    color: "#1C1C1E",
+    letterSpacing: -0.5,
+  },
+  providerCheckBadge: {
+    backgroundColor: "#fa6205",
+    borderRadius: 8,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    marginTop: 4,
+  },
+  providerCheckText: {
+    fontSize: 9,
+    fontFamily: "MontserratBold",
+    color: "#FFFFFF",
+    letterSpacing: 0.5,
+    textTransform: "uppercase",
+  },
+  sectionSpacer: {
+    marginTop: 20,
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontFamily: "MontserratBold",
+    color: "#1C1C1E",
+    marginBottom: 12,
+  },
+
+  // --- Service step ---
+  routeSummaryCard: {
+    position: "relative",
+    backgroundColor: "rgba(245,240,232,0.6)",
+    borderRadius: 18,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: "#EAE5DC",
+    marginTop: 4,
+    marginBottom: 16,
+  },
+  routeSummaryConnector: {
+    position: "absolute",
+    left: 27,
+    top: 38,
+    width: 0,
+    height: 22,
+    borderLeftWidth: 2,
+    borderStyle: "dashed",
+    borderColor: "#C9C2B5",
+  },
+  routeSummaryRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: 4,
+  },
+  tripDotOuterSmall: {
+    width: 13,
+    height: 13,
+    borderRadius: 7,
+    borderWidth: 3,
+    borderColor: "#fa6205",
+    backgroundColor: "#FFF",
+    marginRight: 12,
+  },
+  routeSummaryLabel: {
+    fontSize: 10,
+    fontFamily: "MontserratSemiBold",
+    color: "#888888",
+    letterSpacing: 1.3,
+  },
+  routeSummaryValue: {
+    fontSize: 13,
+    fontFamily: "MontserratRegular",
+    color: "#1C1C1E",
+    marginTop: 2,
+  },
+
+  serviceCards: {
+    marginTop: 0,
+  },
+  serviceCard: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "rgba(245,240,232,0.4)",
+    borderRadius: 18,
+    padding: 12,
+    marginBottom: 8,
+    borderWidth: 1,
+    borderColor: "#EAE5DC",
+  },
+  serviceCardActive: {
+    borderColor: "#fa6205",
+    backgroundColor: "rgba(255,240,229,0.6)",
+  },
+  serviceCardIcon: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: "#FFF0E5",
+    justifyContent: "center",
+    alignItems: "center",
+    marginRight: 12,
+  },
+  serviceCardIconActive: {
+    backgroundColor: "#fa6205",
+  },
+  serviceCardImg: {
+    width: 22,
+    height: 22,
+    resizeMode: "contain",
+  },
+  serviceCardName: {
+    fontSize: 16,
+    fontFamily: "MontserratBold",
+    color: "#1C1C1E",
+  },
+  serviceCardDetail: {
+    fontSize: 12,
+    fontFamily: "MontserratRegular",
+    color: "#888888",
+    marginTop: 2,
+  },
+  noServicesText: {
+    fontSize: 14,
+    fontFamily: "MontserratRegular",
+    color: "#888888",
+    textAlign: "center",
+    paddingVertical: 16,
+  },
+
+  // --- Observaciones ---
+  observationsInput: {
+    backgroundColor: "rgba(245,240,232,0.6)",
+    borderRadius: 14,
+    padding: 14,
+    fontSize: 14,
+    fontFamily: "MontserratRegular",
+    color: "#1C1C1E",
+    minHeight: 80,
+    textAlignVertical: "top",
+    borderWidth: 1,
+    borderColor: "#EAE5DC",
+  },
+
+  // --- Payment selector (dropdown) ---
+  paymentSelector: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "rgba(245,240,232,0.5)",
+    borderRadius: 18,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    borderWidth: 1,
+    borderColor: "#EAE5DC",
+  },
+  paymentSelectorIcon: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: "#FFF0E5",
+    justifyContent: "center",
+    alignItems: "center",
+    marginRight: 12,
+  },
+  paymentSelectorName: {
+    fontSize: 14,
+    fontFamily: "MontserratSemiBold",
+    color: "#1C1C1E",
+  },
+  paymentSelectorDetail: {
+    fontSize: 12,
+    fontFamily: "MontserratRegular",
+    color: "#888888",
+    marginTop: 1,
+  },
+  paymentDropdown: {
+    marginTop: 8,
+    backgroundColor: "rgba(245,240,232,0.5)",
+    borderRadius: 14,
+    padding: 6,
+    borderWidth: 1,
+    borderColor: "#EAE5DC",
+  },
+  paymentDropdownItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    borderRadius: 10,
+  },
+  paymentDropdownItemActive: {
+    backgroundColor: "#FFF0E5",
+  },
+  paymentDropdownText: {
+    flex: 1,
+    fontSize: 14,
+    fontFamily: "MontserratSemiBold",
+    color: "#1C1C1E",
+    marginLeft: 10,
+  },
+
+  // --- Price summary ---
+  priceSummary: {
+    flexDirection: "row",
+    alignItems: "baseline",
+    marginTop: 20,
+    marginBottom: 4,
+  },
+  priceSummaryTotal: {
+    fontSize: 28,
+    fontFamily: "MontserratBold",
+    color: "#1C1C1E",
+  },
+  priceSummaryDistance: {
+    fontSize: 14,
+    fontFamily: "MontserratRegular",
+    color: "#888888",
+    marginLeft: 10,
+  },
+  priceSummaryPrompt: {
+    fontSize: 14,
+    fontFamily: "MontserratRegular",
+    color: "#888888",
+  },
+
+  // --- Confirmed ---
+  confirmedBanner: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#FFF0E5",
+    borderRadius: 14,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    marginTop: 16,
+  },
+  confirmedCheck: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: "#fa6205",
+    justifyContent: "center",
+    alignItems: "center",
+    marginRight: 10,
+  },
+  confirmedText: {
+    flex: 1,
+    fontSize: 14,
+    fontFamily: "MontserratSemiBold",
+    color: "#1C1C1E",
+  },
+  confirmedPrice: {
+    fontSize: 16,
+    fontFamily: "MontserratBold",
+    color: "#1C1C1E",
+  },
+
+  // --- Footer action bar ---
+  footerBar: {
+    paddingHorizontal: 24,
+    paddingVertical: 14,
+    backgroundColor: "#FFFFFF",
+    borderTopWidth: 1,
+    borderTopColor: "#EAE5DC",
+  },
+  primaryBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#fa6205",
+    borderRadius: 20,
+    paddingVertical: 16,
+    paddingHorizontal: 24,
+    shadowColor: "#fa6205",
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.3,
+    shadowRadius: 14,
+    elevation: 8,
+  },
+  primaryBtnDisabled: {
+    backgroundColor: "#C9C2B5",
+    shadowOpacity: 0,
+    elevation: 0,
+  },
+  biddingArea: {
+    backgroundColor: "#F5F5F7",
+    borderWidth: 1,
+    borderColor: "#E8E8ED",
+    borderRadius: 16,
+    padding: 12,
+    marginBottom: 10,
+  },
+  biddingHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 10,
+  },
+  biddingLabel: {
+    fontSize: 13,
+    fontFamily: "MontserratBold",
+    color: "#1C1C1E",
+  },
+  biddingSuggested: {
+    fontSize: 9,
+    fontFamily: "MontserratBold",
+    color: "#888888",
+    letterSpacing: 0.5,
+    textTransform: "uppercase",
+  },
+  biddingSuggestedValue: {
+    fontSize: 10,
+    fontFamily: "MontserratBold",
+    color: "#fa6205",
+  },
+  biddingControls: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 12,
+  },
+  biddingBtn: {
+    width: 42,
+    height: 42,
+    borderRadius: 21,
+    backgroundColor: "#FFFFFF",
+    justifyContent: "center",
+    alignItems: "center",
+    borderWidth: 1,
+    borderColor: "#E8E8ED",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 3,
+    elevation: 1,
+  },
+  biddingBtnMinus: {},
+  biddingBtnPlus: {
+    backgroundColor: "#1C1C1E",
+    borderColor: "#1C1C1E",
+  },
+  biddingPriceRow: {
+    flexDirection: "row",
+    alignItems: "baseline",
+    gap: 2,
+  },
+  biddingDollarSign: {
+    fontSize: 16,
+    fontFamily: "MontserratBold",
+    color: "#1C1C1E",
+  },
+  biddingPrice: {
+    fontSize: 28,
+    fontFamily: "MontserratBold",
+    color: "#1C1C1E",
+    letterSpacing: -0.5,
+  },
+  footerPriceRow: {
+    flexDirection: "row",
+    alignItems: "baseline",
+    justifyContent: "center",
+    marginBottom: 10,
+  },
+  footerPriceTotal: {
+    fontSize: 26,
+    fontFamily: "MontserratBold",
+    color: "#1C1C1E",
+  },
+  footerPriceDistance: {
+    fontSize: 14,
+    fontFamily: "MontserratRegular",
+    color: "#888888",
+    marginLeft: 8,
+  },
+  footerPricePrompt: {
+    fontSize: 14,
+    fontFamily: "MontserratRegular",
+    color: "#888888",
+  },
+  footerPaymentSelector: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#F5F5F7",
+    borderWidth: 1,
+    borderColor: "#E8E8ED",
+    borderRadius: 16,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    marginBottom: 10,
+  },
+  footerPaymentIcon: {
+    width: 36,
+    height: 36,
+    borderRadius: 12,
+    backgroundColor: "#FFFFFF",
+    justifyContent: "center",
+    alignItems: "center",
+    marginRight: 12,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 1,
+  },
+  footerPaymentLabel: {
+    fontSize: 14,
+    fontFamily: "MontserratSemiBold",
+    color: "#1C1C1E",
+  },
+  paymentModal: {
+    justifyContent: "flex-end",
+    margin: 0,
+  },
+  paymentModalSheet: {
+    backgroundColor: "#FFFFFF",
+    borderTopLeftRadius: 28,
+    borderTopRightRadius: 28,
+    paddingHorizontal: 24,
+    paddingBottom: 40,
+    paddingTop: 8,
+  },
+  paymentModalHandle: {
+    width: 44,
+    height: 5,
+    borderRadius: 3,
+    backgroundColor: "#E0E0E0",
+    alignSelf: "center",
+    marginBottom: 20,
+  },
+  paymentModalTitle: {
+    fontSize: 22,
+    fontFamily: "MontserratBold",
+    color: "#1C1C1E",
+    marginBottom: 16,
+  },
+  paymentModalOptions: {
+    gap: 10,
+  },
+  paymentModalOption: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#F5F5F7",
+    borderRadius: 16,
+    padding: 16,
+    borderWidth: 1.5,
+    borderColor: "transparent",
+  },
+  paymentModalOptionActive: {
+    borderColor: "#fa6205",
+    backgroundColor: "#FFFFFF",
+  },
+  paymentModalOptionText: {
+    fontSize: 15,
+    fontFamily: "MontserratBold",
+    color: "#1C1C1E",
+  },
+  paymentModalOptionSub: {
+    fontSize: 12,
+    fontFamily: "MontserratRegular",
+    color: "#888888",
+    marginTop: 2,
+  },
+  primaryBtnText: {
+    fontSize: 16,
+    fontFamily: "MontserratBold",
+    color: "#FFFFFF",
+  },
+
+  // --- Loading global ---
+  globalLoadingContainer: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: "rgba(0,0,0,0.4)",
+    justifyContent: "center",
+    alignItems: "center",
+    zIndex: 100,
   },
   globalLoadingContent: {
-    backgroundColor: "#FFFFFF",
-    padding: 20,
-    borderRadius: 10,
+    backgroundColor: "#FFF",
+    paddingHorizontal: 28,
+    paddingVertical: 22,
+    borderRadius: 16,
     alignItems: "center",
   },
   globalLoadingText: {
-    marginTop: 10,
-    fontFamily: "MontserratRegular",
-    color: "#000000",
-  },
-  paymentPolicyTitle: {
-    fontSize: 20,
-    fontWeight: "bold",
-    marginBottom: 15,
-    color: "#1C1C1E",
-    textAlign: "center",
-    fontFamily: "MontserratBold",
-  },
-  paymentPolicyText: {
-    fontSize: 16,
-    color: "#777",
-    marginBottom: 25,
-    textAlign: "center",
-    lineHeight: 24,
-    fontFamily: "MontserratRegular",
-  },
-  paymentPolicyButton: {
-    backgroundColor: "#fa6205",
-    paddingVertical: 12,
-    paddingHorizontal: 30,
-    borderRadius: 10,
-  },
-  paymentPolicyButtonText: {
-    color: "#000",
-    fontSize: 16,
-    fontWeight: "600",
-    fontFamily: "MontserratBold",
-  },
-  mensajeAyuda: {
-    fontSize: 12,
-    color: "#666",
-  },
-  mensajeAyudaSecundaria: {
-    fontSize: 12,
-    fontStyle: 'italic',
-    color: "#999999",
-  },
-  mensajeAyudaSecundaria2: {
-    fontSize: 14,
-    fontStyle: 'italic',
-    color: "#999999",
-  },
-  actionsContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
     marginTop: 12,
-  },
-  actionButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#fa6205', // Nuevo verde
-    paddingVertical: 10,
-    paddingHorizontal: 12,
-    borderRadius: 8,
-    marginRight: 2,
-  },
-  actionButtonText: {
-    fontFamily: 'MontserratRegular',
-    fontSize: 13,
-    marginLeft: 8,
-    color: '#000',
-  },
-
-  promptCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginTop: 20,
-    marginBottom: 10,
-    paddingVertical: 15,
-    paddingHorizontal: 20,
-    backgroundColor: '#FFFFFF', // Un gris oscuro para que contraste con el fondo
-    borderRadius: 15,
-    // Sombra sutil para dar profundidad
-    shadowColor: "#000",
-    shadowOffset: {
-      width: 0,
-      height: 4,
-    },
-    shadowOpacity: 0.30,
-    shadowRadius: 4.65,
-    elevation: 8,
-  },
-  promptIcon: {
-    marginRight: 12,
-  },
-  promptText: {
-    color: '#1C1C1E', // Texto blanco brillante para máxima legibilidad
-    fontFamily: 'MontserratBold',
-    fontSize: 15,
+    fontSize: 14,
+    fontFamily: "MontserratSemiBold",
+    color: "#1C1C1E",
   },
 });

@@ -287,6 +287,10 @@ export default function RegisterStoreScreen() {
         showAlert({ title: "Faltan datos", message: "Completa el nombre del establecimiento y la categoría.", type: "error" });
         return false;
       }
+      if (d.establecimiento_nombre.length < 3) {
+        showAlert({ title: "Nombre inválido", message: "El nombre debe tener al menos 3 caracteres.", type: "error" });
+        return false;
+      }
     }
     if (step === 3) { // Ubicación
       if (!d.departamento || !d.ciudad || !d.direccion) {
@@ -297,6 +301,23 @@ export default function RegisterStoreScreen() {
     if (step === 4) { // Contacto y Representante
       if (!d.persona_natural || !d.tipo_documento || !d.numero_documento || !d.numero_telefono || !d.email || !d.fecha_nacimiento) {
         showAlert({ title: "Faltan datos", message: "Completa los datos del representante legal.", type: "error" });
+        return false;
+      }
+      if (d.persona_natural.length < 3) {
+        showAlert({ title: "Nombre inválido", message: "El nombre debe tener al menos 3 caracteres.", type: "error" });
+        return false;
+      }
+      if (d.numero_documento.length < 5) {
+        showAlert({ title: "Documento inválido", message: "El número de documento debe tener al menos 5 dígitos.", type: "error" });
+        return false;
+      }
+      if (d.numero_telefono.length < 7) {
+        showAlert({ title: "Teléfono inválido", message: "El número de teléfono no es válido.", type: "error" });
+        return false;
+      }
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(d.email)) {
+        showAlert({ title: "Email inválido", message: "Ingresa un correo electrónico válido.", type: "error" });
         return false;
       }
       if (!d.password || d.password.length < 9) {
@@ -457,7 +478,7 @@ export default function RegisterStoreScreen() {
       <Text style={styles.title}>Datos del Negocio</Text>
 
       <Text style={styles.label}>Nombre del negocio *</Text>
-      <TextInput style={styles.inputDark} placeholder="Ej. Bodega Don Pepe" placeholderTextColor="#777" value={formData.establecimiento_nombre} onChangeText={(v) => handleInputChange('establecimiento_nombre', v)} />
+      <TextInput style={styles.inputDark} placeholder="Ej. Bodega Don Pepe" placeholderTextColor="#777" value={formData.establecimiento_nombre} onChangeText={(v) => handleInputChange('establecimiento_nombre', v)} maxLength={60} />
 
       <Text style={styles.label}>Categoría *</Text>
       <TouchableOpacity style={styles.inputDark} onPress={() => openPicker('categoria', categorias, "Selecciona Categoría")}>
@@ -501,7 +522,7 @@ export default function RegisterStoreScreen() {
       )}
 
       <Text style={styles.label}>Dirección Exacta *</Text>
-      <TextInput style={styles.inputDark} placeholder="Av. Principal 123" placeholderTextColor="#777" value={formData.direccion} onChangeText={(v) => handleInputChange('direccion', v)} />
+      <TextInput style={styles.inputDark} placeholder="Av. Principal 123" placeholderTextColor="#777" value={formData.direccion} onChangeText={(v) => handleInputChange('direccion', v)} maxLength={80} />
     </View>
   );
 
@@ -517,7 +538,7 @@ export default function RegisterStoreScreen() {
           persona_natural: v,
           nombre_completo: v
         }));
-      }} />
+      }} maxLength={50} />
 
       <Text style={styles.label}>Tipo de Documento *</Text>
       {/* --- AQUI USAMOS LA FUNCIÓN DINÁMICA DE OPCIONES --- */}
@@ -527,7 +548,7 @@ export default function RegisterStoreScreen() {
       </TouchableOpacity>
 
       <Text style={styles.label}>Número de Documento *</Text>
-      <TextInput style={styles.inputDark} placeholder="Número" placeholderTextColor="#777" keyboardType="numeric" value={formData.numero_documento} onChangeText={(v) => handleInputChange('numero_documento', v)} />
+      <TextInput style={styles.inputDark} placeholder="Número" placeholderTextColor="#777" keyboardType="numeric" value={formData.numero_documento} onChangeText={(v) => handleInputChange('numero_documento', v)} maxLength={10} />
 
       <Text style={styles.label}>Fecha de Nacimiento *</Text>
       <TouchableOpacity style={styles.inputDark} onPress={() => setShowDateModal(true)}>
@@ -545,18 +566,19 @@ export default function RegisterStoreScreen() {
         keyboardType="phone-pad" 
         value={formData.numero_telefono} 
         onChangeText={(v) => handleInputChange('numero_telefono', v)} 
+        maxLength={10}
       />
 
       <Text style={styles.label}>Correo Electrónico *</Text>
-      <TextInput style={styles.inputDark} placeholder="email@tienda.com" placeholderTextColor="#777" keyboardType="email-address" autoCapitalize="none" value={formData.email} onChangeText={(v) => handleInputChange('email', v)} />
+      <TextInput style={styles.inputDark} placeholder="email@tienda.com" placeholderTextColor="#777" keyboardType="email-address" autoCapitalize="none" value={formData.email} onChangeText={(v) => handleInputChange('email', v)} maxLength={50} />
 
       <View style={{ height: 1, backgroundColor: '#333', marginVertical: 15 }} />
 
       <Text style={styles.label}>Contraseña *</Text>
-      <TextInput style={styles.inputDark} placeholder="Mínimo 9 caracteres" placeholderTextColor="#777" secureTextEntry value={formData.password} onChangeText={(v) => handleInputChange('password', v)} />
+      <TextInput style={styles.inputDark} placeholder="Mínimo 9 caracteres" placeholderTextColor="#777" secureTextEntry value={formData.password} onChangeText={(v) => handleInputChange('password', v)} maxLength={30} />
 
       <Text style={styles.label}>Repetir Contraseña *</Text>
-      <TextInput style={styles.inputDark} placeholder="Confirma contraseña" placeholderTextColor="#777" secureTextEntry value={formData.repeatPassword} onChangeText={(v) => handleInputChange('repeatPassword', v)} />
+      <TextInput style={styles.inputDark} placeholder="Confirma contraseña" placeholderTextColor="#777" secureTextEntry value={formData.repeatPassword} onChangeText={(v) => handleInputChange('repeatPassword', v)} maxLength={30} />
     </View>
   );
 
@@ -712,7 +734,7 @@ export default function RegisterStoreScreen() {
               <Text style={[styles.inputText, { textAlign: 'center', marginBottom: 15, color: '#ccc' }]}>
                 Si tienes un código, ingrésalo. Si no, continúa.
               </Text>
-              <TextInput style={styles.inputDark} placeholder="Código (Opcional)" placeholderTextColor="#777" value={codigoReferido} onChangeText={setCodigoReferido} />
+              <TextInput style={styles.inputDark} placeholder="Código (Opcional)" placeholderTextColor="#777" value={codigoReferido} onChangeText={setCodigoReferido} maxLength={20} />
               <TouchableOpacity style={styles.buttonPrimary} onPress={finalizarRegistro}>
                 <Text style={styles.buttonTextPrimary}>Finalizar Registro</Text>
               </TouchableOpacity>

@@ -5,13 +5,13 @@ import {
     TextInput,
     TouchableOpacity,
     StyleSheet,
-    Alert,
     SafeAreaView,
     Keyboard,
     TouchableWithoutFeedback,
     StatusBar,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import AlertaModal from "../../components/ErrorModal";
 
 // Definimos la paleta de colores para fácil acceso
 const COLORS = {
@@ -26,19 +26,27 @@ const COLORS = {
 const PagoScreen = ({ navigation }) => {
     const [amount, setAmount] = useState('');
     const [isFocused, setIsFocused] = useState(false);
+    const [alertVisible, setAlertVisible] = useState(false);
+    const [alertData, setAlertData] = useState({ message: "", type: "info", onPrimary: null, primaryLabel: "" });
+
+    const showAlert = (message, type = "info", onPrimary = null, primaryLabel = null) => {
+        setAlertData({ message, type, onPrimary, primaryLabel });
+        setAlertVisible(true);
+    };
+
     const presetAmounts = [20, 50, 100, 200];
 
     // La lógica para la recarga no cambia
     const handleRecharge = async () => {
         if (!amount || isNaN(amount) || Number(amount) <= 0) {
-            Alert.alert('Error', 'Por favor, ingresa un monto válido.');
+            showAlert('Por favor, ingresa un monto válido.', 'error');
             return;
         }
         Keyboard.dismiss();
         try {
             const userId = await AsyncStorage.getItem('userId');
             if (!userId) {
-                Alert.alert('Error', 'No se pudo obtener el ID del usuario. Por favor, inicia sesión de nuevo.');
+                showAlert('No se pudo obtener el ID del usuario. Por favor, inicia sesión de nuevo.', 'error');
                 return;
             }
             const baseUrl = 'https://back.carbycol.com';
@@ -46,7 +54,7 @@ const PagoScreen = ({ navigation }) => {
             navigation.navigate('PaymentWebView', { url: paymentUrl });
         } catch (error) {
             console.error('Error al procesar la recarga:', error);
-            Alert.alert('Error', 'Ocurrió un problema al intentar procesar tu pago.');
+            showAlert('Ocurrió un problema al intentar procesar tu pago.', 'error');
         }
     };
 
@@ -113,6 +121,14 @@ const PagoScreen = ({ navigation }) => {
                     </View>
                 </View>
             </TouchableWithoutFeedback>
+            <AlertaModal
+              visible={alertVisible}
+              mensaje={alertData.message}
+              tipo={alertData.type}
+              onCerrar={() => setAlertVisible(false)}
+              onPrimary={alertData.onPrimary}
+              primaryLabel={alertData.primaryLabel}
+            />
         </SafeAreaView>
     );
 };

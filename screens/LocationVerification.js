@@ -1,14 +1,22 @@
 import React, { useEffect, useState } from 'react';
-import { View, StyleSheet, Text, TouchableOpacity, Linking, Alert, ActivityIndicator } from 'react-native';
+import { View, StyleSheet, Text, TouchableOpacity, Linking, ActivityIndicator } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Location from 'expo-location';
 import { Ionicons } from '@expo/vector-icons';
+import AlertaModal from "../components/ErrorModal";
 
 export default function LocationVerification() {
     const navigation = useNavigation();
     const [permissionStatus, setPermissionStatus] = useState(null);
     const [isLoading, setIsLoading] = useState(true); // Estado para el indicador de carga
+    const [alertVisible, setAlertVisible] = useState(false);
+    const [alertData, setAlertData] = useState({ message: "", type: "info", onPrimary: null, primaryLabel: "" });
+
+    const showAlert = (message, type = "info", onPrimary = null, primaryLabel = null) => {
+      setAlertData({ message, type, onPrimary, primaryLabel });
+      setAlertVisible(true);
+    };
 
     // 1. Lógica mejorada que se ejecuta al cargar la pantalla
     useEffect(() => {
@@ -47,13 +55,11 @@ export default function LocationVerification() {
         if (currentStatus === 'granted') {
             navigation.replace('AuthLoadingScreen');
         } else {
-            Alert.alert(
-                "Permiso Requerido",
+            showAlert(
                 "Para usar la app, necesitas habilitar los permisos de ubicación desde los ajustes de tu teléfono.",
-                [
-                    { text: "Cancelar", style: "cancel" },
-                    { text: "Abrir Ajustes", onPress: () => Linking.openSettings() }
-                ]
+                "confirm",
+                () => Linking.openSettings(),
+                "Abrir Ajustes"
             );
         }
     };
@@ -86,6 +92,14 @@ export default function LocationVerification() {
                     {permissionStatus === 'granted' ? 'Continuar' : 'Habilitar Ubicación'}
                 </Text>
             </TouchableOpacity>
+            <AlertaModal
+                visible={alertVisible}
+                mensaje={alertData.message}
+                tipo={alertData.type}
+                onCerrar={() => setAlertVisible(false)}
+                onPrimary={alertData.onPrimary}
+                primaryLabel={alertData.primaryLabel}
+            />
         </View>
     );
 }

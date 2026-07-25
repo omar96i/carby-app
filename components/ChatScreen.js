@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from "react";
-import { View, Text, TextInput, TouchableOpacity, FlatList, StyleSheet, Image, Alert, ActivityIndicator } from "react-native";
+import { View, Text, TextInput, TouchableOpacity, FlatList, StyleSheet, Image, ActivityIndicator, Platform } from "react-native";
 import { FontAwesome } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { BASE_URL } from "../constants/url";
 import * as ImagePicker from "expo-image-picker";
 import { useNotification } from "../context/NotificationContext";
+import AlertaModal from "../components/ErrorModal";
 
 
 const ChatScreen = ({ tripId }) => {
@@ -12,6 +13,13 @@ const ChatScreen = ({ tripId }) => {
   const [inputText, setInputText] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [isLoadingHistory, setIsLoadingHistory] = useState(false);
+  const [alertVisible, setAlertVisible] = useState(false);
+  const [alertData, setAlertData] = useState({ message: "", type: "info", onPrimary: null, primaryLabel: "" });
+
+  const showAlert = (message, type = "info", onPrimary = null, primaryLabel = null) => {
+    setAlertData({ message, type, onPrimary, primaryLabel });
+    setAlertVisible(true);
+  };
 
   useEffect(() => {
     console.log("ChatScreen received tripId:", tripId);
@@ -39,7 +47,7 @@ const ChatScreen = ({ tripId }) => {
       const userId = await AsyncStorage.getItem("userId");
 
       if (!token || !userId) {
-        Alert.alert("Error", "No se encontró la información de autenticación");
+        showAlert("No se encontró la información de autenticación", "error");
         return;
       }
 
@@ -80,7 +88,7 @@ const ChatScreen = ({ tripId }) => {
 
       if (!response.ok) {
         console.error("Error sending message:", data);
-        Alert.alert("Error", "No se pudo enviar el mensaje");
+        showAlert("No se pudo enviar el mensaje", "error");
         setMessages(prev =>
           prev.map(msg =>
             msg.id === localMessage.id ? { ...msg, status: "error" } : msg
@@ -97,7 +105,7 @@ const ChatScreen = ({ tripId }) => {
 
     } catch (error) {
       console.error("Error in sendMessage:", error);
-      Alert.alert("Error", "Ocurrió un error al enviar el mensaje");
+      showAlert("Ocurrió un error al enviar el mensaje", "error");
     } finally {
       setIsLoading(false);
     }
@@ -111,7 +119,7 @@ const ChatScreen = ({ tripId }) => {
       const userId = await AsyncStorage.getItem("userId");
 
       if (!token || !userId) {
-        Alert.alert("Error", "No se encontró la información de autenticación");
+        showAlert("No se encontró la información de autenticación", "error");
         return;
       }
 
@@ -159,7 +167,7 @@ const ChatScreen = ({ tripId }) => {
 
       if (!response.ok) {
         console.error("Error sending image:", data);
-        Alert.alert("Error", "No se pudo enviar la imagen");
+        showAlert("No se pudo enviar la imagen", "error");
         setMessages(prev =>
           prev.map(msg =>
             msg.id === localMessage.id ? { ...msg, status: "error" } : msg
@@ -176,7 +184,7 @@ const ChatScreen = ({ tripId }) => {
 
     } catch (error) {
       console.error("Error in sendImage:", error);
-      Alert.alert("Error", "Ocurrió un error al enviar la imagen");
+      showAlert("Ocurrió un error al enviar la imagen", "error");
     } finally {
       setIsLoading(false);
     }
@@ -184,7 +192,7 @@ const ChatScreen = ({ tripId }) => {
   const handlePickImageAndSend = async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (status !== 'granted') {
-      Alert.alert('Permiso requerido', 'Se necesita acceso a tu galería para enviar imágenes');
+      showAlert('Se necesita acceso a tu galería para enviar imágenes', "info");
       return;
     }
 
@@ -313,7 +321,7 @@ const ChatScreen = ({ tripId }) => {
             user: sender,
             text: messageContent.type === "text" ? messageContent.content : "",
             image: messageContent.type === "file"
-              ? `${BASE_URL.toString().replace("/api/", "")}/storage/${messageContent.content}`
+              ? `${BASE_URL.toString().replace("/api", "")}storage/${messageContent.content}`
               : null,
             time: new Date(msg.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
             status: "sent",
@@ -351,12 +359,15 @@ const ChatScreen = ({ tripId }) => {
         </View>
       ) : messages.length === 0 ? (
         <View style={styles.emptyChat}>
+          <FontAwesome name="commenting-o" size={40} color="#CCC" />
           <Text style={styles.emptyChatText}>No hay mensajes aún</Text>
+          <Text style={{ color: '#aaa', fontSize: 13, marginTop: 4 }}>Envía un mensaje para iniciar</Text>
         </View>
       ) : (
         <FlatList
           data={messages}
           keyExtractor={(item, index) => `${item.id || index}`}
+          contentContainerStyle={{ padding: 16, paddingBottom: 8 }}
           renderItem={({ item }) => (
             <View style={[
               styles.messageContainer,
@@ -378,7 +389,6 @@ const ChatScreen = ({ tripId }) => {
                 {item.status === "sending" && <Text style={styles.statusSending}>enviando...</Text>}
                 {item.status === "error" && <Text style={styles.statusError}>error</Text>}
               </View>
-              {/* Mostrar texto del mensaje si existe */}
               {item.text && (
                 <Text style={[
                   styles.messageText,
@@ -387,7 +397,6 @@ const ChatScreen = ({ tripId }) => {
                   {item.text}
                 </Text>
               )}
-              {/* Mostrar imagen si existe */}
               {item.image && (
                 <Image
                   source={{ uri: item.image }}
@@ -404,28 +413,38 @@ const ChatScreen = ({ tripId }) => {
 
       <View style={styles.inputContainer}>
         <TouchableOpacity style={styles.iconButton} onPress={handlePickImageAndSend}>
-          <FontAwesome name="camera" size={22} color="#fa6205" />
+          <FontAwesome name="camera" size={20} color="#fa6205" />
         </TouchableOpacity>
 
         <TextInput
           style={styles.input}
           placeholder="Escribe un mensaje..."
+          placeholderTextColor="#999"
           value={inputText}
           onChangeText={setInputText}
           editable={!isLoading}
+          multiline
         />
         <TouchableOpacity
-          style={[styles.sendButton, isLoading && styles.sendButtonDisabled]}
+          style={[styles.sendButton, (isLoading || !inputText.trim()) && styles.sendButtonDisabled]}
           onPress={sendMessage}
           disabled={isLoading || !inputText.trim()}
         >
           <FontAwesome
             name={isLoading ? "circle-o-notch" : "paper-plane"}
-            size={20}
-            color="#FFF"
+            size={18}
+            color="white"
           />
         </TouchableOpacity>
       </View>
+      <AlertaModal
+        visible={alertVisible}
+        mensaje={alertData.message}
+        tipo={alertData.type}
+        onCerrar={() => setAlertVisible(false)}
+        onPrimary={alertData.onPrimary}
+        primaryLabel={alertData.primaryLabel}
+      />
     </View>
   );
 };
@@ -433,10 +452,7 @@ const ChatScreen = ({ tripId }) => {
 const styles = StyleSheet.create({
     container: {
     flex: 1,
-    padding: 10,
-    backgroundColor: "#F2F2F7",
-    marginBottom: 70,
-    borderRadius: 20,
+    backgroundColor: "#F5F0E8",
   },
   messageImage: {
     width: '100%',
@@ -461,107 +477,138 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   emptyChat: {
-    padding: 20,
+    flex: 1,
+    justifyContent: "center",
     alignItems: "center",
+    padding: 20,
   },
   emptyChatText: {
     color: "#999",
     fontSize: 14,
   },
   messageContainer: {
-    backgroundColor: "white",
-    padding: 10,
-    borderRadius: 10,
-    marginVertical: 5,
-    shadowColor: "#000",
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 2,
-    maxWidth: '85%',
+    padding: 12,
+    paddingBottom: 8,
+    borderRadius: 20,
+    marginVertical: 4,
+    maxWidth: '80%',
   },
   myMessageContainer: {
     alignSelf: 'flex-end',
     backgroundColor: "#fa6205",
+    borderBottomRightRadius: 4,
+    shadowColor: "#fa6205",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 6,
+    elevation: 3,
   },
   otherMessageContainer: {
     alignSelf: 'flex-start',
     backgroundColor: "#FFF",
+    borderBottomLeftRadius: 4,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.08,
+    shadowRadius: 4,
+    elevation: 2,
   },
   messageHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 5,
+    marginBottom: 4,
   },
   userName: {
-    fontWeight: "bold",
-    fontSize: 16,
+    fontSize: 12,
+    fontFamily: 'MontserratBold',
   },
   myUserName: {
-    color: "#FFF",
+    color: "rgba(255,255,255,0.9)",
   },
   otherUserName: {
-    color: "#333", // Texto oscuro para mensajes del rider (sobre fondo blanco)
+    color: "#fa6205",
   },
   time: {
-    fontWeight: "normal",
-    fontSize: 12,
+    fontSize: 11,
     color: "gray",
+    marginLeft: 8,
   },
   myTime: {
-    color: "rgba(255,255,255,0.8)", // Tiempo en blanco semi-transparente para mensajes del usuario
+    color: "rgba(255,255,255,0.6)",
   },
   otherTime: {
-    color: "gray", // Tiempo gris para mensajes del rider
+    color: "#bbb",
   },
   statusSending: {
-    fontWeight: "normal",
-    fontSize: 12,
-    color: "#888",
+    fontSize: 11,
+    color: "rgba(255,255,255,0.5)",
     fontStyle: "italic",
+    marginLeft: 4,
   },
   statusError: {
-    fontWeight: "normal",
-    fontSize: 12,
-    color: "red",
+    fontSize: 11,
+    color: "#FF4757",
     fontStyle: "italic",
+    marginLeft: 4,
   },
   messageText: {
-    fontSize: 14,
-    marginTop: 5,
+    fontSize: 15,
+    lineHeight: 20,
+    fontFamily: 'MontserratRegular',
   },
   myMessageText: {
     color: "#FFF",
   },
   otherMessageText: {
-    color: "#333", // Texto oscuro para mensajes del rider
+    color: "#1C1C1E",
   },
   inputContainer: {
     flexDirection: "row",
-    alignItems: "center",
+    alignItems: "flex-end",
     backgroundColor: "#FFF",
-    borderRadius: 30,
     paddingHorizontal: 10,
-    paddingVertical: 5,
-    marginTop: 10,
-    borderWidth: 1,
-    borderColor: '#E0E0E0',
+    paddingVertical: 8,
+    paddingBottom: Platform.OS === "ios" ? 24 : 8,
+    borderTopWidth: 1,
+    borderTopColor: "#EAE5DC",
   },
   input: {
     flex: 1,
-    paddingHorizontal: 10,
+    backgroundColor: "#F5F0E8",
+    borderRadius: 22,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    fontSize: 15,
+    maxHeight: 80,
+    color: "#1C1C1E",
+    marginHorizontal: 8,
   },
   sendButton: {
     backgroundColor: "#fa6205",
-    padding: 10,
-    borderRadius: 30,
-    marginLeft: 5,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    justifyContent: "center",
+    alignItems: "center",
+    shadowColor: "#fa6205",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 4,
   },
   sendButtonDisabled: {
-    backgroundColor: "#aaa",
+    backgroundColor: "#C9C2B5",
+    shadowOpacity: 0,
+    elevation: 0,
   },
   iconButton: {
-    padding: 5,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: "#FFF0E5",
+    justifyContent: "center",
+    alignItems: "center",
   }
 });
 

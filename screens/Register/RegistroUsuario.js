@@ -76,6 +76,18 @@ export default function RegisterFormScreen() {
         showAlert({ title: "Error", message: "Selecciona un tipo de documento.", type: "error" });
         return;
       }
+      if (nombreCompleto.trim().length < 3) {
+        showAlert({ title: "Error", message: "El nombre debe tener al menos 3 caracteres.", type: "error" });
+        return;
+      }
+      if (numeroDocumento.trim().length < 5) {
+        showAlert({ title: "Error", message: "El número de documento debe tener al menos 5 dígitos.", type: "error" });
+        return;
+      }
+      if (numeroTelefono.trim().length < 7) {
+        showAlert({ title: "Error", message: "El número de teléfono no es válido.", type: "error" });
+        return;
+      }
       setStep(2);
     }
   };
@@ -86,6 +98,8 @@ export default function RegisterFormScreen() {
   // --- LÓGICA DE ENVÍO ---
   const handleSubmitFormulario = async () => {
     if (!email.trim()) return showAlert({ title: "Error", message: "El email es obligatorio.", type: "error" });
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email.trim())) return showAlert({ title: "Error", message: "Ingresa un correo electrónico válido.", type: "error" });
     if (!password) return showAlert({ title: "Error", message: "La contraseña es obligatoria.", type: "error" });
     if (password.length < 9) return showAlert({ title: "Error", message: "La contraseña debe tener al menos 9 caracteres.", type: "error" });
     if (password !== repeatPassword) return showAlert({ title: "Error", message: "Las contraseñas no coinciden.", type: "error" });
@@ -217,13 +231,14 @@ export default function RegisterFormScreen() {
                {/* País siempre Colombia */}
 
                
-              <Text style={styles.label}>Nombre completo</Text>
+               <Text style={styles.label}>Nombre completo</Text>
               <TextInput
                 style={styles.inputDark}
                 placeholder="Ej. Juan Pérez"
                 placeholderTextColor="#777"
                 value={nombreCompleto}
                 onChangeText={setNombreCompleto}
+                maxLength={50}
               />
 
               <Text style={styles.label}>Tipo de documento</Text>
@@ -264,6 +279,7 @@ export default function RegisterFormScreen() {
                 keyboardType="numeric"
                 value={numeroDocumento}
                 onChangeText={setNumeroDocumento}
+                maxLength={10}
               />
 
               <Text style={styles.label}>Número de teléfono</Text>
@@ -274,6 +290,7 @@ export default function RegisterFormScreen() {
                 keyboardType="phone-pad"
                 value={numeroTelefono}
                 onChangeText={setNumeroTelefono}
+                maxLength={10}
               />
 
               <TouchableOpacity style={styles.buttonPrimary} onPress={handleNextStep}>
@@ -295,6 +312,7 @@ export default function RegisterFormScreen() {
                 autoCapitalize="none"
                 value={email}
                 onChangeText={setEmail}
+                maxLength={50}
               />
 
               <Text style={styles.label}>Contraseña</Text>
@@ -305,6 +323,7 @@ export default function RegisterFormScreen() {
                 secureTextEntry
                 value={password}
                 onChangeText={setPassword}
+                maxLength={30}
               />
               <Text style={styles.helperText}>La contraseña debe ser segura.</Text>
 
@@ -316,6 +335,7 @@ export default function RegisterFormScreen() {
                 secureTextEntry
                 value={repeatPassword}
                 onChangeText={setRepeatPassword}
+                maxLength={30}
               />
 
               <TouchableOpacity style={styles.buttonPrimary} onPress={handleSubmitFormulario}>

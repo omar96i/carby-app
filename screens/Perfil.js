@@ -292,7 +292,7 @@ export default function Perfil() {
 
       if (!token) {
         await AsyncStorage.clear();
-        navigation.navigate("Login");
+        navigation.reset({ index: 0, routes: [{ name: "Login" }] });
         return;
       }
 
@@ -312,7 +312,7 @@ export default function Perfil() {
       // Siempre limpia los datos locales
       await AsyncStorage.clear();
       showAlert("Éxito", "Has cerrado sesión correctamente", "success");
-      navigation.navigate("Login");
+      navigation.reset({ index: 0, routes: [{ name: "Login" }] });
     } catch (error) {
       console.error("Error en cerrar sesión:", error);
 
@@ -320,7 +320,7 @@ export default function Perfil() {
       try {
         await AsyncStorage.clear();
         showAlert("Éxito", "Se cerró sesión localmente", "success");
-        navigation.navigate("Login");
+        navigation.reset({ index: 0, routes: [{ name: "Login" }] });
       } catch (storageError) {
         showAlert("Error", "No se pudo cerrar sesión. Intenta de nuevo.");
       }

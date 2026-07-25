@@ -11,25 +11,50 @@ import {
   RefreshControl,
   Modal,
   TextInput,
-  Alert
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { FontAwesome } from '@expo/vector-icons';
+import { Ionicons } from '@expo/vector-icons';
 import { BASE_URL } from '../../constants/url';
+import AlertaModal from '../../components/ErrorModal';
+import {
+  Montserrat_400Regular,
+  Montserrat_500Medium,
+  Montserrat_700Bold,
+} from '@expo-google-fonts/montserrat';
+import { useFonts } from 'expo-font';
 
 export default function StepDiecisiete() {
+  const [fontsLoaded] = useFonts({
+    Montserrat_400Regular,
+    Montserrat_500Medium,
+    Montserrat_700Bold,
+  });
   const [userData, setUserData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [refreshing, setRefreshing] = useState(false);
-  
-  // Modal state
+
   const [modalVisible, setModalVisible] = useState(false);
   const [editingField, setEditingField] = useState(null);
   const [editingValue, setEditingValue] = useState('');
   const [updateLoading, setUpdateLoading] = useState(false);
 
-  // Fields that can be edited
+  // Alert state
+  const [alertVisible, setAlertVisible] = useState(false);
+  const [alertMsg, setAlertMsg] = useState('');
+  const [alertType, setAlertType] = useState('error');
+  const [alertPrimary, setAlertPrimary] = useState(null);
+  const [alertLabel, setAlertLabel] = useState('Entendido');
+
+  const showAlert = (msg, type = 'error', onPrimary = null, label = 'Entendido') => {
+    setAlertMsg(msg);
+    setAlertType(type);
+    setAlertPrimary(() => onPrimary);
+    setAlertLabel(label);
+    setAlertVisible(true);
+  };
+
   const editableFields = {
     'nombre_completo': {
       label: 'Nombre Completo',
@@ -61,20 +86,13 @@ export default function StepDiecisiete() {
     try {
       setLoading(true);
       setError(null);
-      
-      // Get user token from AsyncStorage
-      const token = await AsyncStorage.getItem('userToken');
-      if (!token) {
-        throw new Error('No se encontró token de autenticación');
-      }
-      
-      // Get user ID from AsyncStorage
-      const userId = await AsyncStorage.getItem('userId');
-      if (!userId) {
-        throw new Error('No se encontró ID de usuario');
-      }
 
-      // Make API request
+      const token = await AsyncStorage.getItem('userToken');
+      if (!token) throw new Error('No se encontró token de autenticación');
+
+      const userId = await AsyncStorage.getItem('userId');
+      if (!userId) throw new Error('No se encontró ID de usuario');
+
       const response = await fetch(`${BASE_URL}usuario/${userId}`, {
         method: 'GET',
         headers: {
@@ -91,11 +109,9 @@ export default function StepDiecisiete() {
 
       const data = await response.json();
       setUserData(data.data || data);
-      console.log('User data:', data.data);
-      
+
     } catch (err) {
       setError(err.message || 'Error al obtener información del usuario');
-      console.error('Error fetching user data:', err);
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -104,30 +120,22 @@ export default function StepDiecisiete() {
 
   const updateUserField = async () => {
     if (!editingField || editingValue === '') {
-      Alert.alert('Error', 'Por favor completa el campo correctamente');
+      showAlert('Por favor completa el campo correctamente');
       return;
     }
 
     try {
       setUpdateLoading(true);
 
-      // Get user token from AsyncStorage
       const token = await AsyncStorage.getItem('userToken');
-      if (!token) {
-        throw new Error('No se encontró token de autenticación');
-      }
-      
-      // Get user ID from AsyncStorage
-      const userId = await AsyncStorage.getItem('userId');
-      if (!userId) {
-        throw new Error('No se encontró ID de usuario');
-      }
+      if (!token) throw new Error('No se encontró token de autenticación');
 
-      // Prepare data for update
+      const userId = await AsyncStorage.getItem('userId');
+      if (!userId) throw new Error('No se encontró ID de usuario');
+
       const updateData = {};
       updateData[editingField] = editingValue;
 
-      // Make API request
       const response = await fetch(`${BASE_URL}usuario/actualizar/${userId}`, {
         method: 'POST',
         headers: {
@@ -144,14 +152,12 @@ export default function StepDiecisiete() {
         throw new Error(responseData.message || 'Error al actualizar el campo');
       }
 
-      // Close modal and refresh data
       setModalVisible(false);
-      Alert.alert('Éxito', 'La información se ha actualizado correctamente');
+      showAlert('La información se ha actualizado correctamente', 'success');
       fetchUserData();
-      
+
     } catch (err) {
-      Alert.alert('Error', err.message || 'No se pudo actualizar la información');
-      console.error('Error updating user field:', err);
+      showAlert(err.message || 'No se pudo actualizar la información');
     } finally {
       setUpdateLoading(false);
     }
@@ -188,35 +194,49 @@ export default function StepDiecisiete() {
     }
   };
 
+  const getInitials = (name) => {
+    if (!name) return '?';
+    return name.split(' ').slice(0, 2).map(w => w[0]).join('').toUpperCase();
+  };
+
+  const getProfileImageUrl = () => {
+    const photo = userData?.fotografia_perfil || userData?.foto_document_file || userData?.foto_documento_file;
+    if (!photo) return null;
+    if (photo.startsWith('http')) return photo;
+    return `${BASE_URL.toString().replace('/api', '')}/storage/${photo}`;
+  };
+
   const renderInfoItem = (label, value, icon, fieldKey = null) => {
     if (value === null || value === undefined) return null;
-    
+
     const isEditable = fieldKey && fieldKey in editableFields;
-    
+
     return (
       <View style={styles.infoItem}>
         <View style={styles.infoIconContainer}>
-          <FontAwesome name={icon} size={20} color="#fa6205" />
+          <FontAwesome name={icon} size={18} color="#fa6205" />
         </View>
         <View style={styles.infoContent}>
           <Text style={styles.infoLabel}>{label}</Text>
           <Text style={styles.infoValue}>{value || 'No disponible'}</Text>
         </View>
         {isEditable && (
-          <TouchableOpacity 
+          <TouchableOpacity
             style={styles.editButton}
             onPress={() => handleEditField(fieldKey)}
           >
-            <FontAwesome name="pencil" size={18} color="#fa6205" />
+            <Ionicons name="pencil" size={18} color="#fa6205" />
           </TouchableOpacity>
         )}
       </View>
     );
   };
 
+  if (!fontsLoaded) return null;
+
   if (loading && !refreshing) {
     return (
-      <SafeAreaView style={styles.loadingContainer}>
+      <SafeAreaView style={styles.centerContainer}>
         <ActivityIndicator size="large" color="#fa6205" />
         <Text style={styles.loadingText}>Cargando información del usuario...</Text>
       </SafeAreaView>
@@ -225,33 +245,42 @@ export default function StepDiecisiete() {
 
   if (error && !refreshing) {
     return (
-      <SafeAreaView style={styles.errorContainer}>
-        <FontAwesome name="exclamation-triangle" size={50} color="#E53935" />
+      <SafeAreaView style={styles.centerContainer}>
+        <Ionicons name="alert-circle-outline" size={56} color="#E53935" />
         <Text style={styles.errorText}>{error}</Text>
-        <TouchableOpacity style={styles.retryButton} onPress={fetchUserData}>
-          <Text style={styles.retryText}>Intentar nuevamente</Text>
+        <TouchableOpacity style={styles.retryBtn} onPress={fetchUserData}>
+          <Text style={styles.retryBtnText}>Intentar nuevamente</Text>
         </TouchableOpacity>
       </SafeAreaView>
     );
   }
+
+  const profileImageUrl = getProfileImageUrl();
 
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView
         contentContainerStyle={styles.scrollContent}
         refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            colors={["#fa6205"]}
+            tintColor="#fa6205"
+          />
         }
       >
+        {/* Header */}
         <View style={styles.header}>
-          <Image
-            source={
-              userData?.foto_documento_file
-                ? { uri: `https://back.carbycol.com/storage/${userData.foto_documento_file}` }
-                : require('../../assets/images/yar.png')
-            }
-            style={styles.profileImage}
-          />
+          {profileImageUrl ? (
+            <Image source={{ uri: profileImageUrl }} style={styles.profileImage} />
+          ) : (
+            <View style={styles.avatarCircle}>
+              <Text style={styles.avatarText}>
+                {getInitials(userData?.nombre_completo)}
+              </Text>
+            </View>
+          )}
           <Text style={styles.userName}>{userData?.nombre_completo || 'Usuario'}</Text>
           <Text style={styles.userEmail}>{userData?.email || 'Correo no disponible'}</Text>
           <View style={styles.badge}>
@@ -259,31 +288,31 @@ export default function StepDiecisiete() {
           </View>
         </View>
 
-        <View style={styles.infoSection}>
+        {/* Info Sections */}
+        <View style={styles.infoCard}>
           <Text style={styles.sectionTitle}>Información Personal</Text>
-          
+
           {renderInfoItem('Nombre Completo', userData?.nombre_completo, 'user', 'nombre_completo')}
           {renderInfoItem('Correo Electrónico', userData?.email, 'envelope', 'email')}
           {renderInfoItem('Teléfono', userData?.numero_telefono, 'phone', 'numero_telefono')}
-          {renderInfoItem('Tipo de Documento', userData?.tipo_documento, 'id-card-o')}
+          {renderInfoItem('Tipo de Documento', userData?.tipo_documento, 'id-card')}
           {renderInfoItem('Número de Documento', userData?.numero_documento, 'id-card')}
-          {renderInfoItem('Fecha de Nacimiento', formatDate(userData?.fecha_nacimiento), 'birthday-cake')}
-          
+          {renderInfoItem('Fecha de Nacimiento', formatDate(userData?.fecha_nacimiento), 'calendar')}
+
           <Text style={styles.sectionTitle}>Ubicación</Text>
-          
-          {renderInfoItem('Departamento', userData?.departamento, 'map')}
+
+          {renderInfoItem('Departamento', userData?.departamento, 'map-marker')}
           {renderInfoItem('Ciudad', userData?.ciudad, 'building')}
           {renderInfoItem('Dirección Principal', userData?.direccion_principal, 'home', 'direccion_principal')}
-          
+
           <Text style={styles.sectionTitle}>Información de Cuenta</Text>
-          
+
           {renderInfoItem('Estado', userData?.estado === 'activo' ? 'Activo' : 'Inactivo', 'check-circle')}
           {renderInfoItem('Código de Referido', userData?.codigo_referido, 'qrcode')}
           {renderInfoItem('Código de Referido Padre', userData?.codigo_referido_padre, 'users')}
-          {renderInfoItem('Fecha de Registro', formatDate(userData?.created_at), 'calendar')}
+          {renderInfoItem('Fecha de Registro', formatDate(userData?.created_at), 'clock-o')}
           {renderInfoItem('Última Actualización', formatDate(userData?.updated_at), 'clock-o')}
-          
-          {/* Display additional vehicle info if available */}
+
           {(userData?.placa || userData?.marca_vehiculo || userData?.color) && (
             <>
               <Text style={styles.sectionTitle}>Información de Vehículo</Text>
@@ -293,8 +322,7 @@ export default function StepDiecisiete() {
               {renderInfoItem('Color', userData?.color, 'paint-brush')}
             </>
           )}
-          
-          {/* Display banking info if available */}
+
           {(userData?.banco || userData?.numero_cuenta) && (
             <>
               <Text style={styles.sectionTitle}>Información Bancaria</Text>
@@ -315,28 +343,33 @@ export default function StepDiecisiete() {
       >
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
-            <TouchableOpacity 
-              style={styles.modalCloseButton}
+            <TouchableOpacity
+              style={styles.modalClose}
               onPress={() => setModalVisible(false)}
             >
-              <FontAwesome name="close" size={24} color="#333" />
+              <Ionicons name="close" size={24} color="#888" />
             </TouchableOpacity>
-            
+
+            <View style={styles.modalIconCircle}>
+              <Ionicons name="create-outline" size={32} color="#fa6205" />
+            </View>
+
             <Text style={styles.modalTitle}>
               Editar {editingField && editableFields[editingField]?.label}
             </Text>
-            
+
             {editingField && (
               <View style={styles.inputContainer}>
-                <FontAwesome 
-                  name={editableFields[editingField].icon} 
-                  size={20} 
+                <FontAwesome
+                  name={editableFields[editingField].icon}
+                  size={18}
                   color="#fa6205"
                   style={styles.inputIcon}
                 />
                 <TextInput
                   style={styles.input}
                   placeholder={editableFields[editingField].placeholder}
+                  placeholderTextColor="#999"
                   value={editingValue}
                   onChangeText={setEditingValue}
                   keyboardType={editableFields[editingField].keyboardType}
@@ -344,21 +377,31 @@ export default function StepDiecisiete() {
                 />
               </View>
             )}
-            
-            <TouchableOpacity 
-              style={styles.updateButton}
+
+            <TouchableOpacity
+              style={[styles.saveBtn, updateLoading && styles.saveBtnDisabled]}
               onPress={updateUserField}
               disabled={updateLoading}
             >
               {updateLoading ? (
-                <ActivityIndicator size="small" color="#1C1C1E" />
+                <ActivityIndicator size="small" color="#FFF" />
               ) : (
-                <Text style={styles.updateButtonText}>Guardar Cambios</Text>
+                <Text style={styles.saveBtnText}>Guardar Cambios</Text>
               )}
             </TouchableOpacity>
           </View>
         </View>
       </Modal>
+
+      {/* Alert Modal */}
+      <AlertaModal
+        visible={alertVisible}
+        tipo={alertType}
+        mensaje={alertMsg}
+        onCerrar={() => setAlertVisible(false)}
+        onPrimary={alertPrimary}
+        primaryLabel={alertLabel}
+      />
     </SafeAreaView>
   );
 }
@@ -366,71 +409,101 @@ export default function StepDiecisiete() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: '#F5F0E8',
   },
   scrollContent: {
-    padding: 16,
+    padding: 20,
+    paddingBottom: 40,
+  },
+  centerContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#F5F0E8',
+    padding: 20,
   },
   header: {
     alignItems: 'center',
     marginBottom: 24,
-    marginTop: 70,
+    marginTop: 20,
   },
   profileImage: {
-    width: 150,
-    height: 150,
-    borderRadius: 75,
-    marginBottom: 12,
-    resizeMode: "contain",
-    backgroundColor: '#f5f5f5',
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    marginBottom: 14,
+    backgroundColor: '#EAE5DC',
+  },
+  avatarCircle: {
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    backgroundColor: '#fa6205',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 14,
+    borderWidth: 4,
+    borderColor: '#FFF0E5',
+  },
+  avatarText: {
+    fontSize: 40,
+    fontFamily: 'Montserrat_700Bold',
+    color: '#FFF',
   },
   userName: {
     fontSize: 22,
-    fontWeight: 'bold',
-    color: '#333',
+    fontFamily: 'Montserrat_700Bold',
+    color: '#1C1C1E',
   },
   userEmail: {
-    fontSize: 16,
-    color: '#666',
+    fontSize: 14,
+    fontFamily: 'Montserrat_400Regular',
+    color: '#888',
     marginTop: 4,
-    marginBottom: 8,
+    marginBottom: 10,
   },
   badge: {
-    backgroundColor: '#fa6205',
-    paddingHorizontal: 12,
-    paddingVertical: 4,
+    backgroundColor: '#FFF0E5',
+    paddingHorizontal: 16,
+    paddingVertical: 6,
     borderRadius: 20,
   },
   badgeText: {
-    color: '#1C1C1E',
-    fontWeight: 'bold',
+    color: '#fa6205',
+    fontSize: 13,
+    fontFamily: 'Montserrat_700Bold',
     textTransform: 'capitalize',
   },
-  infoSection: {
-    backgroundColor: '#f9f9f9',
-    borderRadius: 10,
-    padding: 16,
-    marginBottom: 16,
+  infoCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 20,
+    padding: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 12,
+    elevation: 3,
   },
   sectionTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginBottom: 12,
+    fontSize: 16,
+    fontFamily: 'Montserrat_700Bold',
     color: '#fa6205',
+    marginBottom: 14,
+    marginTop: 8,
     borderBottomWidth: 1,
-    borderBottomColor: '#e0e0e0',
-    paddingBottom: 8,
+    borderBottomColor: '#F0EDE8',
+    paddingBottom: 10,
   },
   infoItem: {
     flexDirection: 'row',
-    marginBottom: 16,
+    marginBottom: 14,
     alignItems: 'center',
   },
   infoIconContainer: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: '#fff5ee',
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    backgroundColor: '#FFF0E5',
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 12,
@@ -439,52 +512,48 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   infoLabel: {
-    fontSize: 14,
-    color: '#666',
+    fontSize: 12,
+    fontFamily: 'Montserrat_400Regular',
+    color: '#888',
   },
   infoValue: {
-    fontSize: 16,
-    color: '#333',
-    fontWeight: '500',
+    fontSize: 15,
+    fontFamily: 'Montserrat_500Medium',
+    color: '#1C1C1E',
+    marginTop: 2,
   },
   editButton: {
-    padding: 8,
-  },
-  loadingContainer: {
-    flex: 1,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: '#FFF0E5',
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#fff',
   },
   loadingText: {
     marginTop: 16,
-    fontSize: 16,
-    color: '#666',
-  },
-  errorContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#fff',
-    padding: 20,
+    fontSize: 15,
+    fontFamily: 'Montserrat_400Regular',
+    color: '#888',
   },
   errorText: {
     marginTop: 16,
-    fontSize: 16,
+    fontSize: 15,
+    fontFamily: 'Montserrat_400Regular',
     color: '#E53935',
     textAlign: 'center',
-    marginBottom: 16,
+    marginBottom: 20,
   },
-  retryButton: {
+  retryBtn: {
     backgroundColor: '#fa6205',
-    paddingVertical: 12,
-    paddingHorizontal: 24,
-    borderRadius: 8,
+    paddingVertical: 14,
+    paddingHorizontal: 28,
+    borderRadius: 30,
   },
-  retryText: {
-    color: '#1C1C1E',
-    fontSize: 16,
-    fontWeight: '500',
+  retryBtnText: {
+    color: '#FFF',
+    fontSize: 15,
+    fontFamily: 'Montserrat_700Bold',
   },
   modalOverlay: {
     flex: 1,
@@ -493,40 +562,54 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
   },
   modalContent: {
-    width: '80%',
-    backgroundColor: 'white',
-    borderRadius: 10,
-    padding: 20,
+    width: '82%',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 24,
+    padding: 28,
     alignItems: 'center',
     shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
-    elevation: 5,
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.15,
+    shadowRadius: 24,
+    elevation: 12,
   },
-  modalCloseButton: {
+  modalClose: {
     position: 'absolute',
-    top: 10,
-    right: 10,
-    padding: 10,
+    top: 14,
+    right: 14,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: '#F5F0E8',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalIconCircle: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    backgroundColor: '#FFF0E5',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 16,
   },
   modalTitle: {
     fontSize: 18,
-    fontWeight: 'bold',
+    fontFamily: 'Montserrat_700Bold',
+    color: '#1C1C1E',
     marginBottom: 20,
-    color: '#fa6205',
+    textAlign: 'center',
   },
   inputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#f5f5f5',
-    borderRadius: 8,
-    paddingHorizontal: 10,
+    backgroundColor: '#F5F0E8',
+    borderRadius: 14,
+    paddingHorizontal: 14,
     width: '100%',
     marginBottom: 20,
+    borderWidth: 1,
+    borderColor: '#EAE5DC',
   },
   inputIcon: {
     marginRight: 10,
@@ -534,20 +617,30 @@ const styles = StyleSheet.create({
   input: {
     flex: 1,
     height: 50,
-    fontSize: 16,
-    color: '#333',
+    fontSize: 15,
+    fontFamily: 'Montserrat_400Regular',
+    color: '#1C1C1E',
   },
-  updateButton: {
+  saveBtn: {
     backgroundColor: '#fa6205',
-    paddingVertical: 12,
-    paddingHorizontal: 24,
-    borderRadius: 8,
+    paddingVertical: 16,
+    borderRadius: 30,
     width: '100%',
     alignItems: 'center',
+    shadowColor: '#fa6205',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 6,
+    elevation: 4,
   },
-  updateButtonText: {
-    color: '#1C1C1E',
+  saveBtnDisabled: {
+    backgroundColor: '#C9C2B5',
+    shadowOpacity: 0,
+    elevation: 0,
+  },
+  saveBtnText: {
+    color: '#FFFFFF',
     fontSize: 16,
-    fontWeight: '500',
+    fontFamily: 'Montserrat_700Bold',
   },
 });

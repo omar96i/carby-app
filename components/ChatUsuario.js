@@ -1,10 +1,11 @@
 import React, { useState, useEffect, useRef } from "react";
-import { View, Text, TextInput, TouchableOpacity, FlatList, StyleSheet, Alert, ActivityIndicator, Image, KeyboardAvoidingView, Keyboard, Platform, TouchableWithoutFeedback } from "react-native";
+import { View, Text, TextInput, TouchableOpacity, FlatList, StyleSheet, ActivityIndicator, Image, KeyboardAvoidingView, Keyboard, Platform, TouchableWithoutFeedback } from "react-native";
 import { FontAwesome } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as ImagePicker from 'expo-image-picker';
 import { BASE_URL } from "../constants/url";
 import { useNotification } from "../context/NotificationContext";
+import AlertaModal from "../components/ErrorModal";
 
 const ChatUsuario = ({ tripId }) => {
   const [messages, setMessages] = useState([]);
@@ -12,6 +13,13 @@ const ChatUsuario = ({ tripId }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [isLoadingHistory, setIsLoadingHistory] = useState(false);
   const [keyboardVisible, setKeyboardVisible] = useState(false);
+  const [alertVisible, setAlertVisible] = useState(false);
+  const [alertData, setAlertData] = useState({ message: "", type: "info", onPrimary: null, primaryLabel: "" });
+
+  const showAlert = (message, type = "info", onPrimary = null, primaryLabel = null) => {
+    setAlertData({ message, type, onPrimary, primaryLabel });
+    setAlertVisible(true);
+  };
 
   useEffect(() => {
     const showSubscription = Keyboard.addListener("keyboardDidShow", () => {
@@ -205,7 +213,7 @@ const ChatUsuario = ({ tripId }) => {
       const userId = await AsyncStorage.getItem("userId");
 
       if (!token || !userId) {
-        Alert.alert("Error", "No se encontró la información de autenticación");
+        showAlert("No se encontró la información de autenticación", "error");
         return;
       }
 
@@ -244,7 +252,7 @@ const ChatUsuario = ({ tripId }) => {
 
       if (!response.ok) {
         console.error("Error sending message:", data);
-        Alert.alert("Error", "No se pudo enviar el mensaje");
+        showAlert("No se pudo enviar el mensaje", "error");
         setMessages(prev =>
           prev.map(msg =>
             msg.id === localMessage.id ? { ...msg, status: "error" } : msg
@@ -261,7 +269,7 @@ const ChatUsuario = ({ tripId }) => {
 
     } catch (error) {
       console.error("Error in sendMessage:", error);
-      Alert.alert("Error", "Ocurrió un error al enviar el mensaje");
+      showAlert("Ocurrió un error al enviar el mensaje", "error");
     } finally {
       setIsLoading(false);
     }
@@ -276,7 +284,7 @@ const ChatUsuario = ({ tripId }) => {
       const userId = await AsyncStorage.getItem("userId");
 
       if (!token || !userId) {
-        Alert.alert("Error", "No se encontró la información de autenticación");
+        showAlert("No se encontró la información de autenticación", "error");
         return;
       }
 
@@ -321,7 +329,7 @@ const ChatUsuario = ({ tripId }) => {
 
       if (!response.ok) {
         console.error("Error sending image:", data);
-        Alert.alert("Error", "No se pudo enviar la imagen");
+        showAlert("No se pudo enviar la imagen", "error");
         setMessages(prev =>
           prev.map(msg =>
             msg.id === localMessage.id ? { ...msg, status: "error" } : msg
@@ -338,7 +346,7 @@ const ChatUsuario = ({ tripId }) => {
 
     } catch (error) {
       console.error("Error in sendImage:", error);
-      Alert.alert("Error", "Ocurrió un error al enviar la imagen");
+      showAlert("Ocurrió un error al enviar la imagen", "error");
     } finally {
       setIsLoading(false);
     }
@@ -348,7 +356,7 @@ const ChatUsuario = ({ tripId }) => {
   const handlePickImageAndSend = async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (status !== 'granted') {
-      Alert.alert('Permiso requerido', 'Se necesita acceso a tu galería para enviar imágenes');
+      showAlert('Se necesita acceso a tu galería para enviar imágenes', "info");
       return;
     }
 
@@ -452,6 +460,14 @@ const ChatUsuario = ({ tripId }) => {
           </View>
         </View>
       </TouchableWithoutFeedback>
+      <AlertaModal
+        visible={alertVisible}
+        mensaje={alertData.message}
+        tipo={alertData.type}
+        onCerrar={() => setAlertVisible(false)}
+        onPrimary={alertData.onPrimary}
+        primaryLabel={alertData.primaryLabel}
+      />
     </KeyboardAvoidingView>
   );
 };

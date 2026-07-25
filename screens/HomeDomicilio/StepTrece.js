@@ -12,7 +12,8 @@ import {
   Alert,
   TextInput,
   Dimensions,
-  StatusBar
+  StatusBar,
+  Platform
 } from "react-native";
 import MapView, { Marker, Polyline, PROVIDER_GOOGLE } from "react-native-maps";
 import { MaterialIcons, FontAwesome, Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
@@ -418,20 +419,25 @@ export default function StepTrece({ route }) {
             <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{paddingBottom: 40}}>
                 
                 <View style={styles.userCard}>
-                    <Image 
-                        source={!imageError && tripData?.usuario?.foto_documento_file 
-                            ? { uri: `${(BASE_URL || "").toString().replace("/api", "")}storage/${tripData.usuario.foto_documento_file}` }
-                            : require("../../assets/images/Cliente.png")
-                        }
-                        onError={() => setImageError(true)}
-                        style={styles.userAvatar} 
-                    />
+                    {!imageError && tripData?.usuario?.foto_documento_file ? (
+                        <Image 
+                            source={{ uri: `${(BASE_URL || "").toString().replace("/api", "")}storage/${tripData.usuario.foto_documento_file}` }}
+                            onError={() => setImageError(true)}
+                            style={styles.userAvatar} 
+                        />
+                    ) : (
+                        <View style={styles.userAvatarFallback}>
+                            <Text style={styles.userAvatarInitial}>
+                                {(tripData?.usuario?.nombre_completo || "U").charAt(0).toUpperCase()}
+                            </Text>
+                        </View>
+                    )}
                     <View style={styles.userInfo}>
                         <Text style={styles.userName}>{tripData?.usuario?.nombre_completo || "Usuario"}</Text>
                         <Text style={styles.userPhone}>{tripData?.usuario?.numero_telefono || "Sin teléfono"}</Text>
-                        <TouchableOpacity style={[styles.ratingBtnSmall, hasRated && {backgroundColor: '#444'}]} onPress={() => setRatingModalVisible(true)} disabled={hasRated}>
-                            <FontAwesome name="star" size={12} color={hasRated ? "#AAA" : "#FFF"} />
-                            <Text style={[styles.ratingBtnText, hasRated && {color: '#AAA'}]}>{hasRated ? "Calificado" : "Calificar"}</Text>
+                        <TouchableOpacity style={[styles.ratingBtnSmall, hasRated && {backgroundColor: '#CCC'}]} onPress={() => setRatingModalVisible(true)} disabled={hasRated}>
+                            <FontAwesome name="star" size={11} color={hasRated ? "#FFF" : "#FFF"} />
+                            <Text style={styles.ratingBtnText}>{hasRated ? "Calificado" : "Calificar"}</Text>
                         </TouchableOpacity>
                     </View>
                 </View>
@@ -469,22 +475,22 @@ export default function StepTrece({ route }) {
                              <Text style={styles.notifyBtnText}>Llegué al Comercio</Text>
                          </TouchableOpacity>
                     )}
-                    <TouchableOpacity style={[styles.notifyBtn, tripData?.pedido_id && styles.notifyBtnSec]} onPress={() => handleNotifyArrival('usuario')}>
-                         <MaterialIcons name="person-pin-circle" size={20} color={tripData?.pedido_id ? "#fa6205" : "#000"} />
-                         <Text style={[styles.notifyBtnText, tripData?.pedido_id && {color: "#fa6205"}]}>Llegué donde Cliente</Text>
+                    <TouchableOpacity style={styles.notifyBtn} onPress={() => handleNotifyArrival('usuario')}>
+                         <MaterialIcons name="person-pin-circle" size={20} color="#FFF" />
+                         <Text style={styles.notifyBtnText}>Llegué donde Cliente</Text>
                     </TouchableOpacity>
                 </View>
 
                 <View style={styles.actionsGrid}>
-                    <TouchableOpacity style={[styles.actionItem, {backgroundColor: '#fa6205', borderWidth: 1, borderColor: '#fa6205'}]} onPress={() => setShowChat(true)}>
+                    <TouchableOpacity style={[styles.actionItem, styles.actionPrimary]} onPress={() => setShowChat(true)}>
                         <Ionicons name="chatbubble-ellipses" size={24} color="#FFF" />
-                        <Text style={[styles.actionText, {color: '#FFF'}]}>Chat</Text>
+                        <Text style={[styles.actionText, styles.actionTextPrimary]}>Chat</Text>
                     </TouchableOpacity>
 
                     {!paymentApproved ? (
-                        <TouchableOpacity style={[styles.actionItem, {borderColor: '#fa6205', borderWidth: 1}]} onPress={approvePayment} disabled={approvingPayment}>
+                        <TouchableOpacity style={[styles.actionItem, styles.actionSecondary]} onPress={approvePayment} disabled={approvingPayment}>
                             {approvingPayment ? <ActivityIndicator color="#fa6205"/> : <MaterialIcons name="attach-money" size={24} color="#fa6205" />}
-                            <Text style={[styles.actionText, {color: '#fa6205'}]}>Aprobar Pago</Text>
+                            <Text style={[styles.actionText, styles.actionTextSecondary]}>Aprobar Pago</Text>
                         </TouchableOpacity>
                     ) : (
                         <View style={[styles.actionItem, {backgroundColor: '#FFF5EE'}]}>
@@ -498,9 +504,9 @@ export default function StepTrece({ route }) {
                     <Text style={styles.warningText}>Verifica el pago en el chat antes de aprobar.</Text>
                 )}
 
-                    <TouchableOpacity style={styles.finishBtn} onPress={() => setModalVisible(true)}>
-                    <Text style={styles.finishBtnText}>FINALIZAR CARRERA</Text>
-                    <MaterialCommunityIcons name="flag-checkered" size={22} color="#FFF" />
+                <TouchableOpacity style={styles.finishBtn} onPress={() => setModalVisible(true)}>
+                    <Text style={styles.finishBtnText}>Finalizar Carrera</Text>
+                    <MaterialCommunityIcons name="flag-checkered" size={20} color="#FFF" />
                 </TouchableOpacity>
 
                 <TouchableOpacity style={styles.cancelLink} onPress={() => showAlert("Cancelar", "¿Confirmas cancelar?", "confirm", () => cancelarCarrera(tripData.id), "Sí, cancelar")}>
@@ -567,18 +573,15 @@ export default function StepTrece({ route }) {
              </View>
         </Modal>
 
-        <Modal transparent visible={infoModalVisible} animationType="fade">
-            <View style={styles.modalOverlay}>
-                <View style={styles.modalContent}>
-                    <FontAwesome name="info-circle" size={40} color="#fa6205" style={{marginBottom: 10}} />
-                    <Text style={styles.modalTitle}>Usuario Nuevo</Text>
-                    <Text style={styles.modalSub}>Recuerda solicitar el pago por adelantado si el usuario no tiene calificaciones previas.</Text>
-                    <TouchableOpacity style={styles.modalBtnVerify} onPress={closeInfoModal}>
-                        <Text style={{color: '#FFF', fontWeight: 'bold'}}>Entendido</Text>
-                    </TouchableOpacity>
-                </View>
-            </View>
-        </Modal>
+        <AlertaModal
+            visible={infoModalVisible}
+            titulo="Usuario Nuevo"
+            mensaje="Recuerda solicitar el pago por adelantado si el usuario no tiene calificaciones previas."
+            tipo="info"
+            onCerrar={closeInfoModal}
+            onPrimary={closeInfoModal}
+            primaryLabel="Entendido"
+        />
 
         {showChat && (
                 <View style={styles.chatOverlay}>
@@ -589,7 +592,7 @@ export default function StepTrece({ route }) {
                         </View>
                         <Text style={{color: '#FFF', fontSize: 18, fontFamily: 'Inter_700Bold'}}>Chat</Text>
                     </View>
-                    <TouchableOpacity onPress={() => setShowChat(false)}><Ionicons name="close" size={24} color="#FFF"/></TouchableOpacity>
+                    <TouchableOpacity style={{width: 36, height: 36, borderRadius: 18, backgroundColor: 'rgba(255,255,255,0.2)', justifyContent: 'center', alignItems: 'center'}} onPress={() => setShowChat(false)}><Ionicons name="close" size={22} color="#FFF"/></TouchableOpacity>
                 </View>
                 <ChatScreen tripId={activeId} />
             </View>
@@ -612,42 +615,47 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#F2F2F7" },
   loadingContainer: { flex: 1, backgroundColor: "#F2F2F7", justifyContent: 'center', alignItems: 'center' },
   loadingText: { color: '#fa6205', marginTop: 10, fontFamily: 'Inter_700Bold' },
-  mapContainer: { height: height * 0.45, width: '100%' },
+  mapContainer: { height: height * 0.42, width: '100%' },
   dotMarker: { width: 14, height: 14, borderRadius: 7, borderWidth: 2, borderColor: '#FFF' },
-  backButton: { position: 'absolute', top: 40, left: 20, backgroundColor: '#fa6205', padding: 8, borderRadius: 20, elevation: 5 },
-  floatNavButton: { position: 'absolute', bottom: 60, right: 20, backgroundColor: '#ECECEC', paddingVertical: 10, paddingHorizontal: 15, borderRadius: 25, flexDirection: 'row', alignItems: 'center', borderWidth: 1, borderColor: '#fa6205', elevation: 5 },
-  floatNavText: { color: '#1C1C1E', marginLeft: 8, fontFamily: 'Inter_700Bold' },
-  bottomSheet: { flex: 1, backgroundColor: '#F2F2F7', marginTop: -20, borderTopLeftRadius: 25, borderTopRightRadius: 25, paddingHorizontal: 20, paddingTop: 25 },
-  userCard: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#FFFFFF', padding: 15, borderRadius: 15, marginBottom: 15, borderWidth: 1, borderColor: '#DDD' },
+  backButton: { position: 'absolute', top: 40, left: 20, backgroundColor: '#fa6205', width: 36, height: 36, borderRadius: 18, justifyContent: 'center', alignItems: 'center', elevation: 5, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.15, shadowRadius: 4 },
+  floatNavButton: { position: 'absolute', bottom: 60, right: 20, backgroundColor: '#FFF', paddingVertical: 10, paddingHorizontal: 14, borderRadius: 22, flexDirection: 'row', alignItems: 'center', shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 6, elevation: 4 },
+  floatNavText: { color: '#1C1C1E', marginLeft: 6, fontFamily: 'Inter_700Bold', fontSize: 13 },
+  bottomSheet: { flex: 1, backgroundColor: '#F2F2F7', marginTop: -20, borderTopLeftRadius: 28, borderTopRightRadius: 28, paddingHorizontal: 20, paddingTop: 25 },
+  userCard: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#FFFFFF', padding: 16, borderRadius: 16, marginBottom: 14, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.06, shadowRadius: 8, elevation: 3 },
   userAvatar: { width: 50, height: 50, borderRadius: 25, borderWidth: 2, borderColor: '#fa6205' },
+  userAvatarFallback: { width: 50, height: 50, borderRadius: 25, backgroundColor: '#fa6205', justifyContent: 'center', alignItems: 'center' },
+  userAvatarInitial: { color: '#FFF', fontSize: 20, fontFamily: 'Inter_700Bold' },
   userInfo: { flex: 1, marginLeft: 15 },
   userName: { color: '#1C1C1E', fontSize: 16, fontFamily: 'Inter_700Bold' },
   userPhone: { color: '#888', fontSize: 12 },
-  ratingBtnSmall: { backgroundColor: '#fa6205', flexDirection: 'row', alignSelf: 'flex-start', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 10, marginTop: 5, alignItems: 'center' },
-  ratingBtnText: { color: '#FFF', fontSize: 10, fontWeight: 'bold', marginLeft: 4 },
-  routeCard: { backgroundColor: '#FFFFFF', padding: 15, borderRadius: 15, marginBottom: 15, borderWidth: 1, borderColor: '#DDD' },
+  ratingBtnSmall: { backgroundColor: '#fa6205', flexDirection: 'row', alignSelf: 'flex-start', paddingHorizontal: 10, paddingVertical: 5, borderRadius: 8, marginTop: 6, alignItems: 'center' },
+  ratingBtnText: { color: '#FFF', fontSize: 11, fontFamily: 'Inter_700Bold', marginLeft: 4 },
+  routeCard: { backgroundColor: '#FFFFFF', padding: 16, borderRadius: 16, marginBottom: 14, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.06, shadowRadius: 8, elevation: 3 },
   timelineRow: { flexDirection: 'row', alignItems: 'center' },
-  dot: { width: 8, height: 8, borderRadius: 4, marginRight: 10 },
-  line: { width: 2, height: 20, backgroundColor: '#ECECEC', marginLeft: 3, marginVertical: 2 },
-  addressText: { color: '#444', fontSize: 13, flex: 1 },
-  priceRow: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 15, borderTopWidth: 1, borderTopColor: '#333', paddingTop: 10 },
+  dot: { width: 10, height: 10, borderRadius: 5, marginRight: 12, borderWidth: 2, borderColor: '#FFF' },
+  line: { width: 2, height: 22, backgroundColor: '#E8E8E8', marginLeft: 4, marginVertical: 2 },
+  addressText: { color: '#333', fontSize: 13, fontFamily: 'Inter_500Medium', flex: 1, lineHeight: 18 },
+  priceRow: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 14, borderTopWidth: 1, borderTopColor: '#F0F0F0', paddingTop: 12 },
   priceLabel: { color: '#888' },
   priceValue: { color: '#fa6205', fontSize: 18, fontFamily: 'Inter_700Bold' },
-  infoBox: { backgroundColor: 'rgba(255,255,255,0.05)', padding: 10, borderRadius: 10, marginBottom: 15 },
-  infoLabel: { color: '#fa6205', fontSize: 12, fontWeight: 'bold' },
-  infoText: { color: '#333', fontSize: 12, fontStyle: 'italic' },
-  notifyContainer: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 15 },
-  notifyBtn: { flex: 1, backgroundColor: '#fa6205', padding: 12, borderRadius: 12, alignItems: 'center', justifyContent: 'center', marginHorizontal: 2, flexDirection: 'row' },
-  notifyBtnSec: { backgroundColor: '#ECECEC', borderWidth: 1, borderColor: '#fa6205' },
-  notifyBtnText: { color: '#FFF', fontWeight: 'bold', fontSize: 12, marginLeft: 5 },
-  actionsGrid: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 10 },
-  actionItem: { width: '48%', backgroundColor: '#F0F0F0', padding: 10, borderRadius: 12, alignItems: 'center', justifyContent: 'center', minHeight: 70 },
-  actionText: { color: '#1C1C1E', fontSize: 12, marginTop: 5, textAlign: 'center', fontWeight: '500' },
-  warningText: { color: '#888', fontSize: 10, textAlign: 'center', marginBottom: 15 },
-  finishBtn: { backgroundColor: '#fa6205', flexDirection: 'row', justifyContent: 'center', alignItems: 'center', paddingVertical: 16, borderRadius: 15, marginBottom: 10, elevation: 4 },
+  infoBox: { backgroundColor: '#FFF8F0', padding: 12, borderRadius: 12, marginBottom: 14, borderLeftWidth: 3, borderLeftColor: '#fa6205' },
+  infoLabel: { color: '#fa6205', fontSize: 12, fontFamily: 'Inter_700Bold', marginBottom: 2 },
+  infoText: { color: '#555', fontSize: 13, lineHeight: 18 },
+  notifyContainer: { flexDirection: 'row', marginBottom: 16, gap: 10 },
+  notifyBtn: { flex: 1, backgroundColor: '#fa6205', paddingVertical: 14, paddingHorizontal: 10, borderRadius: 14, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', shadowColor: '#fa6205', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.15, shadowRadius: 4, elevation: 3 },
+  notifyBtnText: { color: '#FFF', fontFamily: 'Inter_700Bold', fontSize: 12, marginLeft: 6 },
+  actionsGrid: { flexDirection: 'row', marginBottom: 12, gap: 10 },
+  actionItem: { flex: 1, padding: 12, borderRadius: 14, alignItems: 'center', justifyContent: 'center', minHeight: 72 },
+  actionPrimary: { backgroundColor: '#fa6205' },
+  actionTextPrimary: { color: '#FFF' },
+  actionSecondary: { backgroundColor: '#FFF', borderWidth: 1.5, borderColor: '#fa6205' },
+  actionTextSecondary: { color: '#fa6205' },
+  actionText: { fontSize: 13, marginTop: 6, textAlign: 'center', fontFamily: 'Inter_700Bold' },
+  warningText: { color: '#888', fontSize: 11, textAlign: 'center', marginBottom: 14, lineHeight: 16, paddingHorizontal: 10 },
+  finishBtn: { backgroundColor: '#fa6205', flexDirection: 'row', justifyContent: 'center', alignItems: 'center', paddingVertical: 16, borderRadius: 16, marginBottom: 10, shadowColor: '#fa6205', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.2, shadowRadius: 8, elevation: 5 },
   finishBtnText: { color: '#FFF', fontSize: 16, fontFamily: 'Inter_700Bold', marginRight: 8 },
-  cancelLink: { alignItems: 'center', padding: 10 },
-  cancelLinkText: { color: '#FF4757', textDecorationLine: 'underline' },
+  cancelLink: { alignItems: 'center', paddingVertical: 14, paddingHorizontal: 20, alignSelf: 'center' },
+  cancelLinkText: { color: '#999', fontSize: 13, fontFamily: 'Inter_500Medium' },
   modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.85)', justifyContent: 'center', alignItems: 'center' },
   modalContent: { width: '85%', backgroundColor: '#FFFFFF', padding: 20, borderRadius: 20, borderWidth: 1, borderColor: '#DDD', alignItems: 'center' },
   modalTitle: { color: '#1C1C1E', fontSize: 20, fontFamily: 'Inter_700Bold', marginBottom: 5 },
@@ -657,6 +665,6 @@ const styles = StyleSheet.create({
   modalBtnsRow: { flexDirection: 'row', width: '100%', justifyContent: 'space-between', marginTop: 10 },
   modalBtnCancel: { flex: 1, padding: 12, alignItems: 'center', backgroundColor: '#ECECEC', borderRadius: 10, marginRight: 5 },
   modalBtnVerify: { flex: 1, padding: 12, alignItems: 'center', backgroundColor: '#fa6205', borderRadius: 10, marginLeft: 5 },
-  chatOverlay: { position: 'absolute', top: 0, bottom: 0, left: 0, right: 0, backgroundColor: '#F2F2F7', zIndex: 100 },
-  chatHeaderOverlay: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 15, paddingTop: 40, backgroundColor: '#fa6205' }
+  chatOverlay: { position: 'absolute', top: 0, bottom: 0, left: 0, right: 0, backgroundColor: '#F5F0E8', zIndex: 100 },
+  chatHeaderOverlay: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 14, paddingTop: Platform.OS === "android" ? 40 : 14, backgroundColor: '#fa6205', shadowColor: "#000", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 6, elevation: 4 }
 });

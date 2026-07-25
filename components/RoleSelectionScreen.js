@@ -31,7 +31,7 @@ const RoleSelectionScreen = ({ onSelectUser, onSelectProvider }) => {
             >
                 <FontAwesome5 name="store-alt" size={32} color="#fa6205" style={styles.icon} />
                 <View style={styles.textContainer}>
-                    <Text style={styles.roleTitle}>Trabajar con CarBy</Text>
+                    <Text style={styles.roleTitle}>TRABAJAR CON CARBY</Text>
                     <Text style={styles.roleDescription}>Ingresa si eres comercio, delivery o particular.</Text>
                 </View>
             </TouchableOpacity>

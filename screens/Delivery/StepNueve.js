@@ -10,7 +10,6 @@ import {
   ActivityIndicator,
   ScrollView,
   KeyboardAvoidingView,
-  Alert,
   StatusBar,
   Dimensions
 } from "react-native";
@@ -27,6 +26,7 @@ import React, { useState, useEffect, useRef } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { BASE_URL } from "../../constants/url";
 import ChatUsuario from "../../components/ChatUsuario";
+import AlertaModal from "../../components/ErrorModal";
 import Modal from "react-native-modal";
 import MapView, { Marker, Polyline, PROVIDER_GOOGLE } from "react-native-maps"; // Importamos MapView
 
@@ -71,6 +71,13 @@ export default function StepNueve({ route }) {
   const [driverLocation, setDriverLocation] = useState(null);
   const [pickupCoords, setPickupCoords] = useState(null);
   const [destCoords, setDestCoords] = useState(null);
+  const [alertVisible, setAlertVisible] = useState(false);
+  const [alertData, setAlertData] = useState({ message: "", type: "info", onPrimary: null, primaryLabel: "" });
+
+  const showAlert = (message, type = "info", onPrimary = null, primaryLabel = null) => {
+    setAlertData({ message, type, onPrimary, primaryLabel });
+    setAlertVisible(true);
+  };
 
   const navigation = useNavigation();
 
@@ -214,7 +221,7 @@ export default function StepNueve({ route }) {
       const data = await response.json();
       setRiderQrData(data);
       setQrModalVisible(true);
-    } catch (error) { Alert.alert("Error", "No se pudo obtener el QR"); }
+    } catch (error) { showAlert("No se pudo obtener el QR", "error"); }
     finally { setLoadingQr(false); }
   };
 
@@ -227,8 +234,8 @@ export default function StepNueve({ route }) {
         body: JSON.stringify({ estado: 'cancelado' }),
       });
       navigation.goBack();
-      Alert.alert("Cancelado", "Servicio cancelado.");
-    } catch (e) { Alert.alert("Error", "No se pudo cancelar"); }
+      showAlert("Servicio cancelado.", "success");
+    } catch (e) { showAlert("No se pudo cancelar", "error"); }
   };
 
   if (!fontsLoaded) return null;
@@ -438,7 +445,7 @@ export default function StepNueve({ route }) {
             </View>
 
             {/* Cancelar */}
-            <TouchableOpacity style={styles.cancelButton} onPress={() => Alert.alert("Cancelar", "¿Seguro?", [{ text: "No" }, { text: "Sí", onPress: () => cancelarCarrera(tripData.id), style: 'destructive' }])}>
+            <TouchableOpacity style={styles.cancelButton} onPress={() => showAlert("¿Seguro?", "confirm", () => cancelarCarrera(tripData.id), "Sí, cancelar")}>
               <Text style={styles.cancelButtonText}>Cancelar Servicio</Text>
             </TouchableOpacity>
 
@@ -481,6 +488,14 @@ export default function StepNueve({ route }) {
         </View>
       </Modal>
 
+      <AlertaModal
+        visible={alertVisible}
+        mensaje={alertData.message}
+        tipo={alertData.type}
+        onCerrar={() => setAlertVisible(false)}
+        onPrimary={alertData.onPrimary}
+        primaryLabel={alertData.primaryLabel}
+      />
     </SafeAreaView>
   );
 }

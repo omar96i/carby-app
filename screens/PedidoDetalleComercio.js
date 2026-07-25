@@ -657,9 +657,9 @@ const PedidoDetalleComercio = () => {
       <Modal visible={showChatModal} animationType="slide" onRequestClose={() => setShowChatModal(false)}>
          <SafeAreaView style={styles.chatContainer}>
             <View style={styles.chatHeader}>
-                <TouchableOpacity onPress={() => setShowChatModal(false)}><Ionicons name="arrow-back" size={28} color="#FFF"/></TouchableOpacity>
+                <TouchableOpacity onPress={() => setShowChatModal(false)} style={styles.chatBackBtn}><Ionicons name="arrow-back" size={22} color="#FFF"/></TouchableOpacity>
                 <Text style={styles.chatHeaderTitle}>Chat Pedido #{pedido.id}</Text>
-                <View style={{width: 28}} />
+                <View style={{width: 36}} />
             </View>
             
             <ScrollView 
@@ -821,32 +821,33 @@ const styles = StyleSheet.create({
   cancelText: { color: "#FF4757", fontFamily: "MontserratSemiBold", fontSize: 14 },
 
   // CHAT STYLES
-  chatContainer: { flex: 1, backgroundColor: "#FFF" },
-  chatHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 15, backgroundColor: "#fa6205", paddingTop: 40 },
-  chatHeaderTitle: { color: "#FFF", fontFamily: "MontserratBold", fontSize: 16 },
-  msgList: { flex: 1 },
+  chatContainer: { flex: 1, backgroundColor: "#F5F0E8" },
+  chatHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingVertical: 14, backgroundColor: "#fa6205", paddingTop: Platform.OS === "android" ? 10 : 4, shadowColor: "#000", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 6, elevation: 4 },
+  chatHeaderTitle: { color: "#FFF", fontFamily: "MontserratBold", fontSize: 17 },
+  chatBackBtn: { width: 36, height: 36, borderRadius: 18, backgroundColor: "rgba(255,255,255,0.2)", justifyContent: 'center', alignItems: 'center' },
+  msgList: { flex: 1, backgroundColor: "#F5F0E8" },
   emptyChat: { color: "#555", textAlign: 'center', marginTop: 50, fontFamily: "MontserratMedium" },
   
-  msgContainer: { maxWidth: '75%', borderRadius: 12, padding: 10, marginBottom: 10 },
-  msgMy: { backgroundColor: "#fa6205", alignSelf: 'flex-end', borderBottomRightRadius: 2 },
-  msgOther: { backgroundColor: "#FFF", alignSelf: 'flex-start', borderBottomLeftRadius: 2, borderWidth: 1, borderColor: "#E0E0E0" },
-  msgSender: { color: "#fa6205", fontSize: 10, fontFamily: "MontserratBold", marginBottom: 2 },
-  msgText: { fontSize: 14, fontFamily: "MontserratRegular" },
+  msgContainer: { maxWidth: '78%', borderRadius: 20, padding: 12, paddingBottom: 8, marginBottom: 10 },
+  msgMy: { backgroundColor: "#fa6205", alignSelf: 'flex-end', borderBottomRightRadius: 4, shadowColor: "#fa6205", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.15, shadowRadius: 6, elevation: 3 },
+  msgOther: { backgroundColor: "#FFF", alignSelf: 'flex-start', borderBottomLeftRadius: 4, shadowColor: "#000", shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.08, shadowRadius: 4, elevation: 2 },
+  msgSender: { color: "#fa6205", fontSize: 11, fontFamily: "MontserratBold", marginBottom: 4 },
+  msgText: { fontSize: 15, fontFamily: "MontserratRegular", lineHeight: 20 },
   msgTextMy: { color: "#FFF" },
   msgTextOther: { color: "#1C1C1E" },
-  msgTime: { fontSize: 10, alignSelf: 'flex-end', marginTop: 4 },
+  msgTime: { fontSize: 11, alignSelf: 'flex-end', marginTop: 4 },
   msgTimeMy: { color: "rgba(255,255,255,0.7)" },
-  msgTimeOther: { color: "#999" },
-  msgImage: { width: 150, height: 150, borderRadius: 8, marginTop: 5 },
+  msgTimeOther: { color: "#aaa" },
+  msgImage: { width: 200, height: 150, borderRadius: 12, marginTop: 6 },
 
-  inputArea: { backgroundColor: "#FFF", padding: 10, borderTopWidth: 1, borderTopColor: "#E0E0E0" },
-  imgPreviewBox: { flexDirection: 'row', marginBottom: 10 },
-  imgPreview: { width: 60, height: 60, borderRadius: 8 },
+  inputArea: { backgroundColor: "#FFF", paddingHorizontal: 12, paddingVertical: 10, borderTopWidth: 1, borderTopColor: "#EAE5DC" },
+  imgPreviewBox: { flexDirection: 'row', marginBottom: 8 },
+  imgPreview: { width: 60, height: 60, borderRadius: 12 },
   delImgBtn: { position: 'absolute', top: -5, left: 50, backgroundColor: '#fa6205', borderRadius: 10, padding: 2 },
   inputRow: { flexDirection: 'row', alignItems: 'center' },
-  attachBtn: { padding: 8 },
-  textInput: { flex: 1, backgroundColor: "#F0F0F0", color: "#1C1C1E", borderRadius: 20, paddingHorizontal: 15, paddingVertical: 8, marginHorizontal: 8, maxHeight: 80 },
-  sendBtn: { backgroundColor: "#fa6205", width: 40, height: 40, borderRadius: 20, justifyContent: 'center', alignItems: 'center' },
+  attachBtn: { width: 40, height: 40, borderRadius: 20, backgroundColor: "#FFF0E5", justifyContent: 'center', alignItems: 'center' },
+  textInput: { flex: 1, backgroundColor: "#F5F0E8", color: "#1C1C1E", borderRadius: 22, paddingHorizontal: 16, paddingVertical: 10, marginHorizontal: 8, maxHeight: 80, fontFamily: "MontserratRegular", fontSize: 15 },
+  sendBtn: { backgroundColor: "#fa6205", width: 40, height: 40, borderRadius: 20, justifyContent: 'center', alignItems: 'center', shadowColor: "#fa6205", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.3, shadowRadius: 4, elevation: 4 },
 });
 
 export default PedidoDetalleComercio;

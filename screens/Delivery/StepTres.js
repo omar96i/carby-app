@@ -1,5 +1,6 @@
 import { useNavigation } from "@react-navigation/native";
-import { View, Text, StyleSheet, TouchableOpacity, SafeAreaView, TextInput, ScrollView, Alert } from "react-native";
+import { View, Text, StyleSheet, TouchableOpacity, SafeAreaView, TextInput, ScrollView } from "react-native";
+import AlertaModal from "../../components/ErrorModal";
 import { FontAwesome } from "@expo/vector-icons";
 import Icon from "react-native-vector-icons/FontAwesome";
 import IconMC from "react-native-vector-icons/AntDesign";
@@ -26,6 +27,12 @@ export default function StepTres() {
   const [serviceName, setServiceName] = useState(""); // Nuevo estado para el nombre del servicio
   const [serviceId, setServiceId] = useState("");
   const [distance, setDistance] = useState("");
+  const [alertVisible, setAlertVisible] = useState(false);
+  const [alertData, setAlertData] = useState({ message: "", type: "info", onPrimary: null, primaryLabel: "" });
+  const showAlert = (message, type = "info", onPrimary = null, primaryLabel = null) => {
+    setAlertData({ message, type, onPrimary, primaryLabel });
+    setAlertVisible(true);
+  };
   const navigation = useNavigation();
 
   useEffect(() => {
@@ -118,9 +125,9 @@ const sendTripData = async () => {
         const errorMessages = Object.entries(data.errors)
           .map(([key, msgs]) => `${key}: ${msgs.join(', ')}`)
           .join('\n');
-        Alert.alert("Error", `Problema al crear el viaje:\n${errorMessages}`);
+        showAlert(`Problema al crear el viaje:\n${errorMessages}`, "error");
       } else {
-        Alert.alert("Error", data.message || "Hubo un problema al crear el viaje.");
+        showAlert(data.message || "Hubo un problema al crear el viaje.", "error");
       }
       return;
     }
@@ -131,7 +138,7 @@ const sendTripData = async () => {
     
     if (!tripId) {
       console.error("No trip ID found in API response");
-      Alert.alert("Error", "No se pudo obtener el ID del viaje");
+      showAlert("No se pudo obtener el ID del viaje", "error");
       return;
     }
     
@@ -153,7 +160,7 @@ const sendTripData = async () => {
       });
     } else {
       // For cash payments, continue with the original flow
-      Alert.alert("Éxito", "El viaje ha sido creado exitosamente.");
+      showAlert("El viaje ha sido creado exitosamente.", "success");
       
       // Navigate with explicit tripId parameter
       navigation.navigate("StepCuatro", { 
@@ -168,14 +175,14 @@ const sendTripData = async () => {
     console.log("Navigating with tripId:", tripId);
   } catch (error) {
     console.error("Error sending trip data:", error);
-    Alert.alert("Error", "Hubo un problema al crear el viaje.");
+    showAlert("Hubo un problema al crear el viaje.", "error");
   }
 };
 
 // ...existing code...
 const handlePayment = () => {
   if (!metodoPago) {
-    Alert.alert("Error", "Por favor seleccione un método de pago");
+    showAlert("Por favor seleccione un método de pago", "error");
     return;
   }
   sendTripData();
@@ -377,6 +384,14 @@ const handlePayment = () => {
           </View>
         </View>
       </View>
+      <AlertaModal
+        visible={alertVisible}
+        mensaje={alertData.message}
+        tipo={alertData.type}
+        onCerrar={() => setAlertVisible(false)}
+        onPrimary={alertData.onPrimary}
+        primaryLabel={alertData.primaryLabel}
+      />
     </ScrollView>
   );
 }

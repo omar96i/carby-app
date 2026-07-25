@@ -9,7 +9,6 @@ import {
   StatusBar,
   Image,
   ActivityIndicator,
-  Alert,
   Modal,
   Dimensions,
   Platform
@@ -25,6 +24,7 @@ import { useFonts } from "expo-font";
 import { useNavigation, useFocusEffect } from "@react-navigation/native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { BASE_URL } from "../../constants/url";
+import AlertaModal from "../../components/ErrorModal";
 
 const { width } = Dimensions.get("window");
 
@@ -36,6 +36,13 @@ const Cart = () => {
   const [establishmentId, setEstablishmentId] = useState(null);
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [isUserDemo, setIsUserDemo] = useState(false);
+  const [alertVisible, setAlertVisible] = useState(false);
+  const [alertData, setAlertData] = useState({ message: "", type: "info", onPrimary: null, primaryLabel: "" });
+
+  const showAlert = (message, type = "info", onPrimary = null, primaryLabel = null) => {
+    setAlertData({ message, type, onPrimary, primaryLabel });
+    setAlertVisible(true);
+  };
 
   // Load the fonts
   const [fontsLoaded] = useFonts({
@@ -308,7 +315,7 @@ const Cart = () => {
                     establishmentName: restaurantName,
                     onPaymentComplete: clearCart,
                   });
-                } catch (error) { Alert.alert("Error", "No se pudo procesar"); }
+                } catch (error) { showAlert("No se pudo procesar", "error"); }
               }}
             >
               <View style={{flexDirection:'row', alignItems:'center'}}>
@@ -358,6 +365,14 @@ const Cart = () => {
           </View>
         </View>
       </Modal>
+      <AlertaModal
+        visible={alertVisible}
+        mensaje={alertData.message}
+        tipo={alertData.type}
+        onCerrar={() => setAlertVisible(false)}
+        onPrimary={alertData.onPrimary}
+        primaryLabel={alertData.primaryLabel}
+      />
     </View>
   );
 };

@@ -1,11 +1,12 @@
 import React, { useState, useEffect, useRef } from "react";
-import { View, StyleSheet, ActivityIndicator, Text, Alert, Linking, Platform, TouchableOpacity } from "react-native";
+import { View, StyleSheet, ActivityIndicator, Text, Linking, Platform, TouchableOpacity } from "react-native";
 import MapView, { PROVIDER_GOOGLE, Marker, Circle } from "react-native-maps";
 import * as Location from "expo-location";
 import { isDevice } from 'expo-device';
 import { FontAwesome } from "@expo/vector-icons";
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { BASE_URL } from "../constants/url";
+import AlertaModal from "../components/ErrorModal";
 
 const MapComponent = () => {
   const [location, setLocation] = useState(null);
@@ -17,6 +18,13 @@ const MapComponent = () => {
   const mapRef = useRef(null);
   const [userId, setUserId] = useState(null);
   const locationSendIntervalRef = useRef(null);
+  const [alertVisible, setAlertVisible] = useState(false);
+  const [alertData, setAlertData] = useState({ message: "", type: "info", onPrimary: null, primaryLabel: "" });
+
+  const showAlert = (message, type = "info", onPrimary = null, primaryLabel = null) => {
+    setAlertData({ message, type, onPrimary, primaryLabel });
+    setAlertVisible(true);
+  };
 
   // Obtener el ID del usuario al cargar el componente
   useEffect(() => {
@@ -109,11 +117,7 @@ const MapComponent = () => {
         const isGPSEnabled = await Location.hasServicesEnabledAsync();
         if (!isGPSEnabled) {
           if (!checkMounted || isMounted) {
-            Alert.alert(
-              "GPS Desactivado",
-              "Por favor, activa el GPS para obtener tu ubicación actual.",
-              [{ text: "Abrir configuración", onPress: () => Linking.openSettings() }]
-            );
+            showAlert("Por favor, activa el GPS para obtener tu ubicación actual.", "error", () => Linking.openSettings(), "Abrir configuración");
             setError("Los servicios de ubicación están desactivados.");
             setLoading(false);
           }
@@ -125,11 +129,7 @@ const MapComponent = () => {
       const { status } = await Location.requestForegroundPermissionsAsync();
       if (status !== "granted") {
         if (!checkMounted || isMounted) {
-          Alert.alert(
-            "Permiso Requerido", 
-            "Esta app necesita acceso a tu ubicación para funcionar correctamente.",
-            [{ text: "Abrir configuración", onPress: () => Linking.openSettings() }]
-          );
+          showAlert("Esta app necesita acceso a tu ubicación para funcionar correctamente.", "error", () => Linking.openSettings(), "Abrir configuración");
           setError("Permiso de ubicación denegado.");
           setLoading(false);
         }
@@ -292,7 +292,7 @@ const MapComponent = () => {
     getCurrentLocation(true).then(success => {
       if (isMounted) {
         if (!success) {
-          Alert.alert("Error", "No se pudo actualizar tu ubicación. Verifica que el GPS esté activado.");
+          showAlert("No se pudo actualizar tu ubicación. Verifica que el GPS esté activado.", "error");
         }
         setLoading(false);
       }
@@ -450,6 +450,14 @@ const MapComponent = () => {
   return (
     <View style={styles.mapContainer}>
       {renderMap()}
+      <AlertaModal
+        visible={alertVisible}
+        mensaje={alertData.message}
+        tipo={alertData.type}
+        onCerrar={() => setAlertVisible(false)}
+        onPrimary={alertData.onPrimary}
+        primaryLabel={alertData.primaryLabel}
+      />
     </View>
   );
 };

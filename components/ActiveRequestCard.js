@@ -1,11 +1,19 @@
-import React from "react";
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Alert, ActivityIndicator } from "react-native";
+import React, { useState } from "react";
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, ActivityIndicator } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { BASE_URL } from "../constants/url";
+import AlertaModal from "../components/ErrorModal";
 
 const ActiveRequestCard = ({ tripData, onAccept, onReject, disabled }) => {
   const navigation = useNavigation();
+  const [alertVisible, setAlertVisible] = useState(false);
+  const [alertData, setAlertData] = useState({ message: "", type: "info", onPrimary: null, primaryLabel: "" });
+
+  const showAlert = (message, type = "info", onPrimary = null, primaryLabel = null) => {
+    setAlertData({ message, type, onPrimary, primaryLabel });
+    setAlertVisible(true);
+  };
 
   // Log para ver toda la data que llega
   console.log("📋 Datos completos de tripData:", JSON.stringify(tripData, null, 2));
@@ -41,12 +49,12 @@ const ActiveRequestCard = ({ tripData, onAccept, onReject, disabled }) => {
       const token = await AsyncStorage.getItem("userToken");
 
       if (!driverId && newStatus === "aceptado") {
-        Alert.alert("Error", "No se pudo identificar al conductor");
+        showAlert("No se pudo identificar al conductor", "error");
         return false;
       }
 
       if (!token) {
-        Alert.alert("Error", "No se encontró el token de autenticación");
+        showAlert("No se encontró el token de autenticación", "error");
         return false;
       }
 
@@ -83,16 +91,12 @@ const ActiveRequestCard = ({ tripData, onAccept, onReject, disabled }) => {
       console.log("Respuesta de actualización:", responseData);
 
       // Mostrar mensaje de éxito
-      Alert.alert(
-        "Carrera Aceptada",
-        "Has aceptado exitosamente esta carrera.",
-        [{ text: "OK" }]
-      );
+      showAlert("Has aceptado exitosamente esta carrera.", "success");
 
       return true;
     } catch (error) {
       console.error("Error al actualizar el estado de la carrera:", error);
-      Alert.alert("Error", "No se pudo actualizar el estado de la carrera");
+      showAlert("No se pudo actualizar el estado de la carrera", "error");
       return false;
     }
   };
@@ -237,31 +241,19 @@ const ActiveRequestCard = ({ tripData, onAccept, onReject, disabled }) => {
   const handleAccept = async () => {
     // Verificar si está deshabilitado por tener una carrera activa
     if (disabled) {
-      Alert.alert(
-        "Carrera en Curso",
-        "Ya tienes una carrera activa. Completa o cancela tu carrera actual antes de aceptar una nueva.",
-        [{ text: "Entendido" }]
-      );
+      showAlert("Ya tienes una carrera activa. Completa o cancela tu carrera actual antes de aceptar una nueva.", "info");
       return;
     }
 
     // Verificación adicional en tiempo real
     const hasActiveRide = await checkActiveRide();
     if (hasActiveRide) {
-      Alert.alert(
-        "Carrera en Curso",
-        "Ya tienes una carrera activa. Completa o cancela tu carrera actual antes de aceptar una nueva.",
-        [{ text: "Entendido" }]
-      );
+      showAlert("Ya tienes una carrera activa. Completa o cancela tu carrera actual antes de aceptar una nueva.", "info");
       return;
     }
 
     // Mostrar indicador de espera
-    Alert.alert(
-      "Aceptando Carrera",
-      "Espera mientras procesamos tu solicitud...",
-      []
-    );
+    showAlert("Espera mientras procesamos tu solicitud...", "info");
 
     const success = await updateTripStatus(id, "aceptado");
 
@@ -283,7 +275,7 @@ const ActiveRequestCard = ({ tripData, onAccept, onReject, disabled }) => {
       if (onReject) onReject(id);
 
       // Show confirmation
-      Alert.alert("Viaje ignorado", "Este viaje no se mostrará nuevamente");
+      showAlert("Este viaje no se mostrará nuevamente", "info");
     }
   };
 
@@ -524,6 +516,14 @@ const ActiveRequestCard = ({ tripData, onAccept, onReject, disabled }) => {
           </TouchableOpacity>
         </View>
       </View>
+      <AlertaModal
+        visible={alertVisible}
+        mensaje={alertData.message}
+        tipo={alertData.type}
+        onCerrar={() => setAlertVisible(false)}
+        onPrimary={alertData.onPrimary}
+        primaryLabel={alertData.primaryLabel}
+      />
     </View>
   );
 };

@@ -9,12 +9,12 @@ import {
   SafeAreaView,
   KeyboardAvoidingView,
   Platform,
-  Alert,
 } from 'react-native';
 import { FontAwesome } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { BASE_URL } from '../constants/url';
 import { useNotification } from "../context/NotificationContext";
+import AlertaModal from "../components/ErrorModal";
 
 export default function ChatComercioRider({ route, navigation }) {
   const { pedidoId, conductorId, carreraId, conductorNombre, comercioId, tipo } = route.params;
@@ -24,6 +24,13 @@ export default function ChatComercioRider({ route, navigation }) {
   const [cargando, setCargando] = useState(true);
   const [enviando, setEnviando] = useState(false);
   const [userInfo, setUserInfo] = useState(null);
+  const [alertVisible, setAlertVisible] = useState(false);
+  const [alertData, setAlertData] = useState({ message: "", type: "info", onPrimary: null, primaryLabel: "" });
+
+  const showAlert = (message, type = "info", onPrimary = null, primaryLabel = null) => {
+    setAlertData({ message, type, onPrimary, primaryLabel });
+    setAlertVisible(true);
+  };
   const flatListRef = useRef(null);
 
 
@@ -73,7 +80,7 @@ export default function ChatComercioRider({ route, navigation }) {
     try {
       const token = await AsyncStorage.getItem('userToken');
       if (!token) {
-        Alert.alert('Error', 'No se encontró token de autenticación');
+        showAlert('No se encontró token de autenticación', "error");
         return;
       }
 
@@ -117,7 +124,7 @@ export default function ChatComercioRider({ route, navigation }) {
       console.log('pedidoId:', pedidoId);
       console.log('comercioId:', comercioId);
       console.log('conductorId:', conductorId);
-      Alert.alert('Error', 'Faltan datos necesarios para enviar el mensaje');
+      showAlert('Faltan datos necesarios para enviar el mensaje', "error");
       return;
     }
 
@@ -125,7 +132,7 @@ export default function ChatComercioRider({ route, navigation }) {
     try {
       const token = await AsyncStorage.getItem('userToken');
       if (!token) {
-        Alert.alert('Error', 'No se encontró token de autenticación');
+        showAlert('No se encontró token de autenticación', "error");
         return;
       }
 
@@ -227,7 +234,7 @@ export default function ChatComercioRider({ route, navigation }) {
           )
         );
 
-        Alert.alert('Error', errorMessage);
+        showAlert(errorMessage, "error");
         return;
       }
 
@@ -287,7 +294,7 @@ export default function ChatComercioRider({ route, navigation }) {
         errorMessage = error.message;
       }
 
-      Alert.alert('Error', errorMessage);
+      showAlert(errorMessage, "error");
     } finally {
       console.log('🔄 Finalizando envío de mensaje');
       setEnviando(false);
@@ -426,6 +433,14 @@ export default function ChatComercioRider({ route, navigation }) {
           </TouchableOpacity>
         </View>
       </KeyboardAvoidingView>
+      <AlertaModal
+        visible={alertVisible}
+        mensaje={alertData.message}
+        tipo={alertData.type}
+        onCerrar={() => setAlertVisible(false)}
+        onPrimary={alertData.onPrimary}
+        primaryLabel={alertData.primaryLabel}
+      />
     </SafeAreaView>
   );
 }

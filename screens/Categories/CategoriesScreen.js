@@ -343,9 +343,8 @@ export default function CategoriesScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#FFFFFF",
-    
-    padding: 10,
+    paddingHorizontal: 14,
+    marginBottom: 10,
   },
   title: {
     fontSize: 24,
@@ -381,9 +380,14 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    paddingVertical: 10,
-    borderRadius: 10,
+    paddingVertical: 14,
+    borderRadius: 25,
     marginVertical: 5,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 3,
   },
   createButtonText: {
     color: "#FFF",

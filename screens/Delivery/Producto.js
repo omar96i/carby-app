@@ -7,7 +7,6 @@ import {
   TouchableOpacity,
   ScrollView,
   Modal,
-  Alert,
   Dimensions,
   StatusBar,
   Platform
@@ -22,6 +21,7 @@ import {
 import { useFonts } from "expo-font";
 import { useNavigation, useRoute, useFocusEffect } from "@react-navigation/native";
 import { BASE_URL } from "../../constants/url";
+import AlertaModal from "../../components/ErrorModal";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const { width, height } = Dimensions.get("window");
@@ -42,6 +42,13 @@ const Producto = () => {
   const [addedProductName, setAddedProductName] = useState("");
   const [adicionales, setAdicionales] = useState([]);
   const [selectedAdicionales, setSelectedAdicionales] = useState([]);
+  const [alertVisible, setAlertVisible] = useState(false);
+  const [alertData, setAlertData] = useState({ message: "", type: "info", onPrimary: null, primaryLabel: "" });
+
+  const showAlert = (message, type = "info", onPrimary = null, primaryLabel = null) => {
+    setAlertData({ message, type, onPrimary, primaryLabel });
+    setAlertVisible(true);
+  };
 
   const [fontsLoaded] = useFonts({
     Montserrat_400Regular,
@@ -148,7 +155,7 @@ const Producto = () => {
       setAddedQuantity(quantity);
       setAddedProductName(product.nombre || "Producto");
       setModalVisible(true);
-    } catch (error) { Alert.alert("Error", "No se pudo agregar al carrito"); }
+    } catch (error) { showAlert("No se pudo agregar al carrito", "error"); }
   };
 
   if (!fontsLoaded) return null;
@@ -307,6 +314,14 @@ const Producto = () => {
           </View>
         </View>
       </Modal>
+      <AlertaModal
+        visible={alertVisible}
+        mensaje={alertData.message}
+        tipo={alertData.type}
+        onCerrar={() => setAlertVisible(false)}
+        onPrimary={alertData.onPrimary}
+        primaryLabel={alertData.primaryLabel}
+      />
     </View>
   );
 };

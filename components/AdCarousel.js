@@ -199,12 +199,13 @@ const AdCarousel = () => {
         ref={carouselRef}
         data={ads || []}
         renderItem={renderItem}
-        width={width * 0.9}
-        height={200}
+        width={width - 30}
+        height={120}
         onSnapToItem={(index) => setActiveSlide(index)}
         autoPlay={ads && ads.length > 1}
         autoPlayInterval={30000}
-        mode="parallax"
+        style={{ width: '100%' }}
+        mode="default"
         loop={ads && ads.length > 1}
       />
       
@@ -229,26 +230,18 @@ const AdCarousel = () => {
 const styles = StyleSheet.create({
   container: {
     marginVertical: 20,
-    alignItems: 'center',
+    width: '100%',
   },  slide: {
+    height: 120,
+    width: width - 30,
+    justifyContent: 'center',
+    alignItems: 'center',
     borderRadius: 15,
     overflow: 'hidden',
-    height: 200,
-    width: width * 0.9, // Use explicit width value based on screen width
-    backgroundColor: '#F0F0F0', // Fallback background color
-    // Add shadow
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-    elevation: 5,
-    justifyContent: 'center', // Center content in slide
-    alignItems: 'center', // Center content in slide
   },
   adImage: {
-    width: width * 0.9, // Use explicit width value
-    height: 200,
-    borderRadius: 15,
+    width: width - 30,
+    height: 120,
   },  loadingContainer: {
     position: 'absolute',
     top: 0,
@@ -262,21 +255,14 @@ const styles = StyleSheet.create({
     borderRadius: 15,
   },
   emptyBanner: {
-    width: '90%',
-    height: 200,
+    width: '100%',
+    height: 140,
     justifyContent: 'center',
     alignItems: 'center',
-    borderRadius: 15,
     backgroundColor: '#F0F0F0',
     padding: 15,
     marginVertical: 20,
-    alignSelf: 'center',
-    // Add shadow
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-    elevation: 5,
+    borderRadius: 15,
   },
   title: {
     color: '#1C1C1E',

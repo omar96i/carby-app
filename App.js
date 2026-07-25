@@ -4,18 +4,26 @@ import { StatusBar } from "expo-status-bar";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { useLoadedAssets } from "./hooks/useLoadedAssets";
 import Navigation from "./navigation";
-import { useColorScheme, Alert, Platform, Linking } from "react-native";
-import { useEffect } from "react";
+import { useColorScheme, Platform, Linking } from "react-native";
+import { useState, useEffect } from "react";
 import * as Updates from "expo-updates";
 import { NotificationProvider } from "./context/NotificationContext";
 import { AlertProvider } from "./context/AlertContext";
 import Constants from 'expo-constants';
 import { BASE_URL, configureUrl } from "./constants/url";
+import AlertaModal from "./components/ErrorModal";
 
 
 export default function App() {
   const isLoadingComplete = useLoadedAssets();
   const colorScheme = useColorScheme();
+  const [alertVisible, setAlertVisible] = useState(false);
+  const [alertData, setAlertData] = useState({ message: "", type: "info", onPrimary: null, primaryLabel: "" });
+
+  const showAlert = (message, type = "info", onPrimary = null, primaryLabel = null) => {
+    setAlertData({ message, type, onPrimary, primaryLabel });
+    setAlertVisible(true);
+  };
 
   useEffect(() => {
     // Carga la configuración de país al iniciar la app
@@ -33,24 +41,19 @@ export default function App() {
       try {
         const update = await Updates.checkForUpdateAsync();
         if (update.isAvailable) {
-          Alert.alert(
-            "Actualización requerida",
+          showAlert(
             "Hay una nueva versión disponible. Es necesario actualizar para continuar.",
-            [
-              {
-                text: "Actualizar ahora",
-                onPress: async () => {
-                  try {
-                    await Updates.fetchUpdateAsync();
-                    Updates.reloadAsync();
-                  } catch (e) {
-                    Alert.alert("Error", "No se pudo actualizar la aplicación.");
-                    console.log("Error actualizando OTA:", e);
-                  }
-                }
+            "confirm",
+            async () => {
+              try {
+                await Updates.fetchUpdateAsync();
+                Updates.reloadAsync();
+              } catch (e) {
+                showAlert("No se pudo actualizar la aplicación.", "error");
+                console.log("Error actualizando OTA:", e);
               }
-            ],
-            { cancelable: false }
+            },
+            "Actualizar ahora"
           );
         }
       } catch (e) {
@@ -65,22 +68,17 @@ export default function App() {
         if (data.version) {
           const versionBackend = data.version;
           if (versionLocal !== versionBackend) {
-            Alert.alert(
-              "Actualización disponible",
+            showAlert(
               "Hay una nueva versión en la tienda. Debes actualizar para continuar.",
-              [
-                {
-                  text: "Ir a la tienda",
-                  onPress: () => {
-                    if (Platform.OS === "android") {
-                      Linking.openURL("https://play.google.com/store/apps/details?id=com.deloreanstudios.yaridersapp"); // ← Cambia esto
-                    } else {
-                      Linking.openURL("https://apps.apple.com/pe/app/yariders/id6745890453"); // ← Cambia esto
-                    }
-                  }
+              "confirm",
+              () => {
+                if (Platform.OS === "android") {
+                  Linking.openURL("https://play.google.com/store/apps/details?id=com.deloreanstudios.yaridersapp"); // ← Cambia esto
+                } else {
+                  Linking.openURL("https://apps.apple.com/pe/app/yariders/id6745890453"); // ← Cambia esto
                 }
-              ],
-              { cancelable: false }
+              },
+              "Ir a la tienda"
             );
           } else {
             console.log("Las versiones estan bien")
@@ -105,6 +103,14 @@ export default function App() {
             <StatusBar />
           </AlertProvider>
         </NotificationProvider>
+        <AlertaModal
+          visible={alertVisible}
+          mensaje={alertData.message}
+          tipo={alertData.type}
+          onCerrar={() => setAlertVisible(false)}
+          onPrimary={alertData.onPrimary}
+          primaryLabel={alertData.primaryLabel}
+        />
       </SafeAreaProvider>
     );
   }

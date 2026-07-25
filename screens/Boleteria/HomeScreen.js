@@ -12,7 +12,6 @@ import {
     Modal,
     ScrollView,
     TextInput,
-    Alert,
     SafeAreaView
 } from 'react-native';
 import Icon from 'react-native-vector-icons/Feather';
@@ -25,6 +24,7 @@ import { Feather } from '@expo/vector-icons';
 import * as Linking from 'expo-linking';
 import { useIsFocused } from '@react-navigation/native';
 import { API_SECRET_TOKEN } from '../../utils/token'
+import AlertaModal from "../../components/ErrorModal";
 export default function BoleteriaScreen({ navigation }) {
     const [fechaSeleccionada, setFechaSeleccionada] = useState("");
     const [mostrarFiltros, setMostrarFiltros] = useState(false);
@@ -54,6 +54,13 @@ export default function BoleteriaScreen({ navigation }) {
         cantidad: ''
     });
     const isFocused = useIsFocused();
+    const [alertVisible, setAlertVisible] = useState(false);
+    const [alertData, setAlertData] = useState({ message: "", type: "info", onPrimary: null, primaryLabel: "" });
+
+    const showAlert = (message, type = "info", onPrimary = null, primaryLabel = null) => {
+        setAlertData({ message, type, onPrimary, primaryLabel });
+        setAlertVisible(true);
+    };
 
     const Selector = ({ label, value, options, onSelect }) => {
         const showActionSheet = () => {
@@ -132,17 +139,14 @@ export default function BoleteriaScreen({ navigation }) {
 
             // 2. Verificar que se haya seleccionado una localidad
             if (!localidadSeleccionada) {
-                Alert.alert('Selección Requerida', 'Por favor, ingresa una cantidad en una localidad.');
+                showAlert('Por favor, ingresa una cantidad en una localidad.', 'info');
                 return;
             }
 
             // 3. Verificar que la cantidad sea válida
             const cantidadNumerica = parseInt(compra.cantidad || '0', 10);
             if (cantidadNumerica <= 0) {
-                Alert.alert(
-                    'Cantidad Inválida',
-                    'Por favor, ingresa una cantidad mayor a cero.'
-                );
+                showAlert('Por favor, ingresa una cantidad mayor a cero.', 'info');
                 return;
             }
 
@@ -153,10 +157,7 @@ export default function BoleteriaScreen({ navigation }) {
             setModalVisible(false)
             navigation.navigate('PaymentScreenBoleteria', datosParaPago);
         } else {
-            Alert.alert(
-                'La venta no esta disponible',
-                'La venta de boleteria no esta disponible en el momento'
-            );
+            showAlert('La venta de boleteria no esta disponible en el momento', 'info');
         }
 
     };
@@ -342,7 +343,7 @@ export default function BoleteriaScreen({ navigation }) {
             }
         } catch (error) {
             console.error('Error al obtener eventos:', error);
-            Alert.alert("Error", "No se pudieron cargar los eventos.");
+            showAlert("No se pudieron cargar los eventos.", "error");
         }
     }, []);
 
@@ -625,6 +626,14 @@ export default function BoleteriaScreen({ navigation }) {
                     </View>
                 </View>
             </Modal>
+            <AlertaModal
+              visible={alertVisible}
+              mensaje={alertData.message}
+              tipo={alertData.type}
+              onCerrar={() => setAlertVisible(false)}
+              onPrimary={alertData.onPrimary}
+              primaryLabel={alertData.primaryLabel}
+            />
         </View>
     );
 }

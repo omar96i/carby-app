@@ -10,7 +10,6 @@ import {
     TouchableOpacity,
     Image,
     RefreshControl,
-    Alert,
     Modal, // Importamos el componente Modal
 } from 'react-native';
 import { useIsFocused } from '@react-navigation/native';
@@ -18,6 +17,7 @@ import { API_SECRET_TOKEN } from '../../utils/token';
 import { Feather } from '@expo/vector-icons';
 import { BASE_URL } from "../../constants/url";
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import AlertaModal from "../../components/ErrorModal";
 
 // --- Componente BoletaCard Rediseñado ---
 const BoletaCard = ({ item, onShowQr }) => {
@@ -76,6 +76,13 @@ const MisComprasScreen = ({ navigation }) => {
     const [selectedBoletaForQr, setSelectedBoletaForQr] = useState(null);
     const isFocused = useIsFocused();
     const [cliente, setCliente] = useState(null);
+    const [alertVisible, setAlertVisible] = useState(false);
+    const [alertData, setAlertData] = useState({ message: "", type: "info", onPrimary: null, primaryLabel: "" });
+
+    const showAlert = (message, type = "info", onPrimary = null, primaryLabel = null) => {
+        setAlertData({ message, type, onPrimary, primaryLabel });
+        setAlertVisible(true);
+    };
 
     // 2. NUEVA FUNCIÓN que orquesta todo el proceso
     const loadClientAndFetchBoletas = useCallback(async () => {
@@ -120,7 +127,7 @@ const MisComprasScreen = ({ navigation }) => {
 
         } catch (error) {
             console.error("Error en el proceso de carga:", error);
-            Alert.alert("Error", "No se pudo cargar tu información. Por favor, intenta de nuevo.");
+            showAlert("No se pudo cargar tu información. Por favor, intenta de nuevo.", "error");
         } finally {
             setIsLoading(false);
         }
@@ -143,7 +150,7 @@ const MisComprasScreen = ({ navigation }) => {
             }
         } catch (error) {
             console.error(error);
-            Alert.alert("Error", "No se pudieron cargar tus compras.");
+            showAlert("No se pudieron cargar tus compras.", "error");
         }
     }, []);
 
@@ -166,10 +173,10 @@ const MisComprasScreen = ({ navigation }) => {
             const response = await fetch(url, { method: 'GET', headers: { 'Accept': 'application/json', 'X-API-KEY': API_SECRET_TOKEN } });
             if (!response.ok) throw new Error("Error en la validación");
             await fetchBoletas();
-            Alert.alert("Éxito", "Tus compras han sido sincronizadas.");
+            showAlert("Tus compras han sido sincronizadas.", "success");
         } catch (error) {
             console.error("Error al sincronizar:", error);
-            Alert.alert("Error", "No se pudo completar la sincronización.");
+            showAlert("No se pudo completar la sincronización.", "error");
         } finally {
             setIsSyncing(false);
         }
@@ -248,6 +255,14 @@ const MisComprasScreen = ({ navigation }) => {
                     </View>
                 </View>
             </Modal>
+            <AlertaModal
+              visible={alertVisible}
+              mensaje={alertData.message}
+              tipo={alertData.type}
+              onCerrar={() => setAlertVisible(false)}
+              onPrimary={alertData.onPrimary}
+              primaryLabel={alertData.primaryLabel}
+            />
         </SafeAreaView>
     );
 };

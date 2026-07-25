@@ -89,10 +89,7 @@ const Wallet = () => {
         const { status } =
           await ImagePicker.requestMediaLibraryPermissionsAsync();
         if (status !== "granted") {
-          Alert.alert(
-            "Se requieren permisos",
-            "Necesitamos permisos para acceder a tu galería de fotos"
-          );
+          showAlert("Se requieren permisos", "Necesitamos permisos para acceder a tu galería de fotos", "info");
         }
       }
     })();
@@ -250,10 +247,7 @@ const Wallet = () => {
       }
     } catch (error) {
       console.error("Error al obtener suscripciones:", error);
-      Alert.alert(
-        "Error",
-        "No se pudieron cargar los paquetes disponibles. Por favor, intenta de nuevo más tarde."
-      );
+      showAlert("Error", "No se pudieron cargar los paquetes disponibles. Por favor, intenta de nuevo más tarde.", "error");
       // Establecer paquetes por defecto para no mostrar una pantalla vacía
       setPackages([
         {
@@ -294,10 +288,7 @@ const Wallet = () => {
       }
     } catch (error) {
       console.error("Error al seleccionar imagen:", error);
-      Alert.alert(
-        "Error",
-        "No se pudo seleccionar la imagen. Intente nuevamente."
-      );
+      showAlert("Error", "No se pudo seleccionar la imagen. Intente nuevamente.", "error");
     }
   };
 
@@ -307,10 +298,7 @@ const Wallet = () => {
       const { status } = await ImagePicker.requestCameraPermissionsAsync();
 
       if (status !== "granted") {
-        Alert.alert(
-          "Se requieren permisos",
-          "Necesitamos permisos para acceder a tu cámara"
-        );
+        showAlert("Se requieren permisos", "Necesitamos permisos para acceder a tu cámara", "info");
         return;
       }
 
@@ -526,10 +514,7 @@ const Wallet = () => {
       }
     } catch (error) {
       console.error("Error enviando comprobante:", error);
-      Alert.alert(
-        "Error",
-        "No se pudo enviar el comprobante de pago. Intente nuevamente."
-      );
+      showAlert("Error", "No se pudo enviar el comprobante de pago. Intente nuevamente.", "error");
       setLoading(false);
     }
   };
@@ -749,18 +734,10 @@ const Wallet = () => {
       fetchActiveSubscriptions();
       fetchUserStoreStatus();
 
-      Alert.alert(
-        "¡Felicitaciones!",
-        "Has activado tu suscripción gratuita de bienvenida exitosamente. Ya puedes comenzar a vender.",
-        [{ text: "¡Genial!", onPress: () => setFreeSubscriptionModal(false) }]
-      );
+      showAlert("¡Felicitaciones!", "Has activado tu suscripción gratuita de bienvenida exitosamente. Ya puedes comenzar a vender.", "success", () => setFreeSubscriptionModal(false));
     } catch (error) {
       console.error("Error activando suscripción gratuita:", error);
-      Alert.alert(
-        "Error",
-        error.message ||
-          "No se pudo activar la suscripción gratuita. Intenta nuevamente."
-      );
+      showAlert("Error", error.message || "No se pudo activar la suscripción gratuita. Intenta nuevamente.", "error");
     } finally {
       setLoadingFreeClaim(false);
     }

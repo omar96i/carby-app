@@ -12,12 +12,12 @@ import {
     StatusBar,
     ImageBackground,
     Linking,
-    Alert, // Para mostrar mensajes
 } from 'react-native';
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage'; // Para leer el token
 import { useNavigation, useFocusEffect } from "@react-navigation/native";
 import { getMyBalance } from '../../utils/api';
+import AlertaModal from "../../components/ErrorModal";
 
 
 // --- CONFIGURACIÓN ---
@@ -114,6 +114,13 @@ const CajaMisterioScreen = () => {
 
     const [balance, setBalance] = useState(0);
     const [refreshing, setRefreshing] = useState(false); // Para el pull-to-refresh
+    const [alertVisible, setAlertVisible] = useState(false);
+    const [alertData, setAlertData] = useState({ message: "", type: "info", onPrimary: null, primaryLabel: "" });
+
+    const showAlert = (message, type = "info", onPrimary = null, primaryLabel = null) => {
+        setAlertData({ message, type, onPrimary, primaryLabel });
+        setAlertVisible(true);
+    };
 
     // Función para obtener los datos, envuelta en useCallback para optimización
     const fetchBalance = useCallback(async () => {
@@ -169,7 +176,7 @@ const CajaMisterioScreen = () => {
                 }
             } catch (error) {
                 console.error("Error al cargar datos:", error);
-                Alert.alert("Error", "No se pudieron cargar los datos. Inténtalo de nuevo.");
+                showAlert("No se pudieron cargar los datos. Inténtalo de nuevo.", "error");
             } finally {
                 setLoading(false);
             }
@@ -179,21 +186,21 @@ const CajaMisterioScreen = () => {
 
     const handleSubscribe = async (box) => {
         if (subscribedBoxId) {
-            Alert.alert("Acción no permitida", "Ya estás suscrito a una caja misteriosa.");
+            showAlert("Ya estás suscrito a una caja misteriosa.", "error");
             return;
         }
         setSubscribing(true);
         try {
             await api.post(`/mystery-boxes/${box.id}/subscribe`);
             setSubscribedBoxId(box.id);
-            Alert.alert("¡Éxito!", `Te has suscrito a: ${box.nombre}`);
+            showAlert(`Te has suscrito a: ${box.nombre}`, "success");
             setSelectedBox({ ...box, isSubscribed: true });
         } catch (error) {
             const message = error.response?.data?.message || "No se pudo completar la suscripción.";
             if (error.response?.status === 401) {
-                Alert.alert("Acción requerida", "Necesitas iniciar sesión para suscribirte.");
+                showAlert("Necesitas iniciar sesión para suscribirte.", "info");
             } else {
-                Alert.alert("Error", message);
+                showAlert(message, "error");
             }
         } finally {
             setSubscribing(false);
@@ -211,7 +218,7 @@ const CajaMisterioScreen = () => {
     };
 
     const handleJoinMeeting = (url) => {
-        Linking.openURL(url).catch(err => Alert.alert("Error", "No se pudo abrir el enlace."));
+        Linking.openURL(url).catch(err => showAlert("No se pudo abrir el enlace.", "error"));
     };
 
     if (loading) {
@@ -319,6 +326,14 @@ const CajaMisterioScreen = () => {
                     </View>
                 </TouchableOpacity>
             </Modal>
+            <AlertaModal
+              visible={alertVisible}
+              mensaje={alertData.message}
+              tipo={alertData.type}
+              onCerrar={() => setAlertVisible(false)}
+              onPrimary={alertData.onPrimary}
+              primaryLabel={alertData.primaryLabel}
+            />
         </SafeAreaView>
     );
 };

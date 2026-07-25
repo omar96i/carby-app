@@ -8,7 +8,6 @@ import {
   ActivityIndicator,
   SafeAreaView,
   Platform,
-  Alert,
 } from "react-native";
 import {
   useFonts,
@@ -20,6 +19,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import MapComponent from "../../components/MapComponent";
 import ToggleSwitch from "../../components/ToggleSwitch";
 import ActiveRequestCard from "../../components/ActiveRequestCard";
+import AlertaModal from "../../components/ErrorModal";
 
 export default function VistaDos() {
   const navigation = useNavigation();
@@ -27,6 +27,14 @@ export default function VistaDos() {
   const [isEnabled, setIsEnabled] = useState(false);
   const [tripsData, setTripsData] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [alertVisible, setAlertVisible] = useState(false);
+  const [alertData, setAlertData] = useState({ message: "", type: "info", onPrimary: null, primaryLabel: "" });
+
+  const showAlert = (message, type = "info", onPrimary = null, primaryLabel = null) => {
+    setAlertData({ message, type, onPrimary, primaryLabel });
+    setAlertVisible(true);
+  };
+
   const scrollViewRef = useRef(null);
 
   // Handle data received from the ToggleSwitch component
@@ -158,10 +166,9 @@ export default function VistaDos() {
 
           // Show test notification if trips were found
           if (filteredData.length > 0) {
-            Alert.alert(
-              "Viajes Encontrados",
+            showAlert(
               `Se encontraron ${filteredData.length} viajes disponibles.`,
-              [{ text: "OK" }]
+              "info"
             );
           }
         } else {
@@ -192,19 +199,11 @@ export default function VistaDos() {
     console.log("Request accepted for trip:", tripId);
 
     // Show confirmation before navigating
-    Alert.alert(
-      "Viaje Aceptado",
+    showAlert(
       "Estás aceptando este viaje. ¿Deseas continuar?",
-      [
-        {
-          text: "Cancelar",
-          style: "cancel",
-        },
-        {
-          text: "Continuar",
-          onPress: () => navigation.navigate("StepTrece", { tripId }),
-        },
-      ]
+      "confirm",
+      () => navigation.navigate("StepTrece", { tripId }),
+      "Continuar"
     );
   };
 
@@ -334,6 +333,14 @@ YaRiders disponibles"
           )}
         </ScrollView>
       </View>
+        <AlertaModal
+          visible={alertVisible}
+          mensaje={alertData.message}
+          tipo={alertData.type}
+          onCerrar={() => setAlertVisible(false)}
+          onPrimary={alertData.onPrimary}
+          primaryLabel={alertData.primaryLabel}
+        />
     </SafeAreaView>
   );
 }

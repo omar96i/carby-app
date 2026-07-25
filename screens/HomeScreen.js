@@ -9,7 +9,6 @@ import {
   TouchableOpacity,
   FlatList,
   ActivityIndicator,
-  Alert,
   Modal,
   ScrollView,
   Dimensions,
@@ -32,6 +31,7 @@ import MapView, { Marker, PROVIDER_GOOGLE } from "react-native-maps";
 import { BASE_URL } from "../constants/url";
 import AdCarousel from "../components/AdCarousel";
 import FloatingActionMenu from '../components/FloatingActionMenu';
+import AlertaModal from "../components/ErrorModal";
 
 const { width, height } = Dimensions.get("window");
 const ASPECT_RATIO = width / height;
@@ -130,6 +130,13 @@ export default function HomeScreen() {
   const [userRating, setUserRating] = useState(null);
   // Nuevo estado para el modal de políticas de pago
   const [showPaymentPolicyModal, setShowPaymentPolicyModal] = useState(false);
+  const [alertVisible, setAlertVisible] = useState(false);
+  const [alertData, setAlertData] = useState({ message: "", type: "info", onPrimary: null, primaryLabel: "" });
+
+  const showAlert = (message, type = "info", onPrimary = null, primaryLabel = null) => {
+    setAlertData({ message, type, onPrimary, primaryLabel });
+    setAlertVisible(true);
+  };
 
   const navigation = useNavigation();
   const locationUpdateTimerRef = useRef(null);
@@ -313,9 +320,9 @@ export default function HomeScreen() {
 
         if (status !== "granted" || !isMountedRef.current) {
           if (isMountedRef.current) {
-            Alert.alert(
-              "Permiso denegado",
-              "Necesitamos permisos de ubicación para mostrar categorías cercanas."
+            showAlert(
+              "Necesitamos permisos de ubicación para mostrar categorías cercanas.",
+              "info"
             );
             setUpdatingLocation(false);
           }
@@ -808,9 +815,9 @@ export default function HomeScreen() {
     } catch (error) {
       console.error("Error al obtener ubicación:", error);
       if (isMountedRef.current) {
-        Alert.alert(
-          "Error",
-          "No pudimos obtener tu ubicación. Intenta de nuevo más tarde."
+        showAlert(
+          "No pudimos obtener tu ubicación. Intenta de nuevo más tarde.",
+          "error"
         );
       }
     } finally {
@@ -881,7 +888,7 @@ export default function HomeScreen() {
   const confirmAndSaveLocation = useCallback(async () => {
     try {
       if (!markerCoordinates || !isMountedRef.current) {
-        Alert.alert("Error", "No se ha seleccionado una ubicación");
+        showAlert("No se ha seleccionado una ubicación", "error");
         return;
       }
 
@@ -907,9 +914,9 @@ export default function HomeScreen() {
         ]);
 
         if (isMountedRef.current) {
-          Alert.alert(
-            "Ubicación actualizada",
-            "Tu ubicación ha sido actualizada y enviada correctamente."
+          showAlert(
+            "Tu ubicación ha sido actualizada y enviada correctamente.",
+            "success"
           );
         }
       }
@@ -920,9 +927,9 @@ export default function HomeScreen() {
     } catch (error) {
       console.error("Error al guardar ubicación:", error);
       if (isMountedRef.current) {
-        Alert.alert(
-          "Error",
-          "No pudimos guardar tu ubicación. Intenta de nuevo más tarde."
+        showAlert(
+          "No pudimos guardar tu ubicación. Intenta de nuevo más tarde.",
+          "error"
         );
       }
     } finally {
@@ -1159,8 +1166,6 @@ export default function HomeScreen() {
               </TouchableOpacity>
             </View>
 
-            <AdCarousel />
-
             <Modal
               animationType="fade"
               transparent={true}
@@ -1282,6 +1287,7 @@ export default function HomeScreen() {
                 </View>
               </View>
             </Modal>
+            <AdCarousel />
             {/* Categories Section */}
             <View>
               <View style={styles.sectionHeader}>
@@ -1354,9 +1360,9 @@ export default function HomeScreen() {
                   No hay categorías de servicios
                 </Text>
                )}
-             </View>
-           </View>
-        </ScrollView>
+              </View>
+            </View>
+         </ScrollView>
       )}
 
       {/* Modal con el mapa para seleccionar ubicación */}
@@ -1448,6 +1454,14 @@ export default function HomeScreen() {
           </View>
         </View>
       </Modal>
+        <AlertaModal
+          visible={alertVisible}
+          mensaje={alertData.message}
+          tipo={alertData.type}
+          onCerrar={() => setAlertVisible(false)}
+          onPrimary={alertData.onPrimary}
+          primaryLabel={alertData.primaryLabel}
+        />
     </SafeAreaView>
   );
 }
@@ -1733,7 +1747,7 @@ const styles = StyleSheet.create({
     borderRadius: 16,
   },
   heroSection: {
-    marginHorizontal: 15,
+    marginHorizontal: 0,
     marginBottom: 4,
     marginTop: 20,
   },

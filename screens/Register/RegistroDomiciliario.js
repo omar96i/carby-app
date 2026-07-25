@@ -270,6 +270,23 @@ export default function RegisterRiderScreen() {
         showAlert({ title: "Faltan datos", message: "Completa todos los campos personales.", type: "error" });
         return false;
       }
+      if (nombre_completo.length < 3) {
+        showAlert({ title: "Nombre inválido", message: "El nombre debe tener al menos 3 caracteres.", type: "error" });
+        return false;
+      }
+      if (numero_documento.length < 5) {
+        showAlert({ title: "Documento inválido", message: "El número de documento debe tener al menos 5 dígitos.", type: "error" });
+        return false;
+      }
+      if (numero_telefono.length < 7) {
+        showAlert({ title: "Teléfono inválido", message: "El número de teléfono no es válido.", type: "error" });
+        return false;
+      }
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(email)) {
+        showAlert({ title: "Email inválido", message: "Ingresa un correo electrónico válido.", type: "error" });
+        return false;
+      }
     }
     if (step === 3) {
       if (!departamento || !ciudad || !direccion_residencia) {
@@ -288,6 +305,10 @@ export default function RegisterRiderScreen() {
     if (step === 4) {
       if (!placa || !marca_vehiculo || !linea || !color) {
         showAlert({ title: "Faltan datos", message: "Completa los datos del vehículo.", type: "error" });
+        return false;
+      }
+      if (placa.length < 5) {
+        showAlert({ title: "Placa inválida", message: "La placa debe tener al menos 5 caracteres.", type: "error" });
         return false;
       }
     }
@@ -485,10 +506,10 @@ export default function RegisterRiderScreen() {
               </TouchableOpacity>
 
               <Text style={styles.label}>Número de documento</Text>
-              <TextInput style={styles.inputDark} placeholder="Ej. 123456789" placeholderTextColor="#777" keyboardType="numeric" value={formData.numero_documento} onChangeText={(v) => handleInputChange('numero_documento', v)} />
+              <TextInput style={styles.inputDark} placeholder="Ej. 123456789" placeholderTextColor="#777" keyboardType="numeric" value={formData.numero_documento} onChangeText={(v) => handleInputChange('numero_documento', v)} maxLength={10} />
 
               <Text style={styles.label}>Nombre completo</Text>
-              <TextInput style={styles.inputDark} placeholder="Ej. Juan Pérez" placeholderTextColor="#777" value={formData.nombre_completo} onChangeText={(v) => handleInputChange('nombre_completo', v)} />
+              <TextInput style={styles.inputDark} placeholder="Ej. Juan Pérez" placeholderTextColor="#777" value={formData.nombre_completo} onChangeText={(v) => handleInputChange('nombre_completo', v)} maxLength={50} />
 
               <Text style={styles.label}>Fecha de nacimiento</Text>
               <TouchableOpacity style={styles.inputDark} onPress={() => setShowDateModal(true)}>
@@ -506,10 +527,11 @@ export default function RegisterRiderScreen() {
                 keyboardType="phone-pad" 
                 value={formData.numero_telefono} 
                 onChangeText={(v) => handleInputChange('numero_telefono', v)} 
+                maxLength={10}
               />
 
               <Text style={styles.label}>Correo electrónico</Text>
-              <TextInput style={styles.inputDark} placeholder="ejemplo@email.com" placeholderTextColor="#777" keyboardType="email-address" autoCapitalize="none" value={formData.email} onChangeText={(v) => handleInputChange('email', v)} />
+              <TextInput style={styles.inputDark} placeholder="ejemplo@email.com" placeholderTextColor="#777" keyboardType="email-address" autoCapitalize="none" value={formData.email} onChangeText={(v) => handleInputChange('email', v)} maxLength={50} />
             </View>
           )}
 
@@ -542,18 +564,18 @@ export default function RegisterRiderScreen() {
               )}
 
               <Text style={styles.label}>Dirección de residencia</Text>
-              <TextInput style={styles.inputDark} placeholder="Dirección completa" placeholderTextColor="#777" value={formData.direccion_residencia} onChangeText={(v) => handleInputChange('direccion_residencia', v)} />
+              <TextInput style={styles.inputDark} placeholder="Dirección completa" placeholderTextColor="#777" value={formData.direccion_residencia} onChangeText={(v) => handleInputChange('direccion_residencia', v)} maxLength={80} />
 
               <View style={{ marginTop: 10 }}>
                 <Text style={styles.label}>Código de Referido (Opcional)</Text>
-                <TextInput style={styles.inputDark} placeholder="Si tienes uno, ingrésalo" placeholderTextColor="#777" value={formData.codigo_referido_padre} onChangeText={(v) => handleInputChange('codigo_referido_padre', v)} />
+                <TextInput style={styles.inputDark} placeholder="Si tienes uno, ingrésalo" placeholderTextColor="#777" value={formData.codigo_referido_padre} onChangeText={(v) => handleInputChange('codigo_referido_padre', v)} maxLength={20} />
               </View>
 
               <Text style={[styles.title, { marginTop: 10, fontSize: 20 }]}>Seguridad</Text>
               <Text style={styles.label}>Contraseña</Text>
-              <TextInput style={styles.inputDark} placeholder="Mínimo 9 caracteres" placeholderTextColor="#777" secureTextEntry value={formData.password} onChangeText={(v) => handleInputChange('password', v)} />
+              <TextInput style={styles.inputDark} placeholder="Mínimo 9 caracteres" placeholderTextColor="#777" secureTextEntry value={formData.password} onChangeText={(v) => handleInputChange('password', v)} maxLength={30} />
               <Text style={styles.label}>Repetir Contraseña</Text>
-              <TextInput style={styles.inputDark} placeholder="Confirma tu contraseña" placeholderTextColor="#777" secureTextEntry value={formData.repeatPassword} onChangeText={(v) => handleInputChange('repeatPassword', v)} />
+              <TextInput style={styles.inputDark} placeholder="Confirma tu contraseña" placeholderTextColor="#777" secureTextEntry value={formData.repeatPassword} onChangeText={(v) => handleInputChange('repeatPassword', v)} maxLength={30} />
             </View>
           )}
 
@@ -564,11 +586,11 @@ export default function RegisterRiderScreen() {
               <Text style={styles.label}>Placa</Text>
               <TextInput style={styles.inputDark} placeholder="ABC-123" placeholderTextColor="#777" maxLength={7} autoCapitalize="characters" value={formData.placa} onChangeText={(v) => handleInputChange('placa', v.toUpperCase())} />
               <Text style={styles.label}>Marca</Text>
-              <TextInput style={styles.inputDark} placeholder="Ej. Chevrolet" placeholderTextColor="#777" value={formData.marca_vehiculo} onChangeText={(v) => handleInputChange('marca_vehiculo', v)} />
+              <TextInput style={styles.inputDark} placeholder="Ej. Chevrolet" placeholderTextColor="#777" value={formData.marca_vehiculo} onChangeText={(v) => handleInputChange('marca_vehiculo', v)} maxLength={30} />
               <Text style={styles.label}>Línea / Modelo</Text>
-              <TextInput style={styles.inputDark} placeholder="Ej. Spark GT" placeholderTextColor="#777" value={formData.linea} onChangeText={(v) => handleInputChange('linea', v)} />
+              <TextInput style={styles.inputDark} placeholder="Ej. Spark GT" placeholderTextColor="#777" value={formData.linea} onChangeText={(v) => handleInputChange('linea', v)} maxLength={30} />
               <Text style={styles.label}>Color</Text>
-              <TextInput style={styles.inputDark} placeholder="Ej. Negro" placeholderTextColor="#777" value={formData.color} onChangeText={(v) => handleInputChange('color', v)} />
+              <TextInput style={styles.inputDark} placeholder="Ej. Negro" placeholderTextColor="#777" value={formData.color} onChangeText={(v) => handleInputChange('color', v)} maxLength={20} />
             </View>
           )}
 

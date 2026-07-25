@@ -6,7 +6,6 @@ import {
   TextInput,
   Image,
   ScrollView,
-  Alert,
   Platform,
   ActivityIndicator,
   Switch,
@@ -18,8 +17,9 @@ import { FontAwesome } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as ImagePicker from 'expo-image-picker';
 import { BASE_URL } from '../constants/url';
-import { Montserrat_400Regular, Montserrat_700Bold, Montserrat_300Light } from '@expo-google-fonts/montserrat';
+import { Montserrat_400Regular, Montserrat_500Medium, Montserrat_600SemiBold, Montserrat_700Bold, Montserrat_300Light } from '@expo-google-fonts/montserrat';
 import { useFonts } from 'expo-font';
+import AlertaModal from "../components/ErrorModal";
 
 const MetodosPago = () => {
   const navigation = useNavigation();
@@ -27,6 +27,8 @@ const MetodosPago = () => {
   // Cargar fuentes
   const [fontsLoaded] = useFonts({
     Montserrat_400Regular,
+    Montserrat_500Medium,
+    Montserrat_600SemiBold,
     Montserrat_700Bold,
     Montserrat_300Light,
   });
@@ -52,6 +54,13 @@ const MetodosPago = () => {
   // Añadir estado para userInfo
   const [userInfo, setUserInfo] = useState(null);
   const [isTipoComercio, setIsTipoComercio] = useState(false);
+  const [alertVisible, setAlertVisible] = useState(false);
+  const [alertData, setAlertData] = useState({ message: "", type: "info", onPrimary: null, primaryLabel: "" });
+
+  const showAlert = (message, type = "info", onPrimary = null, primaryLabel = null) => {
+    setAlertData({ message, type, onPrimary, primaryLabel });
+    setAlertVisible(true);
+  };
 
   // Cargar datos al iniciar
   useEffect(() => {
@@ -95,7 +104,7 @@ const MetodosPago = () => {
     try {
       const token = await AsyncStorage.getItem('userToken');
       if (!token) {
-        Alert.alert('Error', 'No se encontró el token de autenticación');
+        showAlert('No se encontró el token de autenticación', 'error');
         return;
       }
 
@@ -233,7 +242,7 @@ const MetodosPago = () => {
       const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
       
       if (!permissionResult.granted) {
-        Alert.alert('Permiso denegado', 'Se necesita acceso a la galería para seleccionar imágenes');
+        showAlert('Se necesita acceso a la galería para seleccionar imágenes', 'error');
         return;
       }
       
@@ -251,25 +260,25 @@ const MetodosPago = () => {
       }
     } catch (error) {
       console.error('Error seleccionando imagen QR:', error);
-      Alert.alert('Error', 'No se pudo seleccionar la imagen. Inténtalo de nuevo.');
+      showAlert('No se pudo seleccionar la imagen. Inténtalo de nuevo.', 'error');
     }
   };
 
   // Función para guardar todas las configuraciones de pago
   const saveAllPaymentMethods = async () => {
     if (!userId) {
-      Alert.alert('Error', 'No se ha identificado el usuario');
+      showAlert('No se ha identificado el usuario', 'error');
       return;
     }
 
     // Validaciones
     if (qrEstado && !qrImage && !qrImagePreview) {
-      Alert.alert('Error', 'Si activas el pago por QR, debes seleccionar una imagen');
+      showAlert('Si activas el pago por QR, debes seleccionar una imagen', 'error');
       return;
     }
 
     if (mercadoPagoEstado && (!publicKey || !accessToken)) {
-      Alert.alert('Error', 'Si activas Mercado Pago, debes completar las claves');
+      showAlert('Si activas Mercado Pago, debes completar las claves', 'error');
       return;
     }
 
@@ -278,7 +287,7 @@ const MetodosPago = () => {
       const token = await AsyncStorage.getItem('userToken');
       
       if (!token) {
-        Alert.alert('Error', 'No se encontró el token de autenticación');
+        showAlert('No se encontró el token de autenticación', 'error');
         setIsSaving(false);
         return;
       }
@@ -330,27 +339,27 @@ const MetodosPago = () => {
         const data = JSON.parse(responseText);
         
         if (response.ok) {
-          Alert.alert('Éxito', 'Métodos de pago configurados correctamente');
+          showAlert('Métodos de pago configurados correctamente', 'success');
           // Si era una creación nueva, obtener el ID para futuras actualizaciones
           if (!pagoId && data.data && data.data.id) {
             setPagoId(data.data.id);
           }
           fetchPaymentMethods(userId);
         } else {
-          Alert.alert('Error', data.message || 'No se pudieron guardar los métodos de pago');
+          showAlert(data.message || 'No se pudieron guardar los métodos de pago', 'error');
         }
       } catch (e) {
         // Si la respuesta no es JSON válido pero la petición fue exitosa
         if (response.ok) {
-          Alert.alert('Éxito', 'Métodos de pago configurados correctamente');
+          showAlert('Métodos de pago configurados correctamente', 'success');
           fetchPaymentMethods(userId);
         } else {
-          Alert.alert('Error', 'No se pudieron guardar los métodos de pago');
+          showAlert('No se pudieron guardar los métodos de pago', 'error');
         }
       }
     } catch (error) {
       console.error('Error guardando métodos de pago:', error);
-      Alert.alert('Error', 'Ocurrió un error al guardar la configuración');
+      showAlert('Ocurrió un error al guardar la configuración', 'error');
     } finally {
       setIsSaving(false);
     }
@@ -376,16 +385,13 @@ const MetodosPago = () => {
 
   return (
     <SafeAreaView style={styles.safeContainer}>
-      <ScrollView style={styles.container}>
-        {/* Botón Atrás */}
-        <TouchableOpacity 
-          style={styles.backButton}
-          onPress={() => navigation.goBack()}
-        >
-          <FontAwesome name="arrow-left" size={24} color="#1C1C1E" />
+      <View style={styles.headerBar}>
+        <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()}>
+          <FontAwesome name="arrow-left" size={18} color="#FFF" />
         </TouchableOpacity>
-
-        <Text style={styles.title}>Métodos de Pago</Text>
+        <Text style={styles.headerTitle}>Métodos de Pago</Text>
+      </View>
+      <ScrollView style={styles.container}>
         <Text style={styles.subtitle}>Configura tus métodos para recibir pagos</Text>
 
         {/* Sección de QR */}
@@ -407,13 +413,13 @@ const MetodosPago = () => {
             <View style={styles.qrContainer}>
               <Text style={styles.fieldLabel}>Imagen de QR</Text>
               
-              <TouchableOpacity 
-                style={styles.imagePickerButton}
-                onPress={pickQrImage}
-              >
-                <FontAwesome name="camera" size={20} color="#1C1C1E" />
-                <Text style={styles.imagePickerText}>Seleccionar imagen QR</Text>
-              </TouchableOpacity>
+                <TouchableOpacity 
+                  style={styles.imagePickerButton}
+                  onPress={pickQrImage}
+                >
+                  <FontAwesome name="camera" size={18} color="#fa6205" />
+                  <Text style={styles.imagePickerText}>Seleccionar imagen QR</Text>
+                </TouchableOpacity>
               
               {qrImagePreview && (
                 <View style={styles.imagePreviewContainer}>
@@ -476,10 +482,10 @@ const MetodosPago = () => {
           disabled={isSaving}
         >
           {isSaving ? (
-            <ActivityIndicator size="small" color="#1C1C1E" />
+            <ActivityIndicator size="small" color="#FFF" />
           ) : (
-            <View>
-              <FontAwesome name="save" size={20} color="#1C1C1E" style={styles.saveIcon} />
+            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+              <FontAwesome name="save" size={18} color="#FFF" style={styles.saveIcon} />
               <Text style={styles.mainSaveButtonText}>Guardar métodos de pago</Text>
             </View>
           )}
@@ -491,6 +497,14 @@ const MetodosPago = () => {
           </Text>
         </View>
       </ScrollView>
+        <AlertaModal
+          visible={alertVisible}
+          mensaje={alertData.message}
+          tipo={alertData.type}
+          onCerrar={() => setAlertVisible(false)}
+          onPrimary={alertData.onPrimary}
+          primaryLabel={alertData.primaryLabel}
+        />
     </SafeAreaView>
   );
 };
@@ -499,8 +513,8 @@ const MetodosPago = () => {
 const styles = StyleSheet.create({
   safeContainer: {
     flex: 1,
-    backgroundColor: "#FFFFFF",
-    paddingTop: Platform.OS === "android" ? 50 : 40,
+    backgroundColor: "#F2F2F7",
+    paddingTop: Platform.OS === "android" ? 0 : 0,
   },
   container: {
     flex: 1,
@@ -510,128 +524,165 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+    backgroundColor: "#F2F2F7",
   },
-  backButton: {
-    position: 'absolute',
-    top: 10,
-    left: 10,
-    zIndex: 10,
-    padding: 5,
+  headerBar: {
+    backgroundColor: "#fa6205",
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    paddingTop: Platform.OS === "android" ? 40 : 14,
+  },
+  headerTitle: {
+    fontSize: 18,
+    fontFamily: "Montserrat_700Bold",
+    color: "#FFF",
+    marginLeft: 12,
+  },
+  backBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: "rgba(255,255,255,0.2)",
+    justifyContent: "center",
+    alignItems: "center",
   },
   title: {
     fontFamily: "Montserrat_700Bold",
-    fontSize: 24,
+    fontSize: 22,
     color: "#1C1C1E",
     textAlign: 'center',
-    marginTop: 40,
-    marginBottom: 5,
+    marginTop: 8,
+    marginBottom: 4,
   },
   subtitle: {
     fontFamily: "Montserrat_400Regular",
-    fontSize: 16,
-    color: "#CCCCCC",
+    fontSize: 14,
+    color: "#888",
     textAlign: 'center',
-    marginBottom: 30,
+    marginBottom: 24,
   },
   section: {
-    backgroundColor: '#333333',
-    borderRadius: 15,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
     padding: 20,
-    marginBottom: 20,
+    marginBottom: 16,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 8,
+    elevation: 3,
   },
   sectionTitle: {
     fontFamily: "Montserrat_700Bold",
-    fontSize: 18,
+    fontSize: 16,
     color: "#fa6205",
-    marginBottom: 15,
+    marginBottom: 16,
   },
   switchRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 15,
+    marginBottom: 4,
   },
   switchLabel: {
-    fontFamily: "Montserrat_400Regular",
-    fontSize: 16,
+    fontFamily: "Montserrat_500Medium",
+    fontSize: 15,
     color: "#1C1C1E",
   },
   qrContainer: {
-    marginTop: 10,
+    marginTop: 16,
+    paddingTop: 16,
+    borderTopWidth: 1,
+    borderTopColor: "#F0F0F0",
   },
   mpContainer: {
-    marginTop: 10,
+    marginTop: 16,
+    paddingTop: 16,
+    borderTopWidth: 1,
+    borderTopColor: "#F0F0F0",
   },
   fieldLabel: {
-    fontFamily: "Montserrat_400Regular",
-    fontSize: 14,
-    color: "#1C1C1E",
-    marginBottom: 5,
+    fontFamily: "Montserrat_600SemiBold",
+    fontSize: 13,
+    color: "#666",
+    marginBottom: 6,
   },
   input: {
-    backgroundColor: "#FFFFFF",
-    borderRadius: 8,
-    paddingHorizontal: 15,
-    paddingVertical: 10,
-    fontSize: 14,
+    backgroundColor: "#F5F0E8",
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    fontSize: 15,
     fontFamily: "Montserrat_400Regular",
-    color: "#000000",
-    marginBottom: 15,
+    color: "#1C1C1E",
+    marginBottom: 14,
   },
   imagePickerButton: {
-    backgroundColor: "#555555",
+    backgroundColor: "#F5F0E8",
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    padding: 12,
-    borderRadius: 8,
-    marginBottom: 15,
+    padding: 14,
+    borderRadius: 12,
+    marginBottom: 14,
+    borderWidth: 1.5,
+    borderColor: "#E8E2D8",
+    borderStyle: "dashed",
   },
   imagePickerText: {
-    fontFamily: "Montserrat_400Regular",
+    fontFamily: "Montserrat_500Medium",
     fontSize: 14,
-    color: "#1C1C1E",
+    color: "#888",
     marginLeft: 10,
   },
   imagePreviewContainer: {
     alignItems: 'center',
-    marginBottom: 15,
+    marginBottom: 10,
   },
   imagePreview: {
-    width: 200,
-    height: 200,
-    borderRadius: 10,
-    backgroundColor: '#FFFFFF',
+    width: 160,
+    height: 160,
+    borderRadius: 12,
+    backgroundColor: '#F5F0E8',
   },
-  // Nuevo estilo para el botón único de guardar
   mainSaveButton: {
     backgroundColor: "#fa6205",
-    padding: 15,
-    borderRadius: 10,
+    paddingVertical: 16,
+    borderRadius: 30,
     alignItems: 'center',
     justifyContent: 'center',
     flexDirection: 'row',
-    marginBottom: 20,
+    marginBottom: 16,
+    shadowColor: "#fa6205",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 5,
   },
   mainSaveButtonText: {
     fontFamily: "Montserrat_700Bold",
     fontSize: 16,
-    color: "#000000",
+    color: "#FFFFFF",
   },
   saveIcon: {
-    marginRight: 10,
+    marginRight: 8,
   },
   infoContainer: {
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
-    borderRadius: 10,
-    padding: 15,
+    backgroundColor: '#FFF8F0',
+    borderRadius: 12,
+    padding: 16,
     marginBottom: 30,
+    borderLeftWidth: 3,
+    borderLeftColor: "#fa6205",
   },
   infoText: {
-    fontFamily: "Montserrat_300Light",
-    fontSize: 14,
-    color: "#CCCCCC",
+    fontFamily: "Montserrat_400Regular",
+    fontSize: 13,
+    color: "#888",
     textAlign: 'center',
+    lineHeight: 18,
   },
 });
 
