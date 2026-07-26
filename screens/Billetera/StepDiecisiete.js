@@ -303,7 +303,6 @@ export default function StepDiecisiete() {
 
           {renderInfoItem('Departamento', userData?.departamento, 'map-marker')}
           {renderInfoItem('Ciudad', userData?.ciudad, 'building')}
-          {renderInfoItem('Dirección Principal', userData?.direccion_principal, 'home', 'direccion_principal')}
 
           <Text style={styles.sectionTitle}>Información de Cuenta</Text>
 

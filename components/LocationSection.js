@@ -110,7 +110,7 @@ const LocationSection = ({ precioKilometro, setDistance, setTotalPrice }) => {
       }
       try {
         const response = await fetch(
-          `https://maps.googleapis.com/maps/api/place/autocomplete/json?input=${encodeURIComponent(input)}&key=${GOOGLE_MAPS_API_KEY}${locationQuery}&components=country:co`
+          `https://maps.googleapis.com/maps/api/place/autocomplete/json?input=${encodeURIComponent(input)}&key=${GOOGLE_MAPS_API_KEY}${locationQuery}&components=country:CO`
         );
         const data = await response.json();
         setSuggestions(data.predictions);

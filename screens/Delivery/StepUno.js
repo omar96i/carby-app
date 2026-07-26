@@ -14,7 +14,8 @@ import {
   Animated,
   Platform,
   Dimensions,
-  Keyboard
+  Keyboard,
+  KeyboardAvoidingView,
 } from "react-native";
 import Icon1 from "react-native-vector-icons/Entypo";
 import IconMC from "react-native-vector-icons/AntDesign";
@@ -88,18 +89,40 @@ export default function SelectLocationScreen() {
   const [isCreatingRide, setIsCreatingRide] = useState(false);
   // Altura del mapa
   const screenH = Dimensions.get("window").height;
-  const [mapHeight, setMapHeight] = useState(screenH * 0.35);
+  const [mapHeight, setMapHeight] = useState(screenH * 0.28);
+  const [sheetCollapsed, setSheetCollapsed] = useState(false);
+  const animatedMapHeight = useRef(new Animated.Value(screenH * 0.28)).current;
+  const [keyboardVisible, setKeyboardVisible] = useState(false);
+
+  useEffect(() => {
+    const showSub = Keyboard.addListener("keyboardDidShow", () => setKeyboardVisible(true));
+    const hideSub = Keyboard.addListener("keyboardDidHide", () => setKeyboardVisible(false));
+    return () => { showSub.remove(); hideSub.remove(); };
+  }, []);
+
+  const toggleSheet = useCallback(() => {
+    const nextCollapsed = !sheetCollapsed;
+    const targetHeight = nextCollapsed ? screenH * 0.12 : screenH * 0.28;
+    setSheetCollapsed(nextCollapsed);
+    Animated.spring(animatedMapHeight, {
+      toValue: targetHeight,
+      friction: 8,
+      tension: 60,
+      useNativeDriver: false,
+    }).start();
+  }, [sheetCollapsed, screenH, animatedMapHeight]);
+
   useEffect(() => {
     if (pinMode) return;
+    if (sheetCollapsed) return;
     const inputActive = showPickupSuggestions || showDeliverySuggestions;
-    if (inputActive) {
-      setMapHeight(screenH * 0.10);
-    } else if (totalPrice) {
-      setMapHeight(screenH * 0.28);
-    } else {
-      setMapHeight(screenH * 0.35);
-    }
-  }, [pinMode, showPickupSuggestions, showDeliverySuggestions, totalPrice]);
+    const targetHeight = inputActive ? screenH * 0.10 : totalPrice ? screenH * 0.22 : screenH * 0.28;
+    Animated.timing(animatedMapHeight, {
+      toValue: targetHeight,
+      duration: 250,
+      useNativeDriver: false,
+    }).start();
+  }, [pinMode, showPickupSuggestions, showDeliverySuggestions, totalPrice, sheetCollapsed]);
   // Auto-scroll del sheet cuando aparecen sugerencias
   useEffect(() => {
     if ((showPickupSuggestions || showDeliverySuggestions) && sheetScrollRef.current) {
@@ -136,8 +159,8 @@ export default function SelectLocationScreen() {
     setTotalPrice("");
   }
   const [mapRegion, setMapRegion] = useState({
-    latitude: -12.046374,
-    longitude: -77.042793,
+    latitude: 4.60971,
+    longitude: -74.08175,
     latitudeDelta: 0.01,
     longitudeDelta: 0.01,
   });
@@ -274,10 +297,10 @@ export default function SelectLocationScreen() {
         longitudeDelta: 0.01,
       });
       setIgnoreNextRegionChange(true);
+      setPickupCoord({ latitude: userLocation.latitude, longitude: userLocation.longitude });
       getAddressFromCoordinates(userLocation.latitude, userLocation.longitude).then((addr) => {
         if (addr && !pickupAddress) {
           setPickupAddress(addr);
-          setPickupCoord({ latitude: userLocation.latitude, longitude: userLocation.longitude });
         }
       });
     }
@@ -379,7 +402,7 @@ export default function SelectLocationScreen() {
           // 1. LÓGICA DINÁMICA DE PAÍS
           // Convertimos la URL a string y revisamos si es la de Colombia
           const currentUrlStr = BASE_URL.toString();
-          const countryCode = "co";
+          const countryCode = "CO";
           console.log(countryCode)
           console.log(`🔎 Buscando en Google Maps para región: ${countryCode.toUpperCase()}`);
 
@@ -663,14 +686,13 @@ export default function SelectLocationScreen() {
         "No se pudieron obtener coordenadas con Google. Usando coordenadas de respaldo."
       );
 
-      // Coordenadas predeterminadas (en este caso para Perú - Lima)
-      // Puedes ajustar estas coordenadas según la región principal de tu aplicación
-      return { lat: -12.046374, lng: -77.042793 };
+      // Coordenadas predeterminadas (Bogotá, Colombia)
+      return { lat: 4.60971, lng: -74.08175 };
     } catch (error) {
       console.error("Error obteniendo coordenadas:", error);
 
       // Devolver coordenadas de respaldo en caso de error
-      return { lat: -12.046374, lng: -77.042793 };
+      return { lat: 4.60971, lng: -74.08175 };
     }
   };
 
@@ -1033,10 +1055,10 @@ export default function SelectLocationScreen() {
       console.log(
         "No se encontraron coordenadas, usando coordenadas por defecto"
       );
-      return { lat: -12.046374, lng: -77.042793 };
+      return { lat: 4.60971, lng: -74.08175 };
     } catch (error) {
       console.error("Error obteniendo coordenadas:", error);
-      return { lat: -12.046374, lng: -77.042793 };
+      return { lat: 4.60971, lng: -74.08175 };
     }
   };
 
@@ -1288,7 +1310,9 @@ export default function SelectLocationScreen() {
 
         const encodedQuery = encodeURIComponent(text.trim());
 
-        const locationBias = `&location=${lat},${lng}&radius=50000`;
+        const userLat = userLocationRef.current?.latitude || 4.60971;
+        const userLng = userLocationRef.current?.longitude || -74.08175;
+        const locationBias = `&location=${userLat},${userLng}&radius=50000`;
 
 
         // 2. INYECTAMOS EL CÓDIGO DE PAÍS DINÁMICO
@@ -1335,8 +1359,9 @@ export default function SelectLocationScreen() {
 
         const encodedQuery = encodeURIComponent(text.trim());
 
-        // Agrega locationBias si lo necesitas más adelante
-        const locationBias = "";
+        const userLat = userLocationRef.current?.latitude || 4.60971;
+        const userLng = userLocationRef.current?.longitude || -74.08175;
+        const locationBias = `&location=${userLat},${userLng}&radius=50000`;
 
         // 2. INYECTAMOS EL CÓDIGO DE PAÍS
         const url = `https://maps.googleapis.com/maps/api/place/autocomplete/json?input=${encodedQuery}&components=country:${countryCode}${locationBias}&key=${GOOGLE_MAPS_API_KEY}`;
@@ -1784,9 +1809,14 @@ export default function SelectLocationScreen() {
 
   // Render principal
   return (
+    <KeyboardAvoidingView
+      style={{ flex: 1 }}
+      behavior={Platform.OS === "ios" ? "padding" : undefined}
+      keyboardVerticalOffset={Platform.OS === "ios" ? 0 : -60}
+    >
     <SafeAreaView style={styles.safeContainer}>
       {/* MAPA */}
-      <View style={[styles.mapHero, pinMode ? { flex: 1 } : { height: mapHeight }]}>
+      <Animated.View style={[styles.mapHero, pinMode ? { flex: 1 } : { height: animatedMapHeight }]}>
         <MapView
           ref={mapRef}
           style={styles.mapFull}
@@ -1860,11 +1890,17 @@ export default function SelectLocationScreen() {
           </>
         )}
 
-      </View>
+      </Animated.View>
 
       {/* BOTTOM SHEET */}
       <Animated.View style={[styles.sheet, pinMode && styles.sheetPin, !pinMode && { transform: [{ translateY: sheetEntryAnim.interpolate({ inputRange: [0, 1], outputRange: [0, 600] }) }] }]}>
-        <View style={styles.dragHandle} />
+        <TouchableOpacity onPress={toggleSheet} style={styles.dragHandle} activeOpacity={0.7}>
+          <Ionicons
+            name={sheetCollapsed ? "chevron-down" : "chevron-up"}
+            size={18}
+            color="#999"
+          />
+        </TouchableOpacity>
 
         {pinMode ? (
           <View style={styles.pinActionBar}>
@@ -2074,6 +2110,11 @@ export default function SelectLocationScreen() {
               value={observations}
               onChangeText={setObservations}
               multiline
+              onFocus={() => {
+                setTimeout(() => {
+                  sheetScrollRef.current?.scrollToEnd({ animated: true });
+                }, 300);
+              }}
             />
 
           </View>
@@ -2082,7 +2123,7 @@ export default function SelectLocationScreen() {
 
         {/* FOOTER ACTION BAR */}
         <View style={styles.footerBar}>
-          {selectedServiceId && (
+          {!keyboardVisible && selectedServiceId && (
           <View style={styles.biddingArea}>
             <View style={styles.biddingHeader}>
               <Text style={styles.biddingLabel}>Tu oferta de precio</Text>
@@ -2108,7 +2149,7 @@ export default function SelectLocationScreen() {
           </View>
           )}
 
-          {selectedServiceId && (
+          {!keyboardVisible && selectedServiceId && (
           <TouchableOpacity style={styles.footerPaymentSelector} onPress={() => setShowPaymentDropdown(true)} activeOpacity={0.7}>
             <View style={styles.footerPaymentIcon}>
               <MaterialCommunityIcons
@@ -2257,6 +2298,7 @@ export default function SelectLocationScreen() {
         </View>
       )}
     </SafeAreaView>
+    </KeyboardAvoidingView>
   );
 }
 
@@ -2517,12 +2559,14 @@ const styles = StyleSheet.create({
     color: "#1C1C1E",
   },
   dragHandle: {
-    width: 40,
-    height: 5,
-    borderRadius: 3,
-    backgroundColor: "#E5E0D8",
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: "#F0EBE3",
     alignSelf: "center",
-    marginTop: 10,
+    justifyContent: "center",
+    alignItems: "center",
+    marginTop: 8,
     marginBottom: 4,
   },
   sheetScroll: {

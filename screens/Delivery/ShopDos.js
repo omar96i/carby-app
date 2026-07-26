@@ -1571,7 +1571,7 @@ const styles = StyleSheet.create({
   },
   // Estilos para el modal de calificaciones
   ratingsModalContent: {
-    backgroundColor: "#F0F0F0",
+    backgroundColor: "#FFF",
     borderRadius: 15,
     padding: 20,
     width: "100%",
@@ -1618,7 +1618,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   configurePaymentButtonText: {
-    color: "#000",
+    color: "#FFF",
     fontSize: 16,
     fontFamily: "Montserrat_700Bold",
   },
@@ -1643,8 +1643,13 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     marginBottom: 20,
     padding: 15,
-    backgroundColor: "#383838",
+    backgroundColor: "#FFF",
     borderRadius: 10,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    elevation: 3,
   },
   averageRatingNumber: {
     color: "#1C1C1E",
@@ -1653,7 +1658,7 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   totalRatingsText: {
-    color: "#aaa",
+    color: "#999",
     fontSize: 14,
     fontFamily: "Montserrat_400Regular",
     marginTop: 10,
@@ -1662,10 +1667,15 @@ const styles = StyleSheet.create({
     maxHeight: 400,
   },
   ratingItem: {
-    backgroundColor: "#383838",
+    backgroundColor: "#FFF",
     borderRadius: 10,
     padding: 15,
     marginBottom: 10,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.06,
+    shadowRadius: 6,
+    elevation: 2,
   },
   ratingHeader: {
     flexDirection: "row",
@@ -1682,7 +1692,7 @@ const styles = StyleSheet.create({
     fontFamily: "Montserrat_700Bold",
   },
   ratingDate: {
-    color: "#aaa",
+    color: "#999",
     fontSize: 12,
     fontFamily: "Montserrat_400Regular",
   },
@@ -1690,7 +1700,7 @@ const styles = StyleSheet.create({
     flexShrink: 0,
   },
   ratingComment: {
-    color: "#eee",
+    color: "#555",
     fontSize: 14,
     fontFamily: "Montserrat_400Regular",
     fontStyle: "italic",
@@ -1698,11 +1708,11 @@ const styles = StyleSheet.create({
   },
   orderInfo: {
     borderTopWidth: 1,
-    borderTopColor: "#555",
+    borderTopColor: "#E0E0E0",
     paddingTop: 10,
   },
   orderInfoText: {
-    color: "#aaa",
+    color: "#999",
     fontSize: 12,
     fontFamily: "Montserrat_400Regular",
   },
@@ -1719,7 +1729,7 @@ const styles = StyleSheet.create({
     textAlign: "center",
   },
   noRatingsSubText: {
-    color: "#aaa",
+    color: "#999",
     fontSize: 14,
     fontFamily: "Montserrat_400Regular",
     textAlign: "center",

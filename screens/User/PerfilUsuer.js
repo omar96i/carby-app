@@ -374,19 +374,6 @@ export default function PerfilUsuario() {
                 </View>
                 <Icon3 name="chevron-right" size={20} color="#888" />
             </TouchableOpacity>
-
-            <View style={styles.menuItem}>
-                <View style={styles.menuItemLeft}>
-                    <Icon3 name="map-pin" size={20} color="#888" />
-                    <View style={{flex: 1}}>
-                        <Text style={styles.menuItemText}>Dirección</Text>
-                        <Text style={styles.menuItemSubText} numberOfLines={1}>
-                            {userInfo?.data?.direccion_principal || 
-                             (userInfo?.data?.departamento ? userInfo.data.departamento : "No disponible")}
-                        </Text>
-                    </View>
-                </View>
-            </View>
         </View>
 
         <View style={styles.menuContainer}>
@@ -411,25 +398,12 @@ export default function PerfilUsuario() {
 
         {/* 5. Legal & Logout */}
         <View style={styles.legalContainer}>
-            {/* Términos */}
-            <View style={styles.legalRow}>
-                <TouchableOpacity onPress={() => Linking.openURL("https://carbycol.com/terminos-y-condiciones/")}>
-                    <Text style={styles.linkText}>Términos y Condiciones</Text>
-                </TouchableOpacity>
-                <TouchableOpacity onPress={toggleTermsCheck} style={[styles.checkbox, termsChecked && styles.checkboxActive]}>
-                    {termsChecked && <Icon3 name="check" size={12} color="#000" />}
-                </TouchableOpacity>
-            </View>
-
-            {/* Privacidad */}
-            <View style={styles.legalRow}>
-                <TouchableOpacity onPress={() => Linking.openURL("https://carbycol.com/politica-de-privacidad/")}>
-                    <Text style={styles.linkText}>Privacidad de Datos</Text>
-                </TouchableOpacity>
-                <TouchableOpacity onPress={togglePrivacyCheck} style={[styles.checkbox, privacyChecked && styles.checkboxActive]}>
-                    {privacyChecked && <Icon3 name="check" size={12} color="#000" />}
-                </TouchableOpacity>
-            </View>
+            <TouchableOpacity onPress={() => Linking.openURL("https://carbycol.com/terminos-y-condiciones/")}>
+                <Text style={styles.linkText}>Términos y Condiciones</Text>
+            </TouchableOpacity>
+            <TouchableOpacity onPress={() => Linking.openURL("https://carbycol.com/politica-de-privacidad/")}>
+                <Text style={styles.linkText}>Privacidad de Datos</Text>
+            </TouchableOpacity>
 
             <TouchableOpacity style={styles.logoutButton} onPress={cerrarSesion}>
                 <Icon3 name="log-out" size={18} color="#FF4757" style={{marginRight: 8}} />
@@ -692,12 +666,14 @@ const styles = StyleSheet.create({
   legalContainer: {
     paddingHorizontal: 25,
     marginBottom: 20,
+    alignItems: 'center',
+    gap: 12,
   },
   legalRow: {
     flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 15
   },
   linkText: {
-    color: "#fa6205", textDecorationLine: "underline", fontSize: 14, fontFamily: "Montserrat_400Regular"
+    color: "#1C1C1E", fontSize: 14, fontFamily: "Montserrat_400Regular", textAlign: 'center', paddingVertical: 4
   },
   checkbox: {
     width: 20, height: 20, borderWidth: 2, borderColor: "#555", borderRadius: 6, alignItems: 'center', justifyContent: 'center'

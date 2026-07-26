@@ -103,8 +103,8 @@ const PaymentScreen = () => {
   };
 
   const [mapRegion, setMapRegion] = useState({
-    latitude: -12.046374,
-    longitude: -77.042793,
+    latitude: 4.60971,
+    longitude: -74.08175,
     latitudeDelta: 0.05,
     longitudeDelta: 0.05,
   });
@@ -133,6 +133,9 @@ const PaymentScreen = () => {
       });
 
       setCurrentLocation({ latitude, longitude });
+      setSelectedLocation({ latitude, longitude });
+      resolveAddressFromCoords(latitude, longitude);
+      setIgnoreNextRegionChange(true);
     })();
   }, []);
 
@@ -211,10 +214,9 @@ const PaymentScreen = () => {
           const lng = userLocationRef.current?.longitude;
 
           const locationBias =
-            lat && lng ? `&locationbias=point:${lat},${lng}` : "";
+            lat && lng ? `&location=${lat},${lng}&radius=50000` : `&location=4.60971,-74.08175&radius=50000`;
 
-          const currentUrlStr = BASE_URL.toString();
-          const countryCode = currentUrlStr.includes("co.yariders") ? "co" : "pe";
+          const countryCode = "CO";
 
          const url = `https://maps.googleapis.com/maps/api/place/autocomplete/json?input=${encodedQuery}&components=country:${countryCode}${locationBias}&key=${GOOGLE_MAPS_API_KEY}`;
           const response = await fetch(url);
@@ -631,13 +633,13 @@ const PaymentScreen = () => {
           const timeoutId = setTimeout(() => controller.abort(), 3000); // 3 segundos
 
           const urls = [
-            `https://maps.googleapis.com/maps/api/place/autocomplete/json?input=${text}&types=address&components=country:pe&key=${GOOGLE_MAPS_API_KEY}`
+            `https://maps.googleapis.com/maps/api/place/autocomplete/json?input=${text}&types=address&components=country:CO&key=${GOOGLE_MAPS_API_KEY}`
           ];
 
-          const [resPe, resCo] = await Promise.all(urls.map(url => fetch(url)));
-          const [dataPe, dataCo] = await Promise.all([resPe.json(), resCo.json()]);
+          const responses = await Promise.all(urls.map(url => fetch(url)));
+          const dataResults = await Promise.all(responses.map(res => res.json()));
 
-          const resultados = [...(dataPe.predictions || []), ...(dataCo.predictions || [])];
+          const resultados = dataResults.flatMap(d => d.predictions || []);
           setAddressSuggestions(resultados);
         } catch (error) {
           if (error.name === "AbortError") {
@@ -679,10 +681,9 @@ const PaymentScreen = () => {
 
       try {
         const encodedQuery = encodeURIComponent(text.trim());
-        const locationBias = ""; // Si más adelante quieres usar lat/lng, lo añades aquí
+        const locationBias = `&location=4.60971,-74.08175&radius=50000`;
 
-        const currentUrlStr = BASE_URL.toString();
-        const countryCode = currentUrlStr.includes("co.yariders") ? "co" : "pe";
+        const countryCode = "CO";
 
         const url = `https://maps.googleapis.com/maps/api/place/autocomplete/json?input=${encodedQuery}&components=country:${countryCode}${locationBias}&key=${GOOGLE_MAPS_API_KEY}`;
         const response = await fetch(url);

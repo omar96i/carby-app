@@ -91,7 +91,7 @@ const CategoryItem = memo(({ item, onPress }) => (
       {item.establishmentCount > 0 && (
         <Text style={styles.cardSubtitle}>
           {item.establishmentCount}
-          {item.establishmentCount === 1 ? "Tienda" : "Tiendas"}
+          {item.establishmentCount === 1 ? " Tienda" : " Tiendas"}
         </Text>
       )}
     </TouchableOpacity>
@@ -1120,16 +1120,20 @@ export default function HomeScreen() {
           )}
         </TouchableOpacity>
         <Text style={styles.locationText} numberOfLines={2}>{locationAddress}</Text>
-        <View style={styles.avatar}>
-          <Text style={styles.avatarText}>
-            {userData?.nombre_completo
-              ?.split(" ")
-              .slice(0, 2)
-              .map(w => w[0])
-              .join("")
-              .toUpperCase() || "U"}
-          </Text>
-        </View>
+        <TouchableOpacity onPress={() => navigation.navigate("Perfil")} style={styles.avatar}>
+          {profileImageUrl ? (
+            <Image source={{ uri: profileImageUrl }} style={styles.avatarImage} />
+          ) : (
+            <Text style={styles.avatarText}>
+              {userData?.nombre_completo
+                ?.split(" ")
+                .slice(0, 2)
+                .map(w => w[0])
+                .join("")
+                .toUpperCase() || "U"}
+            </Text>
+          )}
+        </TouchableOpacity>
       </View>
 
       {!fontsLoaded || loading ? (
@@ -1376,7 +1380,12 @@ export default function HomeScreen() {
       >
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Selecciona tu ubicación</Text>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Selecciona tu ubicación</Text>
+              <TouchableOpacity onPress={() => setLocationModalVisible(false)} style={styles.modalCloseBtn}>
+                <Ionicons name="close" size={22} color="#999" />
+              </TouchableOpacity>
+            </View>
 
             {loadingCoordinates ? (
               <View style={styles.loadingContainer}>
@@ -1711,6 +1720,12 @@ const styles = StyleSheet.create({
     backgroundColor: "#1C1C1E",
     justifyContent: "center",
     alignItems: "center",
+    overflow: 'hidden',
+  },
+  avatarImage: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
   },
   avatarText: {
     color: "#FFF",
@@ -1848,26 +1863,35 @@ const styles = StyleSheet.create({
   },
   modalContent: {
     backgroundColor: "#FFF",
-    borderRadius: 15,
-    padding: 25,
-    width: "90%",
-    alignItems: "center",
+    borderRadius: 20,
+    padding: 20,
+    width: "95%",
     shadowColor: "#000",
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-    elevation: 5,
-    maxHeight: height * 0.8,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 12,
+    elevation: 10,
+    maxHeight: height * 0.85,
+  },
+  modalHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 15,
+  },
+  modalCloseBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: "#F2F2F7",
+    justifyContent: "center",
+    alignItems: "center",
   },
   modalTitle: {
-    fontSize: 22,
+    fontSize: 20,
     fontFamily: "Montserrat_700Bold",
-    color: "#fa6205",
-    marginBottom: 15,
-    textAlign: "center",
+    color: "#1C1C1E",
+    marginBottom: 0,
   },
   mapContainer: {
     width: "100%",
@@ -1885,31 +1909,26 @@ const styles = StyleSheet.create({
     position: "absolute",
     bottom: 15,
     right: 15,
-    backgroundColor: "#fa6205",
+    backgroundColor: "#FFF",
     width: 44,
     height: 44,
     borderRadius: 22,
     justifyContent: "center",
     alignItems: "center",
     shadowColor: "#000",
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-    elevation: 5,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 6,
+    elevation: 4,
   },
   locationInfoContainer: {
     flexDirection: "row",
     alignItems: "center",
     marginVertical: 10,
     width: "100%",
-    backgroundColor: "#FFF",
-    padding: 12,
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: "#E0E0E0",
+    backgroundColor: "#F5F0E8",
+    padding: 14,
+    borderRadius: 12,
   },
   locationAddressModal: {
     fontSize: 14,
@@ -1922,36 +1941,41 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     width: "100%",
-    marginTop: 15,
+    marginTop: 10,
+    gap: 10,
   },
   cancelButton: {
     backgroundColor: "#FFF",
-    paddingVertical: 12,
+    paddingVertical: 14,
     paddingHorizontal: 20,
-    borderRadius: 10,
-    marginRight: 10,
+    borderRadius: 25,
     flex: 1,
     alignItems: "center",
     borderWidth: 1.5,
-    borderColor: "#fa6205",
+    borderColor: "#E0E0E0",
   },
   cancelButtonText: {
-    color: "#fa6205",
+    color: "#666",
     fontFamily: "Montserrat_600SemiBold",
-    fontSize: 16,
+    fontSize: 15,
   },
   saveButton: {
     backgroundColor: "#fa6205",
-    paddingVertical: 12,
+    paddingVertical: 14,
     paddingHorizontal: 20,
-    borderRadius: 10,
+    borderRadius: 25,
     flex: 1,
     alignItems: "center",
+    shadowColor: "#fa6205",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 6,
   },
   saveButtonText: {
     color: "#FFF",
     fontFamily: "Montserrat_700Bold",
-    fontSize: 16,
+    fontSize: 15,
   },
   loadingText: {
     color: "#1C1C1E",

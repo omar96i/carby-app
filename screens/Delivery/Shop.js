@@ -257,7 +257,7 @@ const Shop = () => {
       <TouchableOpacity style={styles.ratingBadge} onPress={onPress}>
         <FontAwesome name="star" size={14} color="#fa6205" style={{marginRight: 4}} />
         <Text style={styles.ratingBadgeText}>
-          {hasRating ? parseFloat(rating).toFixed(1) : "N/A"}
+          {hasRating ? parseFloat(rating).toFixed(1) : "0.0"}
         </Text>
       </TouchableOpacity>
     );
@@ -453,7 +453,7 @@ const Shop = () => {
                         ListHeaderComponent={() => (
                             <View style={styles.scoreBigContainer}>
                                 <Text style={styles.scoreBig}>{rating ? parseFloat(rating).toFixed(1) : "-"}</Text>
-                                <View style={{flexDirection:'row'}}>{[...Array(5)].map((_,i)=><FontAwesome key={i} name="star" size={16} color={i<Math.round(rating)?"#FFD700":"#ccc"} />)}</View>
+                                <View style={{flexDirection:'row', gap: 4}}>{[...Array(5)].map((_,i)=><FontAwesome key={i} name="star" size={16} color={i<Math.round(rating)?"#FFD700":"#ccc"} />)}</View>
                                 <Text style={{color:'#888', marginTop:5}}>Promedio general</Text>
                             </View>
                         )}
@@ -463,7 +463,7 @@ const Shop = () => {
                                     <Text style={styles.reviewUser}>{item.user?.nombre_completo || "Anónimo"}</Text>
                                     <Text style={styles.reviewDate}>{formatDate(item.created_at)}</Text>
                                 </View>
-                                <View style={{flexDirection:'row', marginBottom:5}}>{[...Array(5)].map((_,i)=><FontAwesome key={i} name="star" size={12} color={i<item.puntuacion_restaurante?"#FFD700":"#DDD"} />)}</View>
+                                <View style={{flexDirection:'row', marginBottom:5, gap: 3}}>{[...Array(5)].map((_,i)=><FontAwesome key={i} name="star" size={12} color={i<item.puntuacion_restaurante?"#FFD700":"#DDD"} />)}</View>
                                 {item.comentario_restaurante && <Text style={styles.reviewText}>"{item.comentario_restaurante}"</Text>}
                             </View>
                         )}
@@ -687,16 +687,16 @@ const styles = StyleSheet.create({
   btnPrimaryText: { fontFamily: 'Montserrat_700Bold', color: '#FFF' },
   btnSecondary: { padding: 10, alignItems: 'center', marginBottom: 5 },
   btnSecondaryText: { fontFamily: 'Montserrat_600SemiBold', color: '#666' },
-  ratingsModalContent: { width: '100%', height: '70%', marginTop: 'auto', backgroundColor: '#222', borderTopLeftRadius: 25, borderTopRightRadius: 25, padding: 20 },
+  ratingsModalContent: { width: '100%', height: '70%', marginTop: 'auto', backgroundColor: '#FFF', borderTopLeftRadius: 25, borderTopRightRadius: 25, padding: 20 },
   ratingHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 },
   ratingTitle: { color: '#1C1C1E', fontSize: 20, fontFamily: 'Montserrat_700Bold' },
-  scoreBigContainer: { alignItems: 'center', paddingVertical: 20, borderBottomWidth: 1, borderBottomColor: '#333', marginBottom: 15 },
+  scoreBigContainer: { alignItems: 'center', paddingVertical: 20, borderBottomWidth: 1, borderBottomColor: '#E0E0E0', marginBottom: 15 },
   scoreBig: { color: '#1C1C1E', fontSize: 48, fontFamily: 'Montserrat_700Bold' },
   reviewItem: { marginBottom: 15, backgroundColor: '#ECECEC', padding: 15, borderRadius: 10 },
   reviewHeader: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 5 },
   reviewUser: { color: '#1C1C1E', fontFamily: 'Montserrat_700Bold' },
   reviewDate: { color: '#666', fontSize: 12 },
-  reviewText: { color: '#ccc', fontStyle: 'italic', marginTop: 5 },
+  reviewText: { color: '#555', fontStyle: 'italic', marginTop: 5 },
 });
 
 export default Shop;

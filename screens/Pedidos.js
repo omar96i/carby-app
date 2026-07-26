@@ -5061,9 +5061,6 @@ const styles = StyleSheet.create({
     color: "#FFF",
   },
   cardHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
     marginBottom: 15,
     paddingBottom: 10,
     borderBottomWidth: 1,
@@ -5136,16 +5133,19 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontFamily: "Montserrat_700Bold",
     color: "#000",
+    marginBottom: 4,
   },
   statusContainer: {
     flexDirection: "row",
+    flexWrap: "wrap",
     alignItems: "center",
+    gap: 6,
+    marginTop: 8,
   },
   statusChip: {
     paddingHorizontal: 10,
     paddingVertical: 5,
     borderRadius: 5,
-    marginRight: 5,
     fontFamily: "Montserrat_700Bold",
     fontSize: 12,
   },
@@ -5173,6 +5173,7 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: "#999",
     fontFamily: "Montserrat_300Light",
+    marginTop: 6,
   },
   cardBody: {
     marginTop: 5,
@@ -5404,9 +5405,6 @@ const styles = StyleSheet.create({
     elevation: 3,
   },
   reservaCardHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
     marginBottom: 15,
     paddingBottom: 10,
     borderBottomWidth: 1,
@@ -5416,6 +5414,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontFamily: "Montserrat_700Bold",
     color: "#333",
+    marginBottom: 8,
   },
   reservaInfoRow: {
     flexDirection: "row",

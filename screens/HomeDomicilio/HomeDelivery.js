@@ -521,6 +521,7 @@ export default function HomeDelivery() {
         style={StyleSheet.absoluteFillObject}
         initialRegion={userLocation ? { latitude: userLocation.latitude, longitude: userLocation.longitude, latitudeDelta: 0.015, longitudeDelta: 0.015 } : undefined}
         showsUserLocation={true}
+        showsMyLocationButton={false}
         rotateEnabled={false}
         pitchEnabled={false}
       >
