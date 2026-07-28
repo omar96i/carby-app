@@ -17,6 +17,7 @@ import Desembolso from "../screens/User/Desembolso";
 import WebViewScreen from "../screens/Delivery/WebViewScreen";
 import VistaDos from "../screens/HomeDomicilio/VistaDos";
 import ShopDos from "../screens/Delivery/ShopDos";
+import Dashboard from "../screens/comercio/Dashboard";
 import ProductoDos from "../screens/Delivery/ProductoDos";
 import EditarProducto from "../screens/Delivery/EditarProducto";
 import Wallet from "../screens/Delivery/Wallet";
@@ -31,7 +32,8 @@ const Stack = createStackNavigator();
 
 export default function TerceroStackNavigator() {
   return (
-    <Stack.Navigator  initialRouteName="ShopDos"  screenOptions={{ headerShown: false }}>
+    <Stack.Navigator  initialRouteName="Dashboard"  screenOptions={{ headerShown: false }}>
+      <Stack.Screen name="Dashboard" component={Dashboard} />
       <Stack.Screen name="HomeDelivery" component={HomeDelivery} />
       <Stack.Screen name="StepUno" component={StepUno} />
       <Stack.Screen

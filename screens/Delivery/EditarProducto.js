@@ -18,6 +18,8 @@ import {
   Montserrat_400Regular,
   Montserrat_700Bold,
   Montserrat_300Light,
+  Montserrat_600SemiBold,
+  Montserrat_800ExtraBold,
 } from "@expo-google-fonts/montserrat";
 import { useFonts } from "expo-font";
 import { useNavigation, useRoute, useFocusEffect } from "@react-navigation/native";
@@ -35,6 +37,8 @@ const EditarProducto = () => {
     Montserrat_400Regular,
     Montserrat_700Bold,
     Montserrat_300Light,
+    Montserrat_600SemiBold,
+    Montserrat_800ExtraBold,
   });
 
   // Product form state
@@ -429,47 +433,24 @@ const EditarProducto = () => {
   }; // Renderizar item de adicional - CORREGIDO para usar 'file' en lugar de 'foto'
   const renderAdicionalItem = ({ item }) => (
     <View style={styles.adicionalItem}>
-      <View style={styles.adicionalInfo}>
-        {item.file ? (
-          <Image
-            source={{
-              uri: item.file.startsWith("http")
-                ? item.file
-                : `${BASE_URL.toString().replace("/api", "")}/storage/${item.file}`,
-            }}
-            style={styles.adicionalImage}
-            onError={(error) =>
-              console.log("Error cargando imagen adicional:", error)
-            }
-          />
-        ) : (
-          // Placeholder cuando no hay imagen
-          <View style={styles.adicionalImagePlaceholder}>
-            <Ionicons name="image-outline" size={24} color="#666" />
-          </View>
-        )}
-        <View style={styles.adicionalTexts}>
-          <Text style={styles.adicionalNombre}>{item.nombre}</Text>
-          <Text style={styles.adicionalDescripcion} numberOfLines={2}>
-            {item.descripcion}
-          </Text>
-          <Text style={styles.adicionalPrecio}>${item.precio}</Text>
+      {item.file ? (
+        <Image source={{ uri: item.file.startsWith("http") ? item.file : `${BASE_URL.toString().replace("/api", "")}/storage/${item.file}` }} style={styles.adicionalImage} />
+      ) : (
+        <View style={styles.adicionalImagePlaceholder}>
+          <Ionicons name="image-outline" size={20} color="#CCC" />
         </View>
+      )}
+      <View style={styles.adicionalInfo}>
+        <Text style={styles.adicionalNombre}>{item.nombre}</Text>
+        <Text style={styles.adicionalDescripcion} numberOfLines={2}>{item.descripcion}</Text>
+        <Text style={styles.adicionalPrecio}>$ {Number(item.precio).toLocaleString("es-CO")}</Text>
       </View>
-      <View style={styles.adicionalActions}>
-        <TouchableOpacity
-          style={styles.editButton}
-          onPress={() => openAdicionalModal(item)}
-        >
-          <Ionicons name="pencil" size={16} color="#FFF" />
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={styles.deleteButton}
-          onPress={() => eliminarAdicional(item)}
-        >
-          <Ionicons name="trash" size={16} color="#FFF" />
-        </TouchableOpacity>
-      </View>
+      <TouchableOpacity style={styles.adicionalEditBtn} onPress={() => openAdicionalModal(item)}>
+        <Ionicons name="pencil" size={14} color="#999" />
+      </TouchableOpacity>
+      <TouchableOpacity style={styles.adicionalDeleteBtn} onPress={() => eliminarAdicional(item)}>
+        <Ionicons name="trash-outline" size={14} color="#EF4444" />
+      </TouchableOpacity>
     </View>
   );
 
@@ -479,119 +460,61 @@ const EditarProducto = () => {
       <ScrollView>
         {/* Header */}
         <View style={styles.header}>
-          <TouchableOpacity onPress={() => navigation.goBack()}>
-            <Ionicons name="arrow-back" size={24} color="#FFF" />
+          <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
+            <Ionicons name="arrow-back" size={20} color="#FFF" />
           </TouchableOpacity>
-          <Text style={styles.headerText}>
-            Editar Producto - {categoria_nombre}
-          </Text>
-          <View style={{ width: 24 }} />
+          <Text style={styles.headerText}>Editar Producto</Text>
+          <View style={{ width: 36 }} />
         </View>
 
-        {/* Product Image Picker */}
-        <TouchableOpacity
-          onPress={pickImage}
-          style={styles.imagePickerContainer}
-        >
+        {/* Product Image */}
+        <TouchableOpacity onPress={pickImage} style={styles.imagePicker}>
           {foto ? (
-            <Image source={{ uri: foto.uri }} style={styles.productImage} />
+            <Image source={{ uri: foto.uri }} style={styles.imagePreview} />
           ) : originalImageUrl ? (
-            <Image
-              source={{ uri: originalImageUrl }}
-              style={styles.productImage}
-            />
+            <Image source={{ uri: originalImageUrl }} style={styles.imagePreview} />
           ) : (
-            <View style={styles.placeholderContainer}>
-              <Ionicons name="camera" size={50} color="#fa6205" />
-              <Text style={styles.placeholderText}>
-                Toca para seleccionar imagen
-              </Text>
+            <View style={styles.imagePlaceholder}>
+              <Ionicons name="camera-outline" size={40} color="#CCC" />
+              <Text style={styles.imagePlaceholderText}>Toca para cambiar imagen</Text>
             </View>
           )}
         </TouchableOpacity>
 
-        {/* Product Form */}
+        {/* Form */}
         <View style={styles.formContainer}>
           <Text style={styles.inputLabel}>Nombre del producto</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="Ingresa el nombre"
-            placeholderTextColor="#7d7d7d"
-            value={nombre}
-            onChangeText={setNombre}
-          />
+          <TextInput style={styles.input} placeholder="Ingresa el nombre" placeholderTextColor="#999" value={nombre} onChangeText={setNombre} />
 
           <Text style={styles.inputLabel}>Precio</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="Ingresa el precio"
-            placeholderTextColor="#7d7d7d"
-            keyboardType="numeric"
-            value={precio}
-            onChangeText={setPrecio}
-          />
+          <TextInput style={styles.input} placeholder="Ingresa el precio" placeholderTextColor="#999" keyboardType="numeric" value={precio} onChangeText={setPrecio} />
 
           <Text style={styles.inputLabel}>Descripción</Text>
-          <TextInput
-            style={[styles.input, styles.textArea]}
-            placeholder="Ingresa la descripción"
-            placeholderTextColor="#7d7d7d"
-            multiline
-            numberOfLines={4}
-            value={descripcion}
-            onChangeText={setDescripcion}
-          />
+          <TextInput style={[styles.input, styles.textArea]} placeholder="Ingresa la descripción" placeholderTextColor="#999" multiline numberOfLines={4} value={descripcion} onChangeText={setDescripcion} />
         </View>
 
-        {/* Submit Button */}
-        <TouchableOpacity
-          style={styles.myButton}
-          onPress={handleSubmit}
-          disabled={loading}
-        >
-          {loading ? (
-            <ActivityIndicator size="small" color="#000" />
-          ) : (
-            <Text style={styles.buttonText}>Guardar Cambios</Text>
-          )}
+        {/* Submit */}
+        <TouchableOpacity style={styles.myButton} onPress={handleSubmit} disabled={loading}>
+          {loading ? <ActivityIndicator size="small" color="#FFF" /> : <Text style={styles.buttonText}>Guardar Cambios</Text>}
         </TouchableOpacity>
 
-        {/* Sección de Adicionales */}
+        {/* Adicionales */}
         <View style={styles.adicionalesSection}>
           <View style={styles.adicionalesHeader}>
-            <Text style={styles.adicionalesTitle}>
-              Adicionales del Producto
-            </Text>
-            <TouchableOpacity
-              style={styles.addAdicionalButton}
-              onPress={() => openAdicionalModal()}
-            >
-              <Ionicons name="add" size={24} color="#FFF" />
+            <Text style={styles.adicionalesTitle}>Adicionales del Producto</Text>
+            <TouchableOpacity style={styles.addAdicionalButton} onPress={() => openAdicionalModal()}>
+              <Ionicons name="add" size={18} color="#FFF" />
               <Text style={styles.addAdicionalText}>Agregar</Text>
             </TouchableOpacity>
           </View>
-          <Text style={[styles.modalHelperText, {marginTop: -15}]}>
-            Adicional o para elegir
-          </Text>
+          <Text style={styles.adicionalHelperText}>Adicional o para elegir</Text>
 
           {loadingAdicionales ? (
-            <View style={styles.loadingAdicionales}>
-              <ActivityIndicator size="small" color="#fa6205" />
-              <Text style={styles.loadingAdicionalesText}>
-                Cargando adicionales...
-              </Text>
-            </View>
+            <ActivityIndicator size="small" color="#fa6205" style={{ padding: 20 }} />
           ) : adicionales.length > 0 ? (
-            <FlatList
-              data={adicionales}
-              renderItem={renderAdicionalItem}
-              keyExtractor={(item) => item.id.toString()}
-              scrollEnabled={false}
-            />
+            <FlatList data={adicionales} renderItem={renderAdicionalItem} keyExtractor={(item) => item.id.toString()} scrollEnabled={false} />
           ) : (
-            <Text style={styles.noAdicionalesText}>
-              No hay adicionales creados. ¡Agrega el primero!
-            </Text>
+            <Text style={styles.noAdicionalesText}>No hay adicionales creados. ¡Agrega el primero!</Text>
           )}
         </View>
       </ScrollView>
@@ -727,352 +650,70 @@ const EditarProducto = () => {
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#F2F2F7",
-  },
-  loadingContainer: {
-    flex: 1,
-    backgroundColor: "#F2F2F7",
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  loadingText: {
-    color: "#1C1C1E",
-    marginTop: 10,
-    fontSize: 16,
-    fontFamily: "Montserrat_400Regular",
-  },
+  container: { flex: 1, backgroundColor: "#F4F4F5" },
+  loadingContainer: { flex: 1, backgroundColor: "#F4F4F5", justifyContent: "center", alignItems: "center" },
+  loadingText: { color: "#1C1C1E", marginTop: 10, fontSize: 16, fontFamily: "Montserrat_400Regular" },
   header: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    backgroundColor: "#fa6205",
-    padding: 15,
-    marginTop: 60,
+    flexDirection: "row", alignItems: "center", justifyContent: "space-between",
+    backgroundColor: "#1C1C1E", paddingHorizontal: 16, paddingTop: 50, paddingBottom: 20,
+    borderBottomLeftRadius: 24, borderBottomRightRadius: 24,
   },
-  headerText: {
-    fontSize: 16,
-    fontWeight: "bold",
-    color: "#FFF",
-    fontFamily: "Montserrat_700Bold",
-  },
-  imagePickerContainer: {
-    width: "100%",
-    height: 250,
-    marginVertical: 20,
-  },
-  productImage: {
-    width: "100%",
-    height: "100%",
-    resizeMode: "cover",
-  },
-  placeholderContainer: {
-    width: "100%",
-    height: "100%",
-    backgroundColor: "#ECECEC",
-    justifyContent: "center",
-    alignItems: "center",
-    borderWidth: 1,
-    borderStyle: "dashed",
-    borderColor: "#fa6205",
-  },
-  placeholderText: {
-    marginTop: 10,
-    color: "#1C1C1E",
-    fontFamily: "Montserrat_400Regular",
-  },
-  formContainer: {
-    padding: 15,
-  },
-  inputLabel: {
-    fontSize: 16,
-    color: "#1C1C1E",
-    fontFamily: "Montserrat_700Bold",
-    marginBottom: 5,
-    marginTop: 15,
-  },
-  input: {
-    backgroundColor: "#FFF",
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: "#DDD",
-    padding: 14,
-    fontSize: 16,
-    color: "#1C1C1E",
-    fontFamily: "Montserrat_400Regular",
-  },
-  textArea: {
-    minHeight: 100,
-    textAlignVertical: "top",
-  },
+  backBtn: { width: 36, height: 36, borderRadius: 18, backgroundColor: "rgba(255,255,255,0.1)", justifyContent: "center", alignItems: "center" },
+  headerText: { fontSize: 18, fontFamily: "Montserrat_800ExtraBold", color: "#FFF" },
+  imagePicker: { marginHorizontal: 16, marginTop: 20, height: 180, borderRadius: 16, overflow: "hidden", backgroundColor: "#E8E8ED" },
+  imagePreview: { width: "100%", height: "100%", resizeMode: "cover" },
+  imagePlaceholder: { flex: 1, justifyContent: "center", alignItems: "center", borderWidth: 2, borderColor: "#DDD", borderStyle: "dashed", borderRadius: 16, gap: 6 },
+  imagePlaceholderText: { fontSize: 13, fontFamily: "Montserrat_600SemiBold", color: "#BBB" },
+  formContainer: { padding: 16 },
+  inputLabel: { fontSize: 13, fontFamily: "Montserrat_700Bold", color: "#1C1C1E", marginBottom: 6, marginTop: 14 },
+  input: { backgroundColor: "#FFF", borderRadius: 14, borderWidth: 1, borderColor: "#E8E8ED", padding: 14, fontSize: 14, fontFamily: "Montserrat_400Regular", color: "#1C1C1E" },
+  textArea: { minHeight: 100, textAlignVertical: "top" },
   myButton: {
-    backgroundColor: "#fa6205",
-    paddingVertical: 10,
-    paddingHorizontal: 50,
-    borderRadius: 15,
-    alignItems: "center",
-    justifyContent: "center",
-    alignSelf: "center",
-    elevation: 5,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-    marginVertical: 20,
-    marginBottom: 30,
+    backgroundColor: "#fa6205", marginHorizontal: 16, paddingVertical: 16, borderRadius: 20, alignItems: "center",
+    shadowColor: "#fa6205", shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.3, shadowRadius: 12, elevation: 6, marginTop: 20,
   },
-  buttonText: {
-    color: "#FFF",
-    fontSize: 20,
-    fontWeight: "bold",
-    fontFamily: "Montserrat_700Bold",
-  },
-  // Estilos para la sección de adicionales
-  adicionalesSection: {
-    padding: 15,
-    marginTop: 20,
-  },
-  adicionalesHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 15,
-  },
-  adicionalesTitle: {
-    fontSize: 18,
-    color: "#fa6205",
-    fontFamily: "Montserrat_700Bold",
-  },
-  addAdicionalButton: {
-    backgroundColor: "#fa6205",
-    flexDirection: "row",
-    alignItems: "center",
-    paddingHorizontal: 15,
-    paddingVertical: 8,
-    borderRadius: 20,
-  },
-  addAdicionalText: {
-    color: "#FFF",
-    fontFamily: "Montserrat_700Bold",
-    fontSize: 14,
-    marginLeft: 8,
-  },
-  loadingAdicionales: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    padding: 20,
-  },
-  loadingAdicionalesText: {
-    color: "#1C1C1E",
-    marginLeft: 10,
-    fontFamily: "Montserrat_400Regular",
-  },
-  noAdicionalesText: {
-    color: "#7d7d7d",
-    textAlign: "center",
-    padding: 20,
-    fontFamily: "Montserrat_400Regular",
-    fontStyle: "italic",
-  },
+  buttonText: { color: "#FFF", fontSize: 16, fontFamily: "Montserrat_800ExtraBold" },
+
+  adicionalesSection: { padding: 16, marginTop: 8 },
+  adicionalesHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 4 },
+  adicionalesTitle: { fontSize: 18, fontFamily: "Montserrat_800ExtraBold", color: "#1C1C1E" },
+  addAdicionalButton: { backgroundColor: "#fa6205", flexDirection: "row", alignItems: "center", paddingHorizontal: 14, paddingVertical: 8, borderRadius: 20, gap: 6 },
+  addAdicionalText: { color: "#FFF", fontFamily: "Montserrat_700Bold", fontSize: 13 },
+  adicionalHelperText: { fontSize: 12, fontFamily: "Montserrat_400Regular", color: "#999", marginBottom: 14 },
+  noAdicionalesText: { color: "#999", textAlign: "center", padding: 20, fontFamily: "Montserrat_400Regular" },
   adicionalItem: {
-    backgroundColor: "#ECECEC",
-    borderRadius: 10,
-    padding: 15,
-    marginBottom: 10,
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
+    flexDirection: "row", alignItems: "center", backgroundColor: "#FFF", borderRadius: 14, padding: 12, marginBottom: 8,
+    borderWidth: 1, borderColor: "#F0F0F0", gap: 10,
   },
-  adicionalInfo: {
-    flexDirection: "row",
-    alignItems: "center",
-    flex: 1,
-  },
-  adicionalImage: {
-    width: 60,
-    height: 60,
-    borderRadius: 8,
-    marginRight: 15,
-  },
-  // NUEVO estilo para placeholder de imagen
-  adicionalImagePlaceholder: {
-    width: 60,
-    height: 60,
-    borderRadius: 8,
-    marginRight: 15,
-    backgroundColor: "#333",
-    justifyContent: "center",
-    alignItems: "center",
-    borderWidth: 1,
-    borderColor: "#555",
-    borderStyle: "dashed",
-  },
-  adicionalTexts: {
-    flex: 1,
-  },
-  adicionalNombre: {
-    color: "#1C1C1E",
-    fontSize: 16,
-    fontFamily: "Montserrat_700Bold",
-    marginBottom: 2,
-  },
-  // MODIFICAR para limitar líneas de descripción
-  adicionalDescripcion: {
-    color: "#ccc",
-    fontSize: 14,
-    fontFamily: "Montserrat_400Regular",
-    marginBottom: 2,
-    lineHeight: 18,
-  },
-  adicionalPrecio: {
-    color: "#fa6205",
-    fontSize: 16,
-    fontFamily: "Montserrat_700Bold",
-  },
-  adicionalActions: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  editButton: {
-    backgroundColor: "#fa6205",
-    padding: 7,
-    borderRadius: 6,
-    marginRight: 8,
-    width: 30,
-    height: 30,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  deleteButton: {
-    backgroundColor: "#FF3B30",
-    padding: 7,
-    borderRadius: 6,
-    width: 30,
-    height: 30,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  // Estilos para el modal
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: "rgba(0, 0, 0, 0.5)",
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  modalContent: {
-    backgroundColor: "#FFF",
-    borderRadius: 15,
-    width: "90%",
-    maxHeight: "80%",
-  },
-  modalHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    padding: 20,
-    borderBottomWidth: 1,
-    borderBottomColor: "#DDD",
-  },
-  modalTitle: {
-    color: "#fa6205",
-    fontSize: 18,
-    fontFamily: "Montserrat_700Bold",
-  },
-  closeButton: {
-    padding: 5,
-  },
-  modalScrollView: {
-    padding: 20,
-  },
-  modalImagePicker: {
-    width: "100%",
-    height: 150,
-    marginBottom: 20,
-  },
-  modalImage: {
-    width: "100%",
-    height: "100%",
-    borderRadius: 10,
-  },
-  modalPlaceholder: {
-    width: "100%",
-    height: "100%",
-    backgroundColor: "#F0F0F0",
-    justifyContent: "center",
-    alignItems: "center",
-    borderRadius: 10,
-    borderWidth: 1,
-    borderStyle: "dashed",
-    borderColor: "#fa6205",
-  },
-  modalPlaceholderText: {
-    color: "#fa6205",
-    marginTop: 10,
-    fontFamily: "Montserrat_400Regular",
-  },
-  modalInputLabel: {
-    color: "#1C1C1E",
-    fontSize: 16,
-    fontFamily: "Montserrat_700Bold",
-    marginBottom: 8,
-    marginTop: 15,
-  },
-  modalInput: {
-    backgroundColor: "#F5F5F5",
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: "#DDD",
-    padding: 12,
-    fontSize: 16,
-    color: "#1C1C1E",
-    fontFamily: "Montserrat_400Regular",
-  },
-  modalTextArea: {
-    minHeight: 80,
-    textAlignVertical: "top",
-  },
-  modalButtons: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    marginTop: 20,
-    paddingBottom: 40
-  },
-  modalCancelButton: {
-    backgroundColor: "#DDD",
-    paddingVertical: 12,
-    paddingHorizontal: 20,
-    borderRadius: 8,
-    flex: 0.45,
-    alignItems: "center",
-  },
-  modalCancelText: {
-    color: "#666",
-    fontFamily: "Montserrat_700Bold",
-  },
-  modalSaveButton: {
-    backgroundColor: "#fa6205",
-    paddingVertical: 12,
-    paddingHorizontal: 20,
-    borderRadius: 8,
-    flex: 0.45,
-    alignItems: "center",
-  },
-  modalSaveText: {
-    color: "#FFF",
-    fontFamily: "Montserrat_700Bold",
-  },
-  modalHelperText: {
-    fontSize: 13,
-    color: '#7d7d7d', // Un color gris suave, similar al placeholder
-    marginTop: 5,      // Un pequeño espacio después del input de precio
-    marginBottom: 10,  // Espacio antes de que empiecen los botones
-    textAlign: 'left', // O 'center' si prefieres
-    // Si tus inputs tienen un padding/margin horizontal, 
-    // puedes agregarlo aquí también para que se alinee.
-    // Ejemplo: paddingHorizontal: 10 
-  }
+  adicionalImage: { width: 52, height: 52, borderRadius: 12, backgroundColor: "#F4F4F5" },
+  adicionalImagePlaceholder: { width: 52, height: 52, borderRadius: 12, backgroundColor: "#F4F4F5", justifyContent: "center", alignItems: "center", borderWidth: 1, borderColor: "#E0E0E0", borderStyle: "dashed" },
+  adicionalInfo: { flex: 1 },
+  adicionalNombre: { fontSize: 14, fontFamily: "Montserrat_700Bold", color: "#1C1C1E", marginBottom: 2 },
+  adicionalDescripcion: { fontSize: 12, fontFamily: "Montserrat_400Regular", color: "#71717A", marginBottom: 2 },
+  adicionalPrecio: { fontSize: 13, fontFamily: "Montserrat_800ExtraBold", color: "#fa6205" },
+  adicionalEditBtn: { width: 30, height: 30, borderRadius: 15, backgroundColor: "#F4F4F5", justifyContent: "center", alignItems: "center" },
+  adicionalDeleteBtn: { width: 30, height: 30, borderRadius: 15, backgroundColor: "#FEF2F2", justifyContent: "center", alignItems: "center" },
+
+  modalOverlay: { flex: 1, backgroundColor: "rgba(0,0,0,0.5)", justifyContent: "flex-end" },
+  modalContent: { backgroundColor: "#FFF", borderTopLeftRadius: 28, borderTopRightRadius: 28, maxHeight: "85%", paddingTop: 12 },
+  modalHeader: { flexDirection: "row", justifyContent: "center", alignItems: "center", marginBottom: 8, position: "relative" },
+  closeButton: { position: "absolute", right: 16, top: 0, width: 36, height: 36, borderRadius: 18, backgroundColor: "#F4F4F5", justifyContent: "center", alignItems: "center", zIndex: 1 },
+  modalTitle: { fontSize: 18, fontFamily: "Montserrat_800ExtraBold", color: "#1C1C1E" },
+  modalScrollView: { paddingHorizontal: 20, paddingBottom: 30 },
+  modalImagePicker: { width: "100%", height: 130, marginBottom: 16, borderRadius: 14, overflow: "hidden", backgroundColor: "#F4F4F5" },
+  modalImage: { width: "100%", height: "100%", borderRadius: 14 },
+  modalPlaceholder: { flex: 1, justifyContent: "center", alignItems: "center", borderWidth: 2, borderColor: "#DDD", borderStyle: "dashed", borderRadius: 14, gap: 4 },
+  modalPlaceholderText: { fontSize: 13, fontFamily: "Montserrat_600SemiBold", color: "#BBB" },
+  modalForm: { paddingVertical: 8 },
+  modalInputLabel: { fontSize: 13, fontFamily: "Montserrat_700Bold", color: "#1C1C1E", marginBottom: 6, marginTop: 12 },
+  modalInput: { backgroundColor: "#F4F4F5", borderRadius: 14, padding: 12, fontSize: 14, fontFamily: "Montserrat_400Regular", color: "#1C1C1E" },
+  modalTextArea: { minHeight: 80, textAlignVertical: "top" },
+  modalButtons: { flexDirection: "row", gap: 10, marginTop: 20, paddingBottom: 30 },
+  modalCancelButton: { flex: 1, backgroundColor: "#F4F4F5", paddingVertical: 14, borderRadius: 14, alignItems: "center" },
+  modalCancelText: { fontSize: 15, fontFamily: "Montserrat_700Bold", color: "#71717A" },
+  modalSaveButton: { flex: 1, backgroundColor: "#fa6205", paddingVertical: 14, borderRadius: 14, alignItems: "center" },
+  modalSaveText: { fontSize: 15, fontFamily: "Montserrat_800ExtraBold", color: "#FFF" },
+  modalHelperText: { fontSize: 12, fontFamily: "Montserrat_400Regular", color: "#999", marginTop: 6, marginBottom: 4 },
 });
 
 export default EditarProducto;

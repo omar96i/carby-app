@@ -20,6 +20,8 @@ import {
   useFonts,
   Montserrat_400Regular,
   Montserrat_700Bold,
+  Montserrat_600SemiBold,
+  Montserrat_800ExtraBold,
 } from "@expo-google-fonts/montserrat";
 import { useNavigation } from "@react-navigation/native";
 import { BASE_URL } from "../../constants/url";
@@ -79,6 +81,8 @@ export default function CrearPerfil() {
   const [fontsLoaded] = useFonts({
     Montserrat_400Regular,
     Montserrat_700Bold,
+    Montserrat_600SemiBold,
+    Montserrat_800ExtraBold,
   });
 
   useEffect(() => {
@@ -490,43 +494,20 @@ export default function CrearPerfil() {
     <SafeAreaView style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity
-          style={styles.backButton}
-          onPress={() => navigation.goBack()}
-        >
-          <Ionicons name="arrow-back" size={24} color="#FFF" />
+        <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
+          <Ionicons name="arrow-back" size={20} color="#FFF" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Gestión de Perfiles</Text>
-        <View style={styles.placeholder} />
+        <View style={{ width: 36 }} />
       </View>
 
-      {/* Pestañas */}
+      {/* Tabs */}
       <View style={styles.tabContainer}>
-        <TouchableOpacity
-          style={[styles.tab, activeTab === "perfiles" && styles.activeTab]}
-          onPress={() => setActiveTab("perfiles")}
-        >
-          <Text
-            style={[
-              styles.tabText,
-              activeTab === "perfiles" && styles.activeTabText,
-            ]}
-          >
-            Perfiles
-          </Text>
+        <TouchableOpacity style={[styles.tab, activeTab === "perfiles" && styles.activeTab]} onPress={() => setActiveTab("perfiles")}>
+          <Text style={[styles.tabText, activeTab === "perfiles" && styles.activeTabText]}>Perfiles</Text>
         </TouchableOpacity>
-        <TouchableOpacity
-          style={[styles.tab, activeTab === "crear" && styles.activeTab]}
-          onPress={() => setActiveTab("crear")}
-        >
-          <Text
-            style={[
-              styles.tabText,
-              activeTab === "crear" && styles.activeTabText,
-            ]}
-          >
-            Crear
-          </Text>
+        <TouchableOpacity style={[styles.tab, activeTab === "crear" && styles.activeTab]} onPress={() => setActiveTab("crear")}>
+          <Text style={[styles.tabText, activeTab === "crear" && styles.activeTabText]}>Crear</Text>
         </TouchableOpacity>
       </View>
 
@@ -804,603 +785,186 @@ export default function CrearPerfil() {
         </View>
       </Modal>
 
-      {/* Modal para agregar horario */}
-      <Modal
-        visible={horarioModalVisible}
-        animationType="slide"
-        transparent={true}
-        onRequestClose={() => setHorarioModalVisible(false)}
-      >
-        <View
-          style={{
-            flex: 1,
-            backgroundColor: "rgba(0,0,0,0.5)",
-            justifyContent: "center",
-            alignItems: "center",
-          }}
-        >
-          <View
-            style={{
-              backgroundColor: "#FFF",
-              borderRadius: 16,
-              padding: 24,
-              width: "85%",
-            }}
-          >
-            <ScrollView showsVerticalScrollIndicator={false}>
-              <Text style={[styles.sectionTitle, { marginBottom: 16 }]}>
-                Agregar Horario
-              </Text>
-              {/* Lista de horarios existentes */}
+      {/* Modal para agregar/editar horario */}
+      <Modal visible={horarioModalVisible} animationType="slide" transparent onRequestClose={() => setHorarioModalVisible(false)}>
+        <View style={hm.overlay}>
+          <View style={hm.sheet}>
+            <View style={hm.grabber} />
+            <View style={hm.headerRow}>
+              <Text style={hm.title}>Agregar Horario</Text>
+              <TouchableOpacity onPress={() => setHorarioModalVisible(false)} style={hm.closeBtn}>
+                <Ionicons name="close" size={18} color="#999" />
+              </TouchableOpacity>
+            </View>
+
+            <ScrollView showsVerticalScrollIndicator={false} style={{ maxHeight: 400 }}>
               {horarios.length > 0 && (
-                <View style={{ marginBottom: 20 }}>
-                  <Text style={[styles.inputLabel, { marginBottom: 8 }]}>
-                    Horarios creados:
-                  </Text>
+                <View style={hm.section}>
+                  <Text style={hm.sectionLabel}>Horarios creados</Text>
                   {horarios.map((h) => (
-                    <View key={h.id} style={styles.horarioItem}>
+                    <View key={h.id} style={hm.horarioCard}>
                       <View style={{ flex: 1 }}>
-                        <Text style={styles.horarioText}>
-                          <Text
-                            style={{ color: "#fa6205", fontWeight: "bold" }}
-                          >
-                            {diasSemana[h.dia_semana]?.label || "Día"}:
-                          </Text>
-                          {" "}{h.hora_inicio} - {h.hora_fin}
-                        </Text>
+                        <Text style={hm.horarioDay}>{diasSemana[h.dia_semana]?.label || "Día"}</Text>
+                        <Text style={hm.horarioTime}>{h.hora_inicio} - {h.hora_fin}</Text>
                       </View>
-                      <View style={styles.horarioButtons}>
-                        <TouchableOpacity
-                          onPress={() => handleEditHorario(h)}
-                          style={styles.horarioButton}
-                        >
-                          <Ionicons
-                            name="create-outline"
-                            size={20}
-                            color="#fa6205"
-                          />
-                        </TouchableOpacity>
-                        <TouchableOpacity
-                          onPress={() => handleEliminarHorario(h.id)}
-                          style={styles.horarioButton}
-                        >
-                          <Ionicons
-                            name="trash-outline"
-                            size={20}
-                            color="#ff4d4d"
-                          />
-                        </TouchableOpacity>
-                      </View>
+                      <TouchableOpacity onPress={() => handleEditHorario(h)} style={hm.actionBtn}>
+                        <Ionicons name="pencil" size={16} color="#999" />
+                      </TouchableOpacity>
+                      <TouchableOpacity onPress={() => handleEliminarHorario(h.id)} style={[hm.actionBtn, { backgroundColor: '#FEF2F2' }]}>
+                        <Ionicons name="trash-outline" size={16} color="#EF4444" />
+                      </TouchableOpacity>
                     </View>
                   ))}
                 </View>
               )}
+
               <Text style={styles.inputLabel}>Día de la semana</Text>
-              <View
-                style={{
-                  backgroundColor: "#F0F0F0",
-                  borderRadius: 10,
-                  marginBottom: 15,
-                }}
-              >
+              <View style={hm.dayRow}>
                 {diasSemana.map((d) => (
-                  <TouchableOpacity
-                    key={d.value}
-                    style={{
-                      padding: 10,
-                      backgroundColor:
-                        diaSemana === d.value ? "#fa6205" : "transparent",
-                      borderRadius: 10,
-                    }}
-                    onPress={() => setDiaSemana(d.value)}
-                  >
-                    <Text
-                      style={{
-                        color: diaSemana === d.value ? "#FFF" : "#1C1C1E",
-                        fontWeight: diaSemana === d.value ? "bold" : "normal",
-                      }}
-                    >
-                      {d.label}
-                    </Text>
+                  <TouchableOpacity key={d.value} style={[hm.dayChip, diaSemana === d.value && hm.dayChipActive]} onPress={() => setDiaSemana(d.value)}>
+                    <Text style={[hm.dayChipText, diaSemana === d.value && hm.dayChipTextActive]}>{d.label.slice(0, 2)}</Text>
                   </TouchableOpacity>
                 ))}
               </View>
-              <Text style={styles.inputLabel}>Hora de inicio</Text>
-              <TouchableOpacity
-                style={[styles.textInput, { marginBottom: 10 }]}
-                onPress={() => setShowInicioPicker(true)}
-              >
-                <Text style={{ color: "#1C1C1E" }}>{formatHora(horaInicio)}</Text>
-              </TouchableOpacity>{" "}
+
+              <View style={hm.timeRow}>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.inputLabel}>Inicio</Text>
+                  <TouchableOpacity style={hm.timeBtn} onPress={() => setShowInicioPicker(true)}>
+                    <Ionicons name="time-outline" size={16} color="#fa6205" />
+                    <Text style={hm.timeText}>{formatHora(horaInicio)}</Text>
+                  </TouchableOpacity>
+                </View>
+                <View style={{ width: 12 }} />
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.inputLabel}>Fin</Text>
+                  <TouchableOpacity style={hm.timeBtn} onPress={() => setShowFinPicker(true)}>
+                    <Ionicons name="time-outline" size={16} color="#fa6205" />
+                    <Text style={hm.timeText}>{formatHora(horaFin)}</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+
               {showInicioPicker && (
-                <DateTimePicker
-                  value={horaInicio}
-                  mode="time"
-                  is24Hour={true}
-                  display={Platform.OS === "ios" ? "spinner" : "default"}
-                  minuteInterval={1}
+                <DateTimePicker value={horaInicio} mode="time" is24Hour={true} display={Platform.OS === "ios" ? "spinner" : "default"} minuteInterval={1}
                   onChange={(event, selectedDate) => {
-                    if (Platform.OS === "android") {
-                      setShowInicioPicker(false);
-                    }
-                    if (selectedDate) {
-                      const newDate = new Date(selectedDate);
-                      setHoraInicio(newDate);
-                    }
-                    if (Platform.OS === "ios" && event.type === "dismissed") {
-                      setShowInicioPicker(false);
-                    }
+                    if (Platform.OS === "android") setShowInicioPicker(false);
+                    if (selectedDate) setHoraInicio(new Date(selectedDate));
+                    if (Platform.OS === "ios" && event.type === "dismissed") setShowInicioPicker(false);
                   }}
                 />
               )}
-              {Platform.OS === "ios" && showInicioPicker && (
-                <View
-                  style={{
-                    flexDirection: "row",
-                    justifyContent: "flex-end",
-                    marginTop: 10,
-                  }}
-                >
-                  <TouchableOpacity
-                    onPress={() => setShowInicioPicker(false)}
-                    style={[
-                      styles.createButton,
-                      {
-                        backgroundColor: "#DDD",
-                        marginRight: 10,
-                        paddingVertical: 8,
-                      },
-                    ]}
-                  >
-                    <Text
-                      style={[
-                        styles.createButtonText,
-                        { color: "#666", fontSize: 14 },
-                      ]}
-                    >
-                      Cancelar
-                    </Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    onPress={() => setShowInicioPicker(false)}
-                    style={[styles.createButton, { paddingVertical: 8 }]}
-                  >
-                    <Text style={[styles.createButtonText, { fontSize: 14 }]}>
-                      Confirmar
-                    </Text>
-                  </TouchableOpacity>
-                </View>
-              )}
-              <Text style={styles.inputLabel}>Hora de fin</Text>
-              <TouchableOpacity
-                style={[styles.textInput, { marginBottom: 10 }]}
-                onPress={() => setShowFinPicker(true)}
-              >
-                <Text style={{ color: "#1C1C1E" }}>{formatHora(horaFin)}</Text>
-              </TouchableOpacity>{" "}
+
               {showFinPicker && (
-                <DateTimePicker
-                  value={horaFin}
-                  mode="time"
-                  is24Hour={true}
-                  display={Platform.OS === "ios" ? "spinner" : "default"}
-                  minuteInterval={1}
+                <DateTimePicker value={horaFin} mode="time" is24Hour={true} display={Platform.OS === "ios" ? "spinner" : "default"} minuteInterval={1}
                   onChange={(event, selectedDate) => {
-                    if (Platform.OS === "android") {
-                      setShowFinPicker(false);
-                    }
-                    if (selectedDate) {
-                      const newDate = new Date(selectedDate);
-                      setHoraFin(newDate);
-                    }
-                    if (Platform.OS === "ios" && event.type === "dismissed") {
-                      setShowFinPicker(false);
-                    }
+                    if (Platform.OS === "android") setShowFinPicker(false);
+                    if (selectedDate) setHoraFin(new Date(selectedDate));
+                    if (Platform.OS === "ios" && event.type === "dismissed") setShowFinPicker(false);
                   }}
                 />
               )}
-              {Platform.OS === "ios" && showFinPicker && (
-                <View
-                  style={{
-                    flexDirection: "row",
-                    justifyContent: "flex-end",
-                    marginTop: 10,
-                  }}
-                >
-                  <TouchableOpacity
-                    onPress={() => setShowFinPicker(false)}
-                    style={[
-                      styles.createButton,
-                      {
-                        backgroundColor: "#DDD",
-                        marginRight: 10,
-                        paddingVertical: 8,
-                      },
-                    ]}
-                  >
-                    <Text
-                      style={[
-                        styles.createButtonText,
-                        { color: "#666", fontSize: 14 },
-                      ]}
-                    >
-                      Cancelar
-                    </Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    onPress={() => setShowFinPicker(false)}
-                    style={[styles.createButton, { paddingVertical: 8 }]}
-                  >
-                    <Text style={[styles.createButtonText, { fontSize: 14 }]}>
-                      Confirmar
-                    </Text>
-                  </TouchableOpacity>
-                </View>
-              )}
-              <View
-                style={{
-                  flexDirection: "row",
-                  justifyContent: "flex-end",
-                  marginTop: 20,
-                }}
-              >
-                <TouchableOpacity
-                  onPress={() => setHorarioModalVisible(false)}
-                  style={[
-                    styles.createButton,
-                    { backgroundColor: "#DDD", marginRight: 10 },
-                  ]}
-                >
-                  <Text style={[styles.createButtonText, { color: "#666" }]}>
-                    Cancelar
-                  </Text>
+
+              <View style={hm.buttons}>
+                <TouchableOpacity onPress={() => setHorarioModalVisible(false)} style={hm.cancelBtn}>
+                  <Text style={hm.cancelBtnText}>Cancelar</Text>
                 </TouchableOpacity>
-                {horarioEditId ? (
-                  <TouchableOpacity
-                    onPress={handleGuardarEdicionHorario}
-                    style={styles.createButton}
-                    disabled={isHorarioSubmitting}
-                  >
-                    {isHorarioSubmitting ? (
-                      <ActivityIndicator size="small" color="#FFF" />
-                    ) : (
-                      <Text style={styles.createButtonText}>
-                        Guardar Cambios
-                      </Text>
-                    )}
-                  </TouchableOpacity>
-                ) : (
-                  <TouchableOpacity
-                    onPress={handleCrearHorario}
-                    style={styles.createButton}
-                    disabled={isHorarioSubmitting}
-                  >
-                    {isHorarioSubmitting ? (
-                      <ActivityIndicator size="small" color="#FFF" />
-                    ) : (
-                      <Text style={styles.createButtonText}>Guardar</Text>
-                    )}
-                  </TouchableOpacity>
-                )}
+                <TouchableOpacity onPress={horarioEditId ? handleGuardarEdicionHorario : handleCrearHorario} style={hm.saveBtn} disabled={isHorarioSubmitting}>
+                  {isHorarioSubmitting ? <ActivityIndicator size="small" color="#FFF" /> : <Text style={hm.saveBtnText}>{horarioEditId ? "Guardar Cambios" : "Guardar"}</Text>}
+                </TouchableOpacity>
               </View>
             </ScrollView>
           </View>
         </View>
       </Modal>
 
-      <AlertaModal
-        visible={alertVisible}
-        mensaje={alertData.message}
-        onCerrar={() => setAlertVisible(false)}
-        titulo={alertData.title}
-        tipo={alertData.type}
-        onPrimary={alertData.onConfirm}
-        primaryLabel={alertData.primaryLabel || "Entendido"}
-      />
+      <AlertaModal visible={alertVisible} mensaje={alertData.message} tipo={alertData.type} onCerrar={() => setAlertVisible(false)} onPrimary={alertData.onPrimary} primaryLabel={alertData.primaryLabel} />
     </SafeAreaView>
   );
 }
 
+const hm = StyleSheet.create({
+  overlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' },
+  sheet: { backgroundColor: '#FFF', borderTopLeftRadius: 28, borderTopRightRadius: 28, paddingHorizontal: 20, paddingTop: 8, paddingBottom: 30, maxHeight: '85%' },
+  grabber: { width: 40, height: 5, borderRadius: 3, backgroundColor: '#E0E0E0', alignSelf: 'center', marginBottom: 16 },
+  headerRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 },
+  title: { fontSize: 18, fontFamily: 'Montserrat_800ExtraBold', color: '#1C1C1E' },
+  closeBtn: { width: 36, height: 36, borderRadius: 18, backgroundColor: '#F4F4F5', justifyContent: 'center', alignItems: 'center' },
+  section: { marginBottom: 16 },
+  sectionLabel: { fontSize: 12, fontFamily: 'Montserrat_600SemiBold', color: '#999', textTransform: 'uppercase', marginBottom: 8 },
+  horarioCard: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#F9F9F9', borderRadius: 14, padding: 12, marginBottom: 6, gap: 8 },
+  horarioDay: { fontSize: 13, fontFamily: 'Montserrat_700Bold', color: '#1C1C1E' },
+  horarioTime: { fontSize: 12, fontFamily: 'Montserrat_400Regular', color: '#71717A', marginTop: 2 },
+  actionBtn: { width: 32, height: 32, borderRadius: 16, backgroundColor: '#F4F4F5', justifyContent: 'center', alignItems: 'center' },
+  dayRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginBottom: 16 },
+  dayChip: { paddingHorizontal: 12, paddingVertical: 8, borderRadius: 10, backgroundColor: '#F4F4F5' },
+  dayChipActive: { backgroundColor: '#fa6205' },
+  dayChipText: { fontSize: 13, fontFamily: 'Montserrat_600SemiBold', color: '#71717A' },
+  dayChipTextActive: { color: '#FFF', fontFamily: 'Montserrat_700Bold' },
+  timeRow: { flexDirection: 'row', marginBottom: 16 },
+  timeBtn: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#F4F4F5', borderRadius: 14, padding: 14, gap: 8 },
+  timeText: { fontSize: 14, fontFamily: 'Montserrat_600SemiBold', color: '#1C1C1E' },
+  buttons: { flexDirection: 'row', gap: 10, marginTop: 4 },
+  cancelBtn: { flex: 1, backgroundColor: '#F4F4F5', paddingVertical: 14, borderRadius: 14, alignItems: 'center' },
+  cancelBtnText: { fontSize: 15, fontFamily: 'Montserrat_700Bold', color: '#71717A' },
+  saveBtn: { flex: 1, backgroundColor: '#fa6205', paddingVertical: 14, borderRadius: 14, alignItems: 'center' },
+  saveBtnText: { fontSize: 15, fontFamily: 'Montserrat_800ExtraBold', color: '#FFF' },
+});
+
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#F2F2F7",
-  },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: "#F2F2F7",
-  },
+  container: { flex: 1, backgroundColor: '#F4F4F5' },
+  loadingContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#F4F4F5' },
   header: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    backgroundColor: "#fa6205",
-    paddingHorizontal: 20,
-    paddingVertical: 15,
-    paddingTop: 50,
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+    backgroundColor: '#1C1C1E', paddingHorizontal: 16, paddingTop: 50, paddingBottom: 20,
+    borderBottomLeftRadius: 24, borderBottomRightRadius: 24,
   },
-  backButton: {
-    padding: 5,
-  },
-  headerTitle: {
-    color: "#FFF",
-    fontSize: 18,
-    fontFamily: "Montserrat_700Bold",
-  },
-  placeholder: {
-    width: 34,
-  },
-  // Tab styles
-  tabContainer: {
-    flexDirection: "row",
-    backgroundColor: "#F0F0F0",
-    marginHorizontal: 20,
-    marginVertical: 10,
-    borderRadius: 12,
-    padding: 4,
-  },
-  tab: {
-    flex: 1,
-    paddingVertical: 12,
-    paddingHorizontal: 20,
-    borderRadius: 8,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  activeTab: {
-    backgroundColor: "#fa6205",
-  },
-  tabText: {
-    color: "#999",
-    fontSize: 16,
-    fontFamily: "Montserrat_700Bold",
-  },
-  activeTabText: {
-    color: "#FFF",
-  },
-  // Profiles tab container
-  profilesTabContainer: {
-    padding: 20,
-  },
-  // Enhanced empty state styles
-  emptyProfilesContainer: {
-    alignItems: "center",
-    justifyContent: "center",
-    paddingVertical: 60,
-    paddingHorizontal: 20,
-  },
-  emptyProfilesTitle: {
-    color: "#1C1C1E",
-    fontSize: 18,
-    fontFamily: "Montserrat_700Bold",
-    marginTop: 20,
-    textAlign: "center",
-  },
-  emptyProfilesSubtitle: {
-    color: "#999",
-    fontSize: 14,
-    fontFamily: "Montserrat_400Regular",
-    marginTop: 8,
-    textAlign: "center",
-    lineHeight: 20,
-  },
-  createFirstProfileButton: {
-    backgroundColor: "#fa6205",
-    borderRadius: 25,
-    paddingVertical: 12,
-    paddingHorizontal: 20,
-    flexDirection: "row",
-    alignItems: "center",
-    marginTop: 24,
-  },
-  createFirstProfileText: {
-    color: "#FFF",
-    fontSize: 16,
-    fontFamily: "Montserrat_700Bold",
-    marginLeft: 8,
-  },
-  // ...existing styles...
-  scrollContainer: {
-    flex: 1,
-  },
-  formContainer: {
-    padding: 20,
-  },
-  sectionTitle: {
-    color: "#fa6205",
-    fontSize: 20,
-    fontFamily: "Montserrat_700Bold",
-    marginBottom: 20,
-  },
-  inputContainer: {
-    marginBottom: 20,
-  },
-  inputLabel: {
-    color: "#1C1C1E",
-    fontSize: 16,
-    fontFamily: "Montserrat_700Bold",
-    marginBottom: 8,
-  },
-  textInput: {
-    backgroundColor: "#F0F0F0",
-    borderRadius: 10,
-    padding: 15,
-    color: "#1C1C1E",
-    fontFamily: "Montserrat_400Regular",
-    fontSize: 16,
-    borderWidth: 1,
-    borderColor: "#DDD",
-  },
-  textArea: {
-    height: 60,
-    textAlignVertical: "top",
-  },
-  characterCount: {
-    color: "#999",
-    fontSize: 12,
-    fontFamily: "Montserrat_400Regular",
-    marginTop: 5,
-    textAlign: "right",
-  },
-  imageSelector: {
-    borderRadius: 10,
-    overflow: "hidden",
-  },
-  selectedImageContainer: {
-    position: "relative",
-  },
-  selectedImage: {
-    width: "100%",
-    height: 200,
-    resizeMode: "cover",
-  },
-  changeImageOverlay: {
-    position: "absolute",
-    bottom: 0,
-    left: 0,
-    right: 0,
-    backgroundColor: "rgba(0, 0, 0, 0.7)",
-    padding: 10,
-    alignItems: "center",
-  },
-  changeImageText: {
-    color: "#FFF",
-    fontSize: 12,
-    fontFamily: "Montserrat_400Regular",
-    marginTop: 5,
-  },
-  imagePlaceholder: {
-    backgroundColor: "#F0F0F0",
-    borderRadius: 10,
-    padding: 30,
-    alignItems: "center",
-    justifyContent: "center",
-    borderWidth: 2,
-    borderColor: "#DDD",
-    borderStyle: "dashed",
-  },
-  imagePlaceholderText: {
-    color: "#fa6205",
-    fontSize: 16,
-    fontFamily: "Montserrat_700Bold",
-    marginTop: 10,
-  },
-  imagePlaceholderSubtext: {
-    color: "#999",
-    fontSize: 12,
-    fontFamily: "Montserrat_400Regular",
-    marginTop: 5,
-  },
-  createButton: {
-    backgroundColor: "#fa6205",
-    borderRadius: 25,
-    padding: 15,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    marginTop: 20,
-  },
-  disabledButton: {
-    opacity: 0.6,
-  },
-  createButtonText: {
-    color: "#FFF",
-    fontSize: 16,
-    fontFamily: "Montserrat_700Bold",
-    marginLeft: 8,
-  },
-  existingProfilesContainer: {
-    padding: 20,
-    paddingTop: 0,
-    marginTop: 20,
-  },
-  loadingProfilesContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    padding: 20,
-  },
-  loadingText: {
-    color: "#1C1C1E",
-    fontSize: 14,
-    fontFamily: "Montserrat_400Regular",
-    marginLeft: 10,
-  },
-  profileCard: {
-    backgroundColor: "#F0F0F0",
-    borderRadius: 10,
-    padding: 15,
-    marginBottom: 10,
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  profileImage: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    marginRight: 15,
-  },
-  profileInfo: {
-    flex: 1,
-  },
-  profileName: {
-    color: "#1C1C1E",
-    fontSize: 16,
-    fontFamily: "Montserrat_700Bold",
-    marginBottom: 5,
-  },
-  profileDescription: {
-    color: "#999",
-    fontSize: 14,
-    fontFamily: "Montserrat_400Regular",
-  },
-  horarioItem: {
-    backgroundColor: "#F0F0F0",
-    borderRadius: 10,
-    padding: 15,
-    marginBottom: 10,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-  },
-  horarioText: {
-    color: "#1C1C1E",
-    fontSize: 14,
-    fontFamily: "Montserrat_400Regular",
-  },
-  horarioButtons: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  horarioButton: {
-    marginLeft: 10,
-    padding: 5,
-  },
-  // Styles for enhanced time picker
-  timePickerContainer: {
-    backgroundColor: "#F0F0F0",
-    borderRadius: 10,
-    padding: 10,
-    marginVertical: 10,
-  },
-  timePickerButtonContainer: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    paddingHorizontal: 15,
-    paddingVertical: 12,
-    backgroundColor: "#DDD",
-    borderRadius: 8,
-    marginBottom: 10,
-  },
-  timePickerButtonText: {
-    color: "#1C1C1E",
-    fontSize: 16,
-    fontFamily: "Montserrat_400Regular",
-  },
-  timePickerIcon: {
-    marginLeft: 10,
-  },
+  backButton: { width: 36, height: 36, borderRadius: 18, backgroundColor: 'rgba(255,255,255,0.1)', justifyContent: 'center', alignItems: 'center' },
+  headerTitle: { fontSize: 18, fontFamily: 'Montserrat_800ExtraBold', color: '#FFF' },
+  tabContainer: { flexDirection: 'row', backgroundColor: '#F4F4F5', marginHorizontal: 16, marginVertical: 12, borderRadius: 14, padding: 4 },
+  tab: { flex: 1, paddingVertical: 10, borderRadius: 12, alignItems: 'center' },
+  activeTab: { backgroundColor: '#FFF', shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.06, shadowRadius: 3, elevation: 2 },
+  tabText: { color: '#999', fontSize: 14, fontFamily: 'Montserrat_700Bold' },
+  activeTabText: { color: '#fa6205', fontFamily: 'Montserrat_800ExtraBold' },
+  profilesTabContainer: { padding: 16, paddingTop: 4 },
+  emptyProfilesContainer: { alignItems: 'center', justifyContent: 'center', paddingVertical: 60, paddingHorizontal: 20 },
+  emptyProfilesTitle: { color: '#1C1C1E', fontSize: 17, fontFamily: 'Montserrat_800ExtraBold', marginTop: 16, textAlign: 'center' },
+  emptyProfilesSubtitle: { color: '#999', fontSize: 13, fontFamily: 'Montserrat_400Regular', marginTop: 6, textAlign: 'center' },
+  createFirstProfileButton: { backgroundColor: '#fa6205', borderRadius: 20, paddingVertical: 14, paddingHorizontal: 20, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginTop: 20, shadowColor: '#fa6205', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.25, shadowRadius: 8, elevation: 4 },
+  createFirstProfileText: { color: '#FFF', fontSize: 15, fontFamily: 'Montserrat_800ExtraBold', marginLeft: 8 },
+  scrollContainer: { flex: 1 },
+  formContainer: { padding: 16 },
+  sectionTitle: { color: '#1C1C1E', fontSize: 20, fontFamily: 'Montserrat_800ExtraBold', marginBottom: 16 },
+  inputContainer: { marginBottom: 16 },
+  inputLabel: { color: '#1C1C1E', fontSize: 13, fontFamily: 'Montserrat_700Bold', marginBottom: 6 },
+  textInput: { backgroundColor: '#FFF', borderRadius: 14, padding: 14, fontSize: 14, fontFamily: 'Montserrat_400Regular', color: '#1C1C1E', borderWidth: 1, borderColor: '#E8E8ED' },
+  textArea: { height: 60, textAlignVertical: 'top' },
+  characterCount: { color: '#999', fontSize: 12, fontFamily: 'Montserrat_400Regular', marginTop: 4, textAlign: 'right' },
+  imageSelector: { borderRadius: 16, overflow: 'hidden', marginBottom: 16 },
+  selectedImageContainer: { position: 'relative' },
+  selectedImage: { width: '100%', height: 160, resizeMode: 'cover', borderRadius: 16 },
+  changeImageOverlay: { position: 'absolute', bottom: 0, left: 0, right: 0, backgroundColor: 'rgba(0,0,0,0.6)', padding: 10, alignItems: 'center' },
+  changeImageText: { color: '#FFF', fontSize: 12, fontFamily: 'Montserrat_600SemiBold', marginTop: 4 },
+  imagePlaceholder: { backgroundColor: '#FFF', borderRadius: 16, padding: 30, alignItems: 'center', justifyContent: 'center', borderWidth: 2, borderColor: '#DDD', borderStyle: 'dashed' },
+  imagePlaceholderText: { color: '#fa6205', fontSize: 14, fontFamily: 'Montserrat_700Bold', marginTop: 8 },
+  imagePlaceholderSubtext: { color: '#999', fontSize: 12, fontFamily: 'Montserrat_400Regular', marginTop: 4 },
+  createButton: { backgroundColor: '#fa6205', borderRadius: 20, paddingVertical: 16, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginTop: 16, shadowColor: '#fa6205', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.25, shadowRadius: 8, elevation: 4 },
+  disabledButton: { opacity: 0.5 },
+  createButtonText: { color: '#FFF', fontSize: 16, fontFamily: 'Montserrat_800ExtraBold', marginLeft: 8 },
+  existingProfilesContainer: { padding: 16 },
+  loadingProfilesContainer: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', padding: 20 },
+  loadingText: { color: '#1C1C1E', fontSize: 14, fontFamily: 'Montserrat_400Regular', marginLeft: 10 },
+  profileCard: { backgroundColor: '#FFF', borderRadius: 16, padding: 14, marginBottom: 10, flexDirection: 'row', alignItems: 'center', borderWidth: 1, borderColor: '#F0F0F0' },
+  profileImage: { width: 52, height: 52, borderRadius: 14, marginRight: 12, backgroundColor: '#F4F4F5' },
+  profileInfo: { flex: 1 },
+  profileName: { color: '#1C1C1E', fontSize: 15, fontFamily: 'Montserrat_700Bold', marginBottom: 2 },
+  profileDescription: { color: '#999', fontSize: 12, fontFamily: 'Montserrat_400Regular' },
+  horarioItem: { backgroundColor: '#FFF', borderRadius: 14, padding: 12, marginBottom: 8, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', borderWidth: 1, borderColor: '#F0F0F0' },
+  horarioText: { color: '#1C1C1E', fontSize: 13, fontFamily: 'Montserrat_600SemiBold', flex: 1 },
+  horarioButtons: { flexDirection: 'row', alignItems: 'center' },
+  horarioButton: { marginLeft: 10, padding: 5 },
+  timePickerContainer: { backgroundColor: '#F4F4F5', borderRadius: 14, padding: 10, marginVertical: 10 },
+  timePickerButtonContainer: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 14, paddingVertical: 12, backgroundColor: '#FFF', borderRadius: 12, marginBottom: 8, borderWidth: 1, borderColor: '#E8E8ED' },
+  timePickerButtonText: { color: '#1C1C1E', fontSize: 14, fontFamily: 'Montserrat_600SemiBold' },
+  timePickerIcon: { marginLeft: 8 },
 });

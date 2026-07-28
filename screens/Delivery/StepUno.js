@@ -48,6 +48,21 @@ export default function SelectLocationScreen() {
   const [distance, setDistance] = useState(null);
   const [totalPrice, setTotalPrice] = useState("");
   const totalPriceRaw = useRef(0);
+  const [bidOffset, setBidOffset] = useState(0);
+  const bidMinRef = useRef(0);
+
+  const handleBidIncrease = () => {
+    setBidOffset((prev) => prev + 500);
+  };
+
+  const handleBidDecrease = () => {
+    setBidOffset((prev) => Math.max(prev - 500, bidMinRef.current));
+  };
+
+  const displayPrice = totalPriceRaw.current + bidOffset;
+  const displayPriceFormatted = displayPrice ? displayPrice.toLocaleString("es-CO") : "";
+  const hasPrice = displayPrice > 0;
+  const suggestedPriceFormatted = totalPriceRaw.current ? totalPriceRaw.current.toLocaleString("es-CO") : "";
   const [vehicleType, setVehicleType] = useState(null); // "moto", "mototaxi", or "taxi"
   const [serviceCategory, setServiceCategory] = useState(null);
   const [pickupAddress, setPickupAddress] = useState("");
@@ -116,7 +131,7 @@ export default function SelectLocationScreen() {
     if (pinMode) return;
     if (sheetCollapsed) return;
     const inputActive = showPickupSuggestions || showDeliverySuggestions;
-    const targetHeight = inputActive ? screenH * 0.10 : totalPrice ? screenH * 0.22 : screenH * 0.28;
+    const targetHeight = inputActive ? screenH * 0.10 : hasPrice ? screenH * 0.22 : screenH * 0.28;
     Animated.timing(animatedMapHeight, {
       toValue: targetHeight,
       duration: 250,
@@ -728,7 +743,7 @@ export default function SelectLocationScreen() {
         }),
         punto_recogida: JSON.stringify(puntoRecogidaCoords),
         destino: JSON.stringify(destinoCoords),
-        costo: totalPriceRaw.current,
+        costo: displayPrice,
         distancia: distanceInKm,
         estado: "pendiente",
         metodo_pago: paymentMethod === "tarjeta" ? "Nequi o Bancolombia" : "Efectivo",
@@ -1232,6 +1247,8 @@ export default function SelectLocationScreen() {
           totalPriceRaw.current = finalPrice;
           const formattedPrice = finalPrice.toLocaleString("es-CO");
           setTotalPrice(formattedPrice);
+          setBidOffset(0);
+          bidMinRef.current = -2000;
 
           console.log(
             `Precio calculado: $ ${finalPrice} (Base: $ ${basePrice} + ${distance.toFixed(
@@ -1274,6 +1291,8 @@ export default function SelectLocationScreen() {
           totalPriceRaw.current = finalPrice;
           const formattedPrice = finalPrice.toLocaleString("es-CO");
           setTotalPrice(formattedPrice);
+          setBidOffset(0);
+          bidMinRef.current = -2000;
 
           console.log(
             `Usando precio estimado: $ ${finalPrice} (Base: $ ${basePrice} + distancia estimada de ${estimatedDistance} km + Servicio: $ ${servicePrice})`
@@ -1752,7 +1771,7 @@ export default function SelectLocationScreen() {
     }
   }, [vehicleType, availableServices.length]);
 
-  const isButtonActive = selectedServiceId && paymentMethod && totalPrice && !isCalculatingPrice && !isCreatingRide;
+  const isButtonActive = selectedServiceId && paymentMethod && hasPrice && !isCalculatingPrice && !isCreatingRide;
 
   useEffect(() => {
     if (isButtonActive) {
@@ -1778,10 +1797,24 @@ export default function SelectLocationScreen() {
         Animated.spring(priceAnim, { toValue: 1, useNativeDriver: true, friction: 3, tension: 120 }),
       ]).start();
       setPriceHighlight(true);
-      const timer = setTimeout(() => setPriceHighlight(false), 400);
+      const timer = setTimeout(() => setPriceHighlight(false), 1200);
       return () => clearTimeout(timer);
     }
   }, [totalPrice]);
+
+  const [bidFlash, setBidFlash] = useState(null);
+
+  useEffect(() => {
+    if (bidOffset === 0) return;
+    Animated.sequence([
+      Animated.timing(priceAnim, { toValue: 1.3, duration: 80, useNativeDriver: true }),
+      Animated.spring(priceAnim, { toValue: 1, useNativeDriver: true, friction: 2, tension: 150 }),
+    ]).start();
+    const dir = bidOffset > 0 ? "up" : "down";
+    setBidFlash(dir);
+    const timer = setTimeout(() => setBidFlash(null), 400);
+    return () => clearTimeout(timer);
+  }, [bidOffset]);
 
   const pulseAnimation = useRef(new Animated.Value(1)).current;
 
@@ -2129,20 +2162,35 @@ export default function SelectLocationScreen() {
               <Text style={styles.biddingLabel}>Tu oferta de precio</Text>
               <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
                 <Text style={styles.biddingSuggested}>Sugerido:</Text>
-                <Text style={[styles.biddingSuggestedValue, priceHighlight && { color: "#fa6205" }]}>$ {totalPrice}</Text>
+                <Text style={[styles.biddingSuggestedValue, priceHighlight && { color: "#fa6205" }]}>$ {suggestedPriceFormatted}</Text>
               </View>
             </View>
             <View style={styles.biddingControls}>
-              <TouchableOpacity style={styles.biddingBtn} activeOpacity={0.7}>
-                <Ionicons name="remove" size={20} color="#1C1C1E" />
+              <TouchableOpacity
+                style={[styles.biddingBtn, bidFlash === "down" && styles.biddingBtnMinusFlash]}
+                onPress={handleBidDecrease}
+                activeOpacity={0.7}
+              >
+                <Ionicons name="remove" size={20} color={bidFlash === "down" ? "#FFF" : "#1C1C1E"} />
               </TouchableOpacity>
               <View style={styles.biddingPriceRow}>
                 <Text style={styles.biddingDollarSign}>$</Text>
-                <Animated.Text style={[styles.biddingPrice, { transform: [{ scale: priceAnim }] }, priceHighlight && { color: "#fa6205" }]}>
-                  {totalPrice}
+                <Animated.Text
+                  style={[
+                    styles.biddingPrice,
+                    { transform: [{ scale: priceAnim }] },
+                    bidOffset > 0 && { color: "#10B981" },
+                    bidOffset < 0 && { color: "#fa6205" },
+                  ]}
+                >
+                  {displayPriceFormatted}
                 </Animated.Text>
               </View>
-              <TouchableOpacity style={[styles.biddingBtn, styles.biddingBtnPlus]} activeOpacity={0.7}>
+              <TouchableOpacity
+                style={[styles.biddingBtn, styles.biddingBtnPlus, bidFlash === "up" && styles.biddingBtnPlusFlash]}
+                onPress={handleBidIncrease}
+                activeOpacity={0.7}
+              >
                 <Ionicons name="add" size={20} color="#FFFFFF" />
               </TouchableOpacity>
             </View>
@@ -2168,8 +2216,8 @@ export default function SelectLocationScreen() {
           )}
 
           <TouchableOpacity
-            style={[styles.primaryBtn, { overflow: "hidden" }, (!selectedServiceId || !paymentMethod || !totalPrice || isCalculatingPrice || isCreatingRide) && styles.primaryBtnDisabled]}
-            disabled={!selectedServiceId || !paymentMethod || !totalPrice || isCalculatingPrice || isCreatingRide}
+            style={[styles.primaryBtn, { overflow: "hidden" }, (!selectedServiceId || !paymentMethod || !hasPrice || isCalculatingPrice || isCreatingRide) && styles.primaryBtnDisabled]}
+            disabled={!selectedServiceId || !paymentMethod || !hasPrice || isCalculatingPrice || isCreatingRide}
             onPress={handleContinue}
           >
             {isCreatingRide ? (
@@ -2177,7 +2225,7 @@ export default function SelectLocationScreen() {
             ) : (
               <Animated.View style={{ flexDirection: "row", alignItems: "center", transform: [{ scale: isButtonActive ? pulseAnimation : 1 }] }}>
                 <Text style={styles.primaryBtnText}>
-                  {totalPrice ? `Ofrecer $ ${totalPrice}` : "Solicitar transporte"}
+                  {hasPrice ? `Ofrecer $ ${displayPriceFormatted}` : "Solicitar transporte"}
                 </Text>
                 <Ionicons name="arrow-forward" size={20} color="#FFF" style={{ marginLeft: 8 }} />
               </Animated.View>
@@ -3131,9 +3179,17 @@ const styles = StyleSheet.create({
     elevation: 1,
   },
   biddingBtnMinus: {},
+  biddingBtnMinusFlash: {
+    backgroundColor: "#fa6205",
+    borderColor: "#fa6205",
+  },
   biddingBtnPlus: {
     backgroundColor: "#1C1C1E",
     borderColor: "#1C1C1E",
+  },
+  biddingBtnPlusFlash: {
+    backgroundColor: "#10B981",
+    borderColor: "#10B981",
   },
   biddingPriceRow: {
     flexDirection: "row",
