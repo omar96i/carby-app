@@ -18,11 +18,13 @@ const s = StyleSheet.create({
     paddingHorizontal: 10,
     paddingVertical: 6,
     borderRadius: 999,
-    gap: 5,
+    maxWidth: "50%",
   },
   label: {
     fontSize: 11,
     fontFamily: "Montserrat_700Bold",
     color: COLORS.ink,
+    numberOfLines: 1,
+    flexShrink: 1,
   },
 });

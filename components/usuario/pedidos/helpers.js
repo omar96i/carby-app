@@ -136,11 +136,15 @@ export function obtenerLabelEstado(estado, tipo) {
 
 // ── Método de pago → label ────────────────────────
 export function metodoPagoLabel(metodo) {
-  switch (metodo) {
-    case "mercadopago": return "MERCADO PAGO";
-    case "qr": return "QR";
-    default: return "EFECTIVO";
-  }
+  if (!metodo) return "EFECTIVO";
+  const m = String(metodo).toLowerCase();
+  if (m.includes("nequi") || m.includes("bancolombia")) return "Nequi";
+  if (m.includes("mercadopago") || m.includes("mercado")) return "Mercado Pago";
+  if (m.includes("transferencia")) return "Transferencia";
+  if (m === "qr") return "QR";
+  if (m === "tarjeta") return "Tarjeta";
+  if (m === "efectivo") return "Efectivo";
+  return metodo.length > 12 ? metodo.slice(0, 10) + "…" : metodo;
 }
 
 // ── Vehículo → icono ──────────────────────────────

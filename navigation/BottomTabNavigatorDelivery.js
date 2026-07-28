@@ -3,7 +3,7 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { View } from 'react-native';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import SecondaryStackNavigator from './StackNavigator';
-import Pedidos from '../screens/Pedidos';
+import Pedidos from '../screens/conductor/Pedidos';
 import Perfil from '../screens/Perfil';
 import WalletRider from '../screens/Delivery/WalletRider';
 const BottomTab = createBottomTabNavigator();

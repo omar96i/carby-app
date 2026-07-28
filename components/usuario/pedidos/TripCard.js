@@ -180,8 +180,7 @@ export default function TripCard({ item, onOpenDetail, onNavigate, onCancel, onC
             onPress={() => onNavigate?.(item)}
             activeOpacity={0.7}
           >
-            <Text style={s.detailBtnText}>Detalles</Text>
-            <Ionicons name="chevron-forward" size={14} color={COLORS.surface} />
+            <Ionicons name="receipt-outline" size={20} color={COLORS.surface} />
           </TouchableOpacity>
           {isClickable && (
             <TouchableOpacity
@@ -422,11 +421,14 @@ const s = StyleSheet.create({
     borderTopColor: COLORS.zinc200,
     borderStyle: "dashed",
     marginTop: 12,
+    overflow: "hidden",
   },
   footerLeft: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 12,
+    gap: 8,
+    flex: 1,
+    overflow: "hidden",
   },
   totalLabel: {
     fontSize: 9,
@@ -444,15 +446,16 @@ const s = StyleSheet.create({
   footerActions: {
     flexDirection: "row",
     gap: 8,
+    flexShrink: 0,
   },
   detailBtn: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 4,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
     backgroundColor: COLORS.ink,
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    borderRadius: 999,
+    justifyContent: "center",
+    alignItems: "center",
+    flexShrink: 0,
   },
   detailBtnText: {
     fontSize: 12,
@@ -467,6 +470,7 @@ const s = StyleSheet.create({
     borderColor: COLORS.zinc200,
     justifyContent: "center",
     alignItems: "center",
+    flexShrink: 0,
   },
   rateBtn: {
     flexDirection: "row",

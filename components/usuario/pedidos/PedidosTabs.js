@@ -8,11 +8,15 @@ const TABS = [
   { key: "reservas", label: "Reservas" },
 ];
 
-export default function PedidosTabs({ activeTab, onTabChange, counts = {} }) {
+export default function PedidosTabs({ activeTab, onTabChange, counts = {}, hideReservas = false }) {
+  const tabs = hideReservas
+    ? TABS.filter((t) => t.key !== "reservas")
+    : TABS;
+
   return (
     <View style={s.container}>
       <View style={s.bar}>
-        {TABS.map((t) => {
+        {tabs.map((t) => {
           const isActive = activeTab === t.key;
           return (
             <TouchableOpacity
