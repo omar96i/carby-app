@@ -1,7 +1,7 @@
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { View, Text } from 'react-native';
 import StackNavigatorUsuario from "./StackNavigatorUsuario";
-import Pedidos from "../screens/Pedidos";
+import Pedidos from "../screens/usuario/Pedidos";
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import FontAwesome5 from 'react-native-vector-icons/FontAwesome5';
 import React, { useState, useEffect } from 'react';
