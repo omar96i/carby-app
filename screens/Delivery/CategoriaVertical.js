@@ -7,401 +7,300 @@ import {
   SafeAreaView,
   Platform,
   TouchableOpacity,
-  FlatList,
   ActivityIndicator,
   Dimensions,
-  Alert,
+  ScrollView,
+  Animated,
 } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import Ionicons from "react-native-vector-icons/Ionicons";
 import {
   Montserrat_400Regular,
   Montserrat_700Bold,
-  Montserrat_300Light,
+  Montserrat_600SemiBold,
+  Montserrat_800ExtraBold,
 } from "@expo-google-fonts/montserrat";
 import { useFonts } from "expo-font";
-import { useNavigation, useRoute, useFocusEffect } from "@react-navigation/native";
-import AlertaModal from "../../components/ErrorModal";
-import * as Location from "expo-location";
+import { useNavigation, useFocusEffect, useRoute } from "@react-navigation/native";
 
 import { BASE_URL } from "../../constants/url";
 
 const { width } = Dimensions.get("window");
-const cardWidth = (width - 40) / 2; // 40 = total padding + margin
+const ITEM_IMG_SIZE = 120;
 
 export default function CategoriaVertical() {
-  const [categories, setCategories] = useState([]);
+  const route = useRoute();
+  const tipo = (route.params?.tipo || "productos").toLowerCase().trim();
+  const esServicios = tipo === "servicios";
+
+  const [categorias, setCategorias] = useState([]);
+  const [comercios, setComercios] = useState([]);
+  const [categoriaSeleccionada, setCategoriaSeleccionada] = useState(null);
   const [loading, setLoading] = useState(true);
   const [location, setLocation] = useState(null);
   const navigation = useNavigation();
-  const route = useRoute();
-  const tipo = (route.params?.tipo || '').toLowerCase().trim();
 
-  useFocusEffect(useCallback(() => {
-    navigation.getParent()?.setOptions({ tabBarStyle: { display: "none" } });
-    return () => navigation.getParent()?.setOptions({ tabBarStyle: { backgroundColor: '#FFF', height: 56, borderTopWidth: 1, borderTopColor: '#F0F0F0', display: 'flex' } });
-  }, [navigation]));
+  useFocusEffect(
+    useCallback(() => {
+      navigation.getParent()?.setOptions({ tabBarStyle: { display: "none" } });
+    }, [navigation])
+  );
 
-  const [alertVisible, setAlertVisible] = useState(false);
-  const [alertData, setAlertData] = useState({ title: "", message: "", type: "info", onConfirm: null });
-  const showAlert = (title, message, type, onConfirm) => {
-    setAlertData({ title, message, type: type || (title === "Éxito" ? "success" : "error"), onConfirm });
-    setAlertVisible(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const bounceAnim = useRef(new Animated.Value(0)).current;
+
+  const startBounce = () => {
+    bounceAnim.setValue(0);
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(bounceAnim, { toValue: -12, duration: 400, useNativeDriver: true }),
+        Animated.timing(bounceAnim, { toValue: 0, duration: 400, useNativeDriver: true }),
+      ])
+    ).start();
+  };
+
+  const stopBounce = () => {
+    bounceAnim.setValue(0);
+    bounceAnim.stopAnimation();
   };
 
   const [fontsLoaded] = useFonts({
     Montserrat_400Regular,
     Montserrat_700Bold,
-    Montserrat_300Light,
+    Montserrat_600SemiBold,
+    Montserrat_800ExtraBold,
   });
 
-  // Get image URL helper function
-  const getImageUrl = (photoPath) => {
-    if (!photoPath) return null;
-
-    if (photoPath.startsWith("http")) return photoPath;
-
-    // CORRECCIÓN AQUÍ: Agregamos .toString()
-    // Esto fuerza a obtener el texto "https://..." antes de intentar reemplazar
-    return `${BASE_URL.toString().replace("/api/", "")}/storage/${photoPath}`;
+  const getImageUrl = (path) => {
+    if (!path) return null;
+    if (path.startsWith("http")) return path;
+    return `${BASE_URL.toString().replace("/api", "")}/storage/${path}`;
   };
 
-  // Function to capture, save and return user location
-  const captureAndSaveLocation = async () => {
-    try {
-      // First check for permissions
-      const { status } = await Location.requestForegroundPermissionsAsync();
-
-      if (status !== "granted") {
-        showAlert("Permiso denegado", "Necesitamos permisos de ubicación para mostrar categorías cercanas.");
-        return null;
-      }
-
-      // Get current location
-      const currentLocation = await Location.getCurrentPositionAsync({
-        accuracy: Location.Accuracy.Balanced,
-      });
-
-      // Save to state for immediate use
-      setLocation(currentLocation.coords);
-
-      // Save to AsyncStorage for persistence
-      await AsyncStorage.setItem(
-        "userLocation",
-        JSON.stringify({
-          latitude: currentLocation.coords.latitude,
-          longitude: currentLocation.coords.longitude,
-          timestamp: new Date().toISOString(),
-        })
-      );
-
-      console.log(
-        "Location saved:",
-        currentLocation.coords.latitude,
-        currentLocation.coords.longitude
-      );
-
-      return currentLocation.coords;
-    } catch (error) {
-      console.error("Error capturando ubicación:", error);
-      showAlert("Error de ubicación", "No pudimos obtener tu ubicación. Se usarán coordenadas predeterminadas.");
-      return null;
-    }
-  };
-
-  // Function to get location from various sources
   const getStoredLocation = async () => {
-    // First check if we have it in state
-    if (location) {
-      return location;
-    }
-
-    // Then try to get from AsyncStorage
     try {
-      const savedLocation = await AsyncStorage.getItem("userLocation");
-      if (savedLocation) {
-        const parsedLocation = JSON.parse(savedLocation);
-
-        // Check if location is recent (less than 30 minutes old)
-        const savedTime = new Date(parsedLocation.timestamp).getTime();
-        const currentTime = new Date().getTime();
-        const thirtyMinutesInMs = 30 * 60 * 1000;
-
-        if (currentTime - savedTime < thirtyMinutesInMs) {
-          setLocation(parsedLocation);
-          return parsedLocation;
-        } else {
-          console.log("Stored location is too old, getting a fresh one");
-        }
+      const saved = await AsyncStorage.getItem("userLocation");
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        setLocation(parsed);
+        return parsed;
       }
     } catch (error) {
-      console.error("Error getting stored location:", error);
+      console.error("Error leyendo ubicación:", error);
     }
-
-    // If we get here, we need a fresh location
-    return await captureAndSaveLocation();
+    return null;
   };
 
-
-  // Fetch categories from API
-  const fetchCategories = async (userLocation) => {
+  const fetchCategorias = async (loc) => {
     try {
-      const token = await AsyncStorage.getItem("userToken");
-      const isDemo = await AsyncStorage.getItem("user_demo") === "true";
-
-      // Try to get location from parameter first
-      let locationToUse = userLocation;
-
-      // If not provided, try to get from stored sources
-      if (!locationToUse) {
-        locationToUse = await getStoredLocation();
-      }
-
-      // Prepare location data for API request
-      const locationData = {
-        latitud: locationToUse?.latitude || 4.8124573,
-        longitud: locationToUse?.longitude || -75.7772694,
-      };
-
-      console.log("User is demo:", isDemo);
-
-      // For demo users or if no token is available, use the no-auth endpoint directly
-      if (isDemo || !token) {
-        return fetchCategoriesNoAuth(locationData);
-      }
-
-      // Only authenticated users reach this point
-      const url = `${BASE_URL}global-categorias/get/obtener`;
-
-      console.log("Sending authenticated request to:", url);
-
+      const endpoint = esServicios ? "servicios/categorias" : "comercios/categorias";
+      const url = `${BASE_URL}${endpoint}?lat=${loc.latitude}&lng=${loc.longitude}&radio=20`;
       const response = await fetch(url, {
-        method: "POST",
-        headers: {
-          Accept: "application/json",
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`
-        },
-        body: JSON.stringify(locationData),
+        headers: { Accept: "application/json", "Content-Type": "application/json" },
       });
-
-      if (!response.ok) {
-        console.error("API response status:", response.status);
-        const errorText = await response.text();
-        console.error("API error response:", errorText);
-
-        // If unauthorized, try the non-auth endpoint
-        if (response.status === 401) {
-          console.log("Authentication failed, falling back to no-auth endpoint");
-          return fetchCategoriesNoAuth(locationData);
-        }
-
-        throw new Error(`HTTP error! Status: ${response.status}`);
-      }
-
-      const responseData = await response.json();
-      console.log(
-        "Categories response:",
-        responseData.status,
-        responseData.data?.length || 0
-      );
-
-      // Verify we have valid data in the response
-      if (responseData.status && Array.isArray(responseData.data)) {
-        // Map global categories to the format required by the UI
-        const formattedCategories = responseData.data.map((globalCategory) => {
-          return {
-            id: globalCategory.id.toString(),
-            title: globalCategory.nombre,
-            image: globalCategory.icono
-              ? getImageUrl(globalCategory.icono)
-              : require("../../assets/images/yar.png"),
-            establishmentCount: globalCategory.users.length + globalCategory.user_sedes.length,
-            establishments: globalCategory.users || [],
-            establishmentsSedes: globalCategory.user_sedes,
-            tipo_categoria: (globalCategory.tipo_categoria || '').toLowerCase().trim(), 
-          };
-        });
-
-        setCategories(formattedCategories);
+      const data = await response.json();
+      if (data.status && Array.isArray(data.data)) {
+        setCategorias(data.data);
       }
     } catch (error) {
-      console.error("Error al obtener categorías:", error);
-      try {
-        const locationData = {
-          latitud: userLocation?.latitude || 4.8124573,
-          longitud: userLocation?.longitude || -75.7772694,
-        };
-        await fetchCategoriesNoAuth(locationData);
-      } catch (fallbackError) {
-        console.error("Final fallback attempt also failed:", fallbackError);
-      }
-    } finally {
-      setLoading(false);
+      console.error("Error categorías:", error);
     }
   };
 
-  // Additional function to fetch categories without auth as fallback
-  const fetchCategoriesNoAuth = async (locationData) => {
+  const fetchComercios = async (loc, categoriaId) => {
     try {
-      const url = `${BASE_URL}global-categorias/get/obtener/no-auth`;
-      console.log("Falling back to no-auth endpoint:", url);
+      const endpoint = esServicios ? "servicios/home" : "comercios/home";
+      let url = `${BASE_URL}${endpoint}?lat=${loc.latitude}&lng=${loc.longitude}&radio=20`;
+      if (categoriaId) url += `&global_categoria_id=${categoriaId}`;
 
       const response = await fetch(url, {
-        method: "POST",
-        headers: {
-          Accept: "application/json",
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(locationData),
+        headers: { Accept: "application/json", "Content-Type": "application/json" },
       });
-
-      if (!response.ok) {
-        console.error("Fallback API response status:", response.status);
-        const errorText = await response.text();
-        console.error("Fallback API error response:", errorText);
-        throw new Error(`HTTP error in fallback! Status: ${response.status}`);
-      }
-
-      const responseData = await response.json();
-      console.log(
-        "Fallback categories response:",
-        responseData.status,
-        responseData.data?.length || 0
-      );
-
-      // Verify we have valid data in the response
-      if (responseData.status && Array.isArray(responseData.data)) {
-        // Map global categories to the format required by the UI
-        const formattedCategories = responseData.data.map((globalCategory) => {
-          return {
-            id: globalCategory.id.toString(),
-            title: globalCategory.nombre,
-            image: globalCategory.icono
-              ? getImageUrl(globalCategory.icono)
-              : require("../../assets/images/yar.png"),
-            establishmentCount: globalCategory.users?.length || 0,
-            establishments: globalCategory.users || [],
-            tipo_categoria: (globalCategory.tipo_categoria || '').toLowerCase().trim(), // <-- fix: include tipo_categoria
-          };
-        });
-
-        setCategories(formattedCategories);
+      const data = await response.json();
+      if (data.status && Array.isArray(data.data)) {
+        setComercios(data.data);
       }
     } catch (error) {
-      console.error("Error al obtener categorías (fallback):", error);
+      console.error("Error comercios:", error);
     }
+  };
+
+  const loadData = async () => {
+    setLoading(true);
+    const loc = await getStoredLocation();
+    if (loc) {
+      await Promise.all([fetchCategorias(loc), fetchComercios(loc)]);
+    }
+    setLoading(false);
   };
 
   useEffect(() => {
-    const initialize = async () => {
-      try {
-        // Get location from stored sources first
-        const userLocation = await getStoredLocation();
-        await fetchCategories(userLocation);
-      } catch (error) {
-        console.error("Error en la inicialización:", error);
-        setLoading(false);
-      }
-    };
-
-    initialize();
+    loadData();
   }, []);
 
-  // Return loading indicator if fonts are not loaded or data is loading
-  if (!fontsLoaded || loading) {
-    return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#fa6205" />
-      </View>
-    );
-  }
+  const onSelectCategoria = async (cat) => {
+    const nueva = categoriaSeleccionada?.id === cat.id ? null : cat;
+    setCategoriaSeleccionada(nueva);
+    if (location) {
+      setRefreshing(true);
+      startBounce();
+      await fetchComercios(location, nueva?.id);
+      stopBounce();
+      setRefreshing(false);
+    }
+  };
 
-  // Filter categories by tipo_categoria if tipo param is provided
-  const filteredCategories = tipo
-    ? categories.filter(cat => (cat.tipo_categoria || '').toLowerCase().trim() === tipo)
-    : categories;
+  const navigateToShop = (comercio) => {
+    navigation.navigate("Shop", {
+      establishmentId: comercio.id,
+      userId: comercio.id,
+      establishmentName: comercio.establecimiento_nombre,
+    });
+  };
 
-  // Render each category item
-  const renderCategoryItem = ({ item }) => {
+  const navigateToService = (servicio, comercio) => {
+    navigation.navigate("ServicioDetalle", {
+      servicio,
+      establishmentId: comercio.id,
+      establishmentName: comercio.establecimiento_nombre,
+    });
+  };
+
+  const formatPrice = (price) => {
+    return `$${Number(price).toLocaleString("es-CO")}`;
+  };
+
+  const renderCategoriaItem = (cat) => {
+    const seleccionada = categoriaSeleccionada?.id === cat.id;
     return (
       <TouchableOpacity
-        style={styles.card}
-        activeOpacity={0.8} 
-        onPress={() =>
-          navigation.navigate("Categorias", {
-            categoryId: item.id,
-            categoryName: item.title,
-            establishments: item.establishments,
-            establishmentsSedes : item.establishmentsSedes
-          })
-        }
+        key={cat.id}
+        style={[styles.catItem, seleccionada && styles.catItemSelected]}
+        activeOpacity={0.85}
+        onPress={() => onSelectCategoria(cat)}
       >
-        <View style={styles.imageContainer}>
-          {item.image ? (
-            typeof item.image === "string" ? (
-              <Image source={{ uri: item.image }} style={styles.cardImage} />
-            ) : (
-              <Image source={item.image} style={styles.cardImage} />
-            )
+        <View style={[styles.catIconWrap, seleccionada && styles.catIconWrapSelected]}>
+          {cat.icono ? (
+            <Image source={{ uri: getImageUrl(cat.icono) }} style={styles.catIcon} />
           ) : (
-            <Image
-              source={require("../../assets/images/yar.png")}
-              style={styles.cardImage}
-            />
+            <Ionicons name={esServicios ? "cut-outline" : "restaurant-outline"} size={28} color="#FF5A00" />
           )}
         </View>
-
-        <View style={styles.cardContent}>
-          <Text style={styles.cardTitle} numberOfLines={2}>
-            {item.title}
-          </Text>
-          {item.establishmentCount > 0 && (
-            <Text style={styles.cardSubtitle}>
-              {item.establishmentCount}{" "}
-              {item.establishmentCount === 1 ? "Tienda" : "Tiendas"}
-            </Text>
-          )}
-        </View>
+        <Text style={[styles.catName, seleccionada && styles.catNameSelected]}>
+          {cat.nombre}
+        </Text>
       </TouchableOpacity>
     );
   };
 
+  const renderItem = (item, comercio) => {
+    const imageUrl = item.foto ? getImageUrl(item.foto) : null;
+    const precioOriginal = Number(item.precio) || 0;
+    const descuento = item.activo_descuento ? Number(item.descuento) || 0 : 0;
+    const precioFinal = precioOriginal - descuento;
+
+    const esServicio = esServicios;
+
+    return (
+      <TouchableOpacity
+        key={item.id}
+        style={styles.itemCard}
+        activeOpacity={0.9}
+        onPress={() =>
+          esServicio ? navigateToService(item, comercio) : navigateToShop(comercio)
+        }
+      >
+        <View style={styles.itemImgWrap}>
+          {imageUrl ? (
+            <Image source={{ uri: imageUrl }} style={styles.itemImg} />
+          ) : (
+            <View style={styles.itemPlaceholder}>
+              <Ionicons name={esServicio ? "cut-outline" : "image-outline"} size={28} color="#CCC" />
+            </View>
+          )}
+        </View>
+        <Text style={styles.itemName} numberOfLines={1}>{item.nombre}</Text>
+        <Text style={styles.itemPrice}>{formatPrice(precioFinal)}</Text>
+        {descuento > 0 && (
+          <Text style={styles.itemOriginalPrice}>{formatPrice(precioOriginal)}</Text>
+        )}
+      </TouchableOpacity>
+    );
+  };
+
+  const renderComercio = (comercio) => {
+    const items = esServicios ? (comercio.servicios || []) : (comercio.productos || []);
+    if (items.length === 0) return null;
+
+    return (
+      <View key={comercio.id} style={styles.comercioSection}>
+        <View style={styles.comercioHeader}>
+          <Text style={styles.comercioName} numberOfLines={1}>{comercio.establecimiento_nombre}</Text>
+          <TouchableOpacity
+            style={styles.verMasBtn}
+            activeOpacity={0.8}
+            onPress={() => navigateToShop(comercio)}
+          >
+            <Text style={styles.verMasText}>Ver más</Text>
+            <Ionicons name="chevron-forward" size={16} color="#FF5A00" />
+          </TouchableOpacity>
+        </View>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+          <View style={styles.itemsRow}>
+            {items.map((item) => renderItem(item, comercio))}
+          </View>
+        </ScrollView>
+      </View>
+    );
+  };
+
+  if (!fontsLoaded || loading) {
+    return (
+      <SafeAreaView style={styles.safeContainer}>
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#FF5A00" />
+        </View>
+      </SafeAreaView>
+    );
+  }
+
   return (
     <SafeAreaView style={styles.safeContainer}>
-      {/* Header */}
-      <View style={styles.headerBar}>
-        <Text style={styles.headerTitle}>Categorías</Text>
+      <View style={styles.header}>
+        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
+          <Ionicons name="arrow-back" size={24} color="#1C1C1E" />
+        </TouchableOpacity>
+        <Text style={styles.headerTitle}>
+          {esServicios ? "Servicios" : "Restaurantes"}
+        </Text>
+        <View style={styles.backBtn} />
       </View>
 
-      {/* Main Content */}
-      <View style={styles.container}>
-        {filteredCategories.length > 0 ? (
-          <FlatList
-            data={filteredCategories}
-            renderItem={renderCategoryItem}
-            keyExtractor={(item) => item.id}
-            numColumns={2}
-            showsVerticalScrollIndicator={false}
-            contentContainerStyle={styles.gridContainer}
-          />
-        ) : (
-          <View style={styles.emptyContainer}>
-            <Ionicons name="cart-outline" size={60} color="#666" />
-            <Text style={styles.noDataText}>No hay categorías disponibles</Text>
-          </View>
-        )}
-      </View>
+      <ScrollView showsVerticalScrollIndicator={false}>
+        <View style={styles.categoriasScroll}>
+          {categorias.map(renderCategoriaItem)}
+        </View>
 
-      <AlertaModal
-        visible={alertVisible}
-        tipo={alertData.type}
-        mensaje={alertData.message}
-        onCerrar={() => {
-          setAlertVisible(false);
-          if (alertData.onConfirm) alertData.onConfirm();
-        }}
-      />
+        <View style={styles.content}>
+          {refreshing ? (
+            <View style={styles.refreshingWrap}>
+              <Animated.View style={{ transform: [{ translateY: bounceAnim }] }}>
+                <Ionicons name="cube" size={42} color="#FF5A00" />
+              </Animated.View>
+              <Text style={styles.refreshingText}>Buscando...</Text>
+            </View>
+          ) : comercios.length === 0 ? (
+            <View style={styles.emptyWrap}>
+              <Ionicons name={esServicios ? "cut-outline" : "restaurant-outline"} size={48} color="#CCC" />
+              <Text style={styles.emptyText}>
+                No hay {esServicios ? "servicios" : "negocios"} disponibles
+              </Text>
+            </View>
+          ) : (
+            comercios.map(renderComercio)
+          )}
+        </View>
+      </ScrollView>
     </SafeAreaView>
   );
 }
@@ -410,98 +309,168 @@ const styles = StyleSheet.create({
   safeContainer: {
     flex: 1,
     backgroundColor: "#FFFFFF",
-    paddingTop: Platform.OS === "android" ? 10 : 0,
+    paddingTop: Platform.OS === "android" ? 20 : 0,
   },
   loadingContainer: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "#FFFFFF",
   },
-  headerBar: {
+  header: {
     flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    borderBottomWidth: 1,
+    borderBottomColor: "#F2F2F2",
+  },
+  backBtn: {
+    width: 40,
+    height: 40,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "#fa6205",
-    padding: 15,
-    paddingTop: Platform.OS === "android" ? 45 : 15,
   },
   headerTitle: {
-    fontSize: 20,
+    fontSize: 18,
     fontFamily: "Montserrat_700Bold",
-    color: "#FFF",
+    color: "#1C1C1E",
   },
-  container: {
-    flex: 1,
-    padding: 10,
-    backgroundColor: "#F2F2F7",
+  categoriasScroll: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    paddingHorizontal: 16,
+    paddingTop: 16,
+    paddingBottom: 8,
+    gap: 10,
   },
-  gridContainer: {
-    paddingHorizontal: 5,
-    paddingBottom: 20,
+  catItem: {
+    alignItems: "center",
+    width: 80,
+    marginBottom: 8,
   },
-  card: {
-    backgroundColor: "#F0F0F0", // Fondo de tarjeta mucho más oscuro
-    borderRadius: 16, // Bordes un poco más redondeados para modernidad
-    margin: 6,
-    width: cardWidth,
-    overflow: "hidden",
-
-    // Sutil borde para definir la tarjeta en modo oscuro
-    borderWidth: 1,
-    borderColor: "#333333",
-
-    // Sombras más sutiles pero oscuras
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 5,
-    elevation: 4,
+  catItemSelected: {
+    opacity: 1,
   },
-  imageContainer: {
-    width: "100%",
-    height: 110, // Un poco más compacto
-    overflow: "hidden",
-    backgroundColor: "#F0F0F0", // Fondo oscuro placeholder detrás de la imagen
+  catIconWrap: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    backgroundColor: "#FFF5EC",
     justifyContent: "center",
     alignItems: "center",
+    marginBottom: 6,
+    borderWidth: 1.5,
+    borderColor: "transparent",
   },
-  cardImage: {
-    width: "80%", // Reduje un poco para que la imagen "respire" dentro del contenedor
-    height: "80%",
+  catIconWrapSelected: {
+    backgroundColor: "#FFEDE5",
+    borderColor: "#FF5A00",
+  },
+  catIcon: {
+    width: 38,
+    height: 38,
     resizeMode: "contain",
-    // IMPORTANTE: Quitamos el backgroundColor claro (#fff5ee)
   },
-  cardContent: {
-    paddingVertical: 12,
-    paddingHorizontal: 12,
-    backgroundColor: "#F0F0F0", // Asegura coincidencia con la tarjeta
+  catName: {
+    fontSize: 12,
+    fontFamily: "Montserrat_600SemiBold",
+    color: "#666",
+    textAlign: "center",
   },
-  cardTitle: {
-    fontSize: 15,
+  catNameSelected: {
+    color: "#FF5A00",
     fontFamily: "Montserrat_700Bold",
-    color: "#1C1C1E", // Blanco puro para máximo contraste
-    marginBottom: 4,
-    letterSpacing: 0.5,
   },
-  cardSubtitle: {
-    fontSize: 11,
-    fontFamily: "Montserrat_600SemiBold", // Un poco más de peso
-    color: "#fa6205", // Tu color de acento se ve genial sobre el negro
-    textTransform: "uppercase", // Le da un toque más "tech"
-    opacity: 0.9,
+  content: {
+    paddingHorizontal: 16,
+    paddingBottom: 30,
   },
-  emptyContainer: {
+  comercioSection: {
+    marginBottom: 24,
+  },
+  comercioHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 12,
+  },
+  comercioName: {
     flex: 1,
+    fontSize: 16,
+    fontFamily: "Montserrat_700Bold",
+    color: "#1C1C1E",
+  },
+  verMasBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 2,
+  },
+  verMasText: {
+    fontSize: 13,
+    fontFamily: "Montserrat_600SemiBold",
+    color: "#FF5A00",
+  },
+  itemsRow: {
+    flexDirection: "row",
+    gap: 10,
+  },
+  itemCard: {
+    width: ITEM_IMG_SIZE,
+  },
+  itemImgWrap: {
+    width: ITEM_IMG_SIZE,
+    height: ITEM_IMG_SIZE,
+    borderRadius: 16,
+    overflow: "hidden",
+    backgroundColor: "#F2F2F2",
+    marginBottom: 8,
+  },
+  itemImg: {
+    width: "100%",
+    height: "100%",
+  },
+  itemPlaceholder: {
+    width: "100%",
+    height: "100%",
     justifyContent: "center",
     alignItems: "center",
-    padding: 20,
   },
-  noDataText: {
-    color: "#aaa",
-    textAlign: "center",
-    padding: 20,
+  itemName: {
+    fontSize: 13,
+    fontFamily: "Montserrat_600SemiBold",
+    color: "#1C1C1E",
+    marginBottom: 2,
+  },
+  itemPrice: {
+    fontSize: 14,
+    fontFamily: "Montserrat_800ExtraBold",
+    color: "#FF5A00",
+  },
+  itemOriginalPrice: {
+    fontSize: 11,
     fontFamily: "Montserrat_400Regular",
-    fontSize: 16,
+    color: "#BBB",
+    textDecorationLine: "line-through",
+  },
+  emptyWrap: {
+    alignItems: "center",
+    paddingVertical: 60,
+    gap: 12,
+  },
+  emptyText: {
+    fontSize: 14,
+    fontFamily: "Montserrat_600SemiBold",
+    color: "#999",
+  },
+  refreshingWrap: {
+    alignItems: "center",
+    paddingVertical: 50,
+    gap: 16,
+  },
+  refreshingText: {
+    fontSize: 14,
+    fontFamily: "Montserrat_600SemiBold",
+    color: "#999",
   },
 });

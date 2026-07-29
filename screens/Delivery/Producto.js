@@ -17,6 +17,7 @@ import {
   Montserrat_700Bold,
   Montserrat_600SemiBold,
   Montserrat_300Light,
+  Montserrat_800ExtraBold,
 } from "@expo-google-fonts/montserrat";
 import { useFonts } from "expo-font";
 import { useNavigation, useRoute, useFocusEffect } from "@react-navigation/native";
@@ -55,11 +56,15 @@ const Producto = () => {
     Montserrat_700Bold,
     Montserrat_600SemiBold,
     Montserrat_300Light,
+    Montserrat_800ExtraBold,
   });
 
-  // --- LÓGICA DE NEGOCIO (Mantenida intacta) ---
+  // --- LÓGICA DE NEGOCIO ---
   const [quantity, setQuantity] = useState(1);
-  const pricePerUnit = product?.precio ? parseFloat(product.precio) : 0;
+  const precioOriginal = product?.precio ? parseFloat(product.precio) : 0;
+  const descuento = product?.activo_descuento ? parseFloat(product.descuento) || 0 : 0;
+  const pricePerUnit = precioOriginal - descuento;
+  const pctDescuento = precioOriginal > 0 ? Math.round((descuento / precioOriginal) * 100) : 0;
 
   const adicionalesPrice = selectedAdicionales.reduce(
     (total, adicional) => total + parseFloat(adicional.precio) * adicional.quantity, 0
@@ -197,7 +202,15 @@ const Producto = () => {
                     </Text>
                 </View>
                 <View style={styles.priceTag}>
+                    {descuento > 0 && (
+                      <Text style={styles.priceTagOriginal}>$ {precioOriginal.toLocaleString()}</Text>
+                    )}
                     <Text style={styles.priceTagText}>$ {pricePerUnit.toLocaleString()}</Text>
+                    {descuento > 0 && (
+                      <View style={styles.discountBadge}>
+                        <Text style={styles.discountBadgeText}>-{pctDescuento}%</Text>
+                      </View>
+                    )}
                 </View>
             </View>
 
@@ -395,12 +408,30 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: 'rgba(250, 98, 5, 0.3)',
     marginLeft: 10,
+    alignItems: 'flex-end',
+  },
+  priceTagOriginal: {
+    color: '#999',
+    fontFamily: 'Montserrat_400Regular',
+    fontSize: 13,
+    textDecorationLine: 'line-through',
   },
   priceTagText: {
     color: '#fa6205',
-    color: '#fa6205',
     fontFamily: 'Montserrat_700Bold',
     fontSize: 16,
+  },
+  discountBadge: {
+    backgroundColor: '#FFF8E1',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 6,
+    marginTop: 2,
+  },
+  discountBadgeText: {
+    color: '#1C1C1E',
+    fontFamily: 'Montserrat_800ExtraBold',
+    fontSize: 11,
   },
   divider: {
     height: 1,

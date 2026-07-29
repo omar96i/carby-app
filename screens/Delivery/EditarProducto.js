@@ -51,6 +51,8 @@ const EditarProducto = () => {
   const [loading, setLoading] = useState(false);
   const [isLoadingProduct, setIsLoadingProduct] = useState(true);
   const [originalImageUrl, setOriginalImageUrl] = useState(null);
+  const [descuento, setDescuento] = useState("");
+  const [activoDescuento, setActivoDescuento] = useState(false);
 
   useFocusEffect(useCallback(() => {
     navigation.getParent()?.setOptions({ tabBarStyle: { display: "none" } });
@@ -119,6 +121,8 @@ const EditarProducto = () => {
         setPrecio(data.precio ? data.precio.toString() : "");
         setDescripcion(data.descripcion || "");
         setCategoriaId(data.categoria_id);
+        setDescuento(data.descuento ? data.descuento.toString() : "");
+        setActivoDescuento(data.activo_descuento === 1 || data.activo_descuento === true);
 
         // Si el producto tiene categoría, guardar su nombre
         if (data.categoria) {
@@ -394,6 +398,8 @@ const EditarProducto = () => {
       formData.append("precio", precio);
       formData.append("descripcion", descripcion);
       formData.append("categoria_id", categoria_id);
+      if (descuento) formData.append("descuento", descuento);
+      formData.append("activo_descuento", activoDescuento ? "1" : "0");
 
       // Si se seleccionó una nueva imagen, adjuntarla
       if (foto) {
@@ -491,6 +497,20 @@ const EditarProducto = () => {
 
           <Text style={styles.inputLabel}>Descripción</Text>
           <TextInput style={[styles.input, styles.textArea]} placeholder="Ingresa la descripción" placeholderTextColor="#999" multiline numberOfLines={4} value={descripcion} onChangeText={setDescripcion} />
+
+          <View style={{ flexDirection: "row", gap: 10, marginTop: 14 }}>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.inputLabel}>Descuento ($)</Text>
+              <TextInput style={styles.input} placeholder="0" placeholderTextColor="#999" keyboardType="numeric" value={descuento} onChangeText={setDescuento} />
+            </View>
+            <View style={{ flex: 1, justifyContent: "flex-end", paddingBottom: 14 }}>
+              <TouchableOpacity style={[styles.toggleBtn, activoDescuento && { backgroundColor: "#fa6205" }]} onPress={() => setActivoDescuento(!activoDescuento)}>
+                <Text style={[styles.toggleText, activoDescuento && { color: "#FFF", fontFamily: "Montserrat_700Bold" }]}>
+                  {activoDescuento ? "DTO Activo" : "Activar DTO"}
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
         </View>
 
         {/* Submit */}
@@ -714,6 +734,8 @@ const styles = StyleSheet.create({
   modalSaveButton: { flex: 1, backgroundColor: "#fa6205", paddingVertical: 14, borderRadius: 14, alignItems: "center" },
   modalSaveText: { fontSize: 15, fontFamily: "Montserrat_800ExtraBold", color: "#FFF" },
   modalHelperText: { fontSize: 12, fontFamily: "Montserrat_400Regular", color: "#999", marginTop: 6, marginBottom: 4 },
+  toggleBtn: { paddingVertical: 10, paddingHorizontal: 16, borderRadius: 12, backgroundColor: "#F4F4F5", alignItems: "center" },
+  toggleText: { fontSize: 13, fontFamily: "Montserrat_600SemiBold", color: "#71717A" },
 });
 
 export default EditarProducto;

@@ -42,6 +42,8 @@ export default function useServicios() {
     if (form.foto) {
       fd.append("foto", { uri: form.foto, type: "image/jpeg", name: `servicio_${Date.now()}.jpg` });
     }
+    if (form.descuento) fd.append("descuento", String(form.descuento));
+    if (form.activo_descuento) fd.append("activo_descuento", "1");
 
     logger.request("POST", `${BASE_URL}user-servicio`, { nombre: form.nombre, precio: form.precio, categoria_id: form.categoria_id });
     const res = await fetch(`${BASE_URL}user-servicio`, {

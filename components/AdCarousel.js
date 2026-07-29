@@ -199,8 +199,8 @@ const AdCarousel = () => {
         ref={carouselRef}
         data={ads || []}
         renderItem={renderItem}
-        width={width - 30}
-        height={120}
+        width={width - 32}
+        height={150}
         onSnapToItem={(index) => setActiveSlide(index)}
         autoPlay={ads && ads.length > 1}
         autoPlayInterval={30000}
@@ -229,19 +229,20 @@ const AdCarousel = () => {
 
 const styles = StyleSheet.create({
   container: {
-    marginVertical: 20,
+    marginBottom: 20,
     width: '100%',
   },  slide: {
-    height: 120,
-    width: width - 30,
+    height: 150,
+    width: width - 32,
     justifyContent: 'center',
     alignItems: 'center',
-    borderRadius: 15,
+    borderRadius: 24,
     overflow: 'hidden',
+    alignSelf: 'center',
   },
   adImage: {
-    width: width - 30,
-    height: 120,
+    width: width - 32,
+    height: 150,
   },  loadingContainer: {
     position: 'absolute',
     top: 0,
@@ -252,17 +253,17 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: '#F0F0F0',
     zIndex: 1,
-    borderRadius: 15,
+    borderRadius: 24,
   },
   emptyBanner: {
     width: '100%',
-    height: 140,
+    height: 150,
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: '#F0F0F0',
     padding: 15,
-    marginVertical: 20,
-    borderRadius: 15,
+    marginBottom: 20,
+    borderRadius: 24,
   },
   title: {
     color: '#1C1C1E',

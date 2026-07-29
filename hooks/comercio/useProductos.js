@@ -34,6 +34,8 @@ export default function useProductos() {
     fd.append("precio", String(form.precio));
     fd.append("descripcion", form.extra || "");
     fd.append("categoria_id", String(form.categoria_id));
+    if (form.descuento) fd.append("descuento", String(form.descuento));
+    if (form.activo_descuento) fd.append("activo_descuento", "1");
     if (form.foto) {
       fd.append("foto", { uri: form.foto, type: "image/jpeg", name: `producto_${Date.now()}.jpg` });
     }

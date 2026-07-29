@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Image, ActivityIndicator } from "react-native";
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, Image, ActivityIndicator, Switch } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import * as ImagePicker from "expo-image-picker";
 
@@ -13,6 +13,8 @@ export default function ItemCreator({ categorias, onCreate, showServicios = true
   const [foto, setFoto] = useState(null);
   const [categoriaId, setCategoriaId] = useState(categorias[0]?.id || null);
   const [loading, setLoading] = useState(false);
+  const [descuento, setDescuento] = useState("");
+  const [activoDescuento, setActivoDescuento] = useState(false);
 
   const pickImage = async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -39,11 +41,15 @@ export default function ItemCreator({ categorias, onCreate, showServicios = true
         categoria_id: categoriaId,
         tipo: mode,
         foto: foto,
+        descuento: descuento ? parseInt(descuento.replace(/\D/g, "")) || 0 : 0,
+        activo_descuento: activoDescuento && descuento ? true : false,
       });
       setNombre("");
       setPrecio("");
       setExtra("");
       setFoto(null);
+      setDescuento("");
+      setActivoDescuento(false);
     } catch (e) {
       // error handled by parent
     } finally {
@@ -86,6 +92,14 @@ export default function ItemCreator({ categorias, onCreate, showServicios = true
       <TextInput style={s.input} placeholder={mode === "producto" ? "Ej. Hamburguesa Doble" : "Ej. Corte Fade"} placeholderTextColor="#999" value={nombre} onChangeText={setNombre} />
       <TextInput style={s.input} placeholder="Precio ($)" placeholderTextColor="#999" keyboardType="numeric" value={precio} onChangeText={setPrecio} />
       <TextInput style={s.input} placeholder={mode === "producto" ? "Ej. Con papas, 300gr..." : "Ej. 45 min"} placeholderTextColor="#999" value={extra} onChangeText={setExtra} />
+
+      <View style={s.discountRow}>
+        <TextInput style={[s.input, { flex: 1, marginBottom: 0 }]} placeholder="Descuento ($)" placeholderTextColor="#999" keyboardType="numeric" value={descuento} onChangeText={setDescuento} />
+        <View style={s.discountToggle}>
+          <Switch value={activoDescuento} onValueChange={setActivoDescuento} trackColor={{ false: "#DDD", true: C.brand }} thumbColor="#FFF" style={{ transform: [{ scaleX: 0.8 }, { scaleY: 0.8 }] }} />
+          <Text style={s.discountLabel}>Activar</Text>
+        </View>
+      </View>
 
       <View style={s.selectWrapper}>
         <Text style={s.selectLabel}>Sección</Text>
@@ -136,4 +150,7 @@ const s = StyleSheet.create({
   submit: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 6, backgroundColor: "#FDEEE2", paddingVertical: 12, borderRadius: 12, marginTop: 6 },
   submitDisabled: { opacity: 0.4 },
   submitText: { fontSize: 14, fontFamily: "Montserrat_800ExtraBold", color: C.brand },
+  discountRow: { flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 4 },
+  discountToggle: { flexDirection: "row", alignItems: "center", gap: 4 },
+  discountLabel: { fontSize: 10, fontFamily: "Montserrat_600SemiBold", color: C.muted },
 });

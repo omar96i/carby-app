@@ -16,6 +16,7 @@ import {
 import { useNavigation, useFocusEffect } from "@react-navigation/native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { BASE_URL } from "../constants/url";
+import RoleSwitcher from "../components/RoleSwitcher";
 import AlertaModal from "../components/ErrorModal";
 import {
   Montserrat_400Regular,
@@ -52,6 +53,8 @@ export default function Perfil() {
   const [premiosReferidos, setPremiosReferidos] = useState([]);
   const [loadingPremios, setLoadingPremios] = useState(false);
   const [supportModalVisible, setSupportModalVisible] = useState(false);
+  const [preferenciaModalVisible, setPreferenciaModalVisible] = useState(false);
+  const [preferenciaRol, setPreferenciaRol] = useState(null);
   const [termsChecked, setTermsChecked] = useState(false);
   const [privacyChecked, setPrivacyChecked] = useState(false);
 
@@ -177,6 +180,10 @@ export default function Perfil() {
     fetchUserInfo();
   }, [userId, refreshTrigger]);
 
+  useEffect(() => {
+    AsyncStorage.getItem("preferencia_rol").then((r) => setPreferenciaRol(r));
+  }, []);
+
   // Función para seleccionar imagen
   const pickImage = async () => {
     try {
@@ -286,6 +293,12 @@ export default function Perfil() {
   };
 
   // Función para cerrar sesión
+  const setPreferencia = async (rol) => {
+    await AsyncStorage.setItem("preferencia_rol", rol);
+    setPreferenciaRol(rol);
+    setPreferenciaModalVisible(false);
+  };
+
   const cerrarSesion = async () => {
     try {
       const token = await AsyncStorage.getItem("userToken");
@@ -446,6 +459,9 @@ export default function Perfil() {
 
   return (
     <SafeAreaView style={styles.safeContainer}>
+      <View style={styles.header}>
+        <Text style={styles.headerTitle}>Perfil</Text>
+      </View>
       <ScrollView>
         <View style={styles.container}>
           {/* Modal de desactivación de cuenta */}
@@ -485,39 +501,30 @@ export default function Perfil() {
             </View>
           </Modal>
 
-          {/* Foto de perfil */}
-          <View style={styles.imageContainer}>
-            {imageUrl && !imageError ? (
-              <Image
-                source={{ uri: imageUrl }}
-                style={styles.image}
-                onError={(e) => {
-                  console.log("Error cargando imagen:", e.nativeEvent.error);
-                  setImageError(true);
-                }}
-              />
-            ) : (
-              <View style={styles.avatarInitials}>
-                <Text style={styles.avatarInitialsText}>
-                  {((userInfo?.data?.nombre_completo || "Usuario")).split(" ").slice(0, 2).map(w => w[0]).join("").toUpperCase()}
-                </Text>
+          {/* Compact Profile Row */}
+          <View style={styles.profileRow}>
+            <TouchableOpacity onPress={pickImage} style={styles.avatarSmall}>
+              {imageUrl && !imageError ? (
+                <Image source={{ uri: imageUrl }} style={styles.avatarSmallImg} />
+              ) : (
+                <View style={styles.avatarSmallPlaceholder}>
+                  <Icon3 name="user" size={22} color="#FFF" />
+                </View>
+              )}
+              <View style={styles.editBadge}>
+                <Icon4 name="pencil" size={10} color="#FFF" />
               </View>
-            )}
-
-            {/* Botón para editar foto */}
-            <TouchableOpacity style={styles.editIcon} onPress={pickImage}>
-              <Icon4 name="pencil-circle" size={40} color="#1C1C1E" />
             </TouchableOpacity>
+            <View style={styles.profileInfo}>
+              <Text style={styles.sectionTitle3}>{userInfo?.data?.nombre_completo || "Usuario"}</Text>
+              <Text style={styles.sectionTitle2}><IconMCC name="location" size={14} color="#71717A" /> {userInfo?.data?.ciudad || "Ciudad"}</Text>
+            </View>
           </View>
 
-          {/* Información del usuario */}
-          <Text style={styles.sectionTitle3}>
-            {userInfo?.data?.nombre_completo || "Usuario"}
-          </Text>
-          <Text style={styles.sectionTitle2}>
-            <IconMCC name="location" size={20} color="#1C1C1E" />
-            {userInfo?.data?.ciudad || "Ciudad"}
-          </Text>
+          <RoleSwitcher userData={userInfo?.data || {}} onSwitchSuccess={(role) => {
+            const navMap = { usuario: "BottomTabNavigatorUsuario", comercio: "BottomTabNavigatorAliado", "rider.moto": "BottomTabNavigatorDelivery", "rider.taxi": "BottomTabNavigatorDelivery" };
+            navigation.reset({ index: 0, routes: [{ name: navMap[role] || "BottomTabNavigatorDelivery" }] });
+          }} />
 
           {/* Botones de acciones */}
           <View style={styles.buttonsContainer}>
@@ -610,6 +617,32 @@ export default function Perfil() {
               </View>
             </View>
           </Modal>
+
+          {/* Modal Preferencia de Ingreso */}
+          <Modal animationType="slide" transparent={true} visible={preferenciaModalVisible} onRequestClose={() => setPreferenciaModalVisible(false)}>
+            <View style={ps2.sheetBg}>
+              <View style={ps2.sheet}>
+                <View style={ps2.grabber} />
+                <Text style={ps2.title}>Preferencia de ingreso</Text>
+                <Text style={ps2.sub}>Elige con qué rol iniciarás sesión la próxima vez</Text>
+                {["usuario", "comercio", "rider.moto", "rider.taxi"].map((r) => {
+                  const labels = { usuario: "Usuario", comercio: "Comercio", "rider.moto": "Delivery", "rider.taxi": "Particular" };
+                  const selected = preferenciaRol === r || (!preferenciaRol && r === "usuario");
+                  return (
+                    <TouchableOpacity key={r} style={[ps2.option, selected && ps2.optionSelected]} onPress={() => setPreferencia(r)}>
+                      <Icon3 name={({ usuario: "user", comercio: "shopping-bag", "rider.moto": "truck", "rider.taxi": "navigation" })[r]} size={20} color={selected ? "#fa6205" : "#999"} />
+                      <Text style={[ps2.optionText, selected && ps2.optionTextSelected]}>{labels[r]}</Text>
+                      {selected && <Icon3 name="check-circle" size={18} color="#fa6205" />}
+                    </TouchableOpacity>
+                  );
+                })}
+                <TouchableOpacity style={ps2.cancelBtn} onPress={() => setPreferenciaModalVisible(false)}>
+                  <Text style={ps2.cancelText}>Cerrar</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </Modal>
+
           <Modal
             animationType="fade"
             transparent={true}
@@ -649,6 +682,13 @@ export default function Perfil() {
               <View style={styles.menuLeft}>
                 <Icon3 name="user" size={20} color="#888" />
                 <Text style={styles.menuText}>Datos Personales</Text>
+              </View>
+              <Icon3 name="chevron-right" size={20} color="#888" />
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.menuRow} onPress={() => setPreferenciaModalVisible(true)}>
+              <View style={styles.menuLeft}>
+                <Icon3 name="shuffle" size={20} color="#888" />
+                <Text style={styles.menuText}>Preferencia de ingreso</Text>
               </View>
               <Icon3 name="chevron-right" size={20} color="#888" />
             </TouchableOpacity>
@@ -712,76 +752,23 @@ export default function Perfil() {
 const styles = StyleSheet.create({
   safeContainer: {
     flex: 1,
-    backgroundColor: "#F2F2F7",
+    backgroundColor: "#F4F4F5",
     paddingTop: Platform.OS === "android" ? 40 : 0,
   },
-  container: {
-    padding: 20,
-  },
-  // Estilos para la imagen de perfil
-  imageContainer: {
-    alignSelf: "center",
-    alignItems: "center",
-    marginTop: 20,
-    marginBottom: 10,
-  },
-  image: {
-    width: 160,
-    height: 160,
-    borderRadius: 80,
-    borderWidth: 3,
-    borderColor: "#fa6205",
-    backgroundColor: "#555",
-  },
-  editIcon: {
-    position: "absolute",
-    bottom: -10,
-    right: 10,
-  },
-  avatarInitials: {
-    width: 160,
-    height: 160,
-    borderRadius: 80,
-    borderWidth: 3,
-    borderColor: "#fa6205",
-    backgroundColor: "#fa6205",
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  avatarInitialsText: {
-    fontSize: 50,
-    fontFamily: "Montserrat_700Bold",
-    color: "#FFF",
-  },
-  // Estilos para la información del usuario
-  sectionTitle3: {
-    fontFamily: "Montserrat_700Bold",
-    fontSize: 20,
-    color: "#1C1C1E",
-    textAlign: "center",
-    marginTop: 10,
-  },
-  sectionTitle2: {
-    fontFamily: "Montserrat_300Light",
-    fontSize: 14,
-    color: "#666",
-    textAlign: "center",
-    marginTop: 5,
-  },
-  emailText: {
-    fontSize: 18,
-    fontFamily: "Inter_700Bold",
-    marginBottom: 20,
-    textAlign: "center",
-    color: "#fa6205",
-  },
+  header: { justifyContent: "center", alignItems: "center", backgroundColor: "#1C1C1E", paddingTop: 50, paddingBottom: 20, borderBottomLeftRadius: 24, borderBottomRightRadius: 24 },
+  headerTitle: { fontSize: 18, fontFamily: "Montserrat_800ExtraBold", color: "#FFF" },
+  container: { paddingVertical: 16, paddingHorizontal: 0 },
+  // --- PROFILE ROW (compacta) ---
+  profileRow: { flexDirection: "row", alignItems: "center", paddingHorizontal: 16, paddingVertical: 14, gap: 14, backgroundColor: "#FFF", marginHorizontal: 16, marginTop: 16, borderRadius: 16 },
+  avatarSmall: { width: 52, height: 52, borderRadius: 16, overflow: "hidden", backgroundColor: "#F4F4F5" },
+  avatarSmallImg: { width: 52, height: 52, borderRadius: 16 },
+  avatarSmallPlaceholder: { width: 52, height: 52, borderRadius: 16, backgroundColor: "#fa6205", justifyContent: "center", alignItems: "center" },
+  editBadge: { position: "absolute", bottom: -2, right: -2, width: 20, height: 20, borderRadius: 10, backgroundColor: "#1C1C1E", justifyContent: "center", alignItems: "center", borderWidth: 2, borderColor: "#FFF" },
+  profileInfo: { flex: 1 },
+  sectionTitle3: { fontSize: 16, fontFamily: "Montserrat_800ExtraBold", color: "#1C1C1E", textAlign: "left", marginBottom: 2 },
+  sectionTitle2: { fontSize: 12, fontFamily: "Montserrat_600SemiBold", color: "#71717A", textAlign: "left", marginTop: 0 },
   // Estilos para los botones de acciones
-  buttonsContainer: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    marginTop: 30,
-    marginBottom: 10,
-  },
+  buttonsContainer: { flexDirection: "row", justifyContent: "space-between", marginHorizontal: 16, marginBottom: 8 },
   button1: {
     backgroundColor: "#FFF",
     padding: 14,
@@ -807,21 +794,8 @@ const styles = StyleSheet.create({
   },
   // Estilos para la tarjeta de opciones
   // Menú moderno
-  menuCard: {
-    backgroundColor: "#FFF",
-    borderRadius: 14,
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    marginBottom: 16,
-  },
-  menuSection: {
-    fontSize: 11,
-    fontFamily: "Montserrat_600SemiBold",
-    color: "#999",
-    marginBottom: 6,
-    marginTop: 6,
-    letterSpacing: 0.5,
-  },
+  menuCard: { backgroundColor: "#FFF", borderRadius: 16, paddingHorizontal: 16, paddingVertical: 8, marginHorizontal: 16, marginBottom: 12 },
+  menuSection: { fontSize: 11, fontFamily: "Montserrat_800ExtraBold", color: "#999", marginBottom: 4, marginTop: 4, textTransform: "uppercase", letterSpacing: 0.5 },
   menuRow: {
     flexDirection: "row",
     alignItems: "center",
@@ -837,9 +811,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   menuText: {
-    fontSize: 15,
-    fontFamily: "Montserrat_400Regular",
-    color: "#1C1C1E",
+    fontSize: 14, fontFamily: "Montserrat_600SemiBold", color: "#1C1C1E",
   },
   // Legal & Logout
   legalSection: {
@@ -1103,4 +1075,18 @@ const styles = StyleSheet.create({
   checkboxChecked: {
     backgroundColor: "#fa6205",
   },
+});
+
+const ps2 = StyleSheet.create({
+  sheetBg: { flex: 1, justifyContent: "flex-end" },
+  sheet: { backgroundColor: "#FFF", borderTopLeftRadius: 28, borderTopRightRadius: 28, padding: 20, paddingTop: 8 },
+  grabber: { width: 40, height: 5, borderRadius: 3, backgroundColor: "#E0E0E0", alignSelf: "center", marginBottom: 16 },
+  title: { fontSize: 18, fontFamily: "Montserrat_700Bold", color: "#1C1C1E", marginBottom: 4 },
+  sub: { fontSize: 13, fontFamily: "Montserrat_400Regular", color: "#999", marginBottom: 16 },
+  option: { flexDirection: "row", alignItems: "center", backgroundColor: "#F4F4F5", borderRadius: 14, padding: 14, marginBottom: 8, gap: 12 },
+  optionSelected: { backgroundColor: "#FDEEE2", borderWidth: 1, borderColor: "#fa6205" },
+  optionText: { flex: 1, fontSize: 15, fontFamily: "Montserrat_600SemiBold", color: "#71717A" },
+  optionTextSelected: { color: "#fa6205", fontFamily: "Montserrat_700Bold" },
+  cancelBtn: { backgroundColor: "#F4F4F5", paddingVertical: 14, borderRadius: 14, alignItems: "center", marginTop: 8 },
+  cancelText: { fontSize: 15, fontFamily: "Montserrat_700Bold", color: "#71717A" },
 });

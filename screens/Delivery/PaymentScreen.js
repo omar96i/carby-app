@@ -132,11 +132,14 @@ const PaymentScreen = () => {
         longitudeDelta: 0.01,
       });
 
-      setCurrentLocation({ latitude, longitude });
+      setUserLocation({ latitude, longitude });
+      userLocationRef.current = { latitude, longitude };
       setSelectedLocation({ latitude, longitude });
       resolveAddressFromCoords(latitude, longitude);
       setIgnoreNextRegionChange(true);
-    })();
+    })().catch((err) => {
+      console.error("Error obteniendo ubicación automática:", err);
+    });
   }, []);
 
   const mapRef = useRef(null);
@@ -1496,8 +1499,8 @@ const PaymentScreen = () => {
                   style={styles.inlineMap}
                   region={mapRegion}
                   liteMode={false}
-                  showsUserLocation={false}
-                  showsMyLocationButton={false}
+                  showsUserLocation={true}
+                  showsMyLocationButton={true}
                   showsCompass={false}
                   showsScale={false}
                   showsTraffic={false}

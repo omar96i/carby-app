@@ -26,18 +26,8 @@ import * as ImagePicker from "expo-image-picker";
 import { Picker } from "@react-native-picker/picker";
 import { useNotification } from "../../context/NotificationContext";
 import { useAlert } from "../../context/AlertContext";
-import RoleSelectionScreen from "../../components/RoleSelectionScreen";
-import ProviderTypeSelection from "../../components/ProviderTypeSelection";
 
-// --- CONSTANTES ---
 const API_URL = "https://back.carbycol.com/api/";
-
-const userTypes = [
-  { id: "user", label: "Usuario", icon: "user", color: "#fa6205", desc: "Más popular", tipo_usuario: "usuario" },
-  { id: "commerce", label: "Comercio", icon: "store", color: "#fa6205", desc: "Vende productos", tipo_usuario: "comercio" },
-  { id: "moto", label: "Delivery", icon: "motorcycle", color: "#f97316", desc: "Envíos y mensajería", tipo_usuario: "rider.moto" },
-  { id: "taxi", label: "Particular", icon: "car", color: "#eab308", desc: "Transporte de pasajeros", tipo_usuario: "rider.taxi" },
-];
 
 export default function LoginScreen() {
   const navigation = useNavigation();
@@ -45,9 +35,6 @@ export default function LoginScreen() {
   const { showAlert } = useAlert();
 
   // --- ESTADOS DE UI ---
-  const [step, setStep] = useState(1);
-  const [selectedType, setSelectedType] = useState("user");
-  const selected = userTypes.find((u) => u.id === selectedType);
   const [passwordVisible, setPasswordVisible] = useState(false);
   const [keyboardVisible, setKeyboardVisible] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -74,8 +61,6 @@ export default function LoginScreen() {
   const [resetMessage, setResetMessage] = useState("");
   const [resetEmailStorage, setResetEmailStorage] = useState("");
 
-  // --- ESTADOS DEMO Y CORRECCIONES ---
-  const [isDemoModalVisible, setIsDemoModalVisible] = useState(false);
   const [modalVisible, setModalVisible] = useState(false); // Modal Corrección
   const [camposObservados, setCamposObservados] = useState([]);
   const [textoObservacion, setTextoObservacion] = useState("");
@@ -165,15 +150,15 @@ export default function LoginScreen() {
     if (isLoading) return;
     setIsLoading(true);
 
+    const preferencia = await AsyncStorage.getItem("preferencia_rol") || "usuario";
+
     const loginBody = JSON.stringify({
       email: email.trim(),
       password: password.trim(),
-      tipo_usuario: selected.tipo_usuario ?? 'usuario'
+      tipo_usuario: preferencia,
     });
 
     try {
-      console.log("🌍 Iniciando sesión...");
-
       const res = await fetch(`${API_URL}login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -182,8 +167,27 @@ export default function LoginScreen() {
       const data = await res.json();
 
       if (res.status === 200 && data.token) {
-        console.log("🚀 Ingreso exitoso");
+        console.log("🚀 Ingreso exitoso como", preferencia);
         await finalizarLogin(data);
+        return;
+      }
+
+      // Si falló por validación de rol, reintentar como usuario
+      const isRoleError = data.razon === "estado_inexistente" || data.razon === "estado_no_activo";
+      if (isRoleError && preferencia !== "usuario") {
+        console.log("⚠️ Rol no aprobado, reintentando como usuario...");
+        const retryRes = await fetch(`${API_URL}login`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email: email.trim(), password: password.trim(), tipo_usuario: "usuario" }),
+        });
+        const retryData = await retryRes.json();
+        if (retryRes.status === 200 && retryData.token) {
+          await finalizarLogin(retryData);
+          return;
+        }
+        setIsLoading(false);
+        manejarErrorNegocio(retryData, API_URL);
         return;
       }
 
@@ -192,7 +196,7 @@ export default function LoginScreen() {
     } catch (error) {
       console.error("Error handleLogin:", error);
       setIsLoading(false);
-      showAlert({ title: "Error", message: "Error de conexión inesperado.", type: "error" });
+      showAlert({ title: "Error", message: "Ocurrió un error inesperado. Intenta nuevamente.", type: "error" });
     }
   };
 
@@ -401,24 +405,6 @@ export default function LoginScreen() {
     }
   };
 
-  const activateDemoMode = async () => {
-    setIsDemoModalVisible(false);
-    setIsLoading(true);
-    try {
-      await Promise.all([
-        AsyncStorage.setItem("userToken", "demo_token"),
-        AsyncStorage.setItem("userId", "demo_user"),
-        AsyncStorage.setItem("userData", JSON.stringify({ id: "demo", nombre: "Demo", email: "demo@yar.com" })),
-        AsyncStorage.setItem("tipo_usuario", "usuario"),
-        AsyncStorage.setItem("is_demo", "true"),
-        AsyncStorage.setItem("pais_seleccionado", "CO")
-      ]);
-      setTimeout(() => {
-        navigation.reset({ index: 0, routes: [{ name: "BottomTabNavigatorUsuario" }] });
-      }, 500);
-    } catch (e) { console.error(e); } finally { setIsLoading(false); }
-  };
-
   // --- HELPERS ---
   const getMimeType = (f) => f.endsWith('png') ? 'image/png' : f.endsWith('pdf') ? 'application/pdf' : 'image/jpeg';
 
@@ -479,21 +465,13 @@ export default function LoginScreen() {
 
   if (!fontsLoaded) return <View style={{ flex: 1, backgroundColor: '#F2F2F7', justifyContent: 'center' }}><ActivityIndicator color="#fa6205" size="large" /></View>;
 
-  if (step === 1) return <RoleSelectionScreen onSelectUser={() => { setSelectedType('user'); setStep(3); }} onSelectProvider={() => setStep(2)} />;
-  if (step === 2) return <ProviderTypeSelection userTypes={userTypes.slice(1)} onSelectType={(t) => { setSelectedType(t); setStep(3); }} onGoBack={() => setStep(1)} />;
-
   return (
     <KeyboardAvoidingView style={styles.keyboardAvoidingContainer} behavior={Platform.OS === "ios" ? "padding" : "height"}>
       <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
         <ScrollView ref={scrollViewRef} contentContainerStyle={styles.scrollContainer} showsVerticalScrollIndicator={false}>
           <View style={styles.container}>
-            <TouchableOpacity style={styles.backButton} onPress={() => setStep(1)}>
-              <FontAwesome5 name="arrow-left" size={16} color="#A0A0A0" />
-              <Text style={styles.backButtonText}>Volver atrás</Text>
-            </TouchableOpacity>
-
             <Image source={require("../../assets/images/nuevo-icono.jpeg")} style={styles.logo} />
-            <Text style={styles.subtitle}>Inicia sesión como {selected?.label.toUpperCase()}</Text>
+            <Text style={styles.subtitle}>Inicia sesión en tu cuenta</Text>
 
             <Text style={styles.inputLabel}>Email</Text>
             <View style={styles.inputContainer}>
@@ -520,6 +498,14 @@ export default function LoginScreen() {
             <View style={styles.forgotPasswordContainer}>
               <TouchableOpacity onPress={() => setForgotModalVisible(true)}>
                 <Text style={{ color: "#fa6205", fontFamily: "Montserrat-Bold" }}>¿Olvidaste tu contraseña?</Text>
+              </TouchableOpacity>
+            </View>
+
+            <View style={{ alignItems: "center", marginTop: 12 }}>
+              <TouchableOpacity onPress={() => navigation.navigate("Register")}>
+                <Text style={{ color: "#1C1C1E", fontFamily: "Montserrat_600SemiBold", fontSize: 14 }}>
+                  ¿No tienes cuenta? <Text style={{ color: "#fa6205", fontFamily: "Montserrat_800ExtraBold" }}>Regístrate</Text>
+                </Text>
               </TouchableOpacity>
             </View>
 
@@ -687,20 +673,6 @@ export default function LoginScreen() {
                     <TouchableOpacity style={styles.confirmButton} onPress={confirmarResetPassword}>
                       {resetLoading ? <ActivityIndicator color="#F2F2F7" size="small" /> : <Text style={styles.confirmButtonText}>Actualizar</Text>}
                     </TouchableOpacity>
-                  </View>
-                </View>
-              </View>
-            </Modal>
-
-            {/* MODAL DEMO */}
-            <Modal transparent={true} visible={isDemoModalVisible} onRequestClose={() => setIsDemoModalVisible(false)}>
-              <View style={styles.modalOverlay}>
-                <View style={styles.modalContainer}>
-                  <Text style={styles.modalTitle}>Modo Demo</Text>
-                  <Text style={styles.modalText}>Funcionalidad limitada para pruebas.</Text>
-                  <View style={styles.modalButtonsContainer}>
-                    <TouchableOpacity style={styles.cancelButton} onPress={() => setIsDemoModalVisible(false)}><Text style={styles.cancelButtonText}>Cancelar</Text></TouchableOpacity>
-                    <TouchableOpacity style={styles.confirmButton} onPress={activateDemoMode}><Text style={styles.confirmButtonText}>Acceder</Text></TouchableOpacity>
                   </View>
                 </View>
               </View>

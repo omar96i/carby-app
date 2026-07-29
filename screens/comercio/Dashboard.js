@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { SafeAreaView, View, ScrollView, StyleSheet, ActivityIndicator, RefreshControl, Text, TouchableOpacity, Modal, Image, FlatList, TextInput } from "react-native";
-import { useNavigation } from "@react-navigation/native";
+import { useNavigation, useFocusEffect } from "@react-navigation/native";
 import { useFonts, Montserrat_400Regular, Montserrat_700Bold, Montserrat_600SemiBold, Montserrat_800ExtraBold } from "@expo-google-fonts/montserrat";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Ionicons } from "@expo/vector-icons";
@@ -11,11 +11,13 @@ import ShopHeader from "../../components/comercio/dashboard/ShopHeader";
 import SeccionCreator from "../../components/comercio/dashboard/SeccionCreator";
 import ItemCreator from "../../components/comercio/dashboard/ItemCreator";
 import Inventario from "../../components/comercio/dashboard/Inventario";
+import BannerManager from "../../components/comercio/dashboard/BannerManager";
 
 import useCategorias from "../../hooks/comercio/useCategorias";
 import useProductos from "../../hooks/comercio/useProductos";
 import useServicios from "../../hooks/comercio/useServicios";
 import useShopInfo from "../../hooks/comercio/useShopInfo";
+import useBanners from "../../hooks/comercio/useBanners";
 import logger from "../../utils/logger";
 
 const C = { brand: "#fa6205", ink: "#1C1C1E", surface: "#FFF", muted: "#71717A", bg: "#F4F4F5", green: "#10B981" };
@@ -37,6 +39,7 @@ export default function Dashboard() {
   const { productos, fetchProductos, createProducto, deleteProducto, toggleProducto } = useProductos();
   const { servicios, fetchServicios, createServicio, deleteServicio } = useServicios();
   const { establishmentName, profileImageUrl, shopActive, averageRating, ratings, tipoCategoria, loading: shopLoading, fetchShopInfo, toggleTienda, getCurrentLocation, saveShopLocation, userData } = useShopInfo();
+  const { banners, loading: bannersLoading, fetchBanners, uploadBanner, toggleBanner, deleteBanner } = useBanners();
 
   const [refreshing, setRefreshing] = useState(false);
   const [alertVisible, setAlertVisible] = useState(false);
@@ -58,8 +61,11 @@ export default function Dashboard() {
   const [deleteItemModal, setDeleteItemModal] = useState(false);
   const [selectedItem, setSelectedItem] = useState(null);
 
-  const loadAll = async () => { await Promise.all([fetchShopInfo(), fetchCategorias(), fetchProductos(), fetchServicios()]); };
-  useEffect(() => { loadAll(); }, []);
+  const loadAll = async () => { await Promise.all([fetchShopInfo(), fetchCategorias(), fetchProductos(), fetchServicios(), fetchBanners()]); };
+
+  useFocusEffect(useCallback(() => {
+    loadAll();
+  }, []));
   const onRefresh = async () => { setRefreshing(true); await loadAll(); setRefreshing(false); };
 
   const handleCreateCategoria = async (nombre) => { try { await createCategoria(nombre); } catch { showAlert("Error al crear sección", "error"); } };
@@ -99,6 +105,10 @@ export default function Dashboard() {
   };
   const handleSaveLocation = async () => { try { await saveShopLocation(); setLocationModal(false); showAlert("Ubicación guardada", "success"); } catch { showAlert("Error al guardar ubicación", "error"); } };
   const handleSolicitarRider = () => nav.navigate("StepUno");
+
+  const handleUploadBanner = async (foto) => { try { await uploadBanner(foto); } catch { showAlert("Error al subir banner", "error"); } };
+  const handleToggleBanner = async (banner) => { try { await toggleBanner(banner); } catch {} };
+  const handleDeleteBanner = async (id) => { try { await deleteBanner(id); } catch {} };
 
   if (!fontsLoaded) return <SafeAreaView style={ds.safe}><ActivityIndicator size="large" color={C.brand} /></SafeAreaView>;
 
@@ -148,6 +158,8 @@ export default function Dashboard() {
               </TouchableOpacity>
             )}
           </View>
+
+          <BannerManager banners={banners} loading={bannersLoading} onUpload={handleUploadBanner} onToggle={handleToggleBanner} onDelete={handleDeleteBanner} />
 
           <SeccionCreator categorias={categorias} onCreate={handleCreateCategoria} onEdit={openEditCat} onDelete={openDeleteCat} />
           <ItemCreator categorias={categorias} onCreate={handleCreateItem} showServicios={tipoCategoria === "servicios"} />

@@ -32,6 +32,8 @@ const EditarServicio = () => {
   const [categoriaId, setCategoriaId] = useState('');
   const [categoriaNombre, setCategoriaNombre] = useState('');
   const [perfilRelacionado, setPerfilRelacionado] = useState('');
+  const [descuento, setDescuento] = useState('');
+  const [activoDescuento, setActivoDescuento] = useState(false);
 
   // Adicionales
   const [adicionales, setAdicionales] = useState([]);
@@ -70,6 +72,8 @@ const EditarServicio = () => {
           setPerfilId(data.data.user_perfil_id ? String(data.data.user_perfil_id) : '');
           setCategoriaId(data.data.categoria_id ? String(data.data.categoria_id) : '');
           setCategoriaNombre(data.data.categoria?.nombre || '');
+          setDescuento(data.data.descuento ? String(data.data.descuento) : '');
+          setActivoDescuento(data.data.activo_descuento === 1 || data.data.activo_descuento === true);
           if (data.data.foto) {
             setFoto({ uri: `${BASE_URL.toString().replace('/api', '')}/storage/${data.data.foto}` });
           }
@@ -221,6 +225,8 @@ const EditarServicio = () => {
       formData.append('user_perfil_id', perfilId);
       formData.append('categoria_id', categoriaId);
       formData.append('user_id', user_id);
+      if (descuento) formData.append('descuento', descuento);
+      formData.append('activo_descuento', activoDescuento ? '1' : '0');
       if (foto && foto.uri && !foto.uri.startsWith('http')) {
         formData.append('foto', {
           uri: foto.uri,
@@ -366,6 +372,20 @@ const EditarServicio = () => {
             <TextInput style={styles.input} placeholder="Ej: 30 min" placeholderTextColor="#999" value={tiempo} onChangeText={setTiempo} />
             <Text style={styles.inputLabel}>Descripción</Text>
             <TextInput style={[styles.input, { minHeight: 80, textAlignVertical: 'top' }]} placeholder="Ingresa la descripción" placeholderTextColor="#999" multiline numberOfLines={4} value={descripcion} onChangeText={setDescripcion} />
+
+            <View style={{ flexDirection: "row", gap: 10, marginTop: 14 }}>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.inputLabel}>Descuento ($)</Text>
+                <TextInput style={styles.input} placeholder="0" placeholderTextColor="#999" keyboardType="numeric" value={descuento} onChangeText={setDescuento} />
+              </View>
+              <View style={{ flex: 1, justifyContent: "flex-end", paddingBottom: 14 }}>
+                <TouchableOpacity style={[edToggle.toggleBtn, activoDescuento && { backgroundColor: "#fa6205" }]} onPress={() => setActivoDescuento(!activoDescuento)}>
+                  <Text style={[edToggle.toggleText, activoDescuento && { color: "#FFF", fontFamily: "Montserrat_700Bold" }]}>
+                    {activoDescuento ? "DTO Activo" : "Activar DTO"}
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            </View>
           </View>
           <TouchableOpacity style={styles.myButton} onPress={handleSubmit} disabled={loading}>
             {loading ? <ActivityIndicator size="small" color="#FFF" /> : <Text style={styles.buttonText}>Guardar Cambios</Text>}
@@ -504,6 +524,11 @@ const styles = StyleSheet.create({
   modalPrimaryBtn: { flex: 1, backgroundColor: '#fa6205', paddingVertical: 14, borderRadius: 14, alignItems: 'center' },
   modalPrimaryBtnText: { fontSize: 15, fontFamily: 'Montserrat_800ExtraBold', color: '#FFF' },
   modalHelperText: { fontSize: 12, fontFamily: 'Montserrat_400Regular', color: '#999', marginTop: 4, marginBottom: 12 },
+});
+
+const edToggle = StyleSheet.create({
+  toggleBtn: { paddingVertical: 10, paddingHorizontal: 16, borderRadius: 12, backgroundColor: "#F4F4F5", alignItems: "center" },
+  toggleText: { fontSize: 13, fontFamily: "Montserrat_600SemiBold", color: "#71717A" },
 });
 
 export default EditarServicio;

@@ -392,7 +392,10 @@ const ServicioDetalle = ({ route, navigation }) => {
   };
 
   // Calculate prices
-  const priceBase = parseFloat(servicio.precio) || 0;
+  const precioOriginal = parseFloat(servicio.precio) || 0;
+  const descuento = servicio.activo_descuento ? parseFloat(servicio.descuento) || 0 : 0;
+  const priceBase = precioOriginal - descuento;
+  const pctDescuento = precioOriginal > 0 ? Math.round((descuento / precioOriginal) * 100) : 0;
   const adicionalesPrice = selectedAdicionales.reduce(
     (sum, a) => sum + (parseFloat(a.precio) || 0) * a.quantity,
     0
@@ -1140,290 +1143,164 @@ const ServicioDetalle = ({ route, navigation }) => {
       >
         <Ionicons name="arrow-back" size={28} color="#1C1C1E" />
       </TouchableOpacity>
-      {/* Vista del Servicio principal */}
-      <View
-        style={{
-          backgroundColor: "#F5F5F5",
-          borderRadius: 14,
-          padding: 16,
-          marginBottom: 18,
-          shadowColor: "#000",
-          shadowOpacity: 0.15,
-          shadowRadius: 8,
-          elevation: 4,
-        }}
-      >
+
+      {/* Tarjeta principal unificada */}
+      <View style={styles.card}>
+        {/* Vista del servicio principal */}
         <Image
           source={
             servicio.foto && getImageUrl(servicio.foto)
               ? { uri: getImageUrl(servicio.foto) }
               : require("../../assets/images/imagen.jpg")
           }
-          style={{
-            width: "100%",
-            height: 180,
-            borderRadius: 12,
-            marginBottom: 12,
-            backgroundColor: "#F5F5F5",
-          }}
+          style={styles.serviceImage}
           resizeMode="cover"
         />
-        <Text
-          style={{
-            fontSize: 22,
-            color: "#1C1C1E",
-            fontWeight: "bold",
-            marginBottom: 4,
-          }}
-        >
-          {servicio.nombre}
-        </Text>
-        <Text
-          style={{
-            fontSize: 18,
-            color: "#fa6205",
-            fontWeight: "bold",
-            marginBottom: 4,
-          }}
-        >
-          $ {servicio.precio || "0"}
-        </Text>
-        <Text style={{ fontSize: 15, color: "#ccc", marginBottom: 4 }}>
-          {servicio.descripcion}
-        </Text>
-        <Text style={{ fontSize: 14, color: "#aaa", marginBottom: 8 }}>
+        <Text style={styles.serviceTitle}>{servicio.nombre}</Text>
+        {descuento > 0 && (
+          <Text style={styles.originalPrice}>
+            $ {precioOriginal.toLocaleString()}
+          </Text>
+        )}
+        <View style={styles.priceContainer}>
+          <Text style={styles.price}>$ {priceBase.toLocaleString()}</Text>
+          {descuento > 0 && (
+            <View style={styles.discountBadge}>
+              <Text style={{ color: "#1C1C1E", fontSize: 12, fontWeight: "bold" }}>
+                -{pctDescuento}%
+              </Text>
+            </View>
+          )}
+        </View>
+        <Text style={styles.serviceDesc}>{servicio.descripcion}</Text>
+        <Text style={styles.serviceMeta}>
           Duración estimada: {servicio.tiempo || "-"} Min
         </Text>
-        {/* Quantity Controls for main service */}
-        <View
-          style={{
-            flexDirection: "row",
-            alignItems: "center",
-            justifyContent: "center",
-            marginVertical: 8,
-          }}
-        >
+
+        <View style={styles.divider} />
+
+        {/* Quantity controls */}
+        <View style={styles.quantityRow}>
           <TouchableOpacity
             onPress={decreaseQuantity}
-            style={{
-              backgroundColor: "#ff4d4d",
-              borderRadius: 8,
-              padding: 8,
-              marginHorizontal: 8,
-            }}
+            style={[
+              styles.quantityBtn,
+              quantity > 1 ? styles.quantityBtnMinusActive : styles.quantityBtnMinus,
+            ]}
           >
-            <Text style={{ color: "#1C1C1E", fontSize: 20, fontWeight: "bold" }}>
-              -
-            </Text>
+            <Ionicons
+              name="remove"
+              size={20}
+              color={quantity > 1 ? "#FF5A00" : "#CCC"}
+            />
           </TouchableOpacity>
-          <Text
-            style={{
-              color: "#1C1C1E",
-              fontSize: 18,
-              fontWeight: "bold",
-              minWidth: 32,
-              textAlign: "center",
-            }}
-          >
-            {quantity}
-          </Text>
+          <Text style={styles.quantityNumber}>{quantity}</Text>
           <TouchableOpacity
             onPress={increaseQuantity}
-            style={{
-              backgroundColor: "#fa6205",
-              borderRadius: 8,
-              padding: 8,
-              marginHorizontal: 8,
-            }}
+            style={[styles.quantityBtn, styles.quantityBtnPlus]}
           >
-            <Text
-              style={{ color: "#FFF", fontSize: 20, fontWeight: "bold" }}
-            >
-              +
-            </Text>
+            <Ionicons name="add" size={20} color="#FFF" />
           </TouchableOpacity>
         </View>
-      </View>
-      {/* Adicionales */}
-      {loadingAdicionales ? (
-        <ActivityIndicator color="#fa6205" style={{ marginVertical: 20 }} />
-      ) : adicionales.length > 0 ? (
-        <View
-          style={{
-            backgroundColor: "#F5F5F5",
-            borderRadius: 14,
-            padding: 14,
-            marginBottom: 18,
-          }}
-        >
-          <Text
-            style={{
-              color: "#fa6205",
-              fontSize: 18,
-              fontWeight: "bold",
-              marginBottom: 10,
-            }}
-          >
-            Adicionales
-          </Text>
-          {adicionales.map((adicional) => {
-            const isSelected = selectedAdicionales.find(
-              (a) => a.id === adicional.id
-            );
-            return (
-              <View
-                key={adicional.id}
-                style={{
-                  flexDirection: "row",
-                  alignItems: "center",
-                  backgroundColor: isSelected ? "#F2F2F7" : "transparent",
-                  borderRadius: 8,
-                  padding: 10,
-                  marginBottom: 8,
-                  borderWidth: isSelected ? 2 : 0,
-                  borderColor: isSelected ? "#fa6205" : "transparent",
-                }}
-              >
-                <TouchableOpacity
-                  style={{
-                    flex: 1,
-                    flexDirection: "row",
-                    alignItems: "center",
-                  }}
-                  onPress={() => handleToggleAdicional(adicional)}
+
+        {/* Adicionales */}
+        {loadingAdicionales ? (
+          <ActivityIndicator color="#fa6205" style={{ marginVertical: 20 }} />
+        ) : adicionales.length > 0 ? (
+          <>
+            <View style={styles.divider} />
+            <Text style={styles.sectionTitle}>Adicionales</Text>
+            {adicionales.map((adicional) => {
+              const isSelected = selectedAdicionales.find(
+                (a) => a.id === adicional.id
+              );
+              return (
+                <View
+                  key={adicional.id}
+                  style={[
+                    styles.addOnItem,
+                    isSelected ? styles.addOnSelected : null,
+                  ]}
                 >
-                  <Text style={{ color: "#1C1C1E", fontSize: 16 }}>
-                    {adicional.nombre}
-                  </Text>
-                  <Text
-                    style={{ color: "#fa6205", fontSize: 16, marginLeft: 10 }}
-                  >
-                    $ {adicional.precio || "0"}
-                  </Text>
-                  {isSelected && (
-                    <Ionicons
-                      name="checkmark-circle"
-                      size={22}
-                      color="#fa6205"
-                      style={{ marginLeft: 8 }}
-                    />
-                  )}
-                </TouchableOpacity>
-                {/* Quantity controls for add-on if selected */}
-                {isSelected ? (
-                  <View
+                  <TouchableOpacity
                     style={{
+                      flex: 1,
                       flexDirection: "row",
                       alignItems: "center",
-                      marginLeft: 10,
                     }}
+                    onPress={() => handleToggleAdicional(adicional)}
                   >
-                    <TouchableOpacity
-                      onPress={() => updateAdicionalQuantity(adicional.id, -1)}
+                    <Text style={styles.addOnName}>{adicional.nombre}</Text>
+                    <Text style={styles.addOnPrice}>
+                      $ {adicional.precio || "0"}
+                    </Text>
+                    {isSelected && (
+                      <Ionicons
+                        name="checkmark-circle"
+                        size={22}
+                        color="#fa6205"
+                        style={{ marginLeft: 8 }}
+                      />
+                    )}
+                  </TouchableOpacity>
+                  {isSelected ? (
+                    <View
                       style={{
-                        backgroundColor: "#ff4d4d",
-                        borderRadius: 8,
-                        padding: 6,
-                        marginHorizontal: 4,
+                        flexDirection: "row",
+                        alignItems: "center",
+                        marginLeft: 10,
                       }}
                     >
+                      <TouchableOpacity
+                        onPress={() => updateAdicionalQuantity(adicional.id, -1)}
+                        style={[styles.addOnQtyBtn, styles.addOnQtyBtnMinus]}
+                      >
+                        <Text style={styles.addOnQtyText}>-</Text>
+                      </TouchableOpacity>
                       <Text
                         style={{
                           color: "#1C1C1E",
                           fontSize: 16,
-                          fontWeight: "bold",
+                          minWidth: 24,
+                          textAlign: "center",
                         }}
                       >
-                        -
+                        {isSelected.quantity}
                       </Text>
-                    </TouchableOpacity>
-                    <Text
-                      style={{
-                        color: "#1C1C1E",
-                        fontSize: 16,
-                        minWidth: 24,
-                        textAlign: "center",
-                      }}
-                    >
-                      {isSelected.quantity}
-                    </Text>
-                    <TouchableOpacity
-                      onPress={() => updateAdicionalQuantity(adicional.id, 1)}
-                      style={{
-                        backgroundColor: "#fa6205",
-                        borderRadius: 8,
-                        padding: 6,
-                        marginHorizontal: 4,
-                      }}
-                    >
-                      <Text
-                        style={{
-                          color: "#F5F5F5",
-                          fontSize: 16,
-                          fontWeight: "bold",
-                        }}
+                      <TouchableOpacity
+                        onPress={() => updateAdicionalQuantity(adicional.id, 1)}
+                        style={[styles.addOnQtyBtn, styles.addOnQtyBtnPlus]}
                       >
-                        +
-                      </Text>
-                    </TouchableOpacity>
-                  </View>
-                ) : null}
-              </View>
-            );
-          })}
+                        <Text style={styles.addOnQtyText}>+</Text>
+                      </TouchableOpacity>
+                    </View>
+                  ) : null}
+                </View>
+              );
+            })}
+          </>
+        ) : null}
+
+        <View style={styles.divider} />
+
+        {/* Total */}
+        <View style={styles.totalRow}>
+          <Text style={styles.totalLabel}>Total</Text>
+          <Text style={styles.totalValue}>$ {totalPrice.toLocaleString()}</Text>
         </View>
-      ) : null}
-      {/* Total price */}
-      <View
-        style={{
-          backgroundColor: "#F5F5F5",
-          borderRadius: 10,
-          padding: 12,
-          alignItems: "center",
-          marginBottom: 16,
-        }}
-      >
-        <Text style={{ color: "#fa6205", fontSize: 20, fontWeight: "bold" }}>
-          Total: $ {totalPrice.toLocaleString()}
-        </Text>
         {selectedAdicionales.length > 0 && (
-          <Text style={{ color: "#aaa", fontSize: 13, marginTop: 2 }}>
+          <Text style={styles.addOnTotal}>
             Incluye adicionales: +$ {adicionalesPrice.toLocaleString()}
           </Text>
         )}
-      </View>
-      {/* Captura de datos de reserva */}
-      <View
-        style={{
-          backgroundColor: "#F5F5F5",
-          borderRadius: 14,
-          padding: 16,
-          marginBottom: 18,
-        }}
-      >
-       
-        {/* Selección de perfil - PRIMERO */}
-        <Text
-          style={{
-            color: "#1C1C1E",
-            fontSize: 16,
-            fontWeight: "bold",
-            marginBottom: 12,
-          }}
-        >
-          Selecciona un perfil:
-        </Text>
+
+        <View style={styles.divider} />
+
+        {/* Selección de perfil */}
+        <Text style={styles.sectionLabel}>Selecciona un perfil</Text>
         {profiles.length === 0 ? (
-          <View
-            style={{
-              backgroundColor: "#F2F2F7",
-              borderRadius: 8,
-              padding: 16,
-              marginBottom: 12,
-              alignItems: "center",
-            }}
-          >
-            <Text style={{ color: "#aaa", textAlign: "center" }}>
+          <View style={styles.emptyState}>
+            <Text style={styles.emptyStateText}>
               No tienes perfiles registrados
             </Text>
           </View>
@@ -1433,143 +1310,66 @@ const ServicioDetalle = ({ route, navigation }) => {
             showsHorizontalScrollIndicator={false}
             style={{ marginBottom: 12 }}
           >
-            {profiles.map((perfil) => (
-              <TouchableOpacity
-                key={perfil.id}
-                style={{
-                  backgroundColor:
-                    selectedProfile?.id === perfil.id ? "#fa6205" : "#F2F2F7",
-                  borderRadius: 12,
-                  padding: 12,
-                  marginRight: 12,
-                  minWidth: 140,
-                  maxWidth: 140,
-                  alignItems: "center",
-                  borderWidth: selectedProfile?.id === perfil.id ? 2 : 0,
-                  borderColor:
-                    selectedProfile?.id === perfil.id
-                      ? "#fa6205"
-                      : "transparent",
-                }}
-                onPress={() => handleSelectProfile(perfil)}
-              >
-               
-                <Image
-                  source={
-                    perfil.file && getImageUrl(perfil.file)
-                      ? { uri: getImageUrl(perfil.file) }
-                      : require("../../assets/images/fotoperfil.jpg")
-                  }
-                  style={{
-                    width: 60,
-                    height: 60,
-                    borderRadius: 30,
-                    marginBottom: 8,
-                    backgroundColor: "#F5F5F5",
-                  }}
-                  resizeMode="cover"
-                />
-                <Text
-                  style={{
-                    color:
-                      selectedProfile?.id === perfil.id ? "#FFF" : "#1C1C1E",
-                    fontWeight: "bold",
-                    fontSize: 13,
-                    textAlign: "center",
-                    numberOfLines: 2,
-                  }}
+            {profiles.map((perfil) => {
+              const isSelectedProfile = selectedProfile?.id === perfil.id;
+              return (
+                <TouchableOpacity
+                  key={perfil.id}
+                  style={[
+                    styles.profileCard,
+                    isSelectedProfile ? styles.profileSelected : null,
+                  ]}
+                  onPress={() => handleSelectProfile(perfil)}
                 >
-                  {perfil.nombre}
-                </Text>
-                {selectedProfile?.id === perfil.id && (
-                  <View
+                  <Image
+                    source={
+                      perfil.file && getImageUrl(perfil.file)
+                        ? { uri: getImageUrl(perfil.file) }
+                        : require("../../assets/images/fotoperfil.jpg")
+                    }
                     style={{
-                      position: "absolute",
-                      top: 8,
-                      right: 8,
+                      width: 60,
+                      height: 60,
+                      borderRadius: 30,
+                      marginBottom: 8,
                       backgroundColor: "#F5F5F5",
-                      borderRadius: 10,
-                      padding: 2,
                     }}
+                    resizeMode="cover"
+                  />
+                  <Text
+                    style={[
+                      styles.profileName,
+                      { color: isSelectedProfile ? "#FFF" : "#1C1C1E" },
+                    ]}
+                    numberOfLines={2}
                   >
-                    <Ionicons name="checkmark" size={16} color="#fa6205" />
-                  </View>
-                )}
-              </TouchableOpacity>
-            ))}
+                    {perfil.nombre}
+                  </Text>
+                  {isSelectedProfile && (
+                    <View
+                      style={{
+                        position: "absolute",
+                        top: 8,
+                        right: 8,
+                        backgroundColor: "#F5F5F5",
+                        borderRadius: 10,
+                        padding: 2,
+                      }}
+                    >
+                      <Ionicons name="checkmark" size={16} color="#fa6205" />
+                    </View>
+                  )}
+                </TouchableOpacity>
+              );
+            })}
           </ScrollView>
         )}
-        {/* Mostrar disponibilidad del perfil
-        
-         {selectedProfile && (
-          <View style={{ marginBottom: 12 }}>
-            {loadingDisponibilidad ? (
-              <ActivityIndicator
-                color="#fa6205"
-                style={{ marginVertical: 10 }}
-              />
-            ) : disponibilidadPerfil && disponibilidadPerfil.length > 0 ? (
-              <View>
-                <Text
-                  style={{
-                    color: "#fa6205",
-                    fontSize: 14,
-                    fontWeight: "bold",
-                    marginBottom: 4,
-                  }}
-                >
-                  Disponibilidad del perfil:
-                </Text>
-                {disponibilidadPerfil && Array.isArray(disponibilidadPerfil) ? (
-                  disponibilidadPerfil.map((dia, idx) => {
-                    const nombresDias = [
-                      "Lunes",
-                      "Martes",
-                      "Miércoles",
-                      "Jueves",
-                      "Viernes",
-                      "Sábado",
-                      "Domingo",
-                    ];
-                    const nombreDia =
-                      nombresDias[dia.dia_semana] || `Día ${dia.dia_semana}`;
 
-                    return (
-                      <Text
-                        key={idx}
-                        style={{ color: "#aaa", fontSize: 12, marginBottom: 2 }}
-                      >
-                        {nombreDia}: {dia.hora_inicio} - {dia.hora_fin}
-                      </Text>
-                    );
-                  })
-                ) : (
-                  <Text style={{ color: "#ff6b6b", fontSize: 12 }}>
-                    No hay datos de disponibilidad
-                  </Text>
-                )}
-              </View>
-            ) : (
-              <Text style={{ color: "#ff6b6b", fontSize: 14 }}>
-                No se pudo cargar la disponibilidad del perfil
-              </Text>
-            )}
-          </View>
-        )}*/}
-        {/* Fecha y hora - SOLO SI HAY PERFIL SELECCIONADO */}
+        {/* Fecha y hora */}
         {selectedProfile ? (
           <View>
-            <Text
-              style={{
-                color: "#1C1C1E",
-                fontSize: 16,
-                fontWeight: "bold",
-                marginBottom: 6,
-              }}
-            >
-              Selecciona fecha y hora
-            </Text>
-            {/* Selector de fecha con semana disponible */}
+            <View style={styles.divider} />
+            <Text style={styles.sectionLabel}>Selecciona fecha y hora</Text>
             <ScrollView
               horizontal
               showsHorizontalScrollIndicator={false}
@@ -1588,34 +1388,25 @@ const ServicioDetalle = ({ route, navigation }) => {
                   "Jue",
                   "Vie",
                   "Sáb",
-                ]; // Verificar si el perfil tiene disponibilidad este día
-                const diaSemanaJS = fechaDisponible.getDay(); // 0 = domingo, 1 = lunes, etc.
-                const diaSemanaAPI = diaSemanaJS === 0 ? 6 : diaSemanaJS - 1; // 0=lunes, 1=martes, ..., 6=domingo
-
+                ];
+                const diaSemanaJS = fechaDisponible.getDay();
+                const diaSemanaAPI = diaSemanaJS === 0 ? 6 : diaSemanaJS - 1;
                 const tieneDisponibilidad = disponibilidadPerfil?.some(
                   (d) => d.dia_semana === diaSemanaAPI
                 );
-
                 return (
                   <TouchableOpacity
                     key={idx}
-                    style={{
-                      backgroundColor: isSelected
-                        ? "#fa6205"
-                        : tieneDisponibilidad
-                        ? "#fff"
-                        : "#666",
-                      borderRadius: 8,
-                      padding: 8,
-                      marginRight: 8,
-                      minWidth: 70,
-                      alignItems: "center",
-                      opacity: tieneDisponibilidad ? 1 : 0.5,
-                    }}                    onPress={() => {
+                    style={[
+                      styles.datePill,
+                      isSelected ? styles.datePillSelected : null,
+                      !tieneDisponibilidad ? styles.datePillDisabled : null,
+                    ]}
+                    onPress={() => {
                       setFecha(fechaDisponible);
-                      setHorariosDisponibles([]); // Limpiar horarios al cambiar fecha
-                      setHoraInicio(new Date()); // Resetear hora seleccionada
-                      setHoraFin(new Date()); // Resetear hora fin
+                      setHorariosDisponibles([]);
+                      setHoraInicio(new Date());
+                      setHoraFin(new Date());
                     }}
                     disabled={!tieneDisponibilidad}
                   >
@@ -1649,7 +1440,6 @@ const ServicioDetalle = ({ route, navigation }) => {
                 );
               })}
             </ScrollView>
-            {/* Selector de hora basado en disponibilidad */}
             {fecha ? (
               <>
                 <Text style={{ color: "#1C1C1E", fontSize: 13, marginBottom: 6 }}>
@@ -1670,22 +1460,20 @@ const ServicioDetalle = ({ route, navigation }) => {
                         const isSelected =
                           horaInicio.toTimeString().slice(0, 5) ===
                           horario.toTimeString().slice(0, 5);
-                        return (                          <TouchableOpacity
+                        return (
+                          <TouchableOpacity
                             key={idx}
-                            style={{
-                              backgroundColor: isSelected ? "#fa6205" : "#fff",
-                              borderRadius: 8,
-                              padding: 8,
-                              marginRight: 8,
-                              minWidth: 60,
-                              alignItems: "center",
-                            }}
+                            style={[
+                              styles.timePill,
+                              isSelected ? styles.timePillSelected : null,
+                            ]}
                             onPress={() => {
                               setHoraInicio(horario);
-                              // Calcular hora de fin basada en la duración del servicio
                               const duracionMinutos = parseInt(servicio.tiempo) || 30;
                               const nuevaHoraFin = new Date(horario);
-                              nuevaHoraFin.setMinutes(nuevaHoraFin.getMinutes() + duracionMinutos - 1);
+                              nuevaHoraFin.setMinutes(
+                                nuevaHoraFin.getMinutes() + duracionMinutos - 1
+                              );
                               setHoraFin(nuevaHoraFin);
                             }}
                           >
@@ -1714,47 +1502,30 @@ const ServicioDetalle = ({ route, navigation }) => {
             ) : null}
           </View>
         ) : (
-          <View
-            style={{
-              backgroundColor: "#F5F5F5",
-              borderRadius: 8,
-              padding: 12,
-              marginBottom: 12,
-            }}
-          >
-            <Text style={{ color: "#666", textAlign: "center" }}>
-              Selecciona un perfil para ver fechas y horarios disponibles
-            </Text>
-          </View>
+          <>
+            <View style={styles.divider} />
+            <View style={styles.emptyState}>
+              <Text style={styles.emptyStateText}>
+                Selecciona un perfil para ver fechas y horarios disponibles
+              </Text>
+            </View>
+          </>
         )}
 
         {/* Método de pago */}
-        <Text
-          style={{
-            color: "#1C1C1E",
-            fontSize: 16,
-            fontWeight: "bold",
-            marginBottom: 6,
-          }}
-        >
-          Método de pago
-        </Text>
+        <View style={styles.divider} />
+        <Text style={styles.sectionLabel}>Método de pago</Text>
         {loadingPaymentMethods ? (
           <ActivityIndicator color="#fa6205" style={{ marginVertical: 10 }} />
         ) : (
           <View>
             <View style={{ flexDirection: "row", gap: 8, marginBottom: 12 }}>
-              {/* Efectivo - siempre disponible */}
               <TouchableOpacity
                 onPress={() => setMetodoPago("efectivo")}
-                style={{
-                  backgroundColor:
-                    metodoPago === "efectivo" ? "#fa6205" : "#fff",
-                  borderRadius: 8,
-                  padding: 8,
-                  flex: availablePaymentMethods.length === 1 ? 1 : 1,
-                  alignItems: "center",
-                }}
+                style={[
+                  styles.paymentPill,
+                  metodoPago === "efectivo" ? styles.paymentPillSelected : null,
+                ]}
               >
                 <Text
                   style={{
@@ -1765,18 +1536,13 @@ const ServicioDetalle = ({ route, navigation }) => {
                   Efectivo
                 </Text>
               </TouchableOpacity>
-
-              {/* QR - solo si está disponible */}
               {availablePaymentMethods.includes("qr") && (
                 <TouchableOpacity
                   onPress={() => setMetodoPago("qr")}
-                  style={{
-                    backgroundColor: metodoPago === "qr" ? "#fa6205" : "#fff",
-                    borderRadius: 8,
-                    padding: 8,
-                    flex: 1,
-                    alignItems: "center",
-                  }}
+                  style={[
+                    styles.paymentPill,
+                    metodoPago === "qr" ? styles.paymentPillSelected : null,
+                  ]}
                 >
                   <Text
                     style={{
@@ -1789,27 +1555,11 @@ const ServicioDetalle = ({ route, navigation }) => {
                 </TouchableOpacity>
               )}
             </View>
-
-            {/* Mostrar información adicional según el método seleccionado */}
             {metodoPago === "qr" &&
               availablePaymentMethods.includes("qr") &&
               qrImageUrl && (
-                <View
-                  style={{
-                    backgroundColor: "#F2F2F7",
-                    borderRadius: 8,
-                    padding: 12,
-                    marginBottom: 12,
-                    alignItems: "center",
-                  }}
-                >
-                  <Text
-                    style={{
-                      color: "#fa6205",
-                      fontWeight: "bold",
-                      marginBottom: 8,
-                    }}
-                  >
+                <View style={styles.paymentInfo}>
+                  <Text style={styles.paymentInfoText}>
                     Código QR del establecimiento
                   </Text>
                   <Image
@@ -1822,19 +1572,11 @@ const ServicioDetalle = ({ route, navigation }) => {
                     }}
                     resizeMode="contain"
                   />
-                  <Text
-                    style={{
-                      color: "#aaa",
-                      fontSize: 12,
-                      marginTop: 8,
-                      textAlign: "center",
-                    }}
-                  >
+                  <Text style={styles.paymentNote}>
                     Escanea este código QR para realizar el pago
                   </Text>
                 </View>
               )}
-
             {!availablePaymentMethods.includes("qr") && (
               <View
                 style={{
@@ -1853,18 +1595,10 @@ const ServicioDetalle = ({ route, navigation }) => {
             )}
           </View>
         )}
-        {/* Archivo evidencia si QR está seleccionado y disponible */}
+
+        {/* Evidencia de pago QR */}
         {metodoPago === "qr" && availablePaymentMethods.includes("qr") && (
-          <TouchableOpacity
-            onPress={pickEvidencia}
-            style={{
-              backgroundColor: "#fff",
-              borderRadius: 8,
-              padding: 8,
-              marginBottom: 8,
-              alignItems: "center",
-            }}
-          >
+          <TouchableOpacity onPress={pickEvidencia} style={styles.uploadButton}>
             <Text style={{ color: "#1C1C1E" }}>
               {archivoEvidencia
                 ? "Evidencia de pago seleccionada"
@@ -1872,9 +1606,12 @@ const ServicioDetalle = ({ route, navigation }) => {
             </Text>
           </TouchableOpacity>
         )}
+
+        <View style={styles.divider} />
+
         {/* Botón reservar */}
         <TouchableOpacity
-          style={[styles.addButton, { marginTop: 10 }]}
+          style={styles.addButton}
           onPress={handleReserva}
           disabled={loading}
         >
@@ -1883,6 +1620,7 @@ const ServicioDetalle = ({ route, navigation }) => {
           </Text>
         </TouchableOpacity>
       </View>
+
       {/* MODAL DE MAPA AVANZADO */}
       <Modal
         isVisible={mapModalVisible}
@@ -2072,6 +1810,279 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     marginTop: 30,
     alignSelf: "flex-start",
+  },
+  card: {
+    backgroundColor: "#F5F5F5",
+    borderRadius: 14,
+    padding: 16,
+    marginBottom: 18,
+    shadowColor: "#000",
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  sectionTitle: {
+    color: "#fa6205",
+    fontSize: 18,
+    fontFamily: "Montserrat_700Bold",
+    marginBottom: 10,
+  },
+  sectionLabel: {
+    color: "#fa6205",
+    fontSize: 16,
+    fontFamily: "Montserrat_700Bold",
+    marginBottom: 10,
+  },
+  divider: {
+    height: 1,
+    backgroundColor: "#E0E0E0",
+    marginVertical: 14,
+  },
+  serviceImage: {
+    width: "100%",
+    height: 180,
+    borderRadius: 12,
+    marginBottom: 12,
+    backgroundColor: "#F5F5F5",
+  },
+  serviceTitle: {
+    fontSize: 22,
+    color: "#1C1C1E",
+    fontFamily: "Montserrat_700Bold",
+    marginBottom: 4,
+  },
+  originalPrice: {
+    fontSize: 15,
+    color: "#999",
+    textDecorationLine: "line-through",
+    marginBottom: 2,
+    fontFamily: "Montserrat_400Regular",
+  },
+  priceContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    marginBottom: 4,
+  },
+  price: {
+    fontSize: 18,
+    color: "#fa6205",
+    fontFamily: "Montserrat_700Bold",
+  },
+  discountBadge: {
+    backgroundColor: "#FFF8E1",
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 8,
+  },
+  serviceDesc: {
+    fontSize: 15,
+    color: "#ccc",
+    marginBottom: 4,
+    fontFamily: "Montserrat_400Regular",
+  },
+  serviceMeta: {
+    fontSize: 14,
+    color: "#aaa",
+    fontFamily: "Montserrat_400Regular",
+  },
+  quantityRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  quantityBtn: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    borderWidth: 1.5,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  quantityBtnMinus: {
+    borderColor: "#E0E0E0",
+  },
+  quantityBtnMinusActive: {
+    borderColor: "#FF5A00",
+  },
+  quantityBtnPlus: {
+    backgroundColor: "#FF5A00",
+    borderColor: "#FF5A00",
+  },
+  quantityNumber: {
+    fontSize: 20,
+    fontFamily: "Montserrat_700Bold",
+    color: "#1C1C1E",
+    marginHorizontal: 24,
+    minWidth: 24,
+    textAlign: "center",
+  },
+  addOnItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "transparent",
+    borderRadius: 8,
+    padding: 10,
+    marginBottom: 8,
+    borderWidth: 0,
+    borderColor: "transparent",
+  },
+  addOnSelected: {
+    backgroundColor: "#F2F2F7",
+    borderWidth: 2,
+    borderColor: "#fa6205",
+  },
+  addOnName: {
+    color: "#1C1C1E",
+    fontSize: 16,
+    flex: 1,
+    fontFamily: "Montserrat_400Regular",
+  },
+  addOnPrice: {
+    color: "#fa6205",
+    fontSize: 16,
+    marginLeft: 10,
+    fontFamily: "Montserrat_700Bold",
+  },
+  addOnQtyBtn: {
+    borderRadius: 8,
+    padding: 6,
+    marginHorizontal: 4,
+    minWidth: 28,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  addOnQtyBtnMinus: {
+    backgroundColor: "#ff4d4d",
+  },
+  addOnQtyBtnPlus: {
+    backgroundColor: "#fa6205",
+  },
+  addOnQtyText: {
+    color: "#F5F5F5",
+    fontSize: 16,
+    fontFamily: "Montserrat_700Bold",
+  },
+  totalRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: 4,
+  },
+  totalLabel: {
+    color: "#1C1C1E",
+    fontSize: 16,
+    fontFamily: "Montserrat_700Bold",
+  },
+  totalValue: {
+    color: "#fa6205",
+    fontSize: 20,
+    fontFamily: "Montserrat_700Bold",
+  },
+  addOnTotal: {
+    color: "#aaa",
+    fontSize: 13,
+    fontFamily: "Montserrat_400Regular",
+    marginTop: 2,
+    textAlign: "right",
+  },
+  profileCard: {
+    backgroundColor: "#F2F2F7",
+    borderRadius: 12,
+    padding: 12,
+    marginRight: 12,
+    minWidth: 140,
+    maxWidth: 140,
+    alignItems: "center",
+    borderWidth: 0,
+    borderColor: "transparent",
+  },
+  profileSelected: {
+    backgroundColor: "#fa6205",
+    borderWidth: 2,
+    borderColor: "#fa6205",
+  },
+  profileName: {
+    color: "#1C1C1E",
+    fontWeight: "bold",
+    fontSize: 13,
+    textAlign: "center",
+    fontFamily: "Montserrat_700Bold",
+  },
+  datePill: {
+    backgroundColor: "#fff",
+    borderRadius: 8,
+    padding: 8,
+    marginRight: 8,
+    minWidth: 70,
+    alignItems: "center",
+  },
+  datePillSelected: {
+    backgroundColor: "#fa6205",
+  },
+  datePillDisabled: {
+    backgroundColor: "#666",
+    opacity: 0.5,
+  },
+  timePill: {
+    backgroundColor: "#fff",
+    borderRadius: 8,
+    padding: 8,
+    marginRight: 8,
+    minWidth: 60,
+    alignItems: "center",
+  },
+  timePillSelected: {
+    backgroundColor: "#fa6205",
+  },
+  paymentPill: {
+    backgroundColor: "#fff",
+    borderRadius: 8,
+    padding: 8,
+    flex: 1,
+    alignItems: "center",
+  },
+  paymentPillSelected: {
+    backgroundColor: "#fa6205",
+  },
+  paymentInfo: {
+    backgroundColor: "#F2F2F7",
+    borderRadius: 8,
+    padding: 12,
+    marginBottom: 12,
+    alignItems: "center",
+  },
+  paymentInfoText: {
+    color: "#fa6205",
+    fontWeight: "bold",
+    marginBottom: 8,
+    fontFamily: "Montserrat_700Bold",
+  },
+  paymentNote: {
+    color: "#aaa",
+    fontSize: 12,
+    marginTop: 8,
+    textAlign: "center",
+    fontFamily: "Montserrat_400Regular",
+  },
+  uploadButton: {
+    backgroundColor: "#fff",
+    borderRadius: 8,
+    padding: 8,
+    marginBottom: 8,
+    alignItems: "center",
+  },
+  emptyState: {
+    backgroundColor: "#F2F2F7",
+    borderRadius: 8,
+    padding: 16,
+    marginBottom: 12,
+    alignItems: "center",
+  },
+  emptyStateText: {
+    color: "#aaa",
+    textAlign: "center",
+    fontFamily: "Montserrat_400Regular",
   },
   image: {
     width: "100%",

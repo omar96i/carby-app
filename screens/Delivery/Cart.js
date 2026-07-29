@@ -133,9 +133,8 @@ const Cart = () => {
       const updatedCart = cartItems.map((item) => {
         if (item.product.id === id) {
           const newQuantity = item.quantity + 1;
-          const basePrice = parseFloat(item.product.precio);
-          const adicionalesPrice = item.adicionales ? item.adicionales.reduce((t, a) => t + parseFloat(a.precio) * a.quantity, 0) : 0;
-          return { ...item, quantity: newQuantity, totalPrice: newQuantity * (basePrice + adicionalesPrice) };
+          const unitPrice = item.totalPrice / item.quantity;
+          return { ...item, quantity: newQuantity, totalPrice: newQuantity * unitPrice };
         }
         return item;
       });
@@ -148,9 +147,8 @@ const Cart = () => {
       const updatedCart = cartItems.map((item) => {
         if (item.product.id === id) {
           const newQuantity = Math.max(1, item.quantity - 1);
-          const basePrice = parseFloat(item.product.precio);
-          const adicionalesPrice = item.adicionales ? item.adicionales.reduce((t, a) => t + parseFloat(a.precio) * a.quantity, 0) : 0;
-          return { ...item, quantity: newQuantity, totalPrice: newQuantity * (basePrice + adicionalesPrice) };
+          const unitPrice = item.totalPrice / item.quantity;
+          return { ...item, quantity: newQuantity, totalPrice: newQuantity * unitPrice };
         }
         return item;
       });

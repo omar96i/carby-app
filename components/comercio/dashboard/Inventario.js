@@ -22,7 +22,14 @@ function InventarioItem({ item, onDelete, onToggle, onEdit }) {
       )}
       <View style={si.info}>
         <Text style={si.name} numberOfLines={1}>{item.nombre}</Text>
-        <Text style={si.price}>{formatCOP(item.precio)}</Text>
+        {item.activo_descuento && item.descuento > 0 ? (
+          <View>
+            <Text style={si.priceOld}>{formatCOP(item.precio)}</Text>
+            <Text style={si.priceDiscount}>{formatCOP(item.precio - item.descuento)}</Text>
+          </View>
+        ) : (
+          <Text style={si.price}>{formatCOP(item.precio)}</Text>
+        )}
       </View>
       <Switch
         value={isActive}
@@ -48,6 +55,8 @@ const si = StyleSheet.create({
   info: { flex: 1, overflow: "hidden" },
   name: { fontSize: 13, fontFamily: "Montserrat_700Bold", color: C.ink, marginBottom: 2 },
   price: { fontSize: 12, fontFamily: "Montserrat_600SemiBold", color: C.brand },
+  priceOld: { fontSize: 11, fontFamily: "Montserrat_400Regular", color: "#999", textDecorationLine: "line-through" },
+  priceDiscount: { fontSize: 12, fontFamily: "Montserrat_800ExtraBold", color: "#10B981" },
   switch: { transform: [{ scaleX: 0.8 }, { scaleY: 0.8 }] },
   actionBtn: { width: 32, height: 32, borderRadius: 16, backgroundColor: C.bg, justifyContent: "center", alignItems: "center" },
 });
