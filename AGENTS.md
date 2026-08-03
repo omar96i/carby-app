@@ -16,6 +16,10 @@ No test, lint, typecheck, or formatter scripts exist. No CI or pre-commit config
 
 `android/` is intentionally tracked (do not delete it). `.gitignore` only ignores `android/.gradle/`, `android/app/build/`, and `android/build/`.
 
+**NDK pin**: `android/build.gradle` pins `ndkVersion = "26.3.11579264"` in the `buildscript.ext` block. NDK 27.x has a known bug (reanimated#7446) where CMake ignores `ANDROID_STL=c++_shared` and the reanimated/worklets link fails with 200+ undefined `std::__ndk1` symbols. Do not remove the pin.
+
+**package-lock.json is tracked**: keep it committed. A fresh `npm install` without the lockfile produced a broken tree missing `expo-file-system` (icons/assets fail at runtime). Use `npm ci` for clean installs.
+
 ## Build / deploy
 
 - EAS build profiles are in `eas.json`: `development`, `preview`, `production`.

@@ -277,9 +277,14 @@ export default function CategoriaVertical() {
       </View>
 
       <ScrollView showsVerticalScrollIndicator={false}>
-        <View style={styles.categoriasScroll}>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          style={styles.categoriasScroll}
+          contentContainerStyle={styles.categoriasScrollContent}
+        >
           {categorias.map(renderCategoriaItem)}
-        </View>
+        </ScrollView>
 
         <View style={styles.content}>
           {refreshing ? (
@@ -337,17 +342,17 @@ const styles = StyleSheet.create({
     color: "#1C1C1E",
   },
   categoriasScroll: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    paddingHorizontal: 16,
+    flexGrow: 0,
     paddingTop: 16,
     paddingBottom: 8,
+  },
+  categoriasScrollContent: {
+    paddingHorizontal: 16,
     gap: 10,
   },
   catItem: {
     alignItems: "center",
     width: 80,
-    marginBottom: 8,
   },
   catItemSelected: {
     opacity: 1,

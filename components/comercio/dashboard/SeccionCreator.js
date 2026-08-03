@@ -38,7 +38,7 @@ export default function SeccionCreator({ categorias, onCreate, onEdit, onDelete 
         {categorias.map((cat) => (
           <TouchableOpacity key={cat.id} style={s.chip} onLongPress={() => onEdit?.(cat)} activeOpacity={0.7}>
             <Text style={s.chipText} numberOfLines={1}>{cat.nombre}</Text>
-            <TouchableOpacity onPress={() => onDelete(cat.id)} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+             <TouchableOpacity onPress={() => onDelete(cat)} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
               <Ionicons name="close" size={12} color={COLORS.brand} />
             </TouchableOpacity>
           </TouchableOpacity>

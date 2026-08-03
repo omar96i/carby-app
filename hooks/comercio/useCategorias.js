@@ -36,11 +36,8 @@ export default function useCategorias() {
       body: JSON.stringify({ nombre }),
     });
     if (!res.ok) throw new Error("Error al crear categoría");
-    const data = await res.json();
-    const nueva = data.data || data;
-    setCategorias(prev => [nueva, ...prev]);
-    return nueva;
-  }, []);
+    await fetchCategorias();
+  }, [fetchCategorias]);
 
   const updateCategoria = useCallback(async (id, nombre) => {
     const token = await AsyncStorage.getItem("userToken");

@@ -1,6 +1,11 @@
 // Top-level build file where you can add configuration options common to all sub-projects/modules.
 
 buildscript {
+  ext {
+    // NDK 27.1 no linkea libc++_shared en Windows (bug conocido con reanimated).
+    // Pin a NDK 26 para que el build C++ de reanimated/worklets funcione.
+    ndkVersion = "26.3.11579264"
+  }
   repositories {
     google()
     mavenCentral()
