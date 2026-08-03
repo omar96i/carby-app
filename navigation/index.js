@@ -37,6 +37,7 @@ import MisCompras from "../screens/Boleteria/MisCompras";
 import LocationVerificationScreen from "../screens/LocationVerification";
 import PagoScreen from "../screens/CajaMisterio/PagoScreen";
 import PaymentWebView from "../screens/CajaMisterio/PaymentWebView";
+import ConfigurarPalabraSeguridad from "../screens/ConfigurarPalabraSeguridad";
 const Stack = createStackNavigator();
 
 
@@ -94,6 +95,7 @@ export default function Navigation() {
           component={PaymentWebView}
           options={{ presentation: 'modal' }}
         />
+        <Stack.Screen name="ConfigurarPalabraSeguridad" component={ConfigurarPalabraSeguridad} />
 
       </Stack.Navigator>
     </NavigationContainer>

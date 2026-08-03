@@ -29,6 +29,7 @@ import ChatUsuario from "../../components/ChatUsuario";
 import AlertaModal from "../../components/ErrorModal";
 import Modal from "react-native-modal";
 import MapView, { Marker, Polyline, PROVIDER_GOOGLE } from "react-native-maps"; // Importamos MapView
+import SafetyProtection from "../../components/SafetyProtection";
 
 const { height, width } = Dimensions.get("window");
 
@@ -364,6 +365,10 @@ export default function StepNueve({ route }) {
                 )}
               </View>
             </View>
+
+            {type === "carrera" && ["aceptado", "activo"].includes(tripData?.estado) && (
+              <SafetyProtection carreraId={tripData.id || tripId} role="usuario" />
+            )}
 
             {/* Acciones */}
             <View style={styles.actionsGrid}>

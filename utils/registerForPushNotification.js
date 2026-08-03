@@ -2,6 +2,7 @@ import * as Notifications from "expo-notifications";
 import * as Device from "expo-device";
 import Constants from "expo-constants";
 import { Platform } from "react-native";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { BASE_URL } from "../constants/url";
 
 export async function registerForPushNotificationsAsync() {
@@ -53,6 +54,19 @@ export async function registerForPushNotificationsAsync() {
         throw new Error(
           `Error al registrar token en backend: ${errorData.message || "Error desconocido"}`
         );
+      }
+
+      // If a session already exists, assign immediately. This avoids a race
+      // with AuthLoadingScreen when the notification token resolves late.
+      const storedUserId = await AsyncStorage.getItem("userId");
+      if (storedUserId) {
+        const assignment = await fetch(`${BASE_URL}notification-token/assign-user`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ user_id: JSON.parse(storedUserId), token: pushTokenString }),
+        });
+        const assignmentData = await assignment.json().catch(() => ({}));
+        console.log("Push token assignment", { status: assignment.status, data: assignmentData });
       }
 
       return pushTokenString;

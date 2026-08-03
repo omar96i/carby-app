@@ -38,26 +38,28 @@ export default function App() {
 
     const init = async () => {
       // 🔁 OTA Update (expo-updates)
-      try {
-        const update = await Updates.checkForUpdateAsync();
-        if (update.isAvailable) {
-          showAlert(
-            "Hay una nueva versión disponible. Es necesario actualizar para continuar.",
-            "confirm",
-            async () => {
-              try {
-                await Updates.fetchUpdateAsync();
-                Updates.reloadAsync();
-              } catch (e) {
-                showAlert("No se pudo actualizar la aplicación.", "error");
-                console.log("Error actualizando OTA:", e);
-              }
-            },
-            "Actualizar ahora"
-          );
+      if (!__DEV__) {
+        try {
+          const update = await Updates.checkForUpdateAsync();
+          if (update.isAvailable) {
+            showAlert(
+              "Hay una nueva versión disponible. Es necesario actualizar para continuar.",
+              "confirm",
+              async () => {
+                try {
+                  await Updates.fetchUpdateAsync();
+                  Updates.reloadAsync();
+                } catch (e) {
+                  showAlert("No se pudo actualizar la aplicación.", "error");
+                  console.log("Error actualizando OTA:", e);
+                }
+              },
+              "Actualizar ahora"
+            );
+          }
+        } catch (e) {
+          console.log("Error al buscar actualización OTA:", e);
         }
-      } catch (e) {
-        console.log("Error al buscar actualización OTA:", e);
       }
 
       try {

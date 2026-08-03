@@ -390,6 +390,10 @@ export default function PerfilUsuario() {
                 </View>
                 <Icon3 name="chevron-right" size={20} color="#888" />
             </TouchableOpacity>
+            <TouchableOpacity style={styles.menuItem} onPress={() => navigation.navigate("ConfigurarPalabraSeguridad")}>
+                <View style={styles.menuItemLeft}><Icon3 name="shield" size={20} color="#888" /><Text style={styles.menuItemText}>Configurar palabra de seguridad</Text></View>
+                <Icon3 name="chevron-right" size={20} color="#888" />
+            </TouchableOpacity>
         </View>
 
         <View style={styles.menuContainer}>

@@ -64,6 +64,8 @@
         "INTERNET",
         "ACCESS_BACKGROUND_LOCATION",
         "FOREGROUND_SERVICE",
+        "FOREGROUND_SERVICE_MICROPHONE",
+        "POST_NOTIFICATIONS",
         "RECEIVE_BOOT_COMPLETED",
         "VIBRATE",
         "WAKE_LOCK"
@@ -96,6 +98,13 @@
           "defaultChannel": "default",
           "color": "#ffffff",
           "enableBackgroundRemoteNotifications": false
+        }
+      ],
+      [
+        "expo-audio",
+        {
+          "microphonePermission": "Permite que YaRiders escuche tu palabra de seguridad durante una carrera.",
+          "enableBackgroundRecording": false
         }
       ],
       "expo-background-task"

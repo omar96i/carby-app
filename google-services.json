@@ -1,13 +1,13 @@
 {
   "project_info": {
-    "project_number": "1078573618549",
-    "project_id": "expo-notification-d401a",
-    "storage_bucket": "expo-notification-d401a.firebasestorage.app"
+    "project_number": "964397243756",
+    "project_id": "carby-app-71073",
+    "storage_bucket": "carby-app-71073.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:1078573618549:android:c70df42820ebb13edcaf3c",
+        "mobilesdk_app_id": "1:964397243756:android:44af3d05224b2d1a21e749",
         "android_client_info": {
           "package_name": "com.carbycol.app"
         }
@@ -15,7 +15,7 @@
       "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIzaSyAFa5OQJgnteHlCO589UDLGtyL2AqESPJ0"
+          "current_key": "AIzaSyCrzuzUlw8DiZrDoruuNGjRO8NRDO-9mfw"
         }
       ],
       "services": {

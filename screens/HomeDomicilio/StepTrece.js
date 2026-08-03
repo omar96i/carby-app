@@ -24,6 +24,7 @@ import * as Location from "expo-location";
 import { BASE_URL } from "../../constants/url";
 import ChatScreen from "../../components/ChatScreen";
 import AlertaModal from "../../components/ErrorModal";
+import SafetyProtection from "../../components/SafetyProtection";
 
 const { height } = Dimensions.get("window");
 
@@ -481,6 +482,7 @@ export default function StepTrece({ route }) {
                     </TouchableOpacity>
                 </View>
 
+                <SafetyProtection carreraId={activeId} role="conductor" />
                 <View style={styles.actionsGrid}>
                     <TouchableOpacity style={[styles.actionItem, styles.actionPrimary]} onPress={() => setShowChat(true)}>
                         <Ionicons name="chatbubble-ellipses" size={24} color="#FFF" />

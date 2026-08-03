@@ -685,6 +685,10 @@ export default function Perfil() {
               </View>
               <Icon3 name="chevron-right" size={20} color="#888" />
             </TouchableOpacity>
+            <TouchableOpacity style={styles.menuRow} onPress={() => navigation.navigate("ConfigurarPalabraSeguridad")}>
+              <View style={styles.menuLeft}><Icon3 name="shield" size={20} color="#888" /><Text style={styles.menuText}>Configurar palabra de seguridad</Text></View>
+              <Icon3 name="chevron-right" size={20} color="#888" />
+            </TouchableOpacity>
             <TouchableOpacity style={styles.menuRow} onPress={() => setPreferenciaModalVisible(true)}>
               <View style={styles.menuLeft}>
                 <Icon3 name="shuffle" size={20} color="#888" />

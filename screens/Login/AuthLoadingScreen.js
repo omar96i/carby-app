@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
   StyleSheet,
   View,
@@ -25,40 +25,19 @@ export default function AuthLoadingScreen() {
   const navigation = useNavigation();
   const [isChecking, setIsChecking] = useState(true);
   const { expoPushToken } = useNotification();
+  const authCheckStartedRef = useRef(false);
 
   useEffect(() => {
-    const iniciarProceso = async () => {
-      // Esperar a que el context tenga el token
-      if (!expoPushToken) {
-        console.log("🔄 Esperando token de notificación...");
-        // Intentar esperar hasta 5 segundos máximo
-        let intentos = 0;
-        while (!expoPushToken && intentos < 10) {
-          await new Promise((res) => setTimeout(res, 500));
-          intentos++;
-        }
-
-        if (!expoPushToken) {
-          console.warn("⚠️ Token de notificación no disponible tras espera.");
-        }
-
-        checkAuthStatus();
-      }
-
-      console.log("🔔 Token listo, continuando flujo.");
+    if (authCheckStartedRef.current) return;
+    const timer = setTimeout(() => {
+      global.splashScreenActive = false;
+      authCheckStartedRef.current = true;
+      if (expoPushToken) console.log("🔔 Token listo, continuando flujo.");
+      else console.warn("⚠️ Token de notificación no disponible tras espera.");
       checkAuthStatus();
-    };
+    }, expoPushToken ? 100 : 5000);
 
-    if (global.splashScreenActive) {
-      const timer = setTimeout(() => {
-        global.splashScreenActive = false;
-        iniciarProceso();
-      }, 100);
-
-      return () => clearTimeout(timer);
-    } else {
-      iniciarProceso();
-    }
+    return () => clearTimeout(timer);
   }, [expoPushToken]);
 
   const checkAuthStatus = async () => {
@@ -84,7 +63,7 @@ export default function AuthLoadingScreen() {
 
           try {
             if (expoPushToken) {
-              await fetch(`${BASE_URL}notification-token/assign-user`, {
+              const assignmentResponse = await fetch(`${BASE_URL}notification-token/assign-user`, {
                 method: "POST",
                 headers: {
                   "Content-Type": "application/json"
@@ -94,8 +73,9 @@ export default function AuthLoadingScreen() {
                   token: expoPushToken,
                 }),
               });
-
-              console.log("✅ Token de notificación asignado correctamente.");
+              const assignmentData = await assignmentResponse.json().catch(() => ({}));
+              if (!assignmentResponse.ok) throw new Error(`HTTP ${assignmentResponse.status}: ${assignmentData.message || "Error asignando token"}`);
+              console.log("✅ Token de notificación asignado correctamente.", assignmentData);
             } else {
               console.warn("⚠️ No se encontró token de notificación para asignar.");
             }
