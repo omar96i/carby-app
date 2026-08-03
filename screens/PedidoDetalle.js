@@ -16,6 +16,9 @@ import {
   Dimensions,
 } from "react-native";
 import { Ionicons, FontAwesome, MaterialIcons } from "@expo/vector-icons";
+import { useAudioPlayer } from "expo-audio";
+import OrderStatusStepper from "../components/OrderStatusStepper";
+import OrderChatModal from "../components/OrderChatModal";
 import { useNavigation, useRoute, useFocusEffect } from "@react-navigation/native";
 import {
   Montserrat_400Regular,
@@ -77,11 +80,49 @@ const PedidoDetalle = () => {
 
   const { expoPushToken, notification } = useNotification();
 
+  const dingSource = require("../assets/sounds/pedido.wav");
+  const dingPlayer = useAudioPlayer(dingSource);
+
+  const previousStatusRef = useRef(pedidoData?.estado || "");
+  const previousCarreraStatusRef = useRef(pedidoData?.carrera?.estado || "");
+
+  const playDing = () => {
+    dingPlayer.seekTo(0);
+    dingPlayer.play();
+  };
 
   useEffect(() => {
-    if (notification) {
-      loadChatMessages()
-    }
+    if (!pedidoId) return;
+    let interval;
+    const poll = async () => {
+      try {
+        const token = await AsyncStorage.getItem("userToken");
+        const response = await fetch(`${BASE_URL}pedidos/${pedidoId}`, { headers: { Authorization: `Bearer ${token}` } });
+        if (!response.ok) return;
+        const data = await response.json();
+        const newPedido = data.data || data;
+        if (!newPedido) return;
+        const newStatus = newPedido.estado;
+        const newCarreraStatus = newPedido.carrera?.estado || "";
+        if (newStatus && newStatus !== previousStatusRef.current) {
+          previousStatusRef.current = newStatus;
+          playDing();
+        }
+        if (newCarreraStatus && newCarreraStatus !== previousCarreraStatusRef.current) {
+          previousCarreraStatusRef.current = newCarreraStatus;
+          playDing();
+        }
+        setPedido(newPedido);
+        if (["completado", "cancelado", "entregado"].includes(newStatus)) clearInterval(interval);
+      } catch (error) { /* noop */ }
+    };
+    poll();
+    interval = setInterval(poll, 10000);
+    return () => clearInterval(interval);
+  }, [pedidoId]);
+
+  useEffect(() => {
+    if (notification && showChatModal) loadChatMessages();
   }, [notification]);
 
 
@@ -1214,70 +1255,11 @@ const PedidoDetalle = () => {
             Pedido realizado el {formatDate(pedido.created_at)}
           </Text>
         </View>
-        <View style={styles.pasosContainer}>
-          {pasosRestaurante.map((paso, index) => {
-            const currentIndex = pasosRestaurante.findIndex(p => p.key === pedido.estado);
-            const isActive = paso.key === pedido.estado;
-            const isCompleted = currentIndex > index;
-
-            return (
-              <View key={paso.key} style={styles.paso}>
-                <FontAwesome
-                  name={paso.icon}
-                  size={20}
-                  color={isCompleted || isActive ? '#fa6205' : '#ccc'}
-                />
-                <Text
-                  style={[
-                    styles.pasoTexto,
-                    isActive && styles.pasoTextoActivo,
-                    isCompleted && styles.pasoTextoCompletado,
-                  ]}
-                >
-                  {paso.label}
-                </Text>
-              </View>
-            );
-          })}
+        <View style={styles.statusCard}>
+          <OrderStatusStepper steps={pasosRestaurante} currentStatus={pedido.estado} label="Estado del pedido (restaurante)" />
         </View>
-
-        {/* PASOS CONDUCTOR */}
-        <View style={styles.pasosContainer}>
-          {!pedido.carrera ? (
-            <>
-              {pasosConductor.map(paso => (
-                <View key={paso.key} style={styles.paso}>
-                  <FontAwesome name={paso.icon} size={20} color="#ccc" />
-                  <Text style={[styles.pasoTexto, { color: '#ccc' }]}>{paso.label}</Text>
-                </View>
-              ))}
-            </>
-          ) : (
-            pasosConductor.map((paso, index) => {
-              const currentIndex = pasosConductor.findIndex(p => p.key === pedido.carrera.estado);
-              const isActive = paso.key === pedido.carrera.estado;
-              const isCompleted = currentIndex > index;
-
-              return (
-                <View key={paso.key} style={styles.paso}>
-                  <FontAwesome
-                    name={paso.icon}
-                    size={20}
-                    color={isCompleted || isActive ? '#fa6205' : '#ccc'}
-                  />
-                  <Text
-                    style={[
-                      styles.pasoTexto,
-                      isActive && styles.pasoTextoActivo,
-                      isCompleted && styles.pasoTextoCompletado,
-                    ]}
-                  >
-                    {paso.label}
-                  </Text>
-                </View>
-              );
-            })
-          )}
+        <View style={styles.statusCard}>
+          <OrderStatusStepper steps={pasosConductor} currentStatus={pedido.carrera?.estado || "pendiente"} label="Estado del delivery (conductor)" />
         </View>
 
 
@@ -1503,104 +1485,7 @@ const PedidoDetalle = () => {
         </View>
       </Modal>
 
-      {/* Modal de chat */}
-      <Modal
-        visible={showChatModal}
-        transparent={false}
-        animationType="slide"
-        onRequestClose={() => setShowChatModal(false)}
-      >
-        <SafeAreaView style={styles.chatContainer}>
-          <View style={styles.chatHeader}>
-            <TouchableOpacity
-              onPress={() => setShowChatModal(false)}
-              style={styles.chatBackButton}
-            >
-              <Ionicons name="arrow-back" size={24} color="#FFF" />
-            </TouchableOpacity>
-            <Text style={styles.chatTitle}>Chat del pedido #{pedido.id}</Text>
-          </View>
-
-          <ScrollView
-            ref={chatScrollViewRef}
-            style={styles.chatMessages}
-            contentContainerStyle={styles.chatMessagesContent}
-            onContentSizeChange={() =>
-              chatScrollViewRef.current?.scrollToEnd({ animated: true })
-            }
-          >
-            {loadingChat ? (
-              <ActivityIndicator
-                size="large"
-                color="#fa6205"
-                style={styles.chatLoading}
-              />
-            ) : chatMessages.length === 0 ? (
-              <Text style={styles.noChatMessages}>
-                No hay mensajes aún. ¡Inicia la conversación!
-              </Text>
-            ) : (
-              chatMessages.filter(message => message != null).map((message, index) =>
-                renderChatMessage(message, index)
-              ).filter(Boolean)
-            )}
-          </ScrollView>
-
-          <KeyboardAvoidingView
-            behavior={Platform.OS === "ios" ? "padding" : "height"}
-            style={styles.chatInputContainer}
-          >
-            {chatImage && (
-              <View style={styles.selectedChatImageContainer}>
-                <Image
-                  source={{ uri: chatImage }}
-                  style={styles.selectedChatImage}
-                />
-                <TouchableOpacity
-                  style={styles.removeChatImageButton}
-                  onPress={() => setChatImage(null)}
-                >
-                  <Ionicons name="close-circle" size={24} color="#ff4444" />
-                </TouchableOpacity>
-              </View>
-            )}
-
-            <View style={styles.chatInputRow}>
-              <TouchableOpacity
-                style={styles.chatImageButton}
-                onPress={pickChatImage}
-              >
-                <Ionicons name="camera" size={24} color="#fa6205" />
-              </TouchableOpacity>
-
-              <TextInput
-                style={styles.chatInput}
-                placeholder="Escribe un mensaje..."
-                placeholderTextColor="#999"
-                value={newMessage}
-                onChangeText={setNewMessage}
-                multiline
-                maxLength={500}
-              />
-
-              <TouchableOpacity
-                style={[
-                  styles.chatSendButton,
-                  sendingMessage && styles.disabledButton,
-                ]}
-                onPress={sendChatMessage}
-                disabled={sendingMessage}
-              >
-                {sendingMessage ? (
-                  <ActivityIndicator size="small" color="#FFF" />
-                ) : (
-                  <Ionicons name="send" size={20} color="#FFF" />
-                )}
-              </TouchableOpacity>
-            </View>
-          </KeyboardAvoidingView>
-        </SafeAreaView>
-      </Modal>
+      <OrderChatModal visible={showChatModal} pedidoId={pedidoId} userInfo={userInfo} onClose={() => setShowChatModal(false)} />
 
       <AlertaModal
         visible={alertVisible}
@@ -2180,6 +2065,13 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     borderRadius: 8,
     paddingHorizontal: 12,
+  },
+  statusCard: {
+    backgroundColor: "#FFF",
+    padding: 16,
+    marginHorizontal: 20,
+    marginBottom: 12,
+    borderRadius: 16,
   },
   paso: {
     alignItems: 'center',
