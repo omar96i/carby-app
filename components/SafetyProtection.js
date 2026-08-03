@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
-import { ActivityIndicator, Platform, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { ActivityIndicator, Animated, Platform, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import * as Location from "expo-location";
 import { AudioModule, RecordingPresets, setAudioModeAsync, useAudioRecorder } from "expo-audio";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -14,10 +14,22 @@ export default function SafetyProtection({ carreraId, role }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [lastResult, setLastResult] = useState(null);
+  const [phase, setPhase] = useState("idle");
   const sessionRef = useRef(null);
   const runningRef = useRef(false);
   const sequenceRef = useRef(0);
   const locationQueueRef = useRef([]);
+  const pulse = useRef(new Animated.Value(1)).current;
+
+  useEffect(() => {
+    if (!session || phase === "idle") return undefined;
+    const animation = Animated.loop(Animated.sequence([
+      Animated.timing(pulse, { toValue: 1.18, duration: 700, useNativeDriver: true }),
+      Animated.timing(pulse, { toValue: 1, duration: 700, useNativeDriver: true }),
+    ]));
+    animation.start();
+    return () => animation.stop();
+  }, [session?.id, phase, pulse]);
 
   const api = async (path, options = {}) => {
     const token = await AsyncStorage.getItem("userToken");
@@ -48,6 +60,7 @@ export default function SafetyProtection({ carreraId, role }) {
 
   useEffect(() => () => {
     runningRef.current = false;
+    setPhase("idle");
     const current = sessionRef.current;
     if (current) {
       console.log("[SafetyProtection] desmontando componente, cerrando sesión", current.id);
@@ -99,8 +112,11 @@ export default function SafetyProtection({ carreraId, role }) {
     if (!response.ok) throw new Error(data.message || "No se pudo analizar el audio");
     if (data.detected) {
       setSession((value) => ({ ...value, status: "alerted" }));
+      setPhase("alerted");
       runningRef.current = false;
       console.warn("[SafetyProtection] palabra detectada, grabación detenida", current.id);
+    } else {
+      setPhase("listening");
     }
     return Boolean(data.detected);
   };
@@ -115,6 +131,7 @@ export default function SafetyProtection({ carreraId, role }) {
       if (!runningRef.current && !recorder.uri) break;
       if (recorder.isRecording) await recorder.stop();
       console.log("[SafetyProtection] fragmento detenido", { sessionId: sessionRef.current?.id, uri: recorder.uri });
+      setPhase("processing");
       const detected = await uploadChunk(recorder.uri);
       if (detected) break;
     }
@@ -131,11 +148,12 @@ export default function SafetyProtection({ carreraId, role }) {
       const created = await api("safety-sessions", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ carrera_id: carreraId, role }) });
       sessionRef.current = created;
       setSession(created);
+      setPhase("listening");
       console.log("[SafetyProtection] sesión creada", created);
       runningRef.current = true;
       setLoading(false);
-      recordChunks().catch((error) => { console.error("[SafetyProtection] error en ciclo de audio", error); runningRef.current = false; setError(error.message); });
-    } catch (error) { console.error("[SafetyProtection] error iniciando protección", error); setError(error.message); setLoading(false); }
+      recordChunks().catch((error) => { console.error("[SafetyProtection] error en ciclo de audio", error); runningRef.current = false; setPhase("error"); setError(error.message); });
+    } catch (error) { console.error("[SafetyProtection] error iniciando protección", error); setPhase("error"); setError(error.message); setLoading(false); }
   };
 
   const stop = async () => {
@@ -144,21 +162,34 @@ export default function SafetyProtection({ carreraId, role }) {
     try { if (recorder.isRecording) await recorder.stop(); } catch {}
     const current = sessionRef.current;
     if (current) { await api(`safety-sessions/${current.id}/stop`, { method: "POST" }).catch(() => {}); }
-    sessionRef.current = null; setSession(null); locationQueueRef.current = [];
+    sessionRef.current = null; setSession(null); setLastResult(null); setPhase("idle"); locationQueueRef.current = [];
   };
 
   if (!carreraId) return null;
-  const alerted = session?.status === "alerted";
+  const alerted = phase === "alerted" || session?.status === "alerted";
+  const processing = phase === "processing";
+  const statusLabel = alerted ? "Alerta enviada" : processing ? "Analizando audio" : session ? "Protección activa" : "Protección de seguridad";
+  const statusMessage = alerted
+    ? "Se está enviando tu ubicación a nuestras centrales para hacer seguimiento."
+    : processing
+      ? "Procesando el fragmento de audio de forma segura."
+      : session
+        ? "Escuchando tu palabra configurada y enviando ubicación cada 2 segundos."
+        : "Actívala manualmente durante esta carrera.";
   return (
-    <View style={styles.card}>
-      <View style={styles.header}><Feather name={alerted ? "alert-triangle" : "shield"} size={22} color={alerted ? "#D82D2D" : "#fa6205"} /><View style={styles.copy}><Text style={styles.title}>{alerted ? "Alerta enviada" : session ? "Protección activa" : "Protección de seguridad"}</Text><Text style={styles.subtitle}>{alerted ? "Tu ubicación se está enviando cada 2 segundos." : session ? "La palabra configurada se está escuchando." : "Actívala manualmente durante esta carrera."}</Text>{session && lastResult && <Text style={styles.analysis}>Último análisis: {lastResult.detected ? "palabra detectada" : "no detectada"} · confianza {Math.round((lastResult.confidence || 0) * 100)}%</Text>}</View></View>
-      {!session ? <TouchableOpacity disabled={loading} style={styles.button} onPress={start}>{loading ? <ActivityIndicator color="#FFF" /> : <Text style={styles.buttonText}>Activar protección</Text>}</TouchableOpacity> : <TouchableOpacity style={[styles.button, alerted && styles.alertButton]} onPress={stop}><Text style={styles.buttonText}>{alerted ? "Finalizar alerta" : "Detener protección"}</Text></TouchableOpacity>}
+    <View style={[styles.card, alerted && styles.alertCard]}>
+      <View style={styles.header}>
+        <Animated.View style={[styles.statusIcon, { transform: [{ scale: pulse }] }]}><Feather name={alerted ? "alert-triangle" : processing ? "loader" : "shield"} size={23} color={alerted ? "#D82D2D" : "#fa6205"} /></Animated.View>
+        <View style={styles.copy}><Text style={styles.title}>{statusLabel}</Text><Text style={styles.subtitle}>{statusMessage}</Text>{session && lastResult && <Text style={styles.analysis}>Último análisis: {lastResult.detected ? "palabra detectada" : "no detectada"} · confianza {Math.round((lastResult.confidence || 0) * 100)}%</Text>}</View>
+      </View>
+      {session && <View style={styles.indicators}><View style={styles.indicator}><View style={[styles.dot, phase === "processing" ? styles.dotProcessing : styles.dotActive]} /><Text style={styles.indicatorText}>{processing ? "Audio en análisis" : alerted ? "Audio detenido" : "Escucha activa"}</Text></View><View style={styles.indicator}><View style={[styles.dot, alerted ? styles.dotAlert : styles.dotActive]} /><Text style={styles.indicatorText}>{alerted ? "Ubicación prioritaria" : "Ubicación cada 2 s"}</Text></View></View>}
+      {!session ? <TouchableOpacity disabled={loading} style={styles.button} onPress={start}>{loading ? <ActivityIndicator color="#FFF" /> : <Text style={styles.buttonText}>Activar protección</Text>}</TouchableOpacity> : <TouchableOpacity style={[styles.button, alerted && styles.alertButton]} onPress={stop}><Text style={styles.buttonText}>{alerted ? "Finalizar seguimiento" : "Detener protección"}</Text></TouchableOpacity>}
       {!!error && <Text style={styles.error}>{error}</Text>}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  card: { backgroundColor: "#FFF", borderRadius: 16, padding: 15, marginBottom: 18, borderWidth: 1, borderColor: "#F0F0F0" },
-  header: { flexDirection: "row", alignItems: "center" }, copy: { flex: 1, marginLeft: 12 }, title: { color: "#1C1C1E", fontWeight: "700", fontSize: 15 }, subtitle: { color: "#777", fontSize: 12, marginTop: 4, lineHeight: 17 }, analysis: { color: "#555", fontSize: 11, marginTop: 5 }, button: { backgroundColor: "#fa6205", borderRadius: 10, alignItems: "center", paddingVertical: 12, marginTop: 14 }, alertButton: { backgroundColor: "#D82D2D" }, buttonText: { color: "#FFF", fontWeight: "700" }, error: { color: "#D82D2D", fontSize: 12, marginTop: 8 },
+  card: { backgroundColor: "#FFF", borderRadius: 16, padding: 15, marginBottom: 18, borderWidth: 1, borderColor: "#F0F0F0" }, alertCard: { backgroundColor: "#FFF5F5", borderColor: "#F3A3A3" },
+  header: { flexDirection: "row", alignItems: "center" }, statusIcon: { width: 46, height: 46, borderRadius: 15, backgroundColor: "#FDEEE2", justifyContent: "center", alignItems: "center" }, copy: { flex: 1, marginLeft: 12 }, title: { color: "#1C1C1E", fontWeight: "700", fontSize: 15 }, subtitle: { color: "#666", fontSize: 12, marginTop: 4, lineHeight: 18 }, analysis: { color: "#555", fontSize: 11, marginTop: 5 }, indicators: { flexDirection: "row", gap: 8, marginTop: 14 }, indicator: { flex: 1, flexDirection: "row", alignItems: "center", backgroundColor: "#F7F7F8", borderRadius: 9, paddingVertical: 8, paddingHorizontal: 9 }, dot: { width: 8, height: 8, borderRadius: 4, marginRight: 6 }, dotActive: { backgroundColor: "#22A06B" }, dotProcessing: { backgroundColor: "#E59B16" }, dotAlert: { backgroundColor: "#D82D2D" }, indicatorText: { color: "#555", fontSize: 10, flex: 1 }, button: { backgroundColor: "#fa6205", borderRadius: 10, alignItems: "center", paddingVertical: 12, marginTop: 14 }, alertButton: { backgroundColor: "#D82D2D" }, buttonText: { color: "#FFF", fontWeight: "700" }, error: { color: "#D82D2D", fontSize: 12, marginTop: 8 },
 });
