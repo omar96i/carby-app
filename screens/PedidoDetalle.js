@@ -38,6 +38,16 @@ import { useNotification } from "../context/NotificationContext";
 
 const { width, height } = Dimensions.get("window");
 
+const pasosPedido = [
+  { key: 'pendiente', label: 'Pendiente', icon: 'clock-o' },
+  { key: 'aceptado', label: 'Aceptado', icon: 'thumbs-up' },
+  { key: 'confirmado', label: 'Confirmado', icon: 'check' },
+  { key: 'preparado', label: 'Preparado', icon: 'cutlery' },
+  { key: 'completado', label: 'Completado', icon: 'shopping-bag' },
+  { key: 'en_camino', label: 'En camino', icon: 'motorcycle' },
+  { key: 'entregado', label: 'Entregado', icon: 'check' },
+];
+
 const PedidoDetalle = () => {
   const navigation = useNavigation();
   const route = useRoute();
@@ -56,6 +66,7 @@ const PedidoDetalle = () => {
 
   const { pedidoId, pedidoData } = route.params || {};
   const [qrImageUrl, setQrImageUrl] = useState(null);
+  const [userInfo, setUserInfo] = useState(null);
   // Estados principales
   const [pedido, setPedido] = useState(pedidoData || null);
   const [loading, setLoading] = useState(false); // Cambiar la lógica inicial
@@ -80,7 +91,7 @@ const PedidoDetalle = () => {
 
   const { expoPushToken, notification } = useNotification();
 
-  const dingSource = require("../assets/sounds/pedido.wav");
+  const dingSource = require("../assets/sounds/mario-moneda.mp3");
   const dingPlayer = useAudioPlayer(dingSource);
 
   const previousStatusRef = useRef(pedidoData?.estado || "");
@@ -182,8 +193,9 @@ const PedidoDetalle = () => {
 
         // Cargar datos del usuario de forma paralela
         const userData = await AsyncStorage.getItem("userData");
-        const userInfo = userData ? JSON.parse(userData) : null;
-        setTipoUsuario(userInfo?.tipo_usuario || "usuario");
+        const userInfoParsed = userData ? JSON.parse(userData) : null;
+        setUserInfo(userInfoParsed);
+        setTipoUsuario(userInfoParsed?.tipo_usuario || "usuario");
 
         console.log("PedidoDetalle - Datos cargados exitosamente");
       } catch (error) {
@@ -475,18 +487,34 @@ const PedidoDetalle = () => {
     }
   };
 
-  const pasosRestaurante = [
-    { key: 'pendiente', label: 'Pendiente de aceptación', icon: 'clock-o' },
-    { key: 'aceptado', label: 'Preparando pedido', icon: 'fire' },
-    { key: 'completado', label: 'Pedido listo para recoger', icon: 'check-circle' },
-  ];
+  // Stepper unificado con 6 estados principales para seguimiento completo.
+  const getCurrentStepKey = () => {
+    const estado = pedido?.estado;
+    const carreraEstado = pedido?.carrera?.estado;
 
+    if (estado === 'entregado' || carreraEstado === 'completado') return 'entregado';
+    if (carreraEstado === 'aceptado') return 'en_camino';
+    if (estado === 'completado') return 'completado';
+    if (estado === 'preparado') return 'preparado';
+    if (estado === 'confirmado') return 'confirmado';
+    if (estado === 'aceptado') return 'aceptado';
+    return 'pendiente';
+  };
 
-  const pasosConductor = [
-    { key: 'pendiente', label: 'Buscando conductor', icon: 'search' },
-    { key: 'aceptado', label: 'En reparto', icon: 'motorcycle' },
-    { key: 'completado', label: 'Pedido entregado', icon: 'check-circle' },
-  ];
+  const getCurrentStepLabel = () => {
+    const step = getCurrentStepKey();
+    const map = {
+      pendiente: 'Pedido pendiente de confirmacion',
+      aceptado: 'El comercio acepto tu pedido',
+      confirmado: 'Pedido confirmado por el comercio',
+      preparado: 'El comercio prepara tu pedido',
+      completado: 'Pedido listo para envio',
+      en_camino: 'Tu pedido va en camino',
+      entregado: 'Pedido entregado correctamente',
+    };
+    if (pedido?.estado === 'cancelado') return 'Pedido cancelado';
+    return map[step] || 'Seguimiento del pedido';
+  };
 
   const cancelarPedido = async (pedidoId, carreraId = null) => {
     try {
@@ -1226,47 +1254,48 @@ const PedidoDetalle = () => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="dark-content" />
+      <StatusBar barStyle="light-content" backgroundColor="#fa6205" />
 
-      {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.headerBackButton}>
-          <Ionicons name="arrow-back" size={24} color="#FFF" />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Pedido #{pedido.id}</Text>
-        <View style={{ width: 36 }} />
+      {/* Header + estado: bloque naranja redondeado unido */}
+      <View style={styles.headerBlock}>
+        <View style={styles.header}>
+          <TouchableOpacity onPress={() => navigation.goBack()} style={styles.headerBackButton}>
+            <Ionicons name="arrow-back" size={24} color="#FFF" />
+          </TouchableOpacity>
+          <View style={styles.headerTitleWrap}>
+            <Text style={styles.headerTitle}>Pedido #{pedido.id}</Text>
+            <Text style={styles.headerDate}>{formatDate(pedido.created_at)}</Text>
+          </View>
+          <View style={{ width: 36 }} />
+        </View>
+
+        {/* Tarjeta principal de estado y seguimiento */}
+        <View style={styles.heroCard}>
+          <Text style={styles.heroPrice}>
+            $ {parseFloat(pedido.costo_total || 0).toLocaleString()}
+          </Text>
+          <View style={styles.heroStatusRow}>
+            <Text style={styles.heroStatusLabel}>{getCurrentStepLabel()}</Text>
+          </View>
+          <View style={styles.heroStepper}>
+            <OrderStatusStepper steps={pasosPedido} currentStatus={getCurrentStepKey()} />
+          </View>
+        </View>
       </View>
 
       <ScrollView
         style={styles.scrollContainer}
         showsVerticalScrollIndicator={false}
       >
-        {/* Estado y precio */}
-        <View style={styles.statusSection}>
-          <View style={styles.priceContainer}>
-            <Text style={styles.price}>
-              $ {parseFloat(pedido.costo_total || 0).toLocaleString()}
-            </Text>
-            <Text style={styles.statusBadge}>
-              {obtenerTextoEstadoPedidos(pedido.estado)}
-            </Text>
-          </View>
-          <Text style={styles.orderDate}>
-            Pedido realizado el {formatDate(pedido.created_at)}
-          </Text>
-        </View>
-        <View style={styles.statusCard}>
-          <OrderStatusStepper steps={pasosRestaurante} currentStatus={pedido.estado} label="Estado del pedido (restaurante)" />
-        </View>
-        <View style={styles.statusCard}>
-          <OrderStatusStepper steps={pasosConductor} currentStatus={pedido.carrera?.estado || "pendiente"} label="Estado del delivery (conductor)" />
-        </View>
 
 
         {/* Información del establecimiento */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Establecimiento</Text>
           <View style={styles.establishmentRow}>
+            <View style={styles.establishmentIcon}>
+              <Ionicons name="storefront-outline" size={20} color="#fa6205" />
+            </View>
             <Text style={styles.establishmentName}>
               {pedido.comercio?.establecimiento_nombre || "Comercio no disponible"}
             </Text>
@@ -1529,8 +1558,20 @@ const styles = StyleSheet.create({
     textAlign: "center",
     marginBottom: 20,
   },
-  header: {
+  headerBlock: {
     backgroundColor: "#fa6205",
+    borderBottomLeftRadius: 32,
+    borderBottomRightRadius: 32,
+    paddingBottom: 22,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.12,
+    shadowRadius: 10,
+    elevation: 8,
+    zIndex: 10,
+  },
+  header: {
+    backgroundColor: "transparent",
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
@@ -1542,11 +1583,20 @@ const styles = StyleSheet.create({
     padding: 5,
   },
   headerTitle: {
-    fontSize: 18,
+    fontSize: 20,
     fontFamily: "MontserratBold",
     color: "#FFF",
-    flex: 1,
     textAlign: "center",
+  },
+  headerTitleWrap: {
+    flex: 1,
+    alignItems: "center",
+  },
+  headerDate: {
+    fontSize: 12,
+    fontFamily: "MontserratRegular",
+    color: "rgba(255,255,255,0.8)",
+    marginTop: 2,
   },
   headerActions: {
     flexDirection: "row",
@@ -1558,56 +1608,80 @@ const styles = StyleSheet.create({
   scrollContainer: {
     flex: 1,
   },
-  statusSection: {
-    backgroundColor: "#ECECEC",
-    padding: 20,
+  heroCard: {
+    backgroundColor: "#FFF",
+    marginHorizontal: 20,
+    marginTop: 6,
+    borderRadius: 24,
+    padding: 22,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.08,
+    shadowRadius: 16,
+    elevation: 6,
   },
-  priceContainer: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
+  heroPrice: {
+    color: "#1C1C1E",
+    fontSize: 36,
+    fontFamily: "MontserratBold",
+    textAlign: "center",
     marginBottom: 10,
   },
-  price: {
+  heroStatusRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 22,
+  },
+  heroStatusLabel: {
     color: "#fa6205",
-    fontSize: 24,
+    fontSize: 15,
     fontFamily: "MontserratBold",
   },
-  statusBadge: {
-    backgroundColor: "#fa6205",
-    color: "#FFF",
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 15,
-    fontSize: 14,
-    fontFamily: "MontserratBold",
-  },
-  orderDate: {
-    color: "#ccc",
-    fontSize: 14,
-    fontFamily: "MontserratRegular",
+  heroStepper: {
+    marginTop: 4,
   },
   section: {
-    backgroundColor: "#ECECEC",
-    padding: 20,
-    marginBottom: 10,
+    backgroundColor: "#FFFFFF",
+    padding: 18,
+    marginHorizontal: 20,
+    marginBottom: 12,
+    borderRadius: 18,
+    borderWidth: 1,
+    borderColor: "#EFEFEF",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 2,
   },
   sectionTitle: {
-    color: "#fa6205",
-    fontSize: 18,
+    color: "#71717a",
+    fontSize: 12,
     fontFamily: "MontserratBold",
-    marginBottom: 15,
+    marginBottom: 14,
+    textTransform: "uppercase",
+    letterSpacing: 0.8,
   },
   establishmentName: {
     color: "#1C1C1E",
-    fontSize: 16,
-    fontFamily: "MontserratRegular",
+    fontSize: 18,
+    fontFamily: "MontserratBold",
     flex: 1,
   },
   establishmentRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+    gap: 12,
+  },
+  establishmentIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#FFF0E5',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   chatIconBtn: {
     backgroundColor: '#fa6205',
@@ -1619,17 +1693,17 @@ const styles = StyleSheet.create({
     marginLeft: 12,
   },
   productsContainer: {
-    marginTop: 10,
+    marginTop: 4,
   },
   productItem: {
     flexDirection: "row",
     alignItems: "flex-start",
-    paddingVertical: 15,
+    paddingVertical: 13,
     borderBottomWidth: 1,
-    borderBottomColor: "#DDD",
+    borderBottomColor: "#F0F0F0",
   },
   productQuantity: {
-    backgroundColor: "#fa6205",
+    backgroundColor: "#FFF0E5",
     borderRadius: 15,
     width: 30,
     height: 30,
@@ -1639,7 +1713,7 @@ const styles = StyleSheet.create({
     marginTop: 3,
   },
   productQuantityText: {
-    color: "black",
+    color: "#fa6205",
     fontSize: 14,
     fontFamily: "MontserratBold",
   },
@@ -1649,22 +1723,24 @@ const styles = StyleSheet.create({
   productName: {
     color: "#1C1C1E",
     fontSize: 16,
-    fontFamily: "MontserratRegular",
+    fontFamily: "MontserratBold",
   },
   productVariant: {
-    color: "#ccc",
+    color: "#71717a",
     fontSize: 14,
     fontFamily: "MontserratRegular",
     marginTop: 2,
   },
   additionalsContainer: {
     marginTop: 8,
-    backgroundColor: "#333",
+    backgroundColor: "#FAFAFA",
     borderRadius: 8,
     padding: 10,
+    borderWidth: 1,
+    borderColor: "#F0F0F0",
   },
   additionalsTitle: {
-    color: "#fa6205",
+    color: "#4B5563",
     fontSize: 13,
     fontFamily: "MontserratBold",
     marginBottom: 5,
@@ -1676,7 +1752,7 @@ const styles = StyleSheet.create({
     marginBottom: 3,
   },
   additionalName: {
-    color: "#ddd",
+    color: "#6B7280",
     fontSize: 13,
     fontFamily: "MontserratRegular",
     flex: 1,
@@ -1715,16 +1791,18 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   locationLabel: {
-    color: "#fa6205",
-    fontSize: 14,
+    color: "#71717a",
+    fontSize: 12,
     fontFamily: "MontserratBold",
-    marginBottom: 5,
+    marginBottom: 4,
+    textTransform: "uppercase",
+    letterSpacing: 0.8,
   },
   locationText: {
     color: "#1C1C1E",
-    fontSize: 16,
+    fontSize: 15,
     fontFamily: "MontserratRegular",
-    lineHeight: 22,
+    lineHeight: 21,
   },
   paymentInfo: {
     marginTop: 10,
@@ -1736,7 +1814,7 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   paymentLabel: {
-    color: "#ccc",
+    color: "#71717a",
     fontSize: 14,
     fontFamily: "MontserratRegular",
   },
@@ -1746,7 +1824,8 @@ const styles = StyleSheet.create({
     fontFamily: "MontserratBold",
   },
   actionsSection: {
-    padding: 20,
+    paddingHorizontal: 20,
+    paddingTop: 8,
   },
   actionButton: {
     backgroundColor: "#fa6205",
@@ -1754,8 +1833,13 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     paddingVertical: 15,
-    borderRadius: 10,
-    marginBottom: 10,
+    borderRadius: 14,
+    marginBottom: 12,
+    shadowColor: "#fa6205",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 4,
   },
   actionButtonText: {
     color: "#FFF",
@@ -2098,9 +2182,10 @@ const styles = StyleSheet.create({
     fontStyle: 'italic',
   },
   cancelButtonOutline: {
+    backgroundColor: '#FFF',
     paddingVertical: 10,
     width: '100%',
-    borderRadius: 12,
+    borderRadius: 14,
     borderWidth: 1.5,
     borderColor: '#e74c3c',
     alignItems: 'center',

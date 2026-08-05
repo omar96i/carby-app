@@ -37,6 +37,19 @@ import { useNotification } from "../context/NotificationContext";
 
 const { width } = Dimensions.get("window");
 
+const pasosRestaurante = [
+  { key: 'pendiente', label: 'Pendiente', icon: 'clock-o' },
+  { key: 'confirmado', label: 'Preparando', icon: 'cutlery' },
+  { key: 'preparado', label: 'Listo', icon: 'check' },
+  { key: 'entregado', label: 'Entregado', icon: 'check-circle' },
+];
+
+const pasosConductor = [
+  { key: 'pendiente', label: 'Buscando', icon: 'search' },
+  { key: 'aceptado', label: 'En camino', icon: 'motorcycle' },
+  { key: 'completado', label: 'Entregado', icon: 'check' },
+];
+
 const PedidoDetalleComercio = () => {
   const navigation = useNavigation();
   const route = useRoute();
@@ -79,7 +92,7 @@ const PedidoDetalleComercio = () => {
   const [fontTimeout, setFontTimeout] = useState(false);
   const { expoPushToken, notification } = useNotification();
 
-  const dingSource = require("../assets/sounds/pedido.wav");
+  const dingSource = require("../assets/sounds/mario-moneda.mp3");
   const dingPlayer = useAudioPlayer(dingSource);
 
   const previousStatusRef = useRef(pedidoData?.estado || "");
@@ -374,18 +387,20 @@ const PedidoDetalleComercio = () => {
     return `${BASE_URL.toString().replace("/api", "")}/storage/${path}`;
   };
 
-  // --- ARRAYS DE PASOS (RESTAURADOS) ---
-  const pasosRestaurante = [
-    { key: 'pendiente', label: 'Pendiente', icon: 'clock-o' },
-    { key: 'aceptado', label: 'Preparando', icon: 'fire' },
-    { key: 'completado', label: 'Listo', icon: 'check-circle' },
-  ];
+  const getPedidoStatusLabel = (estado) => {
+    const estados = {
+      pendiente: "Pedido pendiente de aceptacion",
+      aceptado: "Pedido aceptado",
+      confirmado: "Pedido confirmado para preparacion",
+      preparado: "Pedido en preparacion",
+      completado: "Pedido listo para delivery",
+      entregado: "Pedido entregado correctamente",
+      cancelado: "Pedido cancelado",
+    };
+    return estados[estado] || "Seguimiento del pedido";
+  };
 
-  const pasosConductor = [
-    { key: 'pendiente', label: 'Buscando', icon: 'search' },
-    { key: 'aceptado', label: 'En camino', icon: 'motorcycle' },
-    { key: 'completado', label: 'Entregado', icon: 'check-circle' },
-  ];
+
 
   // --- CÁLCULO PAGO AL CONDUCTOR ---
   const calculateDriverPay = () => {
@@ -468,38 +483,40 @@ const PedidoDetalleComercio = () => {
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <StatusBar barStyle="dark-content" backgroundColor="#F2F2F7" />
+      <StatusBar barStyle="light-content" backgroundColor="#fa6205" />
 
-      {/* HEADER */}
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
-          <Feather name="arrow-left" size={24} color="#FFF" />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Pedido #{pedido.id}</Text>
-        <View style={{width: 32}} /> 
+      {/* HEADER + ESTADO: bloque naranja redondeado unido */}
+      <View style={styles.headerBlock}>
+        <View style={styles.header}>
+          <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
+            <Feather name="arrow-left" size={24} color="#FFF" />
+          </TouchableOpacity>
+          <View style={styles.headerTitleWrap}>
+            <Text style={styles.headerTitle}>Pedido #{pedido.id}</Text>
+            <Text style={styles.headerDate}>{formatDate(pedido.created_at)}</Text>
+          </View>
+          <View style={{width: 32}} /> 
+        </View>
+
+        {/* STATUS & PRICE CARD */}
+        <View style={styles.heroCard}>
+          <Text style={styles.heroPrice}>
+            $ {Math.floor(parseFloat(pedido.costo_total || 0)).toLocaleString()}
+          </Text>
+          <View style={styles.heroStatusRow}>
+            <Text style={styles.heroStatusLabel}>{getPedidoStatusLabel(pedido.estado)}</Text>
+          </View>
+        </View>
       </View>
 
       <ScrollView style={styles.scroll} contentContainerStyle={{paddingBottom: 40}}>
-        
-        {/* STATUS & PRICE CARD */}
+
+        {/* --- SECCIÓN DE SEGUIMIENTO --- */}
         <View style={styles.card}>
-            <View style={styles.statusRow}>
-                <View>
-                    <Text style={styles.label}>Estado Actual</Text>
-                    <View style={styles.statusBadge}>
-                        <Text style={styles.statusText}>{pedido.estado.toUpperCase()}</Text>
-                    </View>
-                </View>
-                <View style={{alignItems: 'flex-end'}}>
-                    <Text style={styles.label}>Total Pedido</Text>
-                    <Text style={styles.totalPrice}>$ {Math.floor(parseFloat(pedido.costo_total || 0)).toLocaleString()}</Text>
-                </View>
-            </View>
-            <View style={styles.divider} />
-            <View style={styles.dateRow}>
-                <Feather name="calendar" size={14} color="#888" />
-                <Text style={styles.dateText}> {formatDate(pedido.created_at)}</Text>
-            </View>
+          <OrderStatusStepper steps={pasosRestaurante} currentStatus={pedido.estado} label="Estado del pedido" />
+        </View>
+        <View style={styles.card}>
+          <OrderStatusStepper steps={pasosConductor} currentStatus={pedido.carrera?.estado || "pendiente"} label="Estado del delivery" />
         </View>
 
         {/* --- PAGO AL CONDUCTOR --- */}
@@ -511,14 +528,6 @@ const PedidoDetalleComercio = () => {
             <Text style={styles.driverPayValue}>
                 $ {Math.floor(pagoConductor).toLocaleString()}
             </Text>
-        </View>
-
-        {/* --- SECCIÓN DE SEGUIMIENTO --- */}
-        <View style={styles.card}>
-          <OrderStatusStepper steps={pasosRestaurante} currentStatus={pedido.estado} label="Estado del pedido (restaurante)" />
-        </View>
-        <View style={styles.card}>
-          <OrderStatusStepper steps={pasosConductor} currentStatus={pedido.carrera?.estado || "pendiente"} label="Estado del delivery (conductor)" />
         </View>
 
         {/* CLIENTE */}
@@ -656,27 +665,58 @@ const styles = StyleSheet.create({
   centerContainer: { flex: 1, justifyContent: "center", alignItems: "center" },
   loadingText: { color: "#fa6205", marginTop: 10, fontFamily: "MontserratMedium" },
   
-  // HEADER
+  // HEADER BLOCK (unido a la tarjeta de estado, redondeado abajo)
+  headerBlock: {
+      backgroundColor: "#fa6205",
+      borderBottomLeftRadius: 32,
+      borderBottomRightRadius: 32,
+      paddingBottom: 22,
+      shadowColor: "#000",
+      shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: 0.12,
+      shadowRadius: 10,
+      elevation: 8,
+      zIndex: 10,
+  },
   header: { 
       flexDirection: "row", 
       alignItems: "center", 
       justifyContent: "space-between", 
       paddingHorizontal: 20, 
       paddingVertical: 15, 
-      paddingTop: 30,
-      backgroundColor: "#fa6205",
+      paddingTop: 35,
+      backgroundColor: "transparent",
   },
-  headerTitle: { color: "#FFF", fontSize: 18, fontFamily: "MontserratBold" },
+  headerTitle: { color: "#FFF", fontSize: 20, fontFamily: "MontserratBold", textAlign: "center" },
+  headerTitleWrap: { flex: 1, alignItems: "center" },
+  headerDate: { color: "rgba(255,255,255,0.8)", fontSize: 12, fontFamily: "MontserratRegular", marginTop: 2 },
   backBtn: { padding: 5 },
 
   scroll: { flex: 1, paddingHorizontal: 20 },
+
+  // HERO CARD
+  heroCard: {
+      backgroundColor: "#FFFFFF",
+      borderRadius: 24,
+      padding: 22,
+      marginTop: 6,
+      marginHorizontal: 20,
+      shadowColor: "#000",
+      shadowOffset: { width: 0, height: 6 },
+      shadowOpacity: 0.08,
+      shadowRadius: 16,
+      elevation: 6,
+  },
+  heroPrice: { color: "#1C1C1E", fontSize: 36, fontFamily: "MontserratBold", textAlign: "center", marginBottom: 10 },
+  heroStatusRow: { flexDirection: "row", alignItems: "center", justifyContent: "center", marginBottom: 4 },
+  heroStatusLabel: { color: "#fa6205", fontSize: 15, fontFamily: "MontserratBold" },
 
   // CARDS GENERICS
   card: {
       backgroundColor: "#FFFFFF",
       borderRadius: 16,
       padding: 16,
-      marginTop: 20,
+      marginTop: 16,
       borderWidth: 1,
       borderColor: "#F0F0F0"
   },
