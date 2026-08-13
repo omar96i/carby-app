@@ -81,6 +81,7 @@ const s = StyleSheet.create({
   starIcon: {
     fontSize: 10,
     color: "#F59E0B",
+    fontFamily: "Montserrat_700Bold",
   },
   ratingText: {
     fontSize: 10,

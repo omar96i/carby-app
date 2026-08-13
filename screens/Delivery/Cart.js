@@ -227,7 +227,7 @@ const Cart = () => {
   // --- RENDERIZADO UI PRINCIPAL ---
   return (
     <View style={styles.container}>
-      <StatusBar barStyle="dark-content" backgroundColor="#F2F2F7" />
+      <StatusBar barStyle="light-content" backgroundColor="#1C1C1E" />
 
       {/* Header */}
       <View style={styles.header}>
@@ -378,7 +378,7 @@ const Cart = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#F2F2F7",
+    backgroundColor: "#FFF",
   },
   loadingContainer: {
     flex: 1,
@@ -393,13 +393,10 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     paddingHorizontal: 20,
     paddingTop: Platform.OS === 'android' ? 50 : 50,
-    paddingBottom: 15,
-    backgroundColor: "#fa6205",
-    borderBottomWidth: 1,
-    borderBottomColor: "rgba(255,255,255,0.2)",
-  },
-  backButton: {
-    padding: 5,
+    paddingBottom: 22,
+    backgroundColor: "#1C1C1E",
+    borderBottomLeftRadius: 40,
+    borderBottomRightRadius: 40,
   },
   headerTitle: {
     color: "#FFF",
@@ -407,7 +404,7 @@ const styles = StyleSheet.create({
     fontFamily: "MontserratBold",
   },
   headerSubtitle: {
-    color: "#fa6205",
+    color: "rgba(255,255,255,0.7)",
     fontSize: 12,
     fontFamily: "MontserratRegular",
     marginTop: 2,

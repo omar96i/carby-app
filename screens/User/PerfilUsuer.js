@@ -11,7 +11,8 @@ import {
   Modal,
   Share,
   Linking,
-  Dimensions
+  Dimensions,
+  StatusBar,
 } from "react-native";
 import { useNavigation, useFocusEffect } from "@react-navigation/native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -339,7 +340,7 @@ export default function PerfilUsuario() {
   // --- RENDERIZADO CON NUEVO DISEÑO (DARK MODE MODERNO) ---
   return (
     <SafeAreaView style={styles.safeContainer}>
-      
+      <StatusBar barStyle="light-content" backgroundColor="#1C1C1E" />
       {/* 1. Header */}
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Perfil</Text>
@@ -556,7 +557,7 @@ const styles = StyleSheet.create({
   // --- ESTRUCTURA ---
   safeContainer: {
     flex: 1,
-    backgroundColor: "#F4F4F5",
+    backgroundColor: "#FFF",
     paddingTop: Platform.OS === "android" ? 40 : 0,
   },
   loadingContainer: {
@@ -572,8 +573,8 @@ const styles = StyleSheet.create({
   // --- HEADER ---
   header: {
     justifyContent: "center", alignItems: "center",
-    backgroundColor: "#1C1C1E", paddingTop: 50, paddingBottom: 20,
-    borderBottomLeftRadius: 24, borderBottomRightRadius: 24,
+    backgroundColor: "#1C1C1E", paddingTop: 50, paddingBottom: 22,
+    borderBottomLeftRadius: 40, borderBottomRightRadius: 40,
   },
   iconButton: { width: 36, height: 36, borderRadius: 18, backgroundColor: "rgba(255,255,255,0.1)", justifyContent: "center", alignItems: "center" },
   headerTitle: { fontSize: 18, fontFamily: "Montserrat_800ExtraBold", color: "#FFF" },

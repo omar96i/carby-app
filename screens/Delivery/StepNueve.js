@@ -1,4 +1,4 @@
-import { useNavigation } from "@react-navigation/native";
+import { useNavigation, useFocusEffect } from "@react-navigation/native";
 import {
   SafeAreaView,
   View,
@@ -81,6 +81,11 @@ export default function StepNueve({ route }) {
   };
 
   const navigation = useNavigation();
+
+  useFocusEffect(React.useCallback(() => {
+    navigation.getParent()?.setOptions({ tabBarStyle: { display: "none" } });
+    return () => navigation.getParent()?.setOptions({ tabBarStyle: { backgroundColor: '#FFF', height: 56, borderTopWidth: 1, borderTopColor: '#F0F0F0', display: 'flex' } });
+  }, [navigation]));
 
   let [fontsLoaded] = useFonts({
     Montserrat_400Regular,
@@ -171,19 +176,18 @@ export default function StepNueve({ route }) {
 
   // --- 3. AJUSTAR CÁMARA DEL MAPA ---
   useEffect(() => {
-    if (mapRef.current && driverLocation && pickupCoords) {
-      // Intentamos mostrar Conductor + Destino (o Recogida si está empezando)
-      // Prioridad: Conductor y hacia donde va.
-      const markers = [driverLocation];
-      if (destCoords) markers.push(destCoords);
-      else if (pickupCoords) markers.push(pickupCoords);
+    if (!mapRef.current) return;
+    const markers = [];
+    if (pickupCoords) markers.push(pickupCoords);
+    if (destCoords) markers.push(destCoords);
+    if (driverLocation) markers.push(driverLocation);
+    if (markers.length < 2) return;
 
-      mapRef.current.fitToCoordinates(markers, {
-        edgePadding: { top: 50, right: 50, bottom: 50, left: 50 },
-        animated: true
-      });
-    }
-  }, [driverLocation, destCoords]);
+    mapRef.current.fitToCoordinates(markers, {
+      edgePadding: { top: 80, right: 60, bottom: 80, left: 60 },
+      animated: true,
+    });
+  }, [pickupCoords, destCoords, driverLocation]);
 
 
   // --- PARSEAR INFO TEXTO (DIRECCIONES) ---
@@ -260,12 +264,12 @@ export default function StepNueve({ route }) {
 
   return (
     <SafeAreaView style={styles.safeContainer}>
-      <StatusBar barStyle="dark-content" backgroundColor="#F2F2F7" />
+      <StatusBar barStyle="light-content" backgroundColor="#1C1C1E" />
 
       {/* Header Flotante */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-          <Feather name="arrow-left" size={24} color="#1C1C1E" />
+          <Feather name="arrow-left" size={24} color="#FFF" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>
           {type === "pedido" ? "Tu Pedido" : "En Camino"}
@@ -296,10 +300,10 @@ export default function StepNueve({ route }) {
                 provider={PROVIDER_GOOGLE}
                 style={StyleSheet.absoluteFillObject}
                 initialRegion={{
-                  latitude: pickupCoords?.latitude || -12.0464, // Fallback Lima/Pereira
+                  latitude: pickupCoords?.latitude || -12.0464,
                   longitude: pickupCoords?.longitude || -77.0428,
-                  latitudeDelta: 0.015,
-                  longitudeDelta: 0.015,
+                  latitudeDelta: 0.005,
+                  longitudeDelta: 0.005,
                 }}
               >
                 {/* Marcador Origen */}
@@ -316,17 +320,14 @@ export default function StepNueve({ route }) {
                   </Marker>
                 )}
 
-
                 {/* --- CONDUCTOR EN VIVO --- */}
                 {driverLocation && (
                   <Marker
                     coordinate={driverLocation}
                     title="Conductor"
                     anchor={{ x: 0.5, y: 0.5 }}
-                  // flat={true} // Opcional: hace que el icono rote con el mapa si añades rotación luego
                   >
                     <View style={styles.driverMarker}>
-                      {/* AQUÍ USAMOS LA FUNCIÓN DINÁMICA */}
                       <MaterialCommunityIcons
                         name={getVehicleIcon(tripData?.conductor?.tipo_usuario)}
                         size={15}
@@ -337,21 +338,31 @@ export default function StepNueve({ route }) {
                 )}
               </MapView>
 
-              {/* Overlay de estado */}
-              <View style={styles.mapStatusOverlay}>
-                <View style={styles.statusBadge}>
-                  <View style={styles.liveDot} />
-                  <Text style={styles.statusText}>En vivo</Text>
-                </View>
-              </View>
-            </View>
+              {/* Botones de enfoque */}
+              {pickupCoords && (
+                <TouchableOpacity
+                  style={[styles.mapFocusBtn, { top: 12 }]}
+                  onPress={() => mapRef.current?.animateToRegion({ ...pickupCoords, latitudeDelta: 0.003, longitudeDelta: 0.003 }, 600)}
+                >
+                  <MaterialCommunityIcons name="map-marker-up" size={18} color="#fa6205" />
+                </TouchableOpacity>
+              )}
+              {destCoords && (
+                <TouchableOpacity
+                  style={[styles.mapFocusBtn, { top: 52 }]}
+                  onPress={() => mapRef.current?.animateToRegion({ ...destCoords, latitudeDelta: 0.003, longitudeDelta: 0.003 }, 600)}
+                >
+                  <MaterialCommunityIcons name="map-marker-down" size={18} color="#FF4757" />
+                </TouchableOpacity>
+              )}
+            </View>{/* cierra mapContainer */}
 
             {/* Tarjeta Conductor */}
             <View style={styles.driverCard}>
               <Image source={{ uri: imageUrl }} style={styles.driverImage} />
               <View style={styles.driverInfo}>
                 <Text style={styles.driverLabel}>{type === "pedido" ? "Comercio" : "Conductor"}</Text>
-                <Text style={styles.driverName} numberOfLines={1}>
+                <Text style={styles.driverName} numberOfLines={2}>
                   {type === "pedido" ? tripData?.comercio?.establecimiento_nombre : tripData?.conductor?.nombre_completo || "Asignando..."}
                 </Text>
                 <View style={styles.driverPhoneContainer}>
@@ -381,7 +392,7 @@ export default function StepNueve({ route }) {
 
               <TouchableOpacity style={[styles.actionButton, styles.actionButtonSecondary]} onPress={() => setModalVisible(true)}>
                 <Feather name="lock" size={20} color="#1C1C1E" />
-                <Text style={styles.actionButtonTextSecondary}>Ver PIN</Text>
+                <Text style={styles.actionButtonTextSecondary}>Mostrar PIN</Text>
               </TouchableOpacity>
 
               <TouchableOpacity style={[styles.actionButton, styles.actionButtonSecondary]} onPress={() => setShowChat(true)}>
@@ -418,12 +429,12 @@ export default function StepNueve({ route }) {
               <View style={styles.divider} />
               <View style={styles.routeRow}>
                 <View style={styles.dotOrigin} />
-                <Text style={styles.routeText}>{parsedInfo?.addresA}</Text>
+                <Text style={styles.routeText} numberOfLines={0}>{parsedInfo?.addresA}</Text>
               </View>
               <View style={styles.connectorLine} />
               <View style={styles.routeRow}>
                 <View style={styles.dotDest} />
-                <Text style={styles.routeText}>{parsedInfo?.addresB}</Text>
+                <Text style={styles.routeText} numberOfLines={0}>{parsedInfo?.addresB}</Text>
               </View>
             </View>
 
@@ -506,10 +517,10 @@ export default function StepNueve({ route }) {
 }
 
 const styles = StyleSheet.create({
-  safeContainer: { flex: 1, backgroundColor: "#F2F2F7" },
-  header: { flexDirection: "row", alignItems: "center", paddingHorizontal: 20, paddingVertical: 15, paddingTop: 30, borderBottomWidth: 1, borderBottomColor: "#F0F0F0" },
+  safeContainer: { flex: 1, backgroundColor: "#FFF" },
+  header: { flexDirection: "row", alignItems: "center", paddingHorizontal: 20, paddingVertical: 15, paddingTop: 30, paddingBottom: 22, backgroundColor: "#1C1C1E", borderBottomLeftRadius: 40, borderBottomRightRadius: 40 },
   backButton: { padding: 8, marginRight: 10 },
-  headerTitle: { fontSize: 18, fontFamily: "Montserrat_700Bold", color: "#1C1C1E" },
+  headerTitle: { fontSize: 18, fontFamily: "Montserrat_700Bold", color: "#FFF" },
   centerContainer: { flex: 1, justifyContent: "center", alignItems: "center", padding: 20 },
   loadingText: { marginTop: 15, color: "#fa6205", fontFamily: "Montserrat_500Medium" },
   errorText: { color: "#1C1C1E", textAlign: "center", marginBottom: 20, fontFamily: "Montserrat_400Regular" },
@@ -520,9 +531,10 @@ const styles = StyleSheet.create({
   dotMarker: { width: 14, height: 14, borderRadius: 7, borderWidth: 2, borderColor: '#FFF' },
   driverMarker: { backgroundColor: '#fa6205', padding: 5, borderRadius: 20, borderWidth: 2, borderColor: '#FFF' },
   mapStatusOverlay: { position: 'absolute', top: 10, left: 10, backgroundColor: 'rgba(0,0,0,0.6)', borderRadius: 20, padding: 5 },
+  mapFocusBtn: { position: 'absolute', right: 12, width: 38, height: 38, borderRadius: 19, backgroundColor: '#FFF', justifyContent: 'center', alignItems: 'center', shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.15, shadowRadius: 4, elevation: 4 },
   statusBadge: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 8 },
   liveDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: '#FF4757', marginRight: 5 },
-  statusText: { color: '#1C1C1E', fontSize: 10, fontWeight: 'bold' },
+  statusText: { color: '#1C1C1E', fontSize: 10, fontFamily: "Montserrat_700Bold" },
 
   // DRIVER CARD
   driverCard: { flexDirection: "row", backgroundColor: "#FFFFFF", padding: 16, borderRadius: 16, alignItems: "center", marginBottom: 20, borderWidth: 1, borderColor: "#F0F0F0" },
@@ -549,7 +561,7 @@ const styles = StyleSheet.create({
   divider: { height: 1, backgroundColor: "#F0F0F0", marginBottom: 12 },
   infoRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 },
   infoLabel: { color: "#888", fontSize: 13, fontFamily: "Montserrat_500Medium" },
-  infoValue: { color: "#1C1C1E", fontSize: 13, fontFamily: "Montserrat_400Regular", textAlign: 'right', flex: 1, marginLeft: 10 },
+  infoValue: { color: "#1C1C1E", fontSize: 13, fontFamily: "Montserrat_400Regular", textAlign: 'right', flex: 1, marginLeft: 10, flexWrap: "wrap" },
   infoValueHighlight: { color: "#1C1C1E", fontSize: 15, fontFamily: "Montserrat_700Bold", backgroundColor: "#F0F0F0", paddingHorizontal: 8, paddingVertical: 2, borderRadius: 6 },
   infoValueItalic: { color: "#CCC", fontSize: 13, fontFamily: "Montserrat_400Regular", fontStyle: 'italic', marginTop: 4 },
   priceValue: { color: "#fa6205", fontSize: 18, fontFamily: "Montserrat_700Bold" },
@@ -565,7 +577,7 @@ const styles = StyleSheet.create({
   cancelButton: { marginTop: 10, paddingVertical: 15, borderWidth: 1, borderColor: "#FF4757", borderRadius: 12, alignItems: 'center', marginBottom: 30 },
   cancelButtonText: { color: "#FF4757", fontFamily: "Montserrat_600SemiBold", fontSize: 14 },
   retryButton: { backgroundColor: "#fa6205", paddingHorizontal: 20, paddingVertical: 10, borderRadius: 20 },
-  retryButtonText: { color: "#000", fontWeight: 'bold' },
+  retryButtonText: { color: "#000", fontFamily: "Montserrat_700Bold" },
 
   // CHAT
   chatOverlay: { position: 'absolute', bottom: 0, left: 0, right: 0, height: '85%', backgroundColor: '#FFFFFF', borderTopLeftRadius: 20, borderTopRightRadius: 20, elevation: 20, padding: 20 },

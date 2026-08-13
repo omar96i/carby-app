@@ -117,7 +117,7 @@ export default function Dashboard() {
   return (
     <SafeAreaView style={ds.safe}>
       <View style={ds.root}>
-        <ShopHeader business={{ nombre: establishmentName, ubicacion: locationText }} image={profileImageUrl} />
+        <ShopHeader business={{ nombre: establishmentName, ubicacion: locationText }} image={profileImageUrl} shopActive={shopActive} />
         <ScrollView style={ds.scroll} contentContainerStyle={ds.scrollContent} showsVerticalScrollIndicator={false}
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={[C.brand]} />}>
 

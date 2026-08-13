@@ -37,17 +37,13 @@ import { useNotification } from "../context/NotificationContext";
 
 const { width } = Dimensions.get("window");
 
-const pasosRestaurante = [
+const pasosPedidoComercio = [
   { key: 'pendiente', label: 'Pendiente', icon: 'clock-o' },
-  { key: 'confirmado', label: 'Preparando', icon: 'cutlery' },
-  { key: 'preparado', label: 'Listo', icon: 'check' },
+  { key: 'confirmado', label: 'Confirmado', icon: 'check' },
+  { key: 'preparado', label: 'Preparando', icon: 'cutlery' },
+  { key: 'completado', label: 'Listo', icon: 'shopping-bag' },
+  { key: 'en_camino', label: 'En camino', icon: 'motorcycle' },
   { key: 'entregado', label: 'Entregado', icon: 'check-circle' },
-];
-
-const pasosConductor = [
-  { key: 'pendiente', label: 'Buscando', icon: 'search' },
-  { key: 'aceptado', label: 'En camino', icon: 'motorcycle' },
-  { key: 'completado', label: 'Entregado', icon: 'check' },
 ];
 
 const PedidoDetalleComercio = () => {
@@ -387,17 +383,34 @@ const PedidoDetalleComercio = () => {
     return `${BASE_URL.toString().replace("/api", "")}/storage/${path}`;
   };
 
-  const getPedidoStatusLabel = (estado) => {
-    const estados = {
-      pendiente: "Pedido pendiente de aceptacion",
-      aceptado: "Pedido aceptado",
-      confirmado: "Pedido confirmado para preparacion",
-      preparado: "Pedido en preparacion",
-      completado: "Pedido listo para delivery",
-      entregado: "Pedido entregado correctamente",
-      cancelado: "Pedido cancelado",
+  const getCurrentStepKey = () => {
+    const estado = pedido?.estado;
+    const carreraEstado = pedido?.carrera?.estado;
+
+    if (estado === 'entregado' || carreraEstado === 'completado') return 'entregado';
+    if (carreraEstado === 'aceptado') return 'en_camino';
+    if (estado === 'completado') return 'completado';
+    if (estado === 'preparado') return 'preparado';
+    if (estado === 'confirmado') return 'confirmado';
+    return 'pendiente';
+  };
+
+  const getCurrentStepLabel = () => {
+    const step = getCurrentStepKey();
+    const map = {
+      pendiente: 'Pedido pendiente de aceptacion',
+      confirmado: 'Pedido confirmado para preparacion',
+      preparado: 'Pedido en preparacion',
+      completado: 'Pedido listo para delivery',
+      en_camino: 'El conductor va en camino',
+      entregado: 'Pedido entregado correctamente',
     };
-    return estados[estado] || "Seguimiento del pedido";
+    if (pedido?.estado === 'cancelado') return 'Pedido cancelado';
+    return map[step] || 'Seguimiento del pedido';
+  };
+
+  const getPedidoStatusLabel = (estado) => {
+    return getCurrentStepLabel();
   };
 
 
@@ -504,20 +517,15 @@ const PedidoDetalleComercio = () => {
             $ {Math.floor(parseFloat(pedido.costo_total || 0)).toLocaleString()}
           </Text>
           <View style={styles.heroStatusRow}>
-            <Text style={styles.heroStatusLabel}>{getPedidoStatusLabel(pedido.estado)}</Text>
+            <Text style={styles.heroStatusLabel}>{getCurrentStepLabel()}</Text>
+          </View>
+          <View style={styles.heroStepper}>
+            <OrderStatusStepper steps={pasosPedidoComercio} currentStatus={getCurrentStepKey()} />
           </View>
         </View>
       </View>
 
       <ScrollView style={styles.scroll} contentContainerStyle={{paddingBottom: 40}}>
-
-        {/* --- SECCIÓN DE SEGUIMIENTO --- */}
-        <View style={styles.card}>
-          <OrderStatusStepper steps={pasosRestaurante} currentStatus={pedido.estado} label="Estado del pedido" />
-        </View>
-        <View style={styles.card}>
-          <OrderStatusStepper steps={pasosConductor} currentStatus={pedido.carrera?.estado || "pendiente"} label="Estado del delivery" />
-        </View>
 
         {/* --- PAGO AL CONDUCTOR --- */}
         <View style={styles.driverPayCard}>
@@ -708,19 +716,25 @@ const styles = StyleSheet.create({
       elevation: 6,
   },
   heroPrice: { color: "#1C1C1E", fontSize: 36, fontFamily: "MontserratBold", textAlign: "center", marginBottom: 10 },
-  heroStatusRow: { flexDirection: "row", alignItems: "center", justifyContent: "center", marginBottom: 4 },
-  heroStatusLabel: { color: "#fa6205", fontSize: 15, fontFamily: "MontserratBold" },
+  heroStatusRow: { flexDirection: "row", alignItems: "center", justifyContent: "center", marginBottom: 22 },
+  heroStatusLabel: { color: "#fa6205", fontSize: 15, fontFamily: "MontserratBold", textAlign: "center" },
+  heroStepper: { marginTop: 4 },
 
   // CARDS GENERICS
   card: {
       backgroundColor: "#FFFFFF",
-      borderRadius: 16,
+      borderRadius: 18,
       padding: 16,
-      marginTop: 16,
+      marginTop: 12,
       borderWidth: 1,
-      borderColor: "#F0F0F0"
+      borderColor: "#EFEFEF",
+      shadowColor: "#000",
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.05,
+      shadowRadius: 8,
+      elevation: 2,
   },
-  cardTitle: { color: "#1C1C1E", fontFamily: "MontserratBold", fontSize: 16, marginBottom: 12 },
+  cardTitle: { color: "#71717a", fontFamily: "MontserratBold", fontSize: 12, marginBottom: 14, textTransform: "uppercase", letterSpacing: 0.8 },
   
   // STATUS CARD SPECIFIC
   statusRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
@@ -732,15 +746,19 @@ const styles = StyleSheet.create({
   dateRow: { flexDirection: 'row', alignItems: 'center' },
   dateText: { color: "#888", fontSize: 12, fontFamily: "MontserratRegular" },
 
-  // DRIVER PAY CARD
+  // DRIVER PAY CARD (naranja, destaca pago al conductor)
   driverPayCard: {
       backgroundColor: "#fa6205", 
-      borderRadius: 12,
+      borderRadius: 16,
       padding: 16,
-      marginTop: 20,
+      marginTop: 12,
       flexDirection: 'row',
       justifyContent: 'space-between',
       alignItems: 'center',
+      shadowColor: "#fa6205",
+      shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: 0.3,
+      shadowRadius: 8,
       elevation: 5,
       gap: 8,
   },
@@ -777,29 +795,49 @@ const styles = StyleSheet.create({
 
   // CLIENT
   rowBetween: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 },
-  clientName: { color: "#1C1C1E", fontSize: 15, fontFamily: "MontserratSemiBold" },
-  phoneRow: { flexDirection: 'row', alignItems: 'center', marginTop: 4 },
-  clientPhone: { color: "#CCC", fontSize: 13, fontFamily: "MontserratRegular" },
+  clientName: { color: "#1C1C1E", fontSize: 18, fontFamily: "MontserratBold" },
+  phoneRow: { flexDirection: 'row', alignItems: 'center', marginTop: 6 },
+  clientPhone: { color: "#71717a", fontSize: 13, fontFamily: "MontserratRegular" },
   chatBtn: { backgroundColor: "#fa6205", width: 44, height: 44, borderRadius: 22, justifyContent: 'center', alignItems: 'center' },
 
   // PRODUCTS
-  productRow: { flexDirection: 'row', marginBottom: 16, borderBottomWidth: 1, borderBottomColor: "#F0F0F0", paddingBottom: 10 },
-  qtyBox: { backgroundColor: "#F0F0F0", width: 30, height: 30, borderRadius: 8, justifyContent: 'center', alignItems: 'center', marginRight: 10 },
-  qtyText: { color: "#fa6205", fontFamily: "MontserratBold", fontSize: 12 },
-  prodName: { color: "#1C1C1E", fontFamily: "MontserratMedium", fontSize: 14 },
-  variantText: { color: "#888", fontSize: 12 },
-  addText: { color: "#AAA", fontSize: 11, marginTop: 2, fontStyle: 'italic' },
-  prodPrice: { color: "#fa6205", fontFamily: "MontserratBold", fontSize: 14, marginLeft: 5 },
+  productRow: { flexDirection: 'row', marginBottom: 16, borderBottomWidth: 1, borderBottomColor: "#F0F0F0", paddingBottom: 13 },
+  qtyBox: { backgroundColor: "#FFF0E5", width: 30, height: 30, borderRadius: 8, justifyContent: 'center', alignItems: 'center', marginRight: 10 },
+  qtyText: { color: "#fa6205", fontFamily: "MontserratBold", fontSize: 13 },
+  prodName: { color: "#1C1C1E", fontFamily: "MontserratBold", fontSize: 15 },
+  variantText: { color: "#71717a", fontSize: 12, fontFamily: "MontserratRegular", marginTop: 2 },
+  addText: { color: "#6B7280", fontSize: 11, marginTop: 2, fontStyle: 'italic' },
+  prodPrice: { color: "#fa6205", fontFamily: "MontserratBold", fontSize: 15, marginLeft: 5 },
 
   // PAY INFO
-  payLabel: { color: "#888", fontFamily: "MontserratMedium", fontSize: 13 },
-  payValue: { color: "#1C1C1E", fontFamily: "MontserratSemiBold", fontSize: 13 },
+  payLabel: { color: "#71717a", fontFamily: "MontserratMedium", fontSize: 14 },
+  payValue: { color: "#1C1C1E", fontFamily: "MontserratBold", fontSize: 14 },
 
   // ACTIONS
-  actionsContainer: { marginTop: 30 },
-  mainBtn: { paddingVertical: 16, borderRadius: 12, alignItems: 'center', justifyContent: 'center', marginBottom: 15 },
+  actionsContainer: { marginTop: 8, paddingHorizontal: 0 },
+  mainBtn: {
+      backgroundColor: '#fa6205',
+      paddingVertical: 16,
+      borderRadius: 14,
+      alignItems: 'center',
+      justifyContent: 'center',
+      marginBottom: 12,
+      shadowColor: "#fa6205",
+      shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: 0.2,
+      shadowRadius: 8,
+      elevation: 4,
+  },
   mainBtnText: { color: "#FFF", fontFamily: "MontserratBold", fontSize: 16 },
-  cancelBtn: { paddingVertical: 14, borderWidth: 1, borderColor: "#FF4757", borderRadius: 12, alignItems: 'center' },
+  cancelBtn: {
+      backgroundColor: '#FFF',
+      paddingVertical: 14,
+      borderWidth: 1.5,
+      borderColor: "#FF4757",
+      borderRadius: 14,
+      alignItems: 'center',
+      marginBottom: 12,
+  },
   cancelText: { color: "#FF4757", fontFamily: "MontserratSemiBold", fontSize: 14 },
 
   // CHAT STYLES

@@ -78,7 +78,7 @@ export default function LocationVerification() {
         <View style={styles.container}>
             <Ionicons name="location-sharp" size={80} color="#fa6205" />
             <Text style={styles.title}>Necesitamos tu ubicación en tiempo real</Text>
-            <Text style={styles.subtitle}>YaRiders utiliza tu ubicación en tiempo real para:</Text>
+            <Text style={styles.subtitle}>CarBy utiliza tu ubicación en tiempo real para:</Text>
             <View style={styles.reasonsContainer}>
                 <Text style={styles.reasonText}>• Mostrar conductores y negocios cercanos</Text>
                 <Text style={styles.reasonText}>• Seguir tu viaje y entrega de pedidos</Text>

@@ -24,6 +24,7 @@ import {
   Montserrat_400Regular,
   Montserrat_700Bold,
   Montserrat_300Light,
+  Montserrat_500Medium,
 } from "@expo-google-fonts/montserrat";
 import { useFonts } from "expo-font";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -142,6 +143,7 @@ const PedidoDetalle = () => {
     MontserratRegular: Montserrat_400Regular,
     MontserratBold: Montserrat_700Bold,
     MontserratLight: Montserrat_300Light,
+    MontserratMedium: Montserrat_500Medium,
   });
 
   // Estados adicionales
@@ -1801,7 +1803,7 @@ const styles = StyleSheet.create({
   locationText: {
     color: "#1C1C1E",
     fontSize: 15,
-    fontFamily: "MontserratRegular",
+    fontFamily: "MontserratMedium",
     lineHeight: 21,
   },
   paymentInfo: {
@@ -1816,7 +1818,7 @@ const styles = StyleSheet.create({
   paymentLabel: {
     color: "#71717a",
     fontSize: 14,
-    fontFamily: "MontserratRegular",
+    fontFamily: "MontserratMedium",
   },
   paymentValue: {
     color: "#1C1C1E",

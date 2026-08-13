@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
-import { ActivityIndicator, Dimensions, Image, KeyboardAvoidingView, Platform, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
+import { ActivityIndicator, Dimensions, Image, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as ImagePicker from "expo-image-picker";
 import { Feather, Ionicons } from "@expo/vector-icons";
@@ -102,12 +102,16 @@ export default function OrderChatModal({ visible, pedidoId, userInfo, onClose })
     <View style={styles.overlay}>
       <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : undefined} style={styles.container}>
         <View style={styles.header}>
-          <TouchableOpacity onPress={onClose}><Feather name="chevron-down" size={28} color="#1c1c1e" /></TouchableOpacity>
+          <TouchableOpacity onPress={onClose}><Feather name="chevron-down" size={28} color="#FFF" /></TouchableOpacity>
           <Text style={styles.headerTitle}>Chat del pedido</Text>
-          <TouchableOpacity onPress={loadMessages}><Feather name="refresh-cw" size={20} color="#888" /></TouchableOpacity>
+          <TouchableOpacity onPress={loadMessages}><Feather name="refresh-cw" size={20} color="rgba(255,255,255,0.7)" /></TouchableOpacity>
         </View>
 
-        <View style={styles.messages}>
+        <ScrollView
+          ref={scrollViewRef}
+          style={styles.messages}
+          contentContainerStyle={styles.messagesContent}
+        >
           {loading && <ActivityIndicator size="small" color="#fa6205" style={{ paddingTop: 20 }} />}
           {!loading && !messages.length && <Text style={styles.empty}>No hay mensajes todavía. Envía el primer mensaje.</Text>}
           {messages.map((msg, index) => {
@@ -118,6 +122,7 @@ export default function OrderChatModal({ visible, pedidoId, userInfo, onClose })
                 {!isMine && showAvatar && <View style={styles.avatar}><Feather name="user" size={16} color="#888" /></View>}
                 {!isMine && !showAvatar && <View style={{ width: 36 }} />}
                 <View style={[styles.bubble, isMine ? styles.bubbleMine : styles.bubbleTheirs]}>
+                  <View style={[styles.tail, isMine ? styles.tailMine : styles.tailTheirs]} />
                   {!isMine && showAvatar && <Text style={styles.bubbleUser}>{msg.nombre_completo || "Usuario"}</Text>}
                   {msg.content && <Text style={[styles.bubbleText, isMine && styles.bubbleTextMine]}>{msg.content}</Text>}
                   {msg.image_url && <Image source={{ uri: msg.image_url }} style={styles.bubbleImage} resizeMode="cover" />}
@@ -128,8 +133,7 @@ export default function OrderChatModal({ visible, pedidoId, userInfo, onClose })
               </View>
             );
           })}
-          <View ref={scrollViewRef} />
-        </View>
+        </ScrollView>
 
         <View style={styles.inputBar}>
           {chatImage && (
@@ -142,7 +146,7 @@ export default function OrderChatModal({ visible, pedidoId, userInfo, onClose })
             <TouchableOpacity onPress={pickImage} style={styles.attachBtn}><Feather name="image" size={22} color="#888" /></TouchableOpacity>
             <TextInput value={newMessage} onChangeText={setNewMessage} placeholder="Escribe un mensaje..." style={styles.input} multiline />
             <TouchableOpacity disabled={sending || (!newMessage.trim() && !chatImage)} onPress={sendMessage} style={[styles.sendBtn, (newMessage.trim() || chatImage) && styles.sendBtnActive]}>
-              {sending ? <ActivityIndicator size="small" color="#FFF" /> : <Feather name="send" size={18} color={(newMessage.trim() || chatImage) ? "#FFF" : "#aaa"} />}
+              {sending ? <ActivityIndicator size="small" color="#FFF" /> : <Feather name="send" size={17} color={(newMessage.trim() || chatImage) ? "#FFF" : "#aaa"} />}
             </TouchableOpacity>
           </View>
         </View>
@@ -152,30 +156,44 @@ export default function OrderChatModal({ visible, pedidoId, userInfo, onClose })
 }
 
 const styles = StyleSheet.create({
-  overlay: { ...StyleSheet.absoluteFillObject, backgroundColor: "#FFF", zIndex: 100, paddingTop: 0 },
+  overlay: { ...StyleSheet.absoluteFillObject, backgroundColor: "#FFF", zIndex: 100 },
   container: { flex: 1 },
-  header: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", paddingHorizontal: 16, paddingTop: 50, paddingBottom: 14, borderBottomWidth: 1, borderBottomColor: "#f0f0f0", backgroundColor: "#FFF" },
-  headerTitle: { fontSize: 16, fontWeight: "700", color: "#1c1c1e" },
-  messages: { flex: 1, paddingHorizontal: 14, paddingTop: 10, paddingBottom: 6 },
-  empty: { textAlign: "center", color: "#a1a1aa", fontSize: 13, marginTop: 40 },
-  bubbleWrap: { flexDirection: "row", alignItems: "flex-end", marginBottom: 12 },
+  header: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingHorizontal: 20,
+    paddingTop: 56,
+    paddingBottom: 22,
+    backgroundColor: "#1C1C1E",
+    borderBottomLeftRadius: 40,
+    borderBottomRightRadius: 40,
+  },
+  headerTitle: { fontSize: 19, fontWeight: "700", color: "#FFF", letterSpacing: 0.3 },
+  messages: { flex: 1, backgroundColor: "#FFF" },
+  messagesContent: { paddingHorizontal: 14, paddingBottom: 6, paddingTop: 14 },
+  empty: { textAlign: "center", color: "#a1a1aa", fontSize: 14, marginTop: 40 },
+  bubbleWrap: { flexDirection: "row", alignItems: "flex-end", marginBottom: 14 },
   bubbleWrapMine: { justifyContent: "flex-end" },
-  avatar: { width: 36, height: 36, borderRadius: 18, backgroundColor: "#f4f4f5", justifyContent: "center", alignItems: "center", marginRight: 8 },
-  avatarMine: { width: 36, height: 36, borderRadius: 18, backgroundColor: "#fa6205", justifyContent: "center", alignItems: "center", marginLeft: 8 },
-  bubble: { maxWidth: "72%", borderRadius: 18, padding: 12, paddingBottom: 6 },
-  bubbleTheirs: { backgroundColor: "#f4f4f5", borderBottomLeftRadius: 4 },
-  bubbleMine: { backgroundColor: "#fa6205", borderBottomRightRadius: 4 },
-  bubbleUser: { fontSize: 11, fontWeight: "700", color: "#888", marginBottom: 4 },
-  bubbleText: { fontSize: 15, color: "#1c1c1e", lineHeight: 20 },
+  avatar: { width: 38, height: 38, borderRadius: 19, backgroundColor: "#E8E8ED", justifyContent: "center", alignItems: "center", marginRight: 8 },
+  avatarMine: { width: 38, height: 38, borderRadius: 19, backgroundColor: "#1C1C1E", justifyContent: "center", alignItems: "center", marginLeft: 8 },
+  bubble: { maxWidth: "75%", padding: 14, paddingBottom: 8, borderTopLeftRadius: 24, borderTopRightRadius: 24, overflow: "visible" },
+  bubbleTheirs: { backgroundColor: "#ECECEC", borderBottomLeftRadius: 4, borderBottomRightRadius: 24 },
+  bubbleMine: { backgroundColor: "#1C1C1E", borderBottomLeftRadius: 24, borderBottomRightRadius: 4, shadowColor: "#000", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 4, elevation: 3 },
+  bubbleUser: { fontSize: 12, fontWeight: "700", color: "#71717a", marginBottom: 4 },
+  bubbleText: { fontSize: 16, color: "#1C1C1E", lineHeight: 22 },
   bubbleTextMine: { color: "#FFF" },
   bubbleImage: { width: 120, height: 120, borderRadius: 10, marginTop: 6 },
-  bubbleTime: { fontSize: 10, color: "#a1a1aa", marginTop: 4, textAlign: "right" },
+  bubbleTime: { fontSize: 11, color: "#a1a1aa", marginTop: 4, textAlign: "right" },
   bubbleTimeMine: { color: "rgba(255,255,255,0.7)" },
-  inputBar: { borderTopWidth: 1, borderTopColor: "#f0f0f0", backgroundColor: "#FFF", paddingHorizontal: 14, paddingVertical: 10, paddingBottom: Platform.OS === "ios" ? 24 : 10 },
+  tail: { position: "absolute", bottom: -5, width: 12, height: 12, transform: [{ rotate: "45deg" }] },
+  tailTheirs: { left: -4, backgroundColor: "#ECECEC" },
+  tailMine: { right: -4, backgroundColor: "#1C1C1E" },
+  inputBar: { borderTopWidth: 1, borderTopColor: "#E5E5EA", backgroundColor: "#FFF", paddingHorizontal: 14, paddingVertical: 10, paddingBottom: Platform.OS === "ios" ? 24 : 10 },
   imagePreview: { flexDirection: "row", alignItems: "center", marginBottom: 8 },
-  inputRow: { flexDirection: "row", alignItems: "flex-end" },
-  attachBtn: { padding: 8 },
-  input: { flex: 1, backgroundColor: "#f4f4f5", borderRadius: 20, paddingHorizontal: 14, paddingVertical: 10, maxHeight: 100, fontSize: 15 },
-  sendBtn: { width: 40, height: 40, borderRadius: 20, backgroundColor: "#e4e4e7", justifyContent: "center", alignItems: "center", marginLeft: 8 },
-  sendBtnActive: { backgroundColor: "#fa6205" },
+  inputRow: { flexDirection: "row", alignItems: "flex-end", gap: 6 },
+  attachBtn: { padding: 6, backgroundColor: "#FFF0E5", borderRadius: 20, width: 38, height: 38, justifyContent: "center", alignItems: "center" },
+  input: { flex: 1, backgroundColor: "#ECECEC", borderRadius: 22, paddingHorizontal: 16, paddingVertical: 10, maxHeight: 100, fontSize: 15, color: "#1C1C1E" },
+  sendBtn: { width: 38, height: 38, borderRadius: 19, backgroundColor: "#e4e4e7", justifyContent: "center", alignItems: "center" },
+  sendBtnActive: { backgroundColor: "#1C1C1E" },
 });

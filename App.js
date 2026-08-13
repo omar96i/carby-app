@@ -4,13 +4,12 @@ import { StatusBar } from "expo-status-bar";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { useLoadedAssets } from "./hooks/useLoadedAssets";
 import Navigation from "./navigation";
-import { useColorScheme, Platform, Linking } from "react-native";
+import { useColorScheme } from "react-native";
 import { useState, useEffect } from "react";
 import * as Updates from "expo-updates";
 import { NotificationProvider } from "./context/NotificationContext";
 import { AlertProvider } from "./context/AlertContext";
-import Constants from 'expo-constants';
-import { BASE_URL, configureUrl } from "./constants/url";
+import { configureUrl } from "./constants/url";
 import AlertaModal from "./components/ErrorModal";
 
 
@@ -34,8 +33,6 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    const versionLocal = Constants.expoConfig?.version ?? "N/A";
-
     const init = async () => {
       // 🔁 OTA Update (expo-updates)
       if (!__DEV__) {
@@ -60,34 +57,6 @@ export default function App() {
         } catch (e) {
           console.log("Error al buscar actualización OTA:", e);
         }
-      }
-
-      try {
-
-        const response = await fetch(`${BASE_URL}active-version`);
-        const data = await response.json();
-
-        if (data.version) {
-          const versionBackend = data.version;
-          if (versionLocal !== versionBackend) {
-            showAlert(
-              "Hay una nueva versión en la tienda. Debes actualizar para continuar.",
-              "confirm",
-              () => {
-                if (Platform.OS === "android") {
-                  Linking.openURL("https://play.google.com/store/apps/details?id=com.deloreanstudios.yaridersapp"); // ← Cambia esto
-                } else {
-                  Linking.openURL("https://apps.apple.com/pe/app/yariders/id6745890453"); // ← Cambia esto
-                }
-              },
-              "Ir a la tienda"
-            );
-          } else {
-            console.log("Las versiones estan bien")
-          }
-        }
-      } catch (error) {
-        console.log("Error consultando versión del backend:", error);
       }
     };
 

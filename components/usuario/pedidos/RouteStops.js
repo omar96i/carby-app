@@ -10,7 +10,7 @@ export default function RouteStops({ origin, destination }) {
         <View style={s.dotOrigin} />
         <View style={s.textCol}>
           <Text style={s.label}>{origin?.label || "Origen"}</Text>
-          <Text style={s.address} numberOfLines={2}>{origin?.address || ""}</Text>
+          <Text style={s.address}>{origin?.address || ""}</Text>
         </View>
       </View>
       <View style={[s.stop, { marginTop: 12 }]}>
@@ -19,7 +19,7 @@ export default function RouteStops({ origin, destination }) {
         </View>
         <View style={s.textCol}>
           <Text style={[s.label, { color: COLORS.brand }]}>{destination?.label || "Destino"}</Text>
-          <Text style={s.address} numberOfLines={2}>{destination?.address || ""}</Text>
+          <Text style={s.address}>{destination?.address || ""}</Text>
         </View>
       </View>
     </View>

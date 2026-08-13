@@ -13,6 +13,7 @@ import {
   Dimensions,
   Alert,
   Linking,
+  StatusBar,
 } from "react-native";
 import { Ionicons, FontAwesome5 } from "@expo/vector-icons";
 import {
@@ -522,6 +523,7 @@ const WalletRider = () => {
 
   return (
     <SafeAreaView style={styles.safeContainer}>
+      <StatusBar barStyle="light-content" backgroundColor="#1C1C1E" />
       {/* Header */}
       <View style={styles.headerBar}>
         <Text style={styles.headerTitle}>Billetera de Rider</Text>
@@ -885,9 +887,12 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "#fa6205",
+    backgroundColor: "#1C1C1E",
     padding: 15,
-    marginTop: 30,
+    paddingTop: 45,
+    paddingBottom: 22,
+    borderBottomLeftRadius: 40,
+    borderBottomRightRadius: 40,
   },
   backButton: {
     padding: 5,
