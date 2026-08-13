@@ -75,9 +75,6 @@ export default function SearchModal({
                   <Ionicons name="close" size={12} color="#64748B" />
                 </TouchableOpacity>
               ) : null}
-              <TouchableOpacity style={styles.mapPinBtn} onPress={onSelectMapPin}>
-                <Ionicons name="map-outline" size={16} color="#334155" />
-              </TouchableOpacity>
             </View>
           </View>
 
@@ -251,16 +248,6 @@ const styles = StyleSheet.create({
     width: 28,
     height: 28,
     borderRadius: 14,
-    backgroundColor: "#F1F5F9",
-    borderWidth: 1,
-    borderColor: "#E2E8F0",
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  mapPinBtn: {
-    width: 34,
-    height: 34,
-    borderRadius: 10,
     backgroundColor: "#F1F5F9",
     borderWidth: 1,
     borderColor: "#E2E8F0",

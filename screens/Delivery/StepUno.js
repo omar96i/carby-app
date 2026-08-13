@@ -216,6 +216,7 @@ export default function StepUno() {
   const markerPulse = useRef(new Animated.Value(0)).current;
 
   const searchTimeout = useRef(null);
+  const hasFocused = useRef(false);
 
   const showAlert = (message, type = "error", onPrimary = null, primaryLabel = null) => {
     setAlertData({ message, type, onPrimary, primaryLabel });
@@ -231,17 +232,51 @@ export default function StepUno() {
     setPaymentMethod(null);
     setObservations("");
     setModalVisible(false);
+    setErrorModalVisible(false);
     setPickupAddress("");
     setDeliveryAddress("");
     setPickupCoord(null);
     setDeliveryCoord(null);
     setRouteCoords([]);
     setTotalPrice("");
+    totalPriceRaw.current = 0;
     setDisplayPrice("");
     setSuggestedPrice("");
     setBidOffset(0);
     setDistanceInKm(null);
     setDistance(null);
+    setRouteDuration(null);
+    setRouteDurationInTraffic(null);
+    setPricePerKm(null);
+    setBasePrice(0);
+    setIsCalculatingPrice(false);
+    setPriceError(null);
+    setTariffType(determineTariffType());
+    setIsLoadingServices(false);
+    setIsLoadingCurrentLocation(false);
+    setLocationError(null);
+    setIsCreatingRide(false);
+    setSheetExpanded(false);
+    setPinMode(false);
+    setIsLocationPickup(true);
+    setPinAddress("");
+    setMapSearchQuery("");
+    setMapSearchResults([]);
+    setIsSearchingMap(false);
+    setSearchModalVisible(false);
+    setPaymentModalVisible(false);
+    setPickupSuggestions([]);
+    setDeliverySuggestions([]);
+    setIsSearchingPickup(false);
+    setIsSearchingDelivery(false);
+    setShowPickupSuggestions(false);
+    setShowDeliverySuggestions(false);
+    setMapRegion({
+      latitude: 4.60971,
+      longitude: -74.08175,
+      latitudeDelta: 0.01,
+      longitudeDelta: 0.01,
+    });
   };
 
   useEffect(() => {
@@ -269,6 +304,20 @@ export default function StepUno() {
     useCallback(() => {
       const tabNav = navigation.getParent();
       if (tabNav) tabNav.setOptions({ tabBarStyle: { display: "none" } });
+
+      if (!hasFocused.current) {
+        hasFocused.current = true;
+      } else {
+        resetAll();
+        AsyncStorage.removeItem("selectedServiceId");
+        AsyncStorage.removeItem("serviceName");
+        getCurrentLocation("pickup");
+        fetchPrices().then((priceData) => {
+          if (priceData) setPrices(priceData);
+        });
+        fetchUserPaymentSettings();
+      }
+
       return () => {
         navigation.getParent()?.setOptions({
           tabBarStyle: { backgroundColor: "#FFF", height: 56, borderTopWidth: 1, borderTopColor: "#F0F0F0", display: "flex" },
@@ -345,7 +394,7 @@ export default function StepUno() {
     if (userPaymentSettings && !paymentMethod) {
       setPaymentMethod(getDefaultPaymentMethod(userPaymentSettings));
     }
-  }, [userPaymentSettings]);
+  }, [userPaymentSettings, paymentMethod]);
 
   const fitMapBetween = useCallback((p1, p2) => {
     const midLat = (p1.latitude + p2.latitude) / 2;
@@ -1287,36 +1336,38 @@ export default function StepUno() {
           </MapView>
 
           {/* Header flotante */}
-          <View style={styles.hdr}>
-            <View style={styles.hdrRow}>
-              <TouchableOpacity style={styles.backBtn} onPress={goBack} activeOpacity={0.8}>
-                <Ionicons name="arrow-back" size={20} color="#0F172A" />
-              </TouchableOpacity>
-              <View style={styles.brandPill}>
-                <Image
-                  source={require("../../assets/images/nuevo-icono.jpeg")}
-                  style={styles.logoImg}
-                  resizeMode="contain"
-                />
-                <Text style={styles.brandText}>
-                  Car<Text style={{ color: "#FF5500" }}>By</Text>
-                </Text>
+          {!searchModalVisible && !pinMode && (
+            <View style={styles.hdr}>
+              <View style={styles.hdrRow}>
+                <TouchableOpacity style={styles.backBtn} onPress={goBack} activeOpacity={0.8}>
+                  <Ionicons name="arrow-back" size={20} color="#0F172A" />
+                </TouchableOpacity>
+                <View style={styles.brandPill}>
+                  <Image
+                    source={require("../../assets/images/nuevo-icono.jpeg")}
+                    style={styles.logoImg}
+                    resizeMode="contain"
+                  />
+                  <Text style={styles.brandText}>
+                    Car<Text style={{ color: "#FF5500" }}>By</Text>
+                  </Text>
+                </View>
+                <View style={{ width: 44 }} />
               </View>
-              <View style={{ width: 44 }} />
-            </View>
-            <DestinationBar
-              address={deliveryAddress}
-              onPress={openSearchForDestination}
-              onMapPress={() => openLocationPicker(false)}
-            />
-            {deliveryCoord && (
-              <RouteInfoBar
-                distance={distanceInKm ? distanceInKm.toFixed(1) : "0.0"}
-                eta={routeDurationInTraffic !== null ? String(Math.max(2, routeDurationInTraffic)) : "3"}
-                trafficLevel={trafficLevel}
+              <DestinationBar
+                address={deliveryAddress}
+                onPress={openSearchForDestination}
+                onMapPress={() => openLocationPicker(false)}
               />
-            )}
-          </View>
+              {deliveryCoord && (
+                <RouteInfoBar
+                  distance={distanceInKm ? distanceInKm.toFixed(1) : "0.0"}
+                  eta={routeDurationInTraffic !== null ? String(Math.max(2, routeDurationInTraffic)) : "3"}
+                  trafficLevel={trafficLevel}
+                />
+              )}
+            </View>
+          )}
 
           {/* FAB de ubicacion */}
           {!pinMode && (
@@ -1343,10 +1394,10 @@ export default function StepUno() {
               </View>
 
               <View style={styles.pinCenterOverlay} pointerEvents="none">
-                <View style={styles.pinRipple} />
-                <View style={[styles.pinRipple, { animationDelay: "0.6s" }]} />
                 <View style={styles.pinHead}>
-                  <Ionicons name="location" size={22} color="#FFFFFF" />
+                  <View style={styles.pinIconWrapper}>
+                    <Ionicons name="location" size={24} color="#FFFFFF" />
+                  </View>
                 </View>
                 <View style={styles.pinShadow} />
               </View>
@@ -1549,6 +1600,17 @@ export default function StepUno() {
           primaryLabel={alertData.primaryLabel}
         />
 
+        {/* Loading ubicacion */}
+        {isLoadingCurrentLocation && (
+          <View style={[styles.globalLoadingContainer, { backgroundColor: "rgba(255,255,255,0.92)" }]}>
+            <View style={styles.globalLoadingContent}>
+              <ActivityIndicator size="large" color="#FF5500" />
+              <Text style={styles.globalLoadingText}>Ubicandote...</Text>
+              <Text style={styles.globalLoadingSub}>Estamos buscando tu ubicacion actual</Text>
+            </View>
+          </View>
+        )}
+
         {/* Loading global */}
         {isCreatingRide && (
           <View style={styles.globalLoadingContainer}>
@@ -1711,21 +1773,13 @@ const styles = StyleSheet.create({
     zIndex: 30,
     marginTop: -40,
   },
-  pinRipple: {
-    position: "absolute",
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-    borderWidth: 2,
-    borderColor: "#FF5500",
-  },
   pinHead: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
+    width: 46,
+    height: 46,
+    borderRadius: 23,
     backgroundColor: "#FF5500",
-    borderTopLeftRadius: 22,
-    borderTopRightRadius: 22,
+    borderTopLeftRadius: 23,
+    borderTopRightRadius: 23,
     borderBottomLeftRadius: 4,
     transform: [{ rotate: "-45deg" }],
     justifyContent: "center",
@@ -1737,6 +1791,9 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.35,
     shadowRadius: 20,
     elevation: 8,
+  },
+  pinIconWrapper: {
+    transform: [{ rotate: "45deg" }],
   },
   pinShadow: {
     width: 14,
@@ -1975,5 +2032,12 @@ const styles = StyleSheet.create({
     fontFamily: "MontserratBold",
     fontWeight: "bold",
     color: "#0F172A",
+  },
+  globalLoadingSub: {
+    marginTop: 4,
+    fontSize: 12,
+    fontFamily: "Montserrat",
+    color: "#64748B",
+    textAlign: "center",
   },
 });
