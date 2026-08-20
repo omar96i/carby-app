@@ -1,23 +1,26 @@
 import React, { useRef, useState } from "react";
 import { View, Text, TouchableOpacity, ScrollView, StyleSheet } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import { BASE_URL } from "../../../constants/url";
 import VehicleCard from "./VehicleCard";
 
-export default function VehicleCarousel({ vehicles, selectedType, onSelect, prices, tariffType, distanceKm }) {
+export default function VehicleCarousel({ services, selectedId, onSelect, distanceKm }) {
   const scrollRef = useRef(null);
   const [scrollX, setScrollX] = useState(0);
 
-  const getVehiclePrice = (v) => {
-    if (!prices || prices.length === 0) return v.basePrice;
-    const rolRider = `rider.${v.type}`;
-    const match = prices.find(
-      (p) => p.rol_rider === rolRider && p.tipo_tarifa === tariffType && p.estado === "activo"
-    );
-    if (!match) return v.basePrice;
-    const base = match.precio_base ? parseFloat(match.precio_base) : 0;
-    const perKm = parseFloat(match.precio) || 0;
+  const getServicePrice = (service) => {
+    const base = parseFloat(service.precio_base) || 0;
+    const perKm = parseFloat(service.precio_km) || 0;
+    const additional = parseFloat(service.precio_adicional) || 0;
     const dist = distanceKm || 0;
-    return Math.round(base + perKm * Math.max(0, dist));
+    return Math.round(base + perKm * Math.max(0, dist) + additional);
+  };
+
+  const getServiceIconUrl = (service) => {
+    if (!service.icono) return null;
+    return service.icono.startsWith("http")
+      ? service.icono
+      : `${BASE_URL.toString().replace("/api", "")}storage/${service.icono}`;
   };
 
   const scroll = (dir) => {
@@ -33,7 +36,7 @@ export default function VehicleCarousel({ vehicles, selectedType, onSelect, pric
   return (
     <View style={styles.wrapper}>
       <View style={styles.header}>
-        <Text style={styles.title}>Elige tu vehiculo</Text>
+        <Text style={styles.title}>Elige tu servicio</Text>
         <View style={styles.navBtns}>
           <TouchableOpacity style={styles.navBtn} onPress={() => scroll(-140)}>
             <Ionicons name="chevron-back" size={14} color="#475569" />
@@ -52,16 +55,14 @@ export default function VehicleCarousel({ vehicles, selectedType, onSelect, pric
         onScroll={handleScroll}
         scrollEventThrottle={16}
       >
-        {vehicles.map((v) => (
+        {services.map((service) => (
           <VehicleCard
-            key={v.type}
-            type={v.type}
-            name={v.name}
-            tagline={v.tagline}
-            price={getVehiclePrice(v).toLocaleString("es-CO")}
-            eta={v.eta}
-            selected={selectedType === v.type}
-            onPress={() => onSelect(v.type)}
+            key={service.id}
+            name={service.nombre}
+            iconUrl={getServiceIconUrl(service)}
+            price={getServicePrice(service).toLocaleString("es-CO")}
+            selected={selectedId === service.id.toString()}
+            onPress={() => onSelect(service)}
           />
         ))}
       </ScrollView>
@@ -102,7 +103,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   scrollContent: {
-    paddingHorizontal: 0,
-    paddingVertical: 6,
+    paddingHorizontal: 10,
+    paddingVertical: 15,
   },
 });

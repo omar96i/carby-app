@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
-import { View, Text, TextInput, TouchableOpacity, FlatList, StyleSheet, ActivityIndicator, Image, KeyboardAvoidingView, Keyboard, Platform, TouchableWithoutFeedback } from "react-native";
-import { FontAwesome } from '@expo/vector-icons';
+import { View, Text, TextInput, TouchableOpacity, FlatList, StyleSheet, ActivityIndicator, Image, KeyboardAvoidingView, Keyboard, Platform } from "react-native";
+import { Feather } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as ImagePicker from 'expo-image-picker';
 import { BASE_URL } from "../constants/url";
@@ -374,92 +374,107 @@ const ChatUsuario = ({ tripId }) => {
   // Renderizar mensajes
   const renderMessage = ({ item }) => (
     <View style={[
-      styles.messageContainer,
-      item.isMyMessage ? styles.myMessageContainer : styles.otherMessageContainer
+      styles.messageWrapper,
+      item.isMyMessage ? styles.myMessageWrapper : styles.otherMessageWrapper
     ]}>
-      <View style={styles.userContainer}>
-        <Text style={[
-          styles.userName,
-          item.isMyMessage ? styles.myUserName : styles.otherUserName
-        ]}>
-          {typeof item.user === 'string' ? item.user : ''}
-        </Text>
-        <View style={styles.messageMetadata}>
-          <Text style={styles.time}>{typeof item.time === 'string' ? item.time : ''}</Text>
-          {item.status === "sending" && <Text style={styles.statusSending}> • enviando...</Text>}
-          {item.status === "error" && <Text style={styles.statusError}> • error</Text>}
+      <View style={[
+        styles.bubble,
+        item.isMyMessage ? styles.myBubble : styles.otherBubble
+      ]}>
+        {item.image ? (
+          <Image source={{ uri: item.image }} style={styles.messageImage} />
+        ) : (
+          <Text style={[
+            styles.messageText,
+            item.isMyMessage ? styles.myMessageText : styles.otherMessageText
+          ]}>
+            {typeof item.text === 'string' ? item.text : ''}
+          </Text>
+        )}
+        <View style={styles.metaRow}>
+          <Text style={[styles.time, item.isMyMessage ? styles.myTime : styles.otherTime]}>
+            {typeof item.time === 'string' ? item.time : ''}
+          </Text>
+          {item.status === "sending" && <Text style={styles.statusSending}>enviando</Text>}
+          {item.status === "error" && <Text style={styles.statusError}>error</Text>}
+          {item.isMyMessage && item.status !== "sending" && item.status !== "error" && (
+            <Feather name="check" size={10} color="rgba(255,255,255,0.7)" />
+          )}
         </View>
       </View>
-      {item.image ? (
-        <Image source={{ uri: item.image }} style={styles.messageImage} />
-      ) : (
-        <Text style={[
-          styles.messageText,
-          item.isMyMessage ? styles.myMessageText : styles.otherMessageText
-        ]}>
-          {typeof item.text === 'string' ? item.text : ''}
-        </Text>
-      )}
     </View>
   )
 
   const flatListRef = useRef(null);
 
+  const quickReplies = ['Ya voy en camino', 'Estoy afuera'];
+
   return (
     <KeyboardAvoidingView
       style={styles.container}
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      keyboardVerticalOffset={Platform.OS === 'ios' ? 100 : 0} // ajusta según el header de tu navegación
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
     >
-      <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-        <View style={{ flex: 1 }}>
-          <View style={styles.chatContainer}>
-            {isLoadingHistory ? (
-              <View style={styles.loadingContainer}>
-                <ActivityIndicator size="large" color="#fa6205" />
-                <Text style={styles.loadingText}>Cargando mensajes anteriores...</Text>
-              </View>
-            ) : (
+      <View style={{ flex: 1 }}>
+        <View style={styles.chatContainer}>
+          {isLoadingHistory ? (
+            <View style={styles.loadingContainer}>
+              <ActivityIndicator size="large" color="#FF5500" />
+              <Text style={styles.loadingText}>Cargando mensajes anteriores...</Text>
+            </View>
+          ) : (
               <FlatList
                 ref={flatListRef}
-                data={messages}
+                style={styles.messagesList}
+                inverted
+                data={[...messages].reverse()}
                 keyExtractor={(item) => item.id.toString()}
                 renderItem={renderMessage}
                 onRefresh={fetchPreviousMessages}
                 refreshing={isLoadingHistory}
                 keyboardShouldPersistTaps="handled"
-                contentContainerStyle={{ paddingVertical: 10 }}
+                contentContainerStyle={styles.messagesContent}
               />
-            )}
-          </View>
-
-          <View style={[styles.inputContainer, { marginBottom: keyboardVisible ? 200 : 10 }]}>
-            <TouchableOpacity style={styles.iconButton} onPress={handlePickImageAndSend}>
-              <FontAwesome name="camera" size={24} color="black" />
-            </TouchableOpacity>
-            <TextInput
-              style={styles.input}
-              placeholder="Escribe un mensaje..."
-              value={inputText}
-              onChangeText={setInputText}
-              editable={!isLoading}
-              multiline={true}
-              maxLength={500}
-            />
-            <TouchableOpacity
-              style={[styles.sendButton, isLoading && styles.sendButtonDisabled]}
-              onPress={sendMessage}
-              disabled={isLoading || !inputText.trim()}
-            >
-              {isLoading ? (
-                <ActivityIndicator size="small" color="#000" />
-              ) : (
-                <FontAwesome name="paper-plane" size={24} color="#000" />
-              )}
-            </TouchableOpacity>
-          </View>
+          )}
         </View>
-      </TouchableWithoutFeedback>
+
+        {/* Quick replies */}
+        <View style={styles.quickReplies}>
+          {quickReplies.map((q) => (
+            <TouchableOpacity key={q} style={styles.quickReply} onPress={() => { setInputText(q); }} activeOpacity={0.8}>
+              <Text style={styles.quickReplyText}>{q}</Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+
+        <View style={styles.inputContainer}>
+          <TouchableOpacity style={styles.iconButton} onPress={handlePickImageAndSend}>
+            <Feather name="camera" size={22} color="#64748B" />
+          </TouchableOpacity>
+          <TextInput
+            style={styles.input}
+            placeholder="Escribe un mensaje..."
+            placeholderTextColor="#94A3B8"
+            value={inputText}
+            onChangeText={setInputText}
+            editable={!isLoading}
+            multiline={true}
+            maxLength={500}
+          />
+          <TouchableOpacity
+            style={[styles.sendButton, (!inputText.trim() || isLoading) && styles.sendButtonDisabled]}
+            onPress={sendMessage}
+            disabled={isLoading || !inputText.trim()}
+            activeOpacity={0.8}
+          >
+            {isLoading ? (
+              <ActivityIndicator size="small" color="#FFFFFF" />
+            ) : (
+              <Feather name="send" size={18} color="#FFFFFF" />
+            )}
+          </TouchableOpacity>
+        </View>
+      </View>
       <AlertaModal
         visible={alertVisible}
         mensaje={alertData.message}
@@ -475,26 +490,23 @@ const ChatUsuario = ({ tripId }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#F5F5F5"
+    backgroundColor: "#FFF"
   },
   chatContainer: {
-    flex: 1,
-    padding: 10,
+    flex: 1
   },
   messagesList: {
     flex: 1,
-    marginBottom: 10,
   },
-  messageMetadata: {
-    flexDirection: 'row',
-    alignItems: 'center',
+  messagesContent: {
+    paddingVertical: 12,
+    paddingHorizontal: 14,
   },
   messageImage: {
-    width: '100%',
-    height: 200,
-    borderRadius: 8,
-    marginTop: 5,
-    resizeMode: 'contain',
+    width: 220,
+    height: 160,
+    borderRadius: 12,
+    resizeMode: 'cover',
   },
   loadingContainer: {
     flex: 1,
@@ -504,109 +516,147 @@ const styles = StyleSheet.create({
   },
   loadingText: {
     marginTop: 10,
-    color: '#666',
+    color: '#64748B',
+    fontFamily: "Montserrat",
+    fontSize: 13,
   },
   emptyChat: {
     padding: 20,
     alignItems: "center",
   },
   emptyChatText: {
-    color: "#999",
+    color: "#94A3B8",
     fontSize: 14,
+    fontFamily: "Montserrat",
   },
-  messageContainer: {
-    backgroundColor: "white",
-    padding: 10,
-    borderRadius: 10,
-    marginVertical: 5,
-    shadowColor: "#000",
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 2,
-    maxWidth: '80%',
+  messageWrapper: {
+    maxWidth: '78%',
+    marginVertical: 4,
   },
-  myMessageContainer: {
-    alignSelf: 'flex-end', // Mensajes del usuario a la derecha
-    backgroundColor: "#fa6205", // Verde para mensajes del usuario
+  myMessageWrapper: {
+    alignSelf: 'flex-end',
   },
-  otherMessageContainer: {
-    alignSelf: 'flex-start', // Mensajes del rider a la izquierda
-    backgroundColor: "white", // Blanco para mensajes del rider
+  otherMessageWrapper: {
+    alignSelf: 'flex-start',
   },
-  userContainer: {
-    flexDirection: "row",
-    alignItems: "center",
+  bubble: {
+    borderRadius: 18,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
   },
-  userName: {
-    fontWeight: "bold",
-    fontSize: 16,
+  myBubble: {
+    backgroundColor: "#FF5500",
+    borderBottomRightRadius: 6,
   },
-  myUserName: {
-    color: "black", // Texto negro para mensajes del usuario (sobre fondo verde)
-  },
-  otherUserName: {
-    color: "#333", // Texto oscuro para mensajes del rider (sobre fondo blanco)
-  },
-  time: {
-    fontWeight: "normal",
-    fontSize: 12,
-    color: "gray",
-    marginLeft: 5,
-  },
-  statusSending: {
-    fontWeight: "normal",
-    fontSize: 12,
-    color: "#888",
-    fontStyle: "italic",
-  },
-  statusError: {
-    fontWeight: "normal",
-    fontSize: 12,
-    color: "red",
-    fontStyle: "italic",
+  otherBubble: {
+    backgroundColor: "#F1F5F9",
+    borderBottomLeftRadius: 6,
   },
   messageText: {
     fontSize: 14,
-    marginTop: 5,
+    lineHeight: 19,
+    fontFamily: "Montserrat",
   },
   myMessageText: {
-    color: "black", // Texto negro para mensajes del usuario
+    color: "#FFFFFF",
   },
   otherMessageText: {
-    color: "#333", // Texto oscuro para mensajes del rider
+    color: "#0F172A",
+  },
+  metaRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "flex-end",
+    gap: 4,
+    marginTop: 4,
+  },
+  time: {
+    fontSize: 10,
+    fontFamily: "Montserrat",
+  },
+  myTime: {
+    color: "rgba(255,255,255,0.75)",
+  },
+  otherTime: {
+    color: "#94A3B8",
+  },
+  statusSending: {
+    fontSize: 10,
+    color: "#94A3B8",
+    fontFamily: "Montserrat",
+  },
+  statusError: {
+    fontSize: 10,
+    color: "#FF4757",
+    fontFamily: "Montserrat",
+  },
+  quickReplies: {
+    flexDirection: "row",
+    gap: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    height: 40,
+    alignItems: "center",
+  },
+  quickReply: {
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: "#E2E8F0",
+    backgroundColor: "#F8FAFC",
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    justifyContent: "center",
+  },
+  quickReplyText: {
+    fontSize: 11,
+    fontFamily: "Montserrat",
+    color: "#0F172A",
   },
   inputContainer: {
     flexDirection: "row",
     alignItems: "flex-end",
-    backgroundColor: "white",
-    borderRadius: 25,
-    paddingHorizontal: 10,
-    paddingVertical: 8,
-    margin: 10,
-    marginBottom: Platform.OS === 'ios' ? 10 : 20,
-    shadowColor: "#000",
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    gap: 8,
+    borderTopWidth: 1,
+    borderTopColor: "#E2E8F0",
+    backgroundColor: "#FFFFFF",
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    paddingBottom: Platform.OS === 'ios' ? 24 : 16,
   },
   input: {
     flex: 1,
-    paddingHorizontal: 10,
-    paddingVertical: 8,
-    maxHeight: 100,
-    fontSize: 16,
+    minHeight: 42,
+    maxHeight: 110,
+    borderRadius: 22,
+    borderWidth: 1,
+    borderColor: "#E2E8F0",
+    backgroundColor: "#F8FAFC",
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    fontSize: 14,
+    fontFamily: "Montserrat",
+    color: "#0F172A",
   },
   sendButton: {
-    backgroundColor: "#fa6205",
-    padding: 10,
-    borderRadius: 30,
-    marginLeft: 5,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: "#FF5500",
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: Platform.OS === 'ios' ? 0 : -2,
   },
   sendButtonDisabled: {
-    backgroundColor: "#aaa",
+    backgroundColor: "#CBD5E1",
   },
   iconButton: {
-    padding: 5,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "#F1F5F9",
+    marginBottom: Platform.OS === 'ios' ? 0 : -2,
   }
 });
 

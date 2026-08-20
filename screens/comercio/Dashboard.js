@@ -38,7 +38,7 @@ export default function Dashboard() {
   const { categorias, fetchCategorias, createCategoria, updateCategoria, deleteCategoria } = useCategorias();
   const { productos, fetchProductos, createProducto, deleteProducto, toggleProducto } = useProductos();
   const { servicios, fetchServicios, createServicio, deleteServicio } = useServicios();
-  const { establishmentName, profileImageUrl, shopActive, averageRating, ratings, tipoCategoria, loading: shopLoading, fetchShopInfo, toggleTienda, getCurrentLocation, saveShopLocation, userData } = useShopInfo();
+  const { establishmentName, profileImageUrl, shopActive, averageRating, ratings, tipoCategoria, loading: shopLoading, fetchShopInfo, getCurrentLocation, saveShopLocation, userData } = useShopInfo();
   const { banners, loading: bannersLoading, fetchBanners, uploadBanner, toggleBanner, deleteBanner } = useBanners();
 
   const [refreshing, setRefreshing] = useState(false);
@@ -128,10 +128,10 @@ export default function Dashboard() {
               <View style={{ flexDirection: "row", marginVertical: 2 }}>{renderStars(averageRating)}</View>
               <Text style={ds.statSub}>{ratings.length} {ratings.length === 1 ? "calificación" : "calificaciones"}</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={[ds.statCard, { flex: 1 }]} onPress={toggleTienda}>
-              <View style={[ds.dot, { backgroundColor: shopActive ? C.green : "#EF4444" }]} />
-              <Text style={[ds.statVal, { fontSize: 14 }]}>{shopActive ? "Visible" : "Oculto"}</Text>
-              <Text style={ds.statSub}>{shopActive ? "Toca para ocultar tu negocio" : "Toca para mostrar tu negocio"}</Text>
+            <TouchableOpacity style={[ds.statCard, { flex: 1 }]} onPress={() => nav.navigate("Horarios")}>
+              <Ionicons name="time-outline" size={22} color={C.brand} style={{ marginBottom: 4 }} />
+              <Text style={[ds.statVal, { fontSize: 14 }]}>Horarios</Text>
+              <Text style={ds.statSub}>Configura días y horas</Text>
             </TouchableOpacity>
           </View>
 

@@ -33,20 +33,12 @@ import Modal from "react-native-modal";
 import DestinationBar from "../Transport/components/DestinationBar";
 import RouteInfoBar from "../Transport/components/RouteInfoBar";
 import VehicleCarousel from "../Transport/components/VehicleCarousel";
-import ServiceSelector from "../Transport/components/ServiceSelector";
 import BidPanel from "../Transport/components/BidPanel";
 import PaymentSelector from "../Transport/components/PaymentSelector";
 import NoteInput from "../Transport/components/NoteInput";
 import SearchModal from "../Transport/components/SearchModal";
 
 import PeekSummary from "../Transport/components/PeekSummary";
-
-const VEHICLES = [
-  { type: "taxi", name: "Particular", eta: "~3 min", basePrice: 4000 },
-  { type: "moto", name: "Delivery", eta: "~2 min", basePrice: 2500 },
-];
-
-const TEXTO_PAGO = "Nequi o Bancolombia";
 
 const screenH = Dimensions.get("window").height;
 const screenW = Dimensions.get("window").width;
@@ -101,34 +93,7 @@ const calculateHaversineDistance = (lat1, lon1, lat2, lon2) => {
   return R * c * 1.2;
 };
 
-const isPeruvianHoliday = (date) => {
-  const month = date.getMonth() + 1;
-  const day = date.getDate();
-  const mmdd = `${month.toString().padStart(2, "0")}-${day.toString().padStart(2, "0")}`;
-  const peruvianHolidays = [
-    "01-01",
-    "04-06",
-    "04-07",
-    "05-01",
-    "06-29",
-    "07-28",
-    "07-29",
-    "08-30",
-    "10-08",
-    "11-01",
-    "12-08",
-    "12-25",
-  ];
-  return peruvianHolidays.includes(mmdd);
-};
 
-const determineTariffType = () => {
-  const now = new Date();
-  const hour = now.getHours();
-  if (isPeruvianHoliday(now)) return "festivo";
-  if (hour >= 20 || hour < 6) return "noche";
-  return "dia";
-};
 
 export default function StepUno() {
   const mapRef = useRef(null);
@@ -136,13 +101,16 @@ export default function StepUno() {
   const { expoPushToken, notification } = useNotification();
 
   const [selectedServiceId, setSelectedServiceId] = useState(null);
-  const [serviceDetails, setServiceDetails] = useState({ nombre_servicio: "", precio_kilometro: 0 });
+  const [serviceDetails, setServiceDetails] = useState({
+    nombre_servicio: "",
+    precio_kilometro: 0,
+    precio_base: 0,
+    precio_adicional: 0,
+  });
   const [distance, setDistance] = useState(null);
   const [totalPrice, setTotalPrice] = useState("");
   const totalPriceRaw = useRef(0);
 
-  const [vehicleType, setVehicleType] = useState(null);
-  const [serviceCategory, setServiceCategory] = useState(null);
   const [pickupAddress, setPickupAddress] = useState("");
   const [deliveryAddress, setDeliveryAddress] = useState("");
   const [pickupCoord, setPickupCoord] = useState(null);
@@ -153,6 +121,7 @@ export default function StepUno() {
 
   const [isModalVisible, setModalVisible] = useState(false);
   const [isErrorModalVisible, setErrorModalVisible] = useState(false);
+  const [createdCarreraId, setCreatedCarreraId] = useState(null);
 
   const [pickupSuggestions, setPickupSuggestions] = useState([]);
   const [deliverySuggestions, setDeliverySuggestions] = useState([]);
@@ -161,15 +130,11 @@ export default function StepUno() {
   const [showPickupSuggestions, setShowPickupSuggestions] = useState(false);
   const [showDeliverySuggestions, setShowDeliverySuggestions] = useState(false);
 
-  const [prices, setPrices] = useState([]);
   const [distanceInKm, setDistanceInKm] = useState(null);
   const [routeDuration, setRouteDuration] = useState(null);
   const [routeDurationInTraffic, setRouteDurationInTraffic] = useState(null);
-  const [pricePerKm, setPricePerKm] = useState(null);
-  const [basePrice, setBasePrice] = useState(0);
   const [isCalculatingPrice, setIsCalculatingPrice] = useState(false);
   const [priceError, setPriceError] = useState(null);
-  const [tariffType, setTariffType] = useState("dia");
 
   const [userPaymentSettings, setUserPaymentSettings] = useState(null);
   const [loadingUserSettings, setLoadingUserSettings] = useState(true);
@@ -179,10 +144,15 @@ export default function StepUno() {
   const [isLoadingCurrentLocation, setIsLoadingCurrentLocation] = useState(false);
   const [locationError, setLocationError] = useState(null);
   const [isCreatingRide, setIsCreatingRide] = useState(false);
+  const [showGoToRide, setShowGoToRide] = useState(false);
 
   const [keyboardVisible, setKeyboardVisible] = useState(false);
   const [sheetExpanded, setSheetExpanded] = useState(false);
   const sheetAnim = useRef(new Animated.Value(COLLAPSED_SHEET_H)).current;
+
+  // Animación de creando carrera
+  const creatingPulse = useRef(new Animated.Value(1)).current;
+  const creatingMove = useRef(new Animated.Value(0)).current;
 
   const [pinMode, setPinMode] = useState(false);
   const [isLocationPickup, setIsLocationPickup] = useState(true);
@@ -214,8 +184,11 @@ export default function StepUno() {
   const [displayPrice, setDisplayPrice] = useState("");
   const priceAnim = useRef(new Animated.Value(1)).current;
   const markerPulse = useRef(new Animated.Value(0)).current;
+  const dragHandleAnim = useRef(new Animated.Value(0)).current;
+  const shimmerAnim = useRef(new Animated.Value(-screenW)).current;
 
   const searchTimeout = useRef(null);
+  const mapFocusTimeout = useRef(null);
   const hasFocused = useRef(false);
 
   const showAlert = (message, type = "error", onPrimary = null, primaryLabel = null) => {
@@ -226,9 +199,13 @@ export default function StepUno() {
   const goBack = () => navigation.goBack();
 
   const resetAll = () => {
-    setVehicleType(null);
     setSelectedServiceId(null);
-    setServiceDetails({ nombre_servicio: "", precio_kilometro: 0 });
+    setServiceDetails({
+      nombre_servicio: "",
+      precio_kilometro: 0,
+      precio_base: 0,
+      precio_adicional: 0,
+    });
     setPaymentMethod(null);
     setObservations("");
     setModalVisible(false);
@@ -247,11 +224,8 @@ export default function StepUno() {
     setDistance(null);
     setRouteDuration(null);
     setRouteDurationInTraffic(null);
-    setPricePerKm(null);
-    setBasePrice(0);
     setIsCalculatingPrice(false);
     setPriceError(null);
-    setTariffType(determineTariffType());
     setIsLoadingServices(false);
     setIsLoadingCurrentLocation(false);
     setLocationError(null);
@@ -288,6 +262,37 @@ export default function StepUno() {
     };
   }, []);
 
+  // Animación "Creando carrera"
+  useEffect(() => {
+    if (!isCreatingRide) {
+      creatingPulse.setValue(1);
+      creatingMove.setValue(0);
+      return;
+    }
+
+    const pulse = Animated.loop(
+      Animated.sequence([
+        Animated.timing(creatingPulse, { toValue: 1.2, duration: 700, useNativeDriver: true }),
+        Animated.timing(creatingPulse, { toValue: 1, duration: 700, useNativeDriver: true }),
+      ])
+    );
+
+    const move = Animated.loop(
+      Animated.sequence([
+        Animated.timing(creatingMove, { toValue: 1, duration: 1000, useNativeDriver: true }),
+        Animated.timing(creatingMove, { toValue: 0, duration: 1000, useNativeDriver: true }),
+      ])
+    );
+
+    pulse.start();
+    move.start();
+
+    return () => {
+      pulse.stop();
+      move.stop();
+    };
+  }, [isCreatingRide]);
+
   useEffect(() => {
     const getUserRole = async () => {
       try {
@@ -311,12 +316,10 @@ export default function StepUno() {
         resetAll();
         AsyncStorage.removeItem("selectedServiceId");
         AsyncStorage.removeItem("serviceName");
-        getCurrentLocation("pickup");
-        fetchPrices().then((priceData) => {
-          if (priceData) setPrices(priceData);
-        });
-        fetchUserPaymentSettings();
       }
+      getCurrentLocation("pickup");
+      fetchServices();
+      fetchUserPaymentSettings();
 
       return () => {
         navigation.getParent()?.setOptions({
@@ -412,7 +415,20 @@ export default function StepUno() {
     doFit();
   }, []);
 
+  const focusOnCoordThenFitBoth = (coord, delayMs = 6000) => {
+    if (!coord || !mapRef.current) return;
+    if (mapFocusTimeout.current) clearTimeout(mapFocusTimeout.current);
+    setIgnoreNextRegionChange(true);
+    mapRef.current.animateToRegion({ ...coord, latitudeDelta: 0.002, longitudeDelta: 0.002 }, 800);
+    if (pickupCoord && deliveryCoord) {
+      mapFocusTimeout.current = setTimeout(() => {
+        fitMapBetween(pickupCoord, deliveryCoord);
+      }, delayMs);
+    }
+  };
+
   useEffect(() => {
+    if (mapFocusTimeout.current) return;
     if (pickupCoord && deliveryCoord) {
       const timer = setTimeout(() => fitMapBetween(pickupCoord, deliveryCoord), 400);
       return () => clearTimeout(timer);
@@ -446,6 +462,11 @@ export default function StepUno() {
     else setRouteCoords([]);
   }, [pickupCoord, deliveryCoord]);
 
+  const getLocationBiasParam = (lat, lng, radiusMeters = 20000) => {
+    if (lat == null || lng == null || isNaN(lat) || isNaN(lng)) return "";
+    return `&locationbias=circle:${radiusMeters}@${lat},${lng}`;
+  };
+
   const searchMapLocation = async (query, userLat, userLng) => {
     setMapSearchQuery(query);
     if (searchTimeout.current) clearTimeout(searchTimeout.current);
@@ -457,7 +478,7 @@ export default function StepUno() {
           const encodedQuery = encodeURIComponent(query);
           const lat = userLat ?? userLocationRef.current?.latitude;
           const lng = userLng ?? userLocationRef.current?.longitude;
-          const locationBias = lat && lng ? `&locationbias=point:${lat},${lng}` : "";
+          const locationBias = getLocationBiasParam(lat, lng, 20000);
           const url = `https://maps.googleapis.com/maps/api/place/autocomplete/json?input=${encodedQuery}&components=country:${countryCode}${locationBias}&key=${GOOGLE_MAPS_API_KEY}`;
           const response = await fetch(url);
           const data = await response.json();
@@ -515,16 +536,18 @@ export default function StepUno() {
         const location = data.result.geometry.location;
         let formattedAddress = data.result.formatted_address || description || "";
         if (/^[\w\d]+\+\w+/.test(formattedAddress)) formattedAddress = description || "";
-        setIgnoreNextRegionChange(true);
-        mapRef.current?.animateToRegion({ latitude: location.lat, longitude: location.lng, latitudeDelta: 0.01, longitudeDelta: 0.01 }, 1000);
         if (isLocationPickup) {
           setPickupAddress(formattedAddress);
           setPickupCoord({ latitude: location.lat, longitude: location.lng });
+          setIgnoreNextRegionChange(true);
+          mapRef.current?.animateToRegion({ latitude: location.lat, longitude: location.lng, latitudeDelta: 0.01, longitudeDelta: 0.01 }, 1000);
         } else {
           setDeliveryAddress(formattedAddress);
-          setDeliveryCoord({ latitude: location.lat, longitude: location.lng });
+          const coords = { latitude: location.lat, longitude: location.lng };
+          setDeliveryCoord(coords);
           await saveRecentLocation({ place_id: placeId, description: formattedAddress });
           expandSheet();
+          focusOnCoordThenFitBoth(coords, 6000);
         }
         setMapSearchResults([]);
         setMapSearchQuery("");
@@ -587,8 +610,10 @@ export default function StepUno() {
       setPickupCoord({ latitude, longitude });
     } else {
       setDeliveryAddress(address);
-      setDeliveryCoord({ latitude, longitude });
+      const coords = { latitude, longitude };
+      setDeliveryCoord(coords);
       expandSheet();
+      focusOnCoordThenFitBoth(coords, 6000);
     }
     setPinMode(false);
     setPinAddress("");
@@ -646,44 +671,16 @@ export default function StepUno() {
     }
   };
 
-  const fetchPrices = async () => {
-    try {
-      const token = await AsyncStorage.getItem("userToken");
-      if (!token) {
-        console.error("No se encontro token de autenticacion");
-        return null;
-      }
-      const response = await fetch(`${BASE_URL}precios/activos`, {
-        method: "GET",
-        headers: { Accept: "application/json", Authorization: `Bearer ${token}` },
-      });
-      if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
-      const data = await response.json();
-      console.log("Precios obtenidos:", data);
-      return data.data;
-    } catch (error) {
-      console.error("Error al obtener precios:", error);
-      return null;
-    }
-  };
-
-  const fetchServicesByVehicleType = async (type) => {
+  const fetchServices = async () => {
     try {
       setIsLoadingServices(true);
-      const token = await AsyncStorage.getItem("userToken");
-      if (!token) {
-        console.error("No se encontro token de autenticacion");
-        return;
-      }
-      const role = `rider.${type}`;
-      console.log(`Consultando servicios para: ${role}`);
-      const response = await fetch(`${BASE_URL}services/all/${role}`, {
+      const response = await fetch(`${BASE_URL}services`, {
         method: "GET",
-        headers: { Accept: "application/json", Authorization: `Bearer ${token}` },
+        headers: { Accept: "application/json" },
       });
       if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
       const data = await response.json();
-      console.log(`Servicios para ${role}:`, data);
+      console.log("Servicios obtenidos:", data);
       if (data && data.services) {
         setAvailableServices(data.services);
       } else {
@@ -691,24 +688,11 @@ export default function StepUno() {
         setAvailableServices([]);
       }
     } catch (error) {
-      console.error(`Error al obtener servicios para ${type}:`, error);
+      console.error("Error al obtener servicios:", error);
       setAvailableServices([]);
     } finally {
       setIsLoadingServices(false);
     }
-  };
-
-  const getPricingData = (prices, vehicleType, tariffType) => {
-    if (!prices || !vehicleType || !tariffType) return { pricePerKm: null, basePrice: 0 };
-    const rolRider = `rider.${vehicleType}`;
-    const relevantPrice = prices.find(
-      (price) => price.rol_rider === rolRider && price.tipo_tarifa === tariffType && price.estado === "activo"
-    );
-    if (!relevantPrice) return { pricePerKm: null, basePrice: 0 };
-    return {
-      pricePerKm: parseFloat(relevantPrice.precio),
-      basePrice: relevantPrice.precio_base ? parseFloat(relevantPrice.precio_base) : 0,
-    };
   };
 
   const getCoordinatesFromAddress = async (address) => {
@@ -812,15 +796,13 @@ export default function StepUno() {
   const formatPrice = (value) => Math.round(value).toLocaleString("es-CO");
 
   const computeSuggestedPrice = (distKm) => {
-    if (pricePerKm === null || basePrice === undefined) return 0;
-    const servicePrice = selectedServiceId
-      ? (() => {
-          const selectedService = availableServices.find((s) => s.id.toString() === selectedServiceId);
-          return selectedService ? parseFloat(selectedService.precio) || 0 : 0;
-        })()
-      : 0;
+    const selectedService = availableServices.find((s) => s.id.toString() === selectedServiceId);
+    if (!selectedService) return 0;
+    const base = parseFloat(selectedService.precio_base) || 0;
+    const perKm = parseFloat(selectedService.precio_km) || 0;
+    const additional = parseFloat(selectedService.precio_adicional) || 0;
     const dist = distKm && distKm > 0 ? distKm : 0;
-    let calculated = basePrice + dist * pricePerKm + servicePrice;
+    let calculated = base + dist * perKm + additional;
     calculated = Math.max(calculated, 5.0);
     return parseFloat(calculated.toFixed(0));
   };
@@ -835,7 +817,7 @@ export default function StepUno() {
   };
 
   const calculateTotalPrice = async () => {
-    if (pickupAddress && deliveryAddress && pricePerKm !== null) {
+    if (pickupAddress && deliveryAddress && selectedServiceId) {
       setIsCalculatingPrice(true);
       setPriceError(null);
       try {
@@ -873,11 +855,11 @@ export default function StepUno() {
       setIsSearchingPickup(true);
       setShowPickupSuggestions(true);
       try {
-        const countryCode = "co";
+        const countryCode = "CO";
         const encodedQuery = encodeURIComponent(text.trim());
-        const userLat = userLocationRef.current?.latitude || 4.60971;
-        const userLng = userLocationRef.current?.longitude || -74.08175;
-        const locationBias = `&location=${userLat},${userLng}&radius=50000`;
+        const userLat = userLocationRef.current?.latitude;
+        const userLng = userLocationRef.current?.longitude;
+        const locationBias = getLocationBiasParam(userLat, userLng, 20000);
         const url = `https://maps.googleapis.com/maps/api/place/autocomplete/json?input=${encodedQuery}&components=country:${countryCode}${locationBias}&key=${GOOGLE_MAPS_API_KEY}`;
         const response = await fetch(url);
         const data = await response.json();
@@ -904,11 +886,12 @@ export default function StepUno() {
       setIsSearchingDelivery(true);
       setShowDeliverySuggestions(true);
       try {
-        const countryCode = "co";
+        const countryCode = "CO";
         const encodedQuery = encodeURIComponent(text.trim());
-        const userLat = userLocationRef.current?.latitude || 4.60971;
-        const userLng = userLocationRef.current?.longitude || -74.08175;
-        const locationBias = `&location=${userLat},${userLng}&radius=50000`;
+        // Para el destino sesgamos desde el punto de recogida si ya existe; si no, desde la ubicacion del usuario
+        const biasLat = pickupCoord?.latitude ?? userLocationRef.current?.latitude;
+        const biasLng = pickupCoord?.longitude ?? userLocationRef.current?.longitude;
+        const locationBias = getLocationBiasParam(biasLat, biasLng, 20000);
         const url = `https://maps.googleapis.com/maps/api/place/autocomplete/json?input=${encodedQuery}&components=country:${countryCode}${locationBias}&key=${GOOGLE_MAPS_API_KEY}`;
         const response = await fetch(url);
         const data = await response.json();
@@ -942,7 +925,11 @@ export default function StepUno() {
     setDeliveryAddress(item.description);
     setShowDeliverySuggestions(false);
     const coords = await geocodePlaceId(item.place_id);
-    if (coords) setDeliveryCoord(coords);
+    if (coords) {
+      setDeliveryCoord(coords);
+      focusOnCoordThenFitBoth(coords, 6000);
+      await saveRecentLocation({ place_id: item.place_id, description: item.description });
+    }
   };
 
   const fetchUserPaymentSettings = async () => {
@@ -972,9 +959,22 @@ export default function StepUno() {
     }
   };
 
+  const getPaymentMethodLabel = (method) => {
+    switch (method) {
+      case "efectivo":
+        return "Efectivo";
+      case "nequi":
+        return "Nequi";
+      case "bancolombia":
+        return "Bancolombia";
+      default:
+        return "Nequi o Bancolombia";
+    }
+  };
+
   const getDefaultPaymentMethod = (settings) => {
     if (settings && settings.puede_pagar_efectivo) return "efectivo";
-    return "tarjeta";
+    return "nequi";
   };
 
   const crearCarrera = async () => {
@@ -993,14 +993,14 @@ export default function StepUno() {
           observaciones: observations || "",
           origen: pickupAddress || "",
           destino: deliveryAddress || "",
-          metododepago: paymentMethod === "tarjeta" ? "Nequi o Bancolombia" : "Efectivo",
+          metododepago: getPaymentMethodLabel(paymentMethod),
         }),
         punto_recogida: JSON.stringify(puntoRecogidaCoords),
         destino: JSON.stringify(destinoCoords),
         costo: totalPriceRaw.current,
         distancia: distanceInKm,
         estado: "pendiente",
-        metodo_pago: paymentMethod === "tarjeta" ? "Nequi o Bancolombia" : "Efectivo",
+        metodo_pago: getPaymentMethodLabel(paymentMethod),
       };
       console.log("Datos de carrera a enviar:", carreraData);
       const token = await AsyncStorage.getItem("userToken");
@@ -1013,17 +1013,20 @@ export default function StepUno() {
       const data = await response.json();
       if (!response.ok) throw new Error(data.message || "Error al crear la carrera");
       console.log("Carrera creada exitosamente:", data);
+      let newCarreraId = null;
       if (data && data.carrera && data.carrera.id) {
-        await AsyncStorage.setItem("carreraId", data.carrera.id.toString());
+        newCarreraId = data.carrera.id;
+        await AsyncStorage.setItem("carreraId", newCarreraId.toString());
+      } else if (data && data.id) {
+        newCarreraId = data.id;
+        await AsyncStorage.setItem("carreraId", newCarreraId.toString());
       }
-      setModalVisible(true);
+      setCreatedCarreraId(newCarreraId);
       return data;
     } catch (error) {
       console.error("Error al crear carrera:", error);
       setErrorModalVisible(true);
       return null;
-    } finally {
-      setIsCreatingRide(false);
     }
   };
 
@@ -1040,34 +1043,65 @@ export default function StepUno() {
       showAlert("No se ha podido calcular el precio del servicio. Por favor verifica las direcciones ingresadas.");
       return;
     }
+
+    setIsCreatingRide(true);
+    setShowGoToRide(false);
+    const startTime = Date.now();
+    let result = null;
+    let createError = null;
+
     try {
-      await crearCarrera();
+      result = await crearCarrera();
     } catch (error) {
       console.error("Error en el proceso:", error);
-      setErrorModalVisible(true);
+      createError = error;
+    }
+
+    const elapsed = Date.now() - startTime;
+    const remaining = Math.max(0, 3000 - elapsed);
+
+    setTimeout(() => {
+      if (createError || !result) {
+        setIsCreatingRide(false);
+        setErrorModalVisible(true);
+        return;
+      }
+
+      const newCarreraId = result?.carrera?.id || result?.id;
+      if (newCarreraId) {
+        setCreatedCarreraId(newCarreraId);
+        setShowGoToRide(true);
+      } else {
+        setIsCreatingRide(false);
+        setErrorModalVisible(true);
+      }
+    }, remaining);
+  };
+
+  const handleGoToRide = () => {
+    setIsCreatingRide(false);
+    setShowGoToRide(false);
+    if (createdCarreraId) {
+      navigation.navigate("DetalleCarrera", { tripId: createdCarreraId, carreraId: createdCarreraId });
     }
   };
 
-  const handleVehicleSelect = (type) => {
-    console.log(`Seleccionando vehiculo: ${type}`);
-    setVehicleType(type);
-    setServiceCategory(null);
-    setSelectedServiceId(null);
-    setServiceDetails({ nombre_servicio: "", precio_kilometro: 0 });
-    setBidOffset(0);
-    fetchServicesByVehicleType(type);
-  };
-
   const handleServiceSelect = (service) => {
-    console.log(`Datos completos del servicio:`, service);
+    console.log("Datos completos del servicio:", service);
     if (service.icono) {
       console.log(`Icono del servicio: ${service.icono}`);
       console.log(`URL completa: ${BASE_URL}${service.icono}`);
     } else {
-      console.log(`El servicio no tiene icono`);
+      console.log("El servicio no tiene icono");
     }
     setSelectedServiceId(service.id.toString());
-    setServiceDetails({ nombre_servicio: service.nombre || "", precio_kilometro: service.precio || 0 });
+    setServiceDetails({
+      nombre_servicio: service.nombre || "",
+      precio_kilometro: service.precio_km || 0,
+      precio_base: service.precio_base || 0,
+      precio_adicional: service.precio_adicional || 0,
+    });
+    setBidOffset(0);
     AsyncStorage.setItem("selectedServiceId", service.id.toString());
     if (service.nombre) AsyncStorage.setItem("serviceName", service.nombre);
   };
@@ -1087,15 +1121,15 @@ export default function StepUno() {
         await AsyncStorage.removeItem("selectedServiceId");
         await AsyncStorage.removeItem("serviceName");
         setSelectedServiceId(null);
-        setVehicleType(null);
-        setServiceDetails({ nombre_servicio: "", precio_kilometro: 0 });
-        const priceData = await fetchPrices();
-        if (priceData) setPrices(priceData);
+        setServiceDetails({
+          nombre_servicio: "",
+          precio_kilometro: 0,
+          precio_base: 0,
+          precio_adicional: 0,
+        });
+        await fetchServices();
         await fetchUserPaymentSettings();
-        setTariffType(determineTariffType());
         verifyApiKey();
-        const intervalId = setInterval(() => setTariffType(determineTariffType()), 60000);
-        return () => clearInterval(intervalId);
       } catch (error) {
         console.error("Error cargando datos iniciales:", error);
       }
@@ -1103,48 +1137,21 @@ export default function StepUno() {
     loadInitialData();
   }, []);
 
-  // Actualizar precio por km y base al cambiar vehiculo/tarifa
+  // Calcular precio cuando cambian direcciones o servicio seleccionado
   useEffect(() => {
-    if (prices.length > 0 && vehicleType) {
-      const { pricePerKm, basePrice } = getPricingData(prices, vehicleType, tariffType);
-      console.log(`Precio por km para ${vehicleType} en horario ${tariffType}: ${pricePerKm}`);
-      console.log(`Precio base para ${vehicleType} en horario ${tariffType}: ${basePrice}`);
-      setPricePerKm(pricePerKm);
-      setBasePrice(basePrice);
-    }
-  }, [prices, vehicleType, tariffType]);
-
-  // Calcular precio cuando cambian direcciones, precio por km o base
-  useEffect(() => {
-    if (pickupAddress && deliveryAddress && pricePerKm !== null) {
+    if (pickupAddress && deliveryAddress && selectedServiceId) {
       calculateTotalPrice();
     } else {
       updatePriceDisplay(0);
     }
-  }, [pickupAddress, deliveryAddress, pricePerKm, basePrice]);
-
-  // Recalcular precio al cambiar servicio seleccionado
-  useEffect(() => {
-    if (pickupAddress && deliveryAddress && pricePerKm !== null && selectedServiceId) {
-      calculateTotalPrice();
-    } else {
-      updatePriceDisplay(distanceInKm || 0);
-    }
-  }, [selectedServiceId]);
+  }, [pickupAddress, deliveryAddress, selectedServiceId]);
 
   // Actualizar display cuando cambia el bid offset
   useEffect(() => {
     updatePriceDisplay(distanceInKm || 0);
   }, [bidOffset]);
 
-  // Auto-seleccionar primer vehiculo y primer servicio al cargar precios
-  useEffect(() => {
-    if (prices.length > 0 && !vehicleType) {
-      const defaultType = userRole === "comercio" ? "moto" : "taxi";
-      handleVehicleSelect(defaultType);
-    }
-  }, [prices, userRole]);
-
+  // Auto-seleccionar primer servicio al cargar
   useEffect(() => {
     if (availableServices.length > 0 && !selectedServiceId) {
       handleServiceSelect(availableServices[0]);
@@ -1178,6 +1185,26 @@ export default function StepUno() {
         duration: 1600,
         useNativeDriver: true,
       })
+    ).start();
+  }, []);
+
+  // Animacion de destello en boton de accion
+  useEffect(() => {
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(shimmerAnim, { toValue: screenW, duration: 900, useNativeDriver: true }),
+        Animated.timing(shimmerAnim, { toValue: screenW, duration: 5000, useNativeDriver: true }),
+      ])
+    ).start();
+  }, []);
+
+  // Animacion del handle del bottom sheet
+  useEffect(() => {
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(dragHandleAnim, { toValue: 1, duration: 1200, useNativeDriver: false }),
+        Animated.timing(dragHandleAnim, { toValue: 0, duration: 1200, useNativeDriver: false }),
+      ])
     ).start();
   }, []);
 
@@ -1232,8 +1259,14 @@ export default function StepUno() {
     setSearchModalVisible(true);
   };
 
-  const allowedVehicles = VEHICLES.filter((v) => (userRole === "comercio" ? v.type === "moto" : true));
-  const currentVehicle = VEHICLES.find((v) => v.type === vehicleType) || allowedVehicles[0] || VEHICLES[0];
+  const currentService = availableServices.find((s) => s.id.toString() === selectedServiceId);
+
+  const getServiceIconUrl = (service) => {
+    if (!service || !service.icono) return null;
+    return service.icono.startsWith("http")
+      ? service.icono
+      : `${BASE_URL.toString().replace("/api", "")}storage/${service.icono}`;
+  };
 
   const getTrafficLevel = () => {
     if (!deliveryCoord || routeDuration === null || routeDurationInTraffic === null) return "ok";
@@ -1416,20 +1449,30 @@ export default function StepUno() {
         </View>
 
         {/* BOTTOM SHEET */}
-        {!pinMode && (
+        {!pinMode && !isCreatingRide && (
         <Animated.View
           style={[styles.sheet, { height: sheetAnim }]}
           {...panResponder.panHandlers}
         >
           <View style={styles.dragHandleZone}>
+            <Animated.View
+              style={[
+                styles.sheetTopBorder,
+                {
+                  width: dragHandleAnim.interpolate({
+                    inputRange: [0, 1],
+                    outputRange: [42, screenW * 0.3],
+                  }),
+                },
+              ]}
+            />
             <View style={styles.dragHandle} />
           </View>
 
           {!sheetExpanded ? (
             <PeekSummary
-              vehicle={currentVehicle}
+              service={currentService ? { name: currentService.nombre, iconUrl: getServiceIconUrl(currentService) } : null}
               price={displayPrice}
-              eta={getETA()}
               onGo={handleContinue}
               onExpand={toggleSheet}
             />
@@ -1441,29 +1484,11 @@ export default function StepUno() {
                 showsVerticalScrollIndicator={false}
                 keyboardShouldPersistTaps="handled"
               >
-                <View style={styles.sheetHeader}>
-                  <View style={styles.sheetHeaderAccent} />
-                  <Text style={styles.sheetTitle}>Elige tu vehiculo</Text>
-                  <View style={{ width: 30 }} />
-                </View>
-
                 <VehicleCarousel
-                  vehicles={VEHICLES.filter((v) => (userRole === "comercio" ? v.type === "moto" : true))}
-                  selectedType={vehicleType}
-                  onSelect={handleVehicleSelect}
-                  prices={prices}
-                  tariffType={tariffType}
-                  distanceKm={distanceInKm}
-                />
-
-                <View style={styles.sectionHeader}>
-                  <Text style={styles.sectionTitle}>Servicio</Text>
-                </View>
-                <ServiceSelector
                   services={availableServices}
                   selectedId={selectedServiceId}
                   onSelect={handleServiceSelect}
-                  loading={isLoadingServices}
+                  distanceKm={distanceInKm}
                 />
 
                 <BidPanel
@@ -1492,6 +1517,20 @@ export default function StepUno() {
                     onPress={handleContinue}
                     activeOpacity={0.8}
                   >
+                    <Animated.View
+                      style={[
+                        styles.shimmer,
+                        { transform: [{ translateX: shimmerAnim }] },
+                      ]}
+                      pointerEvents="none"
+                    >
+                      <LinearGradient
+                        colors={["rgba(255,255,255,0)", "rgba(255,255,255,0.4)", "rgba(255,255,255,0)"]}
+                        start={{ x: 0, y: 0 }}
+                        end={{ x: 1, y: 0 }}
+                        style={styles.shimmerGradient}
+                      />
+                    </Animated.View>
                     {isCreatingRide ? (
                       <ActivityIndicator size="small" color="#FFF" />
                     ) : (
@@ -1553,17 +1592,30 @@ export default function StepUno() {
                 </TouchableOpacity>
               )}
               <TouchableOpacity
-                style={[styles.paymentOption, paymentMethod === "tarjeta" && styles.paymentOptionActive]}
-                onPress={() => { handlePaymentMethodSelect("tarjeta"); setPaymentModalVisible(false); }}
+                style={[styles.paymentOption, paymentMethod === "nequi" && styles.paymentOptionActive]}
+                onPress={() => { handlePaymentMethodSelect("nequi"); setPaymentModalVisible(false); }}
               >
                 <View style={styles.paymentOptionIcon}>
-                  <MaterialCommunityIcons name="credit-card" size={20} color="#0F172A" />
+                  <MaterialCommunityIcons name="cellphone" size={20} color="#0F172A" />
                 </View>
                 <View style={{ flex: 1 }}>
-                  <Text style={styles.paymentOptionText}>{TEXTO_PAGO}</Text>
-                  <Text style={styles.paymentOptionSub}>Pago digital</Text>
+                  <Text style={styles.paymentOptionText}>Nequi</Text>
+                  <Text style={styles.paymentOptionSub}>Pago por Nequi</Text>
                 </View>
-                {paymentMethod === "tarjeta" && <Ionicons name="checkmark-circle" size={22} color="#FF5500" />}
+                {paymentMethod === "nequi" && <Ionicons name="checkmark-circle" size={22} color="#FF5500" />}
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.paymentOption, paymentMethod === "bancolombia" && styles.paymentOptionActive]}
+                onPress={() => { handlePaymentMethodSelect("bancolombia"); setPaymentModalVisible(false); }}
+              >
+                <View style={styles.paymentOptionIcon}>
+                  <MaterialCommunityIcons name="bank" size={20} color="#0F172A" />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.paymentOptionText}>Bancolombia</Text>
+                  <Text style={styles.paymentOptionSub}>Transferencia Bancolombia</Text>
+                </View>
+                {paymentMethod === "bancolombia" && <Ionicons name="checkmark-circle" size={22} color="#FF5500" />}
               </TouchableOpacity>
             </View>
           </View>
@@ -1574,13 +1626,24 @@ export default function StepUno() {
           visible={isModalVisible}
           tipo="success"
           mensaje="Tu solicitud ha sido enviada. Un conductor la tomara pronto."
-          onCerrar={() => { setModalVisible(false); navigation.goBack(); }}
+          onCerrar={() => {
+            setModalVisible(false);
+            if (createdCarreraId) {
+              navigation.navigate("DetalleCarrera", { tripId: createdCarreraId, carreraId: createdCarreraId });
+            } else {
+              navigation.goBack();
+            }
+          }}
           onPrimary={() => {
             setModalVisible(false);
-            navigation.goBack();
-            setTimeout(() => navigation.getParent()?.navigate("Pedidos"), 200);
+            if (createdCarreraId) {
+              navigation.navigate("DetalleCarrera", { tripId: createdCarreraId, carreraId: createdCarreraId });
+            } else {
+              navigation.goBack();
+              setTimeout(() => navigation.getParent()?.navigate("Pedidos"), 200);
+            }
           }}
-          primaryLabel="Ver mis viajes"
+          primaryLabel={createdCarreraId ? "Ver mi carrera" : "Ver mis viajes"}
         />
 
         {/* Modal de error */}
@@ -1611,14 +1674,48 @@ export default function StepUno() {
           </View>
         )}
 
-        {/* Loading global */}
+        {/* Loading global creando carrera */}
         {isCreatingRide && (
-          <View style={styles.globalLoadingContainer}>
-            <View style={styles.globalLoadingContent}>
-              <ActivityIndicator size="large" color="#FF5500" />
-              <Text style={styles.globalLoadingText}>Creando servicio...</Text>
+          <TouchableOpacity
+            style={styles.globalLoadingContainer}
+            activeOpacity={1}
+            onPress={() => {}}
+          >
+            <View style={styles.creatingRideContent}>
+              {!showGoToRide ? (
+                <>
+                  <View style={styles.creatingRideRoad}>
+                    <Animated.View
+                      style={[
+                        styles.creatingRideVehicle,
+                        {
+                          transform: [
+                            { translateX: creatingMove.interpolate({ inputRange: [0, 1], outputRange: [-60, 60] }) },
+                            { scale: creatingPulse },
+                          ],
+                        },
+                      ]}
+                    >
+                      <Ionicons name="car-sport" size={48} color="#FF5500" />
+                    </Animated.View>
+                  </View>
+                  <Text style={styles.creatingRideTitle}>Se está creando tu carrera</Text>
+                  <Text style={styles.creatingRideSub}>Buscando el mejor conductor para ti...</Text>
+                </>
+              ) : (
+                <>
+                  <View style={styles.creatingRideSuccessIcon}>
+                    <Ionicons name="checkmark-circle" size={64} color="#10B981" />
+                  </View>
+                  <Text style={styles.creatingRideTitle}>¡Carrera creada!</Text>
+                  <Text style={styles.creatingRideSub}>Tu solicitud fue enviada exitosamente.</Text>
+                  <TouchableOpacity style={styles.goToRideBtn} onPress={handleGoToRide} activeOpacity={0.8}>
+                    <Text style={styles.goToRideBtnText}>Ir a mi carrera</Text>
+                  </TouchableOpacity>
+                </>
+              )}
             </View>
-          </View>
+          </TouchableOpacity>
         )}
       </KeyboardAvoidingView>
     </SafeAreaView>
@@ -1866,8 +1963,16 @@ const styles = StyleSheet.create({
   },
   dragHandleZone: {
     width: "100%",
-    paddingVertical: 10,
+    paddingTop: 8,
+    paddingBottom: 10,
     alignItems: "center",
+    gap: 6,
+  },
+  sheetTopBorder: {
+    height: 2,
+    borderRadius: 3,
+    marginTop: -10,
+    backgroundColor: "#FF5500",
   },
   dragHandle: {
     width: 42,
@@ -1929,11 +2034,21 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.4,
     shadowRadius: 24,
     elevation: 8,
+    overflow: "hidden",
   },
   goBtnDisabled: {
     backgroundColor: "#CBD5E1",
     shadowOpacity: 0,
     elevation: 0,
+  },
+  shimmer: {
+    ...StyleSheet.absoluteFillObject,
+    width: screenW,
+    height: "100%",
+  },
+  shimmerGradient: {
+    width: 80,
+    height: "100%",
   },
   goBtnText: {
     fontSize: 14,
@@ -2010,10 +2125,10 @@ const styles = StyleSheet.create({
   // Loading
   globalLoadingContainer: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: "rgba(15,23,42,0.45)",
+    backgroundColor: "rgba(15,23,42,0.55)",
     justifyContent: "center",
     alignItems: "center",
-    zIndex: 5000,
+    zIndex: 99999,
   },
   globalLoadingContent: {
     backgroundColor: "#FFFFFF",
@@ -2039,5 +2154,65 @@ const styles = StyleSheet.create({
     fontFamily: "Montserrat",
     color: "#64748B",
     textAlign: "center",
+  },
+  creatingRideContent: {
+    backgroundColor: "#FFFFFF",
+    borderRadius: 28,
+    paddingVertical: 36,
+    paddingHorizontal: 32,
+    alignItems: "center",
+    shadowColor: "#0F172A",
+    shadowOffset: { width: 0, height: 24 },
+    shadowOpacity: 0.22,
+    shadowRadius: 70,
+    elevation: 24,
+    minWidth: 260,
+  },
+  creatingRideRoad: {
+    width: 160,
+    height: 80,
+    justifyContent: "center",
+    alignItems: "center",
+    borderBottomWidth: 3,
+    borderBottomColor: "#E2E8F0",
+    marginBottom: 20,
+  },
+  creatingRideVehicle: {
+    position: "absolute",
+  },
+  creatingRideTitle: {
+    fontSize: 17,
+    fontFamily: "MontserratBold",
+    fontWeight: "bold",
+    color: "#0F172A",
+    textAlign: "center",
+  },
+  creatingRideSub: {
+    marginTop: 6,
+    fontSize: 13,
+    fontFamily: "Montserrat",
+    color: "#64748B",
+    textAlign: "center",
+  },
+  creatingRideSuccessIcon: {
+    marginBottom: 16,
+  },
+  goToRideBtn: {
+    marginTop: 20,
+    backgroundColor: "#FF5500",
+    paddingHorizontal: 28,
+    paddingVertical: 14,
+    borderRadius: 14,
+    shadowColor: "#FF5500",
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.3,
+    shadowRadius: 16,
+    elevation: 6,
+  },
+  goToRideBtnText: {
+    fontSize: 15,
+    fontFamily: "MontserratBold",
+    fontWeight: "bold",
+    color: "#FFFFFF",
   },
 });

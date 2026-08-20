@@ -18,10 +18,12 @@ function normalizePedido(p) {
     es_carrera: false,
     estado: p.estado,
     costo_total: p.costo_total || 0,
+    costo_envio: p.costo_envio || 0,
     metodo_pago: p.metodo_pago || "efectivo",
     created_at: p.created_at,
     comercio: p.comercio || null,
     usuario: p.user || p.usuario || null,
+    user_id: p.user_id || p.user?.id || null,
     pedido_lists: (p.items || []).map((item) => ({
       cantidad: item.cantidad || 0,
       producto: item.producto || {},
@@ -156,9 +158,10 @@ export default function usePedidos() {
     const token = await AsyncStorage.getItem("userToken");
     if (!token) throw new Error("No se encontró token");
 
-    const userDataStr = await AsyncStorage.getItem("userData");
-    const userData = userDataStr ? JSON.parse(userDataStr) : {};
-    const userId = userData.id || pedido.usuario?.id || pedido.user_id || null;
+    const userId = pedido.user_id || pedido.usuario?.id || null;
+    if (!userId) {
+      throw new Error("ID de usuario no encontrado en el pedido");
+    }
 
     const rc = pedido.routeCoords || {};
     const startLugar = pedido.start_lugar || pedido.origen || "";
@@ -166,13 +169,35 @@ export default function usePedidos() {
 
     logger.summary("CREAR_CARRERA", `pedido: ${pedido.id}, user: ${userId}, coords: ${rc.originLat},${rc.originLng} -> ${rc.destLat},${rc.destLng}`);
 
+    // Obtener service_id del comercio
+    let serviceId = null;
+    try {
+      const serviceUrl = `${BASE_URL}services/comercio`;
+      logger.request("GET", serviceUrl);
+      const serviceRes = await fetch(serviceUrl, {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          Accept: "application/json",
+        },
+      });
+      if (serviceRes.ok) {
+        const serviceData = await serviceRes.json();
+        serviceId = serviceData?.service?.id || serviceData?.data?.id || null;
+        logger.response("SERVICE_ID", serviceRes.status, `service_id: ${serviceId}`);
+      }
+    } catch (e) {
+      logger.error("SERVICE_ID", "Error obteniendo service_id", e);
+    }
+
     const payload = {
       usuario_id: userId,
       conductor_id: null,
       pedido_id: pedido.id,
+      service_id: serviceId,
       punto_recogida: JSON.stringify({ lat: rc.originLat || 0, lng: rc.originLng || 0 }),
       destino: JSON.stringify({ lat: rc.destLat || 0, lng: rc.destLng || 0 }),
-      costo: "0.00",
+      costo: String(parseFloat(pedido.costo_envio || 0).toFixed(2)),
       distancia: 0,
       estado: "pendiente",
       informacion_adicional: JSON.stringify({

@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useRef } from "react";
 import {
   View,
   Text,
@@ -10,6 +10,8 @@ import {
   Modal,
   KeyboardAvoidingView,
   Platform,
+  Animated,
+  Easing,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 
@@ -29,6 +31,30 @@ export default function SearchModal({
     ? suggestions
     : (recentLocations || []).map((r) => ({ ...r, recent: true }));
 
+  const pulseAnim = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    if (!visible) {
+      pulseAnim.setValue(0);
+      return;
+    }
+    const animation = Animated.loop(
+      Animated.sequence([
+        Animated.timing(pulseAnim, { toValue: 1, duration: 700, easing: Easing.out(Easing.ease), useNativeDriver: false }),
+        Animated.timing(pulseAnim, { toValue: 1, duration: 300, useNativeDriver: false }),
+        Animated.timing(pulseAnim, { toValue: 0, duration: 1400, easing: Easing.in(Easing.ease), useNativeDriver: false }),
+        Animated.timing(pulseAnim, { toValue: 0, duration: 2500, useNativeDriver: false }),
+      ])
+    );
+    animation.start();
+    return () => animation.stop();
+  }, [visible, pulseAnim]);
+
+  const orangeOpacity = pulseAnim.interpolate({
+    inputRange: [0, 0.5, 1],
+    outputRange: [0, 1, 0],
+  });
+
   return (
     <Modal visible={visible} animationType="slide" transparent>
       <KeyboardAvoidingView
@@ -41,7 +67,12 @@ export default function SearchModal({
           <View style={styles.header}>
             <View style={styles.headerLeft}>
               <View style={styles.headerIcon}>
-                <Ionicons name="location" size={20} color="#0F172A" />
+                <View style={[styles.iconLayer, styles.grayLayer]}>
+                  <Ionicons name="location" size={20} color="#0F172A" />
+                </View>
+                <Animated.View style={[styles.iconLayer, styles.orangeLayer, { opacity: orangeOpacity }]}>
+                  <Ionicons name="location" size={20} color="#FFFFFF" />
+                </Animated.View>
               </View>
               <View>
                 <Text style={styles.headerTitle}>¿A donde vamos?</Text>
@@ -167,11 +198,23 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 12,
-    backgroundColor: "#F1F5F9",
-    borderWidth: 1,
-    borderColor: "#E2E8F0",
     justifyContent: "center",
     alignItems: "center",
+  },
+  iconLayer: {
+    ...StyleSheet.absoluteFillObject,
+    borderRadius: 12,
+    justifyContent: "center",
+    alignItems: "center",
+    borderWidth: 1,
+  },
+  grayLayer: {
+    backgroundColor: "#F1F5F9",
+    borderColor: "#E2E8F0",
+  },
+  orangeLayer: {
+    backgroundColor: "#FF5500",
+    borderColor: "#FF5500",
   },
   headerTitle: {
     fontSize: 19,

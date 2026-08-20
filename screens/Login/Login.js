@@ -26,6 +26,7 @@ import * as ImagePicker from "expo-image-picker";
 import { Picker } from "@react-native-picker/picker";
 import { useNotification } from "../../context/NotificationContext";
 import { useAlert } from "../../context/AlertContext";
+import { fetchActiveCarrera } from "../../utils/activeRide";
 
 const API_URL = "https://back.carbycol.com/api/";
 
@@ -132,10 +133,22 @@ export default function LoginScreen() {
     } catch (error) { console.error("Error checking login:", error); }
   }, [navigation]);
 
-  const redirectUser = (tipo) => {
-    if (tipo === "usuario") navigation.reset({ index: 0, routes: [{ name: "BottomTabNavigatorUsuario" }] });
-    else if (tipo === "comercio") navigation.reset({ index: 0, routes: [{ name: "BottomTabNavigatorAliado" }] });
-    else navigation.reset({ index: 0, routes: [{ name: "BottomTabNavigatorDelivery" }] });
+  const redirectUser = async (tipo) => {
+    if (tipo === "usuario") {
+      const activa = await fetchActiveCarrera();
+      if (activa && activa.id) {
+        navigation.reset({
+          index: 0,
+          routes: [{ name: "DetalleCarrera", params: { tripId: activa.id, carreraId: activa.id } }],
+        });
+        return;
+      }
+      navigation.reset({ index: 0, routes: [{ name: "BottomTabNavigatorUsuario" }] });
+    } else if (tipo === "comercio") {
+      navigation.reset({ index: 0, routes: [{ name: "BottomTabNavigatorAliado" }] });
+    } else {
+      navigation.reset({ index: 0, routes: [{ name: "BottomTabNavigatorDelivery" }] });
+    }
   };
 
   // ==========================================
@@ -219,9 +232,9 @@ export default function LoginScreen() {
         }).catch(e => console.log("Push error", e));
       }
 
-      setTimeout(() => {
+      setTimeout(async () => {
         setIsLoading(false);
-        redirectUser(data.user.tipo_usuario);
+        await redirectUser(data.user.tipo_usuario);
       }, 500);
     } catch (e) {
       console.error(e);

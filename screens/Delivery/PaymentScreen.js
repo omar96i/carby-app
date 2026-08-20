@@ -18,6 +18,8 @@ import {
   TouchableWithoutFeedback,
   Linking,
   AppState,
+  Animated,
+  PanResponder,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useNavigation, useRoute, useFocusEffect } from "@react-navigation/native";
@@ -35,6 +37,9 @@ import * as ImagePicker from "expo-image-picker";
 import { manipulateAsync, SaveFormat } from "expo-image-manipulator";
 import MapView, { Marker } from "react-native-maps";
 const { height, width } = Dimensions.get("window");
+const screenH = height;
+const COLLAPSED_SHEET_H = 130;
+const EXPANDED_SHEET_H = Math.round(screenH * 0.5);
 import * as Location from "expo-location";
 const PaymentScreen = () => {
   // Estados generales
@@ -70,7 +75,7 @@ const PaymentScreen = () => {
   const [userLocation, setUserLocation] = useState(null);
   const [distance, setDistance] = useState(0);
   const [deliveryFee, setDeliveryFee] = useState(0);
-  const [deliveryPrices, setDeliveryPrices] = useState(null);
+  const [deliveryService, setDeliveryService] = useState(null);
   const [loadingDeliveryFee, setLoadingDeliveryFee] = useState(false);
   const [calculatedDeliveryFee, setCalculatedDeliveryFee] = useState(false);
   const [timeOfDay, setTimeOfDay] = useState("day"); // 'day', 'night', 'holiday'
@@ -83,7 +88,16 @@ const PaymentScreen = () => {
   const [evidenceUploaded, setEvidenceUploaded] = useState(false);
   // Añade este estado en la sección de declaración de estados del componente
   const [lastMapPress, setLastMapPress] = useState(0);
+  const [isLocating, setIsLocating] = useState(true);
   const navigation = useNavigation();
+
+  // Estados para bottom sheet y modo pin
+  const [sheetExpanded, setSheetExpanded] = useState(true);
+  const [pinMode, setPinMode] = useState(false);
+  const [pinAddress, setPinAddress] = useState("");
+  const sheetAnim = useRef(new Animated.Value(COLLAPSED_SHEET_H)).current;
+  const compactOpacity = useRef(new Animated.Value(1)).current;
+  const expandedOpacity = useRef(new Animated.Value(0)).current;
 
   useFocusEffect(useCallback(() => {
     navigation.getParent()?.setOptions({ tabBarStyle: { display: "none" } });
@@ -115,31 +129,98 @@ const PaymentScreen = () => {
 
   const { onPaymentComplete } = route.params || {};
   useEffect(() => {
-    (async () => {
-      let { status } = await Location.requestForegroundPermissionsAsync();
-      if (status !== 'granted') {
-        showAlert("Permiso denegado", "No se puede acceder a la ubicación");
-        return;
+    let isMounted = true;
+
+    const locateUser = async () => {
+      if (!isMounted) return;
+      setIsLocating(true);
+
+      try {
+        let { status } = await Location.requestForegroundPermissionsAsync();
+        if (status !== 'granted') {
+          setIsLocating(false);
+          showAlert("Permiso denegado", "No se puede acceder a la ubicación");
+          return;
+        }
+
+        // 1. Última ubicación conocida (rápida)
+        let lastLocation = null;
+        try {
+          lastLocation = await Location.getLastKnownPositionAsync({ maxAge: 120000 });
+        } catch (e) {
+          console.log("[PaymentScreen] No hay última ubicación conocida");
+        }
+
+        if (lastLocation && isMounted) {
+          const { latitude, longitude } = lastLocation.coords;
+          const region = {
+            latitude,
+            longitude,
+            latitudeDelta: 0.01,
+            longitudeDelta: 0.01,
+          };
+          setMapRegion(region);
+          setSelectedLocation({ latitude, longitude });
+          setUserLocation({ latitude, longitude });
+          userLocationRef.current = { latitude, longitude };
+          if (mapRef.current) {
+            mapRef.current.animateToRegion(region, 800);
+          }
+        }
+
+        // 2. Ubicación precisa actual
+        let currentLocation = null;
+        try {
+          currentLocation = await Promise.race([
+            Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced }),
+            new Promise((_, reject) => setTimeout(() => reject(new Error("Timeout ubicación")), 10000)),
+          ]);
+        } catch (e) {
+          console.log("[PaymentScreen] Timeout o error ubicación precisa:", e.message);
+        }
+
+        const locationToUse = currentLocation || lastLocation;
+
+        if (!locationToUse) {
+          setIsLocating(false);
+          showAlert("Error", "No se pudo obtener tu ubicación. Verifica que el GPS esté activado.");
+          return;
+        }
+
+        if (isMounted) {
+          const { latitude, longitude } = locationToUse.coords;
+          const region = {
+            latitude,
+            longitude,
+            latitudeDelta: 0.01,
+            longitudeDelta: 0.01,
+          };
+
+          setMapRegion(region);
+          setUserLocation({ latitude, longitude });
+          userLocationRef.current = { latitude, longitude };
+          setSelectedLocation({ latitude, longitude });
+          setIgnoreNextRegionChange(true);
+
+          // Dar tiempo a que el mapa monte antes de animar
+          setTimeout(() => {
+            if (mapRef.current) {
+              mapRef.current.animateToRegion(region, 1000);
+            }
+          }, 300);
+
+          resolveAddressFromCoords(latitude, longitude);
+        }
+      } catch (err) {
+        console.error("[PaymentScreen] Error obteniendo ubicación automática:", err);
+        showAlert("Error", "No se pudo obtener tu ubicación actual.");
+      } finally {
+        if (isMounted) setIsLocating(false);
       }
+    };
 
-      const location = await Location.getCurrentPositionAsync({});
-      const { latitude, longitude } = location.coords;
-
-      setMapRegion({
-        latitude,
-        longitude,
-        latitudeDelta: 0.01,
-        longitudeDelta: 0.01,
-      });
-
-      setUserLocation({ latitude, longitude });
-      userLocationRef.current = { latitude, longitude };
-      setSelectedLocation({ latitude, longitude });
-      resolveAddressFromCoords(latitude, longitude);
-      setIgnoreNextRegionChange(true);
-    })().catch((err) => {
-      console.error("Error obteniendo ubicación automática:", err);
-    });
+    locateUser();
+    return () => { isMounted = false; };
   }, []);
 
   const mapRef = useRef(null);
@@ -186,17 +267,6 @@ const PaymentScreen = () => {
     }
   };
 
-  useEffect(() => {
-    const loadRecentsIfEmpty = async () => {
-      if (!mapSearchQuery || mapSearchQuery.trim() === "") {
-        const recents = await getRecentLocations();
-        const recentsWithFlag = recents.map((r) => ({ ...r, recent: true }));
-        setMapSearchResults(recentsWithFlag);
-      }
-    };
-
-    loadRecentsIfEmpty();
-  }, [mapSearchQuery]);
   // Función para buscar ubicaciones en el mapa
   const searchMapLocation = async (query) => {
     setMapSearchQuery(query);
@@ -235,93 +305,87 @@ const PaymentScreen = () => {
         }
       }, 300);
     } else {
-      // Mostrar lugares recientes si el query es corto o vacío
-      const recents = await getRecentLocations();
-      const recentsWithFlag = recents.map((r) => ({ ...r, recent: true }));
-      setMapSearchResults(recentsWithFlag);
+      // No mostrar historial: limpiar resultados si el query es corto o vacío
+      setMapSearchResults([]);
     }
   };
+
 
   const centerMapOnUserLocation = async () => {
+    setIsLocating(true);
     try {
-      showAlert("Ubicándote...", "Buscando tu ubicación...", "info");
+      let { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== "granted") {
+        setIsLocating(false);
+        showAlert("Permiso denegado", "No se pudo acceder a tu ubicación.");
+        return;
+      }
 
-      Location.requestForegroundPermissionsAsync().then(({ status }) => {
-        if (status !== "granted") {
-          showAlert("Permiso denegado", "No se pudo acceder a tu ubicación.");
-          return;
-        }
+      let lastLocation = null;
+      try {
+        lastLocation = await Location.getLastKnownPositionAsync({ maxAge: 120000 });
+      } catch (e) {
+        console.log("[PaymentScreen] No hay última ubicación conocida");
+      }
 
-        Location.getLastKnownPositionAsync({
-          maxAge: 60000,
-        })
-          .then((lastLocation) => {
-            if (lastLocation) {
-              const region = {
-                latitude: lastLocation.coords.latitude,
-                longitude: lastLocation.coords.longitude,
-                latitudeDelta: 0.01,
-                longitudeDelta: 0.01,
-              };
+      if (lastLocation) {
+        const region = {
+          latitude: lastLocation.coords.latitude,
+          longitude: lastLocation.coords.longitude,
+          latitudeDelta: 0.01,
+          longitudeDelta: 0.01,
+        };
+        setMapRegion(region);
+        setSelectedLocation({ latitude: region.latitude, longitude: region.longitude });
+        setUserLocation({ latitude: region.latitude, longitude: region.longitude });
+        userLocationRef.current = { latitude: region.latitude, longitude: region.longitude };
+        setTimeout(() => mapRef.current?.animateToRegion(region, 800), 100);
+      }
 
-              mapRef.current?.animateToRegion(region, 1000); // <--- cambio clave
-              setSelectedLocation({
-                latitude: region.latitude,
-                longitude: region.longitude,
-              });
-            }
+      let currentLocation = null;
+      try {
+        currentLocation = await Promise.race([
+          Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced }),
+          new Promise((_, reject) => setTimeout(() => reject(new Error("Timeout ubicación")), 10000)),
+        ]);
+      } catch (e) {
+        console.log("[PaymentScreen] Timeout o error ubicación precisa:", e.message);
+      }
 
-            Location.getCurrentPositionAsync({
-              accuracy: Location.Accuracy.Balanced,
-            })
-              .then((preciseLocation) => {
-                const region = {
-                  latitude: preciseLocation.coords.latitude,
-                  longitude: preciseLocation.coords.longitude,
-                  latitudeDelta: 0.01,
-                  longitudeDelta: 0.01,
-                };
+      const locationToUse = currentLocation || lastLocation;
+      if (!locationToUse) {
+        setIsLocating(false);
+        showAlert("Error", "No se pudo obtener tu ubicación. Verifica que el GPS esté activado.");
+        return;
+      }
 
-                mapRef.current?.animateToRegion(region, 1000); // <--- también aquí
-                setSelectedLocation({
-                  latitude: region.latitude,
-                  longitude: region.longitude,
-                });
-              })
-              .catch((error) => {
-                console.log("Error obteniendo ubicación precisa:", error);
-              });
-          })
-          .catch((error) => {
-            console.log("Error obteniendo última ubicación conocida:", error);
+      const { latitude, longitude } = locationToUse.coords;
+      const region = {
+        latitude,
+        longitude,
+        latitudeDelta: 0.01,
+        longitudeDelta: 0.01,
+      };
 
-            Location.getCurrentPositionAsync({
-              accuracy: Location.Accuracy.Balanced,
-            })
-              .then((location) => {
-                const region = {
-                  latitude: location.coords.latitude,
-                  longitude: location.coords.longitude,
-                  latitudeDelta: 0.01,
-                  longitudeDelta: 0.01,
-                };
+      setMapRegion(region);
+      setSelectedLocation({ latitude, longitude });
+      setUserLocation({ latitude, longitude });
+      userLocationRef.current = { latitude, longitude };
+      setIgnoreNextRegionChange(true);
 
-                mapRef.current?.animateToRegion(region, 1000);
-                setSelectedLocation({
-                  latitude: region.latitude,
-                  longitude: region.longitude,
-                });
-              })
-              .catch((err) => {
-                showAlert("Error", "No se pudo obtener tu ubicación actual.");
-              });
-          });
-      });
+      setTimeout(() => {
+        if (mapRef.current) mapRef.current.animateToRegion(region, 1000);
+      }, 200);
+
+      resolveAddressFromCoords(latitude, longitude);
     } catch (error) {
-      console.error("Error general en ubicación:", error);
+      console.error("[PaymentScreen] Error general en ubicación:", error);
+      showAlert("Error", "No se pudo obtener tu ubicación actual.");
+    } finally {
+      setIsLocating(false);
     }
   };
-  // Función para seleccionar una ubicación desde resultados de búsqueda
+
   const selectMapLocation = async (placeId, description = null) => {
     try {
       const response = await fetch(
@@ -361,6 +425,7 @@ const PaymentScreen = () => {
 
         setMapSearchResults([]);
         setMapSearchQuery("");
+        setSheetExpanded(false);
       }
     } catch (error) {
       console.error("Error obteniendo detalles del lugar:", error);
@@ -526,7 +591,7 @@ const PaymentScreen = () => {
         const userId = JSON.parse(userData).id;
 
         // Cargar datos secundarios en paralelo (no bloquea la UI)
-        const [userResponse, locationResponse, pricesResponse] = await Promise.allSettled([
+        const [userResponse, locationResponse, serviceResponse] = await Promise.allSettled([
           // Configuración del usuario
           fetch(`${BASE_URL}usuario/${userId}`, {
             method: "GET",
@@ -543,8 +608,8 @@ const PaymentScreen = () => {
               Authorization: `Bearer ${token}`,
             },
           }),
-          // Precios de envío
-          fetch(`${BASE_URL}precios/activos`, {
+          // Servicio de delivery del comercio
+          fetch(`${BASE_URL}services/comercio`, {
             method: "GET",
             headers: {
               Accept: "application/json",
@@ -581,20 +646,16 @@ const PaymentScreen = () => {
           }
         }
 
-        // Procesar respuesta de precios de envío
-        if (pricesResponse.status === "fulfilled" && pricesResponse.value.ok) {
+        // Procesar respuesta de servicio de envío
+        if (serviceResponse.status === "fulfilled" && serviceResponse.value.ok) {
           try {
-            const pricesData = await pricesResponse.value.json();
-            if (pricesData.status && pricesData.data) {
-              // Filtrar solo tarifas para rider.moto
-              const motoRiderPrices = pricesData.data.filter(
-                (price) => price.rol_rider === "rider.moto"
-              );
-              console.log(motoRiderPrices)
-              setDeliveryPrices(motoRiderPrices);
+            const serviceData = await serviceResponse.value.json();
+            console.log("[PaymentScreen] SERVICE COMERCIO ->", JSON.stringify(serviceData));
+            if (serviceData.status && serviceData.service) {
+              setDeliveryService(serviceData.service);
             }
           } catch (error) {
-            console.error("Error parseando precios de envío:", error);
+            console.error("Error parseando servicio de envío:", error);
           }
         }
       } catch (error) {
@@ -790,39 +851,60 @@ const PaymentScreen = () => {
     return leg.distance.value / 1000; // retorno en KM
   };
 
-  // Función para calcular valor de envío según distancia
+  // Función para calcular valor de envío según el servicio de comercio
   const calculateDeliveryFee = (distance) => {
-    if (!deliveryPrices || deliveryPrices.length === 0) {
-      return 10; // Valor predeterminado
+    if (!deliveryService) {
+      console.log("[PaymentScreen] No hay servicio de comercio, usando tarifa por defecto");
+      return 0; // Sin servicio no hay envío calculado aún
     }
 
-    // Encontrar tarifa según horario
-    let priceMultiplier = 1.0;
-    let baseFee = 5; // Tarifa base mínima
+    const baseFee = parseFloat(deliveryService.precio_base || 0);
+    const pricePerKm = parseFloat(deliveryService.precio_km || 0);
+    const additionalFee = parseFloat(deliveryService.precio_adicional || 0);
 
-    const priceData = deliveryPrices.find((price) => {
-      if (timeOfDay === "night" && price.tipo_tarifa === "noche") return true;
-      if (timeOfDay === "holiday" && price.tipo_tarifa === "festivo")
-        return true;
-      if (timeOfDay === "day" && price.tipo_tarifa === "dia") return true;
-      return false;
-    });
+    // Calcular precio: base + (distancia × precio_km) + adicional
+    let fee = baseFee + (distance * pricePerKm) + additionalFee;
 
-    if (priceData) {
-      baseFee = parseFloat(priceData.precio_base || 5);
-      priceMultiplier = parseFloat(priceData.precio || 1.0);
-    }
-
-    // Calcular precio
-    let fee = baseFee;
-    // Si distancia > 1km, agregar cargo por km adicional
-    if (distance > 1) {
-      fee += distance * priceMultiplier;
-    }
+    console.log("[PaymentScreen] DELIVERY FEE -> base:", baseFee, "km:", distance, "pricePerKm:", pricePerKm, "adicional:", additionalFee, "total:", fee);
 
     // Redondear a 2 decimales
-    return Math.round(fee * 100) / 100;
+    return Math.max(0, Math.round(fee * 100) / 100);
   };
+
+  // Calcular distancia por ruta de Google cuando ambas ubicaciones estén listas
+  useEffect(() => {
+    if (!selectedLocation || !establishmentLocation) {
+      console.log("[PaymentScreen] DISTANCE SKIP -> selectedLocation:", !!selectedLocation, "establishmentLocation:", !!establishmentLocation);
+      return;
+    }
+
+    const calcDistance = async () => {
+      console.log("[PaymentScreen] CALCULANDO DISTANCIA -> origen:", establishmentLocation, "destino:", selectedLocation);
+      try {
+        let km = await calculateDistanceGoogle(establishmentLocation, selectedLocation);
+        console.log("[PaymentScreen] DISTANCIA GOOGLE ->", km);
+        setDistance(km);
+      } catch (err) {
+        console.log("[PaymentScreen] Google Directions falló:", err.message);
+        const km = calculateDistance(establishmentLocation, selectedLocation);
+        console.log("[PaymentScreen] DISTANCIA HAVERSINE ->", km);
+        setDistance(km);
+      }
+    };
+
+    calcDistance();
+  }, [selectedLocation, establishmentLocation]);
+
+  // Recalcular envío cuando cambie el servicio o la distancia
+  useEffect(() => {
+    console.log("[PaymentScreen] FEE EFFECT TRIGGER -> deliveryService:", !!deliveryService, "distance:", distance);
+    if (deliveryService) {
+      const fee = calculateDeliveryFee(distance);
+      setDeliveryFee(fee);
+      setCalculatedDeliveryFee(true);
+      console.log("[PaymentScreen] Recalculado envío:", fee);
+    }
+  }, [deliveryService, distance]);
 
   // Seleccionar dirección de sugerencias
   const selectAddress = async (suggestion) => {
@@ -952,7 +1034,8 @@ const PaymentScreen = () => {
         metodo_pago: paymentMethod,
         estado_pago: "pendiente",
         datos_generales: JSON.stringify(locationData),
-        costo_total: finalTotal,
+        costo_total: totalAmount,
+        costo_envio: deliveryFee,
         tipo_viaje: "rider.moto",
         items: orderItems,
       };
@@ -1421,6 +1504,81 @@ const PaymentScreen = () => {
     setShowSuggestions(false);
   };
 
+  // Animación del bottom sheet
+  useEffect(() => {
+    Animated.parallel([
+      Animated.spring(sheetAnim, {
+        toValue: sheetExpanded ? EXPANDED_SHEET_H : COLLAPSED_SHEET_H,
+        useNativeDriver: false,
+        friction: 9,
+        tension: 60,
+      }),
+      Animated.timing(compactOpacity, { toValue: sheetExpanded ? 0 : 1, duration: 200, useNativeDriver: true }),
+      Animated.timing(expandedOpacity, { toValue: sheetExpanded ? 1 : 0, duration: 250, useNativeDriver: true }),
+    ]).start();
+  }, [sheetExpanded]);
+
+  const toggleSheet = () => setSheetExpanded((v) => !v);
+
+  const panResponder = useRef(
+    PanResponder.create({
+      onStartShouldSetPanResponder: () => true,
+      onMoveShouldSetPanResponder: (_, g) => Math.abs(g.dy) > 5,
+      onPanResponderMove: (_, g) => {
+        const base = sheetExpanded ? EXPANDED_SHEET_H : COLLAPSED_SHEET_H;
+        sheetAnim.setValue(Math.max(COLLAPSED_SHEET_H, base - g.dy));
+      },
+      onPanResponderRelease: (_, g) => {
+        const tap = Math.abs(g.dy) < 10 && Math.abs(g.dx) < 10;
+        if (tap) return toggleSheet();
+        if (sheetExpanded) {
+          if (g.dy > 80 || (g.vy || 0) > 0.5) setSheetExpanded(false);
+          else setSheetExpanded(true);
+        } else {
+          if (g.dy < -80 || (g.vy || 0) < -0.5) setSheetExpanded(true);
+          else setSheetExpanded(false);
+        }
+      },
+    })
+  ).current;
+
+  // Modo pin para seleccionar ubicación manualmente
+  const openPinMode = () => {
+    setPinMode(true);
+    setPinAddress(address || "Mueve el mapa para ajustar");
+  };
+
+  const cancelPinMode = () => {
+    setPinMode(false);
+  };
+
+  const confirmPinLocation = () => {
+    if (mapRegion) {
+      const { latitude, longitude } = mapRegion;
+      setSelectedLocation({ latitude, longitude });
+      resolveAddressFromCoords(latitude, longitude);
+    }
+    setPinMode(false);
+  };
+
+  useEffect(() => {
+    if (!pinMode) return;
+    const updatePinAddress = async () => {
+      if (!mapRegion) return;
+      try {
+        const response = await fetch(
+          `https://maps.googleapis.com/maps/api/geocode/json?latlng=${mapRegion.latitude},${mapRegion.longitude}&key=${GOOGLE_MAPS_API_KEY}`
+        );
+        const data = await response.json();
+        if (data.status === "OK" && data.results.length > 0) {
+          setPinAddress(data.results[0].formatted_address);
+        }
+      } catch (e) {}
+    };
+    const timeout = setTimeout(updatePinAddress, 300);
+    return () => clearTimeout(timeout);
+  }, [mapRegion, pinMode]);
+
   return (
     <SafeAreaView style={styles.safeContainer}>
       <StatusBar barStyle="dark-content" />
@@ -1428,400 +1586,393 @@ const PaymentScreen = () => {
         behavior={Platform.OS === "ios" ? "padding" : "height"}
         style={styles.container}
       >
-        {/* Header */}
-        <View style={styles.header}>
-          <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-            <Ionicons name="arrow-back" size={24} color="#FFF" />
-          </TouchableOpacity>
-          <Text style={styles.headerTitle}>Pagar</Text>
-          <View style={{ width: 28 }} />
-        </View>
+        {/* Mapa a pantalla completa */}
+        <View style={styles.mapContainer}>
+          <MapView
+            ref={mapRef}
+            style={styles.map}
+            region={mapRegion}
+            showsUserLocation={true}
+            showsMyLocationButton={false}
+            showsCompass={false}
+            showsScale={false}
+            showsTraffic={false}
+            showsIndoors={false}
+            showsBuildings={false}
+            showsPointsOfInterest={false}
+            toolbarEnabled={false}
+            loadingEnabled={true}
+            loadingIndicatorColor="#fa6205"
+            loadingBackgroundColor="#F2F2F7"
+            onRegionChangeComplete={(region) => {
+              if (ignoreNextRegionChange) {
+                setIgnoreNextRegionChange(false);
+              } else {
+                setMapRegion(region);
+                // Solo actualizar ubicación automáticamente en modo pin al confirmar
+              }
+            }}
+          >
+            {establishmentLocation && (
+              <Marker coordinate={establishmentLocation} anchor={{ x: 0.5, y: 0.5 }}>
+                <View style={styles.originMarker}>
+                  <Ionicons name="storefront" size={14} color="#FFF" />
+                </View>
+              </Marker>
+            )}
+            {selectedLocation && (
+              <Marker coordinate={selectedLocation} anchor={{ x: 0.5, y: 1 }}>
+                <View style={styles.destMarker}>
+                  <Ionicons name="location" size={22} color="#FFF" />
+                </View>
+              </Marker>
+            )}
+          </MapView>
 
-        {/* Main Scrollable Content */}
-        <ScrollView
-          ref={scrollViewRef}
-          style={styles.scrollContainer}
-          contentContainerStyle={styles.scrollContentContainer}
-          showsVerticalScrollIndicator={false}
-        >
-          {/* Delivery Location Section - Inline Map */}
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Ubicación de entrega</Text>
-            <View style={styles.inlineMapCard}>
-              {/* Search bar */}
-              <View style={styles.inlineMapSearchContainer}>
-                <Ionicons name="search" size={18} color="#999" />
-                <TextInput
-                  style={styles.inlineMapSearchInput}
-                  placeholder="Buscar dirección..."
-                  placeholderTextColor="#999"
-                  value={mapSearchQuery}
-                  onChangeText={searchMapLocation}
-                />
-                {mapSearchQuery.length > 0 && (
-                  <TouchableOpacity onPress={() => { setMapSearchQuery(""); setMapSearchResults([]); }}>
-                    <Ionicons name="close-circle" size={20} color="#bbb" />
-                  </TouchableOpacity>
-                )}
+          {/* Header flotante */}
+          <View style={styles.floatingHeader}>
+            <TouchableOpacity style={styles.headerBackBtn} onPress={() => navigation.goBack()} activeOpacity={0.8}>
+              <Ionicons name="arrow-back" size={22} color="#0F172A" />
+            </TouchableOpacity>
+            <Text style={styles.headerTitle}>Confirmar pedido</Text>
+            <View style={{ width: 44 }} />
+          </View>
+          {/* FAB ubicación */}
+          {!pinMode && (
+            <TouchableOpacity style={styles.fabLocate} onPress={centerMapOnUserLocation} activeOpacity={0.8}>
+              <Ionicons name="locate" size={22} color="#0F172A" />
+            </TouchableOpacity>
+          )}
+
+          {/* Pin central - solo visible en modo pin */}
+          {pinMode && (
+            <View style={styles.centerPin} pointerEvents="none">
+              <Ionicons name="location" size={36} color="#fa6205" />
+            </View>
+          )}
+
+          {/* Modo pin overlay */}
+          {pinMode && (
+            <>
+              <View style={styles.pinBanner} pointerEvents="none">
+                <View style={styles.pinBannerContent}>
+                  <Ionicons name="location" size={18} color="#fa6205" />
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.pinBannerTitle}>Ajusta tu ubicación</Text>
+                    <Text style={styles.pinBannerAddress} numberOfLines={1}>{pinAddress || "Mueve el mapa para ajustar"}</Text>
+                  </View>
+                </View>
               </View>
-              {/* Search results */}
-              {mapSearchResults.length > 0 && (
-                <View style={styles.inlineSearchResults}>
-                  {isSearchingMap ? (
-                    <ActivityIndicator size="small" color="#fa6205" style={{ padding: 10 }} />
-                  ) : (
-                    <ScrollView style={styles.inlineSearchResultsScroll} nestedScrollEnabled={true} keyboardShouldPersistTaps="handled">
-                      {mapSearchResults.map((result) => (
-                        <TouchableOpacity
-                          key={result.place_id}
-                          style={styles.inlineSearchResultItem}
-                          onPress={() => selectMapLocation(result.place_id)}
-                        >
-                          <Ionicons
-                            name={result.recent ? "time-outline" : "location-outline"}
-                            size={18}
-                            color={result.recent ? "#888" : "#fa6205"}
-                            style={{ marginRight: 10 }}
-                          />
-                          <Text style={styles.inlineSearchResultText} numberOfLines={2}>
-                            {result.description}
-                          </Text>
-                        </TouchableOpacity>
-                      ))}
-                    </ScrollView>
-                  )}
-                </View>
-              )}
-              {/* Map */}
-              <View style={styles.inlineMapWrapper}>
-                <MapView
-                  ref={mapRef}
-                  style={styles.inlineMap}
-                  region={mapRegion}
-                  liteMode={false}
-                  showsUserLocation={true}
-                  showsMyLocationButton={true}
-                  showsCompass={false}
-                  showsScale={false}
-                  showsTraffic={false}
-                  showsIndoors={false}
-                  showsBuildings={false}
-                  showsPointsOfInterest={false}
-                  toolbarEnabled={false}
-                  loadingEnabled={true}
-                  loadingIndicatorColor="#fa6205"
-                  loadingBackgroundColor="#F2F2F7"
-                  onRegionChangeComplete={(region) => {
-                    if (ignoreNextRegionChange) {
-                      setIgnoreNextRegionChange(false);
-                    } else {
-                      setMapRegion(region);
-                      setSelectedLocation({ latitude: region.latitude, longitude: region.longitude });
-                      resolveAddressFromCoords(region.latitude, region.longitude);
-                    }
-                  }}
-                >
-                  {selectedLocation && (
-                    <Marker
-                      coordinate={{
-                        latitude: selectedLocation.latitude,
-                        longitude: selectedLocation.longitude,
-                      }}
-                      pinColor="#fa6205"
-                    />
-                  )}
-                </MapView>
-                {/* Center pin */}
-                <View style={styles.inlineCenterPin} pointerEvents="none">
-                  <Ionicons name="location" size={32} color="#fa6205" />
-                  <View style={styles.inlineCenterPinDot} />
-                </View>
-                {/* My location button */}
-                <TouchableOpacity style={styles.inlineLocateBtn} onPress={centerMapOnUserLocation}>
-                  <Ionicons name="locate" size={18} color="#fa6205" />
-                  <Text style={styles.inlineLocateLabel}>Ubícame</Text>
+
+              <View style={styles.pinBottomBar}>
+                <TouchableOpacity style={styles.pinCancelBtn} onPress={cancelPinMode} activeOpacity={0.8}>
+                  <Text style={styles.pinCancelText}>Cancelar</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.pinConfirmBtn} onPress={confirmPinLocation} activeOpacity={0.8}>
+                  <Ionicons name="checkmark" size={20} color="#FFF" />
+                  <Text style={styles.pinConfirmText}>Confirmar punto</Text>
                 </TouchableOpacity>
               </View>
-              {/* Selected address */}
-              <View style={styles.inlineAddressRow}>
-                <Ionicons name="location-outline" size={20} color="#fa6205" />
-                <Text style={styles.inlineAddressText} numberOfLines={2}>
-                  {address || "Arrastra el mapa para elegir tu ubicación"}
-                </Text>
-              </View>
-            </View>
-            {/* Distance and delivery info */}
-            {distance > 0 && (
-              <View style={styles.deliveryInfoContainer}>
-                <View style={styles.deliveryInfoRow}>
-                  <Text style={styles.deliveryInfoLabel}>Distancia</Text>
-                  <Text style={styles.deliveryInfoValue}>
-                    {distance.toFixed(2)} km
-                  </Text>
-                </View>
-                <View style={styles.deliveryInfoRow}>
-                  <Text style={styles.deliveryInfoLabel}>Horario</Text>
-                  <Text style={styles.deliveryInfoValue}>
-                    {timeOfDay === "day" && "Diurno"}
-                    {timeOfDay === "night" && "Nocturno"}
-                    {timeOfDay === "holiday" && "Fin de semana/Festivo"}
-                  </Text>
-                </View>
-              </View>
-            )}
-          </View>
-          {/* Order Summary */}
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>
-              Resumen de Orden ({totalQuantity} productos)
-            </Text>
-            <View style={styles.productList}>
-              {products.map((item, index) => (
-                <View
-                  key={`${item.productId}-${index}`}
-                  style={styles.productItemContainer}
-                >
-                  {/* Información principal del producto */}
-                  <View style={styles.productItem}>
-                    <View style={styles.productInfo}>
-                      <Text style={styles.productName} numberOfLines={1}>
-                        {item.productName}
-                      </Text>
-                      <Text style={styles.productQuantity}>
-                        x{item.quantity}
-                      </Text>
-                      <Text style={styles.productBasePrice}>
-                        Base: {"$"}{item.basePrice.toLocaleString()}
-                      </Text>
-                    </View>
-                    <Text style={styles.productPrice}>
-                      {"$"}{item.itemTotal.toLocaleString()}
-                    </Text>
-                  </View>
-
-                  {/* Mostrar adicionales si existen */}
-                  {item.adicionales && item.adicionales.length > 0 && (
-                    <View style={styles.adicionalesContainer}>
-                      <Text style={styles.adicionalesTitle}>
-                        Adicionales:
-                      </Text>
-                      {item.adicionales.map((adicional, adIndex) => (
-                        <View
-                          key={`${adicional.id}-${adIndex}`}
-                          style={styles.adicionalItem}
-                        >
-                          <Text
-                            style={styles.adicionalText}
-                            numberOfLines={1}
-                          >
-                            • {adicional.nombre}
-                          </Text>
-                          <Text style={styles.adicionalQuantity}>
-                            x{adicional.quantity}
-                          </Text>
-                          <Text style={styles.adicionalPrice}>
-                            +{"$"}
-                            {(
-                              parseFloat(adicional.precio) *
-                              adicional.quantity
-                            ).toLocaleString()}
-                          </Text>
-                        </View>
-                      ))}
-                      {/* Mostrar total de adicionales para este producto */}
-                      <View style={styles.adicionalesTotal}>
-                        <Text style={styles.adicionalesTotalText}>
-                          Total adicionales: {"$"}
-                          {item.adicionalesTotal.toLocaleString()}
-                        </Text>
-                      </View>
-                    </View>
-                  )}
-                </View>
-              ))}
-            </View>
-          </View>
-          {/* Price Summary */}
-          <View style={styles.priceContainer}>
-            <View style={styles.priceRow}>
-              <Text style={styles.priceLabel}>Valor envio</Text>
-              <View style={{ flexDirection: "row", alignItems: "center" }}>
-                {loadingDeliveryFee && (
-                  <ActivityIndicator
-                    size="small"
-                    color="#fa6205"
-                    style={{ marginRight: 5 }}
-                  />
-                )}
-                <Text style={styles.priceValue}>
-                  {"$"}{deliveryFee.toLocaleString()}
-                </Text>
-              </View>
-            </View>
-            <View style={styles.priceRow}>
-              <Text style={styles.priceLabel}>Valor compra</Text>
-              <Text style={styles.priceValue}>
-                {"$"}{totalAmount.toLocaleString()}
-              </Text>
-            </View>
-          </View>
-          {/* Payment Method */}
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Metodo de pago</Text>
-
-            {loadingPaymentMethods ? (
-              <View style={styles.loadingContainer}>
-                <ActivityIndicator size="small" color="#fa6205" />
-                <Text style={styles.loadingText}>
-                  Cargando métodos de pago...
-                </Text>
-              </View>
-            ) : (
-              <View style={styles.paymentMethodsContainer}>
-                {/* Cash Option - Solo mostrar si el usuario puede pagar en efectivo */}
-                {userPaymentSettings &&
-                  userPaymentSettings.puede_pagar_efectivo && (
-                    <TouchableOpacity
-                      style={styles.paymentOption}
-                      onPress={() => selectPaymentMethod("efectivo")}
-                    >
-                      <View style={styles.paymentIconContainer}>
-                        <Ionicons
-                          name="wallet-outline"
-                          size={24}
-                          color="#1C1C1E"
-                        />
-                      </View>
-                      <Text style={styles.paymentMethodLabel}>Efectivo</Text>
-                      <View
-                        style={
-                          selectedPaymentMethod === "efectivo"
-                            ? styles.radioButtonSelected
-                            : styles.radioButtonEmpty
-                        }
-                      >
-                        {selectedPaymentMethod === "efectivo" && (
-                          <View style={styles.radioButtonInner} />
-                        )}
-                      </View>
-                    </TouchableOpacity>
-                  )}
-
-                {/* QR Code Option */}
-                {paymentMethods && paymentMethods.qr_estado === 1 && (
-                  <TouchableOpacity
-                    style={styles.paymentOption}
-                    onPress={() => selectPaymentMethod("qr")}
-                  >
-                    <View style={styles.paymentIconContainer}>
-                      <Ionicons
-                        name="qr-code-outline"
-                        size={24}
-                        color="#1C1C1E"
-                      />
-                    </View>
-                    <Text style={styles.paymentMethodLabel}>
-                      Pagar con código QR
-                    </Text>
-                    <View
-                      style={
-                        selectedPaymentMethod === "qr"
-                          ? styles.radioButtonSelected
-                          : styles.radioButtonEmpty
-                      }
-                    >
-                      {selectedPaymentMethod === "qr" && (
-                        <View style={styles.radioButtonInner} />
-                      )}
-                    </View>
-                  </TouchableOpacity>
-                )}
-
-                {/* Mercado Pago Option */}
-                {paymentMethods &&
-                  paymentMethods.mercado_pago_estado === 1 && (
-                    <TouchableOpacity
-                      style={styles.paymentOption}
-                      onPress={() => selectPaymentMethod("mercadopago")}
-                    >
-                      <View style={styles.paymentIconContainer}>
-                        <Ionicons
-                          name="card-outline"
-                          size={24}
-                          color="#1C1C1E"
-                        />
-                      </View>
-                      <Text style={styles.paymentMethodLabel}>
-                        Mercado Pago
-                      </Text>
-                      <View
-                        style={
-                          selectedPaymentMethod === "mercadopago"
-                            ? styles.radioButtonSelected
-                            : styles.radioButtonEmpty
-                        }
-                      >
-                        {selectedPaymentMethod === "mercadopago" && (
-                          <View style={styles.radioButtonInner} />
-                        )}
-                      </View>
-                    </TouchableOpacity>
-                  )}
-              </View>
-            )}
-
-          </View>
-          {/* Extra space at bottom */}
-          <View style={styles.bottomSpace} />
-        </ScrollView>
-
-        {/* Bottom Total and Pay Button */}
-        <View style={styles.bottomContainer}>
-          <Text style={styles.totalAmount}>
-            {"$"}{finalTotal.toLocaleString()}
-          </Text>
-          <View style={styles.payButtonContainer}>
-            <TouchableOpacity
-              style={[
-                styles.payButton,
-                (isCreatingOrder || !selectedPaymentMethod) &&
-                styles.payButtonDisabled,
-              ]}
-              onPress={handlePayment}
-              disabled={isCreatingOrder || !selectedPaymentMethod}
-            >
-              {isCreatingOrder ? (
-                <ActivityIndicator size="small" color="#333" />
-              ) : (
-                <Text style={styles.payButtonText}>Pedir ahora</Text>
-              )}
-            </TouchableOpacity>
-          </View>
+            </>
+          )}
         </View>
 
-        {/* Success Modal */}
-        <Modal
-          visible={showSuccessModal}
-          transparent={true}
-          animationType="fade"
-        >
+        {/* Bottom Sheet */}
+        {!pinMode && (
+          <Animated.View style={[styles.bottomSheet, { height: sheetAnim }]}>
+            <View style={styles.dragHandleZone} {...panResponder.panHandlers}>
+              <View style={styles.dragHandle} />
+            </View>
+
+            {!sheetExpanded ? (
+              <Animated.View style={[styles.compactSheet, { opacity: compactOpacity }]}>
+                <View style={styles.compactLeft}>
+                  <Text style={styles.compactLabel}>Total a pagar</Text>
+                  <Text style={styles.compactTotal}>${finalTotal.toLocaleString()}</Text>
+                  <Text style={styles.compactDetail} numberOfLines={1}>
+                    {distance > 0 ? `${distance.toFixed(1)} km · ` : ""}
+                    {products.length} productos
+                  </Text>
+                </View>
+                <TouchableOpacity
+                  style={[styles.compactPayButton, (isCreatingOrder || !selectedPaymentMethod) && styles.payButtonDisabled]}
+                  onPress={handlePayment}
+                  disabled={isCreatingOrder || !selectedPaymentMethod}
+                  activeOpacity={0.8}
+                >
+                  {isCreatingOrder ? (
+                    <ActivityIndicator size="small" color="#FFF" />
+                  ) : (
+                    <Text style={styles.payButtonText}>Pedir</Text>
+                  )}
+                </TouchableOpacity>
+              </Animated.View>
+            ) : (
+              <Animated.View style={[styles.expandedSheet, { opacity: expandedOpacity }]} pointerEvents={sheetExpanded ? "auto" : "none"}>
+                <ScrollView
+                  style={styles.sheetScroll}
+                  contentContainerStyle={styles.sheetContent}
+                  showsVerticalScrollIndicator={false}
+                  keyboardShouldPersistTaps="handled"
+                >
+                  {/* Buscador de dirección */}
+                  <View style={styles.searchCard}>
+                    <View style={styles.searchInputWrap}>
+                      <Ionicons name="search" size={18} color="#64748B" />
+                      <TextInput
+                        style={styles.searchInput}
+                        placeholder="Buscar dirección de entrega..."
+                        placeholderTextColor="#94A3B8"
+                        value={mapSearchQuery}
+                        onChangeText={searchMapLocation}
+                      />
+                      {mapSearchQuery.length > 0 && (
+                        <TouchableOpacity onPress={() => { setMapSearchQuery(""); setMapSearchResults([]); }}>
+                          <Ionicons name="close-circle" size={20} color="#94A3B8" />
+                        </TouchableOpacity>
+                      )}
+                    </View>
+
+                    <TouchableOpacity style={styles.pinModeBtn} onPress={openPinMode} activeOpacity={0.8}>
+                      <Ionicons name="locate-outline" size={18} color="#fa6205" />
+                      <Text style={styles.pinModeText}>Fijar en el mapa</Text>
+                    </TouchableOpacity>
+
+                    {mapSearchResults.length > 0 && (
+                      <View style={styles.searchResults}>
+                        {isSearchingMap ? (
+                          <ActivityIndicator size="small" color="#fa6205" style={{ padding: 12 }} />
+                        ) : (
+                          <ScrollView nestedScrollEnabled={true} keyboardShouldPersistTaps="handled" style={{ maxHeight: 180 }}>
+                            {mapSearchResults.map((result) => (
+                              <TouchableOpacity
+                                key={result.place_id}
+                                style={styles.searchResultItem}
+                                onPress={() => selectMapLocation(result.place_id, result.description)}
+                              >
+                                <Ionicons
+                                  name={result.recent ? "time-outline" : "location-outline"}
+                                  size={18}
+                                  color={result.recent ? "#888" : "#fa6205"}
+                                  style={{ marginRight: 10 }}
+                                />
+                                <Text style={styles.searchResultText} numberOfLines={2}>{result.description}</Text>
+                              </TouchableOpacity>
+                            ))}
+                          </ScrollView>
+                        )}
+                      </View>
+                    )}
+                  </View>
+
+                  {/* Ubicaciones */}
+                  <View style={styles.sectionCard}>
+                    <View style={styles.sectionHeader}>
+                      <Ionicons name="map-outline" size={18} color="#0F172A" />
+                      <Text style={styles.sectionTitle}>Recorrido</Text>
+                    </View>
+                    <View style={styles.locationRow}>
+                      <View style={[styles.locationDot, { backgroundColor: "#10B981" }]} />
+                      <Text style={styles.locationLabel}>Desde</Text>
+                      <Text style={styles.locationText} numberOfLines={1}>{establishmentName || "Comercio"}</Text>
+                    </View>
+                    <View style={styles.locationLine} />
+                    <View style={styles.locationRow}>
+                      <View style={[styles.locationDot, { backgroundColor: "#fa6205" }]} />
+                      <Text style={styles.locationLabel}>Hasta</Text>
+                      <Text style={[styles.locationText, !address && styles.locationTextPlaceholder]} numberOfLines={1}>
+                        {address || "Selecciona tu dirección"}
+                      </Text>
+                    </View>
+                  </View>
+
+                  {/* Resumen de orden */}
+                  <View style={styles.sectionCard}>
+                    <View style={styles.sectionHeader}>
+                      <Ionicons name="receipt-outline" size={18} color="#0F172A" />
+                      <Text style={styles.sectionTitle}>Tu pedido ({totalQuantity})</Text>
+                    </View>
+
+                    {products.map((item, index) => (
+                      <View key={`${item.productId}-${index}`} style={styles.productRow}>
+                        <View style={styles.productQtyBadge}>
+                          <Text style={styles.productQtyText}>{item.quantity}</Text>
+                        </View>
+                        <View style={styles.productInfo}>
+                          <Text style={styles.productName} numberOfLines={1}>{item.productName}</Text>
+                          {item.adicionales && item.adicionales.length > 0 && (
+                            <Text style={styles.productExtras} numberOfLines={1}>
+                              + {item.adicionales.map((a) => a.nombre).join(", ")}
+                            </Text>
+                          )}
+                        </View>
+                        <Text style={styles.productPrice}>${item.itemTotal.toLocaleString()}</Text>
+                      </View>
+                    ))}
+                  </View>
+
+                  {/* Servicio de envío */}
+                  <View style={styles.sectionCard}>
+                    <View style={styles.sectionHeader}>
+                      <Ionicons name="bicycle-outline" size={18} color="#0F172A" />
+                      <Text style={styles.sectionTitle}>Envío</Text>
+                    </View>
+                    <View style={styles.deliveryServiceRow}>
+                      <View style={styles.deliveryServiceInfo}>
+                        <Text style={styles.deliveryServiceName}>
+                          {deliveryService?.nombre || "Delivery moto"}
+                        </Text>
+                        <Text style={styles.deliveryServiceDetail}>
+                          {distance > 0 ? `${distance.toFixed(1)} km` : "Calculando distancia..."}
+                        </Text>
+                      </View>
+                      <View style={{ flexDirection: "row", alignItems: "center" }}>
+                        {loadingDeliveryFee && <ActivityIndicator size="small" color="#fa6205" style={{ marginRight: 8 }} />}
+                        <Text style={styles.deliveryServicePrice}>${deliveryFee.toLocaleString()}</Text>
+                      </View>
+                    </View>
+                  </View>
+
+                  {/* Método de pago */}
+                  <View style={styles.sectionCard}>
+                    <View style={styles.sectionHeader}>
+                      <Ionicons name="wallet-outline" size={18} color="#0F172A" />
+                      <Text style={styles.sectionTitle}>Método de pago</Text>
+                    </View>
+
+                    {loadingPaymentMethods ? (
+                      <ActivityIndicator size="small" color="#fa6205" />
+                    ) : (
+                      <View style={styles.paymentOptions}>
+                        {!selectedPaymentMethod && (
+                          <View style={styles.paymentHintBox}>
+                            <Ionicons name="information-circle-outline" size={16} color="#fa6205" />
+                            <Text style={styles.paymentHintText}>
+                              Selecciona una opción para continuar con el pago
+                            </Text>
+                          </View>
+                        )}
+
+                        {userPaymentSettings && userPaymentSettings.puede_pagar_efectivo && (
+                          <TouchableOpacity
+                            style={[
+                              styles.paymentCard,
+                              selectedPaymentMethod === "efectivo" && styles.paymentCardActive,
+                            ]}
+                            onPress={() => selectPaymentMethod("efectivo")}
+                            activeOpacity={0.8}
+                          >
+                            <View style={[styles.paymentIconWrap, selectedPaymentMethod === "efectivo" && styles.paymentIconWrapActive]}>
+                              <Ionicons name="cash-outline" size={24} color={selectedPaymentMethod === "efectivo" ? "#fff" : "#fa6205"} />
+                            </View>
+                            <View style={styles.paymentCardBody}>
+                              <Text style={[styles.paymentCardTitle, selectedPaymentMethod === "efectivo" && styles.paymentCardTitleActive]}>
+                                Efectivo
+                              </Text>
+                              <Text style={styles.paymentCardDesc}>Paga en la entrega</Text>
+                            </View>
+                            <View style={styles.radioOuter}>
+                              {selectedPaymentMethod === "efectivo" && <View style={styles.radioInner} />}
+                            </View>
+                          </TouchableOpacity>
+                        )}
+
+                        {paymentMethods && paymentMethods.qr_estado === 1 && (
+                          <TouchableOpacity
+                            style={[
+                              styles.paymentCard,
+                              selectedPaymentMethod === "qr" && styles.paymentCardActive,
+                            ]}
+                            onPress={() => selectPaymentMethod("qr")}
+                            activeOpacity={0.8}
+                          >
+                            <View style={[styles.paymentIconWrap, selectedPaymentMethod === "qr" && styles.paymentIconWrapActive]}>
+                              <Ionicons name="qr-code-outline" size={24} color={selectedPaymentMethod === "qr" ? "#fff" : "#fa6205"} />
+                            </View>
+                            <View style={styles.paymentCardBody}>
+                              <Text style={[styles.paymentCardTitle, selectedPaymentMethod === "qr" && styles.paymentCardTitleActive]}>
+                                Código QR
+                              </Text>
+                              <Text style={styles.paymentCardDesc}>Escanea y paga desde tu banco</Text>
+                            </View>
+                            <View style={styles.radioOuter}>
+                              {selectedPaymentMethod === "qr" && <View style={styles.radioInner} />}
+                            </View>
+                          </TouchableOpacity>
+                        )}
+
+                        {paymentMethods && paymentMethods.mercado_pago_estado === 1 && (
+                          <TouchableOpacity
+                            style={[
+                              styles.paymentCard,
+                              selectedPaymentMethod === "mercadopago" && styles.paymentCardActive,
+                            ]}
+                            onPress={() => selectPaymentMethod("mercadopago")}
+                            activeOpacity={0.8}
+                          >
+                            <View style={[styles.paymentIconWrap, selectedPaymentMethod === "mercadopago" && styles.paymentIconWrapActive]}>
+                              <Ionicons name="card-outline" size={24} color={selectedPaymentMethod === "mercadopago" ? "#fff" : "#fa6205"} />
+                            </View>
+                            <View style={styles.paymentCardBody}>
+                              <Text style={[styles.paymentCardTitle, selectedPaymentMethod === "mercadopago" && styles.paymentCardTitleActive]}>
+                                Mercado Pago
+                              </Text>
+                              <Text style={styles.paymentCardDesc}>Pago online seguro</Text>
+                            </View>
+                            <View style={styles.radioOuter}>
+                              {selectedPaymentMethod === "mercadopago" && <View style={styles.radioInner} />}
+                            </View>
+                          </TouchableOpacity>
+                        )}
+                      </View>
+                    )}
+                  </View>
+
+                  <View style={{ height: 90 }} />
+                </ScrollView>
+
+                {/* Barra de pago inferior */}
+                <View style={styles.payBar}>
+                  <View>
+                    <Text style={styles.payBarLabel}>Total a pagar</Text>
+                    <Text style={styles.payBarTotal}>${finalTotal.toLocaleString()}</Text>
+                  </View>
+                  <TouchableOpacity
+                    style={[styles.payButton, (isCreatingOrder || !selectedPaymentMethod) && styles.payButtonDisabled]}
+                    onPress={handlePayment}
+                    disabled={isCreatingOrder || !selectedPaymentMethod}
+                    activeOpacity={0.8}
+                  >
+                    {isCreatingOrder ? (
+                      <ActivityIndicator size="small" color="#FFF" />
+                    ) : (
+                      <Text style={styles.payButtonText}>Pedir ahora</Text>
+                    )}
+                  </TouchableOpacity>
+                </View>
+              </Animated.View>
+            )}
+          </Animated.View>
+        )}
+        {/* Modal ubicando */}
+        <Modal visible={isLocating} transparent={true} animationType="fade">
           <View style={styles.modalOverlay}>
             <View style={styles.modalContainer}>
-              <Ionicons
-                name="checkmark-circle"
-                size={80}
-                color="#fa6205"
-                style={styles.successIcon}
-              />
+              <ActivityIndicator size="large" color="#fa6205" />
+              <Text style={[styles.modalTitle, { marginTop: 16 }]}>Ubicándote...</Text>
+              <Text style={styles.modalMessage}>Estamos obteniendo tu ubicación actual para calcular el envío.</Text>
+            </View>
+          </View>
+        </Modal>
+
+        {/* Success Modal */}
+        <Modal visible={showSuccessModal} transparent={true} animationType="fade">
+          <View style={styles.modalOverlay}>
+            <View style={styles.modalContainer}>
+              <Ionicons name="checkmark-circle" size={80} color="#fa6205" style={styles.successIcon} />
               <Text style={styles.modalTitle}>Pago exitoso</Text>
-              <Text style={styles.modalMessage}>
-                A continuación te asignaremos alguien para llevarte tu pedido
-                en pocos minutos.
-              </Text>
-              <TouchableOpacity
-                style={styles.continueButton}
-                onPress={handleContinue}
-              >
+              <Text style={styles.modalMessage}>A continuación te asignaremos alguien para llevarte tu pedido en pocos minutos.</Text>
+              <TouchableOpacity style={styles.continueButton} onPress={handleContinue}>
                 <Text style={styles.continueButtonText}>Continuar</Text>
               </TouchableOpacity>
             </View>
@@ -1829,161 +1980,42 @@ const PaymentScreen = () => {
         </Modal>
 
         {/* Modal para pagos pendientes con Mercado Pago */}
-        <Modal
-          visible={showPendingPaymentModal}
-          transparent={true}
-          animationType="fade"
-        >
+        <Modal visible={showPendingPaymentModal} transparent={true} animationType="fade">
           <View style={styles.modalOverlay}>
             <View style={styles.modalContainer}>
-              <Ionicons
-                name="hourglass-outline"
-                size={80}
-                color="#fa6205"
-                style={styles.successIcon}
-              />
+              <Ionicons name="hourglass-outline" size={80} color="#fa6205" style={styles.successIcon} />
               <Text style={styles.modalTitle}>Pedido Creado</Text>
               <Text style={styles.modalMessage}>
-                Tu pedido #{pendingOrderId} ha sido creado. Serás redirigido a
-                Mercado Pago para completar el pago. Una vez finalizado, tu
-                pedido será procesado y confirmado.
+                Tu pedido #{pendingOrderId} ha sido creado. Serás redirigido a Mercado Pago para completar el pago.
               </Text>
-              <Text style={[styles.modalMessage, { marginTop: 10 }]}>
-                Redirigiendo a la página de pago...
-              </Text>
-              <ActivityIndicator
-                size="large"
-                color="#fa6205"
-                style={{ marginTop: 15 }}
-              />
-
-              {/* Botón para cerrar manualmente si es necesario */}
+              <ActivityIndicator size="large" color="#fa6205" style={{ marginTop: 15 }} />
               <TouchableOpacity
-                style={[
-                  styles.continueButton,
-                  { marginTop: 20, backgroundColor: "#333" },
-                ]}
-                onPress={() => {
-                  setShowPendingPaymentModal(false);
-                  setPaymentInProgress(false);
-                }}
+                style={[styles.continueButton, { marginTop: 20, backgroundColor: "#333" }]}
+                onPress={() => { setShowPendingPaymentModal(false); setPaymentInProgress(false); }}
               >
-                <Text style={[styles.continueButtonText, { color: "#1C1C1E" }]}>
-                  Cerrar
-                </Text>
+                <Text style={[styles.continueButtonText, { color: "#FFF" }]}>Cerrar</Text>
               </TouchableOpacity>
             </View>
           </View>
         </Modal>
 
-        {/* Modal para QR y carga de evidencia */}
-        <Modal
-          visible={showQrEvidenceModal}
-          transparent={true}
-          animationType="fade"
-        >
+        {/* Modal para QR */}
+        <Modal visible={showQrEvidenceModal} transparent={true} animationType="fade">
           <View style={styles.modalOverlay}>
-            <View
-              style={[styles.modalContainer, styles.qrEvidenceModalContainer]}
-            >
+            <View style={[styles.modalContainer, { paddingVertical: 30 }]}>
               <Text style={styles.modalTitle}>¡Listo! Pedido enviado</Text>
               <Text style={styles.modalMessage}>
                 Hemos enviado tu pedido #{qrOrderId} al comercio. Una vez lo acepten, empezarán a prepararlo y te avisaremos.
               </Text>
-
-              {/* QR image */}
-              {/* {qrImageUrl && (
-                <View style={styles.qrEvidenceImageContainer}>
-                  <Image
-                    source={{ uri: qrImageUrl }}
-                    style={styles.qrEvidenceImage}
-                    resizeMode="contain"
-                  />
-                </View>
-              )} */}
-
-              {/* Upload section */}
-              {/* <View style={styles.evidenceUploadSection}>
-                  <Text style={styles.evidenceLabel}>
-                    {evidenceImage
-                      ? "Evidencia seleccionada"
-                      : "Subir evidencia de pago"}
-                  </Text>
-
-                  <TouchableOpacity
-                    style={styles.evidenceButton}
-                    onPress={pickImage}
-                    disabled={isSubmittingEvidence || evidenceUploaded}
-                  >
-                    {evidenceImage ? (
-                      <Image
-                        source={{ uri: evidenceImage }}
-                        style={styles.evidenceThumbnail}
-                      />
-                    ) : (
-                      <View style={styles.evidencePlaceholder}>
-                        <Ionicons
-                          name="cloud-upload-outline"
-                          size={32}
-                          color="#fa6205"
-                        />
-                        <Text style={styles.evidencePlaceholderText}>
-                          Seleccionar imagen
-                        </Text>
-                      </View>
-                    )}
-                  </TouchableOpacity>
-                </View> */}
-
-              {/* Submit button */}
-              {/* <TouchableOpacity
-                  style={[
-                    styles.continueButton,
-                    (!evidenceImage ||
-                      isSubmittingEvidence ||
-                      evidenceUploaded) &&
-                      styles.disabledButton,
-                  ]}
-                  onPress={uploadEvidencia}
-                  disabled={
-                    !evidenceImage || isSubmittingEvidence || evidenceUploaded
-                  }
-                >
-                  {isSubmittingEvidence ? (
-<ActivityIndicator size="small" color="#FFF" />
-                  ) : evidenceUploaded ? (
-                    <View
-                      style={{ flexDirection: "row", alignItems: "center" }}
-                    >
-                      <Ionicons
-                        name="checkmark-circle"
-                        size={20}
-                        color="#333"
-                        style={{ marginRight: 5 }}
-                      />
-                      <Text style={styles.continueButtonText}>
-                        ¡Evidencia enviada!
-                      </Text>
-                    </View>
-                  ) : (
-                    <Text style={styles.continueButtonText}>
-                      Enviar Evidencia
-                    </Text>
-                  )}
-                </TouchableOpacity> */}
-
-              {/* Opción para cancelar/cerrar */}
               <TouchableOpacity
-                style={[styles.cancelButton]}
+                style={styles.continueButton}
                 onPress={() => {
-                  onPaymentComplete(); // Limpia parámetros o estado
+                  onPaymentComplete();
                   setShowQrEvidenceModal(false);
                   navigation.navigate("Pedidos", { newOrderId: qrOrderId });
                 }}
               >
-                <Text style={styles.cancelButtonText}>
-                  Continuar
-                </Text>
+                <Text style={styles.continueButtonText}>Continuar</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -2003,666 +2035,649 @@ const PaymentScreen = () => {
 };
 
 const styles = StyleSheet.create({
-  safeContainer: {
-    flex: 1,
-  },
-  suggestionsPanelMain: {
-    backgroundColor: "#222222",
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: "#333333",
-    zIndex: 1500,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.35,
-    shadowRadius: 5,
-    elevation: 10,
-    marginTop: 5,
-    maxHeight: 200,
-  },
+  safeContainer: { flex: 1, backgroundColor: "#F1F5F9" },
+  container: { flex: 1 },
 
-  container: {
-    flex: 1,
+  // Mapa
+  mapContainer: { flex: 1, backgroundColor: "#E2E8F0" },
+  map: { ...StyleSheet.absoluteFillObject },
+
+  // Header flotante
+  floatingHeader: {
+    position: "absolute",
+    top: Platform.OS === "android" ? (StatusBar.currentHeight || 0) + 12 : 52,
+    left: 12,
+    right: 12,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    zIndex: 100,
   },
-  fullLoadingContainer: {
-    flex: 1,
+  headerBackBtn: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: "rgba(255,255,255,0.95)",
+    borderWidth: 1,
+    borderColor: "#E2E8F0",
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "#F0F0F0",
+    shadowColor: "#0F172A",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.08,
+    shadowRadius: 16,
+    elevation: 6,
   },
-  // --- INLINE MAP STYLES ---
-  inlineMapCard: {
-    backgroundColor: "#FFF",
-    borderRadius: 16,
+  headerTitle: {
+    fontSize: 16,
+    fontFamily: "MontserratBold",
+    fontWeight: "bold",
+    color: "#0F172A",
+    backgroundColor: "rgba(255,255,255,0.95)",
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: "#E2E8F0",
     overflow: "hidden",
+  },
+
+  // Marcadores
+  originMarker: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: "#10B981",
+    justifyContent: "center",
+    alignItems: "center",
+    borderWidth: 3,
+    borderColor: "#FFF",
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
-    shadowRadius: 8,
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
     elevation: 4,
   },
-  inlineMapSearchContainer: {
-    flexDirection: "row",
+  destMarker: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: "#fa6205",
+    justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "#F2F2F7",
-    borderRadius: 10,
-    margin: 12,
-    paddingHorizontal: 12,
-    height: 40,
-  },
-  inlineMapSearchInput: {
-    flex: 1,
-    fontSize: 14,
-    marginLeft: 8,
-    color: '#1C1C1E',
-    fontFamily: "MontserratRegular",
-  },
-  inlineSearchResults: {
-    backgroundColor: "#FFF",
-    marginHorizontal: 12,
-    marginBottom: 4,
-    borderRadius: 10,
-    maxHeight: 160,
-    borderWidth: 1,
-    borderColor: "#F0F0F0",
+    borderWidth: 3,
+    borderColor: "#FFF",
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
-    shadowRadius: 6,
-    elevation: 5,
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 4,
   },
-  inlineSearchResultsScroll: {
-    maxHeight: 160,
-  },
-  inlineSearchResultItem: {
+
+  // Barra de ubicaciones
+  locationRow: {
     flexDirection: "row",
     alignItems: "center",
-    paddingVertical: 10,
-    paddingHorizontal: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: "#F5F5F5",
+    gap: 10,
   },
-  inlineSearchResultText: {
+  locationDot: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+  },
+  locationLabel: {
+    fontSize: 11,
+    fontFamily: "MontserratBold",
+    fontWeight: "bold",
+    color: "#94A3B8",
+    textTransform: "uppercase",
+    width: 42,
+  },
+  locationText: {
+    flex: 1,
     fontSize: 13,
     fontFamily: "MontserratRegular",
-    color: "#333",
-    flex: 1,
+    color: "#0F172A",
   },
-  inlineMapWrapper: {
-    height: 240,
-    position: "relative",
+  locationTextPlaceholder: {
+    color: "#94A3B8",
   },
-  inlineMap: {
-    width: "100%",
-    height: "100%",
+  locationLine: {
+    width: 2,
+    height: 20,
+    backgroundColor: "#E2E8F0",
+    marginLeft: 4,
+    marginVertical: 6,
   },
-  inlineCenterPin: {
+
+  // FAB
+  fabLocate: {
+    position: "absolute",
+    right: 14,
+    bottom: 340,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: "rgba(255,255,255,0.95)",
+    borderWidth: 1.5,
+    borderColor: "#E2E8F0",
+    justifyContent: "center",
+    alignItems: "center",
+    shadowColor: "#0F172A",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 12,
+    elevation: 5,
+    zIndex: 100,
+  },
+
+  // Pin central
+  centerPin: {
     position: "absolute",
     top: "50%",
     left: "50%",
-    marginLeft: -16,
-    marginTop: -32,
-    alignItems: "center",
-    zIndex: 5,
+    marginLeft: -18,
+    marginTop: -36,
+    zIndex: 50,
   },
-  inlineCenterPinDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: "#fa6205",
-    marginTop: -2,
-  },
-  inlineLocateBtn: {
+
+  // Bottom Sheet
+  bottomSheet: {
     position: "absolute",
-    bottom: 12,
-    right: 12,
+    bottom: 0,
+    left: 0,
+    right: 0,
     backgroundColor: "#FFF",
-    borderRadius: 20,
-    flexDirection: "row",
-    alignItems: "center",
-    paddingHorizontal: 12,
-    height: 36,
-    elevation: 4,
+    borderTopLeftRadius: 28,
+    borderTopRightRadius: 28,
     shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.15,
-    shadowRadius: 4,
-    zIndex: 10,
+    shadowOffset: { width: 0, height: -8 },
+    shadowOpacity: 0.12,
+    shadowRadius: 24,
+    elevation: 20,
+    zIndex: 110,
+    overflow: "hidden",
   },
-  inlineLocateLabel: {
-    fontSize: 12,
-    fontFamily: "MontserratSemiBold",
-    color: "#fa6205",
-    marginLeft: 4,
+  dragHandleZone: {
+    alignItems: "center",
+    paddingTop: 8,
+    paddingBottom: 4,
   },
-  inlineAddressRow: {
+  dragHandle: {
+    width: 40,
+    height: 5,
+    borderRadius: 3,
+    backgroundColor: "#E2E8F0",
+  },
+  compactSheet: {
     flexDirection: "row",
     alignItems: "center",
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    borderTopWidth: 1,
-    borderTopColor: "#F0F0F0",
+    paddingHorizontal: 16,
+    paddingBottom: 10,
   },
-  inlineAddressText: {
+  compactLeft: {
+    flex: 1,
+  },
+  compactLabel: {
+    fontSize: 11,
+    fontFamily: "MontserratRegular",
+    color: "#64748B",
+  },
+  compactTotal: {
+    fontSize: 20,
+    fontFamily: "MontserratBold",
+    fontWeight: "bold",
+    color: "#0F172A",
+    marginTop: 1,
+  },
+  compactDetail: {
+    fontSize: 11,
+    fontFamily: "MontserratRegular",
+    color: "#64748B",
+    marginTop: 1,
+  },
+  compactPayButton: {
+    backgroundColor: "#fa6205",
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: 14,
+    shadowColor: "#fa6205",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.25,
+    shadowRadius: 12,
+    elevation: 4,
+  },
+  expandedSheet: {
+    flex: 1,
+  },
+  sheetScroll: {
+    flex: 1,
+  },
+  sheetContent: {
+    paddingHorizontal: 16,
+    paddingBottom: 20,
+  },
+
+  // Buscador
+  searchCard: {
+    backgroundColor: "#F8FAFC",
+    borderRadius: 16,
+    padding: 12,
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: "#E2E8F0",
+  },
+  searchInputWrap: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#FFF",
+    borderRadius: 12,
+    paddingHorizontal: 12,
+    height: 44,
+    borderWidth: 1,
+    borderColor: "#E2E8F0",
+  },
+  searchInput: {
+    flex: 1,
+    marginLeft: 10,
+    fontSize: 14,
+    fontFamily: "MontserratRegular",
+    color: "#0F172A",
+  },
+  searchResults: {
+    marginTop: 8,
+    backgroundColor: "#FFF",
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: "#E2E8F0",
+    overflow: "hidden",
+  },
+  searchResultItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: "#F1F5F9",
+  },
+  searchResultText: {
     flex: 1,
     fontSize: 13,
     fontFamily: "MontserratRegular",
-    color: "#555",
-    marginLeft: 10,
+    color: "#333",
   },
-  header: {
+
+  // Pin mode button
+  pinModeBtn: {
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "space-between",
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    paddingTop: Platform.OS === "android" ? 50 : 14,
-    backgroundColor: "#fa6205",
+    justifyContent: "center",
+    gap: 8,
+    marginTop: 10,
+    paddingVertical: 10,
+    backgroundColor: "#FFF7ED",
+    borderRadius: 12,
   },
-  headerTitle: {
-    fontSize: 20,
+  pinModeText: {
+    fontSize: 13,
+    fontFamily: "MontserratSemiBold",
+    color: "#fa6205",
+  },
+
+  // Pin mode overlay
+  pinBanner: {
+    position: "absolute",
+    top: Platform.OS === "android" ? (StatusBar.currentHeight || 0) + 70 : 110,
+    left: 12,
+    right: 12,
+    backgroundColor: "rgba(255,255,255,0.97)",
+    borderRadius: 16,
+    padding: 12,
+    borderWidth: 1,
+    borderColor: "#E2E8F0",
+    shadowColor: "#0F172A",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 16,
+    elevation: 8,
+    zIndex: 120,
+  },
+  pinBannerContent: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+  },
+  pinBannerTitle: {
+    fontSize: 13,
     fontFamily: "MontserratBold",
+    fontWeight: "bold",
+    color: "#0F172A",
+  },
+  pinBannerAddress: {
+    fontSize: 12,
+    fontFamily: "MontserratRegular",
+    color: "#64748B",
+    marginTop: 2,
+  },
+  pinBottomBar: {
+    position: "absolute",
+    bottom: 24,
+    left: 16,
+    right: 16,
+    flexDirection: "row",
+    gap: 10,
+    zIndex: 120,
+  },
+  pinCancelBtn: {
+    flex: 1,
+    backgroundColor: "#FFF",
+    paddingVertical: 14,
+    borderRadius: 16,
+    alignItems: "center",
+    borderWidth: 1,
+    borderColor: "#E2E8F0",
+  },
+  pinCancelText: {
+    fontSize: 14,
+    fontFamily: "MontserratSemiBold",
+    color: "#64748B",
+  },
+  pinConfirmBtn: {
+    flex: 2,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+    backgroundColor: "#fa6205",
+    paddingVertical: 14,
+    borderRadius: 16,
+    shadowColor: "#fa6205",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.25,
+    shadowRadius: 12,
+    elevation: 4,
+  },
+  pinConfirmText: {
+    fontSize: 14,
+    fontFamily: "MontserratBold",
+    fontWeight: "bold",
     color: "#FFF",
   },
-  backButton: {
-    padding: 4,
+
+  // Cards
+  sectionCard: {
+    backgroundColor: "#F8FAFC",
+    borderRadius: 18,
+    padding: 14,
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: "#E2E8F0",
   },
-  scrollContainer: {
-    flex: 1,
-  },
-  scrollContentContainer: {
-    paddingTop: 20,
-    paddingBottom: 100,
-  },
-  section: {
-    paddingHorizontal: 20,
-    marginBottom: 10,
+  sectionHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    marginBottom: 12,
   },
   sectionTitle: {
-    fontSize: 18,
-    marginBottom: 10,
-    fontFamily: "MontserratRegular",
-  },
-  productList: {
-    borderRadius: 10,
-    padding: 10,
-    marginBottom: 20,
-  },
-
-  productInfo: {
-    flex: 1,
-    marginRight: 10,
-  },
-  productName: {
-    fontFamily: "MontserratRegular",
-    fontSize: 14,
-  },
-  productQuantity: {
-    fontFamily: "MontserratBold",
-    fontSize: 12,
-  },
-  productPrice: {
-    fontFamily: "MontserratBold",
-    fontSize: 14,
-  },
-  addressContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    borderWidth: 1,
-    borderStyle: "dashed",
-    borderRadius: 20,
-    padding: 15,
-    zIndex: 10,
-  },
-  locationIconContainer: {
-    marginRight: 15,
-  },
-  addressTextContainer: {
-    flex: 1,
-  },
-  addressLabel: {
-    fontSize: 16,
-    fontFamily: "MontserratBold",
-  },
-  addressValue: {
-    flex: 1,
     fontSize: 15,
-    color: '#1C1C1E',
-    fontFamily: 'MontserratRegular',
-    paddingVertical: 6,
+    fontFamily: "MontserratBold",
+    fontWeight: "bold",
+    color: "#0F172A",
   },
 
-  suggestionsOverlayContainer: {
-    position: "absolute",
-    backgroundColor: "#222222",
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: "#333333",
-    zIndex: 1500,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.35,
-    shadowRadius: 5,
-    elevation: 10,
-  },
-  suggestionsList: {
-    maxHeight: 200,
-  },
-  suggestionItem: {
+  // Productos
+  productRow: {
     flexDirection: "row",
     alignItems: "center",
+    gap: 10,
     paddingVertical: 8,
-    paddingHorizontal: 12,
     borderBottomWidth: 1,
-    borderBottomColor: "#F0F0F0",
+    borderBottomColor: "#F1F5F9",
   },
-  suggestionText: {
-    flex: 1,
-    color: "#1C1C1E",
-    fontFamily: "MontserratRegular",
-    fontSize: 14,
-  },
-  suggestionIcon: {
-    marginRight: 10,
-  },
-  loadingIndicator: {
-    padding: 15,
-  },
-  deliveryInfoContainer: {
-    marginTop: 15,
-    backgroundColor: "rgba(1,1,1,0.1)",
-    borderRadius: 10,
-    padding: 15,
-  },
-  deliveryInfoRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    marginBottom: 8,
-  },
-  deliveryInfoLabel: {
-    fontFamily: "MontserratRegular",
-    fontSize: 14,
-  },
-  deliveryInfoValue: {
-    fontFamily: "MontserratBold",
-    fontSize: 14,
-  },
-  priceContainer: {
-    paddingHorizontal: 20,
-    marginBottom: 10,
-  },
-  priceRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    marginBottom: 10,
-  },
-  priceLabel: {
-    fontSize: 18,
-    fontFamily: "MontserratBold",
-  },
-  priceValue: {
-    fontSize: 18,
-    fontFamily: "MontserratBold",
-  },
-  loadingContainer: {
-    padding: 20,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  loadingText: {
-    fontFamily: "MontserratRegular",
-    marginTop: 10,
-  },
-  paymentMethodsContainer: {
-    borderWidth: 1,
-    borderColor: "#fa6205",
-    borderStyle: "dashed",
-    borderRadius: 20,
-    overflow: "hidden",
-  },
-  paymentOption: {
-    flexDirection: "row",
-    alignItems: "center",
-    padding: 15,
-  },
-  paymentIconContainer: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: "#F0F0F0",
-    justifyContent: "center",
-    alignItems: "center",
-    marginRight: 15,
-  },
-  paymentMethodLabel: {
-    flex: 1,
-    fontSize: 16,
-    fontFamily: "MontserratRegular",
-  },
-  radioButtonSelected: {
+  productQtyBadge: {
     width: 24,
     height: 24,
-    borderRadius: 12,
-    borderWidth: 2,
-    borderColor: "#fa6205",
+    borderRadius: 6,
+    backgroundColor: "#FFF7ED",
     justifyContent: "center",
     alignItems: "center",
+  },
+  productQtyText: {
+    fontSize: 12,
+    fontFamily: "MontserratBold",
+    fontWeight: "bold",
+    color: "#fa6205",
+  },
+  productInfo: {
+    flex: 1,
+  },
+  productName: {
+    fontSize: 13,
+    fontFamily: "MontserratRegular",
+    color: "#0F172A",
+  },
+  productExtras: {
+    fontSize: 11,
+    fontFamily: "MontserratRegular",
+    color: "#64748B",
+    marginTop: 2,
+  },
+  productPrice: {
+    fontSize: 13,
+    fontFamily: "MontserratBold",
+    fontWeight: "bold",
+    color: "#0F172A",
+  },
+
+  // Delivery service
+  deliveryServiceRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    backgroundColor: "#FFF",
+    borderRadius: 14,
+    padding: 12,
+    borderWidth: 1,
+    borderColor: "#E2E8F0",
+  },
+  deliveryServiceInfo: {
+    flex: 1,
+  },
+  deliveryServiceName: {
+    fontSize: 14,
+    fontFamily: "MontserratBold",
+    fontWeight: "bold",
+    color: "#0F172A",
+  },
+  deliveryServiceDetail: {
+    fontSize: 12,
+    fontFamily: "MontserratRegular",
+    color: "#64748B",
+    marginTop: 2,
+  },
+  deliveryServicePrice: {
+    fontSize: 16,
+    fontFamily: "MontserratBold",
+    fontWeight: "bold",
+    color: "#fa6205",
+  },
+
+  // Payment
+  paymentOptions: {
+    gap: 12,
+  },
+  paymentHintBox: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    backgroundColor: "#FFF7ED",
+    borderRadius: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    marginBottom: 4,
+  },
+  paymentHintText: {
+    flex: 1,
+    fontSize: 13,
+    fontFamily: "MontserratMedium",
+    color: "#9A3412",
+  },
+  paymentCard: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 14,
+    backgroundColor: "#FFF",
+    borderRadius: 16,
+    paddingHorizontal: 16,
+    paddingVertical: 16,
+    borderWidth: 1.5,
+    borderColor: "#E2E8F0",
+  },
+  paymentCardActive: {
+    borderColor: "#fa6205",
+    backgroundColor: "#FFF7ED",
+  },
+  paymentIconWrap: {
+    width: 44,
+    height: 44,
+    borderRadius: 12,
+    backgroundColor: "#FFF7ED",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  paymentIconWrapActive: {
     backgroundColor: "#fa6205",
   },
-  radioButtonInner: {
+  paymentCardBody: {
+    flex: 1,
+    gap: 2,
+  },
+  paymentCardTitle: {
+    fontSize: 15,
+    fontFamily: "MontserratSemiBold",
+    color: "#0F172A",
+  },
+  paymentCardTitleActive: {
+    color: "#9A3412",
+  },
+  paymentCardDesc: {
+    fontSize: 12,
+    fontFamily: "MontserratRegular",
+    color: "#64748B",
+  },
+  radioOuter: {
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    borderWidth: 2,
+    borderColor: "#CBD5E1",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  radioInner: {
     width: 12,
     height: 12,
     borderRadius: 6,
-    backgroundColor: "white",
+    backgroundColor: "#fa6205",
   },
-  radioButtonEmpty: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    borderWidth: 2,
-    borderColor: "#fa6205",
-  },
-  qrImageContainer: {
-    marginTop: 15,
-    alignItems: "center",
-    padding: 20,
-    backgroundColor: "#222222",
-    borderRadius: 15,
-  },
-  qrImage: {
-    width: 200,
-    height: 200,
-    backgroundColor: "white",
-    borderRadius: 10,
-    marginBottom: 10,
-  },
-  qrInstructions: {
-    color: "#1C1C1E",
-    fontFamily: "MontserratRegular",
-    textAlign: "center",
-    marginTop: 10,
-  },
-  bottomSpace: {
-    height: 80,
-  },
-  bottomContainer: {
+
+  // Pay bar
+  payBar: {
+    position: "absolute",
+    bottom: 0,
+    left: 0,
+    right: 0,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    paddingHorizontal: 20,
-    paddingVertical: 15,
-    backgroundColor: "#F0F0F0",
+    backgroundColor: "#FFF",
     borderTopWidth: 1,
-    borderTopColor: "#333",
+    borderTopColor: "#E2E8F0",
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    paddingBottom: Platform.OS === "ios" ? 24 : 12,
   },
-  totalAmount: {
-    fontSize: 24,
+  payBarLabel: {
+    fontSize: 12,
+    fontFamily: "MontserratRegular",
+    color: "#64748B",
+  },
+  payBarTotal: {
+    fontSize: 22,
     fontFamily: "MontserratBold",
-    color: "#1C1C1E",
-  },
-  payButtonContainer: {
-    flexDirection: "row",
-    alignItems: "center",
+    fontWeight: "bold",
+    color: "#0F172A",
   },
   payButton: {
     backgroundColor: "#fa6205",
-    paddingVertical: 15,
-    paddingHorizontal: 30,
-    borderRadius: 25,
-    minWidth: 120,
-    alignItems: "center",
-    justifyContent: "center",
+    paddingHorizontal: 28,
+    paddingVertical: 14,
+    borderRadius: 16,
+    shadowColor: "#fa6205",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.25,
+    shadowRadius: 12,
+    elevation: 4,
   },
   payButtonDisabled: {
-    backgroundColor: "#fa6205",
-    opacity: 0.7,
+    backgroundColor: "#CBD5E1",
+    shadowColor: "transparent",
   },
   payButtonText: {
-    fontSize: 18,
+    fontSize: 15,
     fontFamily: "MontserratBold",
+    fontWeight: "bold",
     color: "#FFF",
   },
+
+  // Modales
   modalOverlay: {
     flex: 1,
-    backgroundColor: "rgba(0, 0, 0, 0.7)",
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  modalContainer: {
-    backgroundColor: "#FFF",
-    borderRadius: 20,
-    padding: 30,
-    width: "85%",
-    alignItems: "center",
-  },
-  successIcon: {
-    marginBottom: 20,
-  },
-  modalTitle: {
-    fontSize: 24,
-    fontFamily: "MontserratBold",
-    color: "#1C1C1E",
-    marginBottom: 15,
-    textAlign: "center",
-  },
-  modalMessage: {
-    fontSize: 16,
-    fontFamily: "MontserratRegular",
-    color: "#1C1C1E",
-    textAlign: "center",
-    marginBottom: 25,
-    lineHeight: 24,
-  },
-  continueButton: {
-    backgroundColor: "#fa6205",
-    paddingVertical: 15,
-    paddingHorizontal: 40,
-    borderRadius: 25,
-    width: "80%",
-    alignItems: "center",
-  },
-  continueButtonText: {
-    fontSize: 18,
-    fontFamily: "MontserratBold",
-    color: "#FFF",
-  },
-  qrEvidenceModalContainer: {
-    width: "90%",
-    maxHeight: "90%",
-  },
-  qrEvidenceImageContainer: {
-    width: "100%",
-    backgroundColor: "white",
-    padding: 10,
-    borderRadius: 10,
-    marginVertical: 15,
-    alignItems: "center",
-  },
-  qrEvidenceImage: {
-    width: 200,
-    height: 200,
-  },
-  evidenceUploadSection: {
-    width: "100%",
-    marginVertical: 15,
-  },
-  evidenceLabel: {
-    color: "#1C1C1E",
-    fontFamily: "MontserratBold",
-    fontSize: 16,
-    marginBottom: 10,
-    textAlign: "center",
-  },
-  evidenceButton: {
-    borderWidth: 2,
-    borderColor: "#fa6205",
-    borderStyle: "dashed",
-    borderRadius: 10,
-    height: 140,
-    width: "100%",
-    justifyContent: "center",
-    alignItems: "center",
-    marginBottom: 15,
-    overflow: "hidden",
-  },
-  evidencePlaceholder: {
+    backgroundColor: "rgba(0,0,0,0.5)",
     justifyContent: "center",
     alignItems: "center",
     padding: 20,
   },
-  evidencePlaceholderText: {
-    color: "#fa6205",
-    fontFamily: "MontserratRegular",
-    marginTop: 10,
-  },
-  evidenceThumbnail: {
-    width: "100%",
-    height: "100%",
-  },
-  disabledButton: {
-    opacity: 0.6,
-    backgroundColor: "#999",
-  },
-  cancelButton: {
-    marginTop: 15,
-    padding: 10,
-  },
-  cancelButtonText: {
-    color: "#fa6205",
-    fontFamily: "MontserratRegular",
-    fontSize: 16,
-    textAlign: "center",
-  },
-  productItemContainer: {
-    marginBottom: 15,
-    borderRadius: 12,
-    backgroundColor: 'rgba(255,255,255,0.6)',
-    borderRadius: 8,
-    padding: 12,
-  },
-  productBasePrice: {
-    color: "#999",
-    fontFamily: "MontserratRegular",
-    fontSize: 12,
-    marginTop: 2,
-  },
-  adicionalesContainer: {
-    marginTop: 10,
-    paddingTop: 10,
-    borderTopWidth: 1,
-    borderTopColor: "#DDD",
-  },
-  adicionalesTitle: {
-    color: "#000",
-    fontFamily: "MontserratBold",
-    fontSize: 12,
-    marginBottom: 5,
-  },
-  adicionalItem: {
-    flexDirection: "row",
-    justifyContent: "space-between",
+  modalContainer: {
+    backgroundColor: "#FFF",
+    borderRadius: 24,
+    padding: 24,
     alignItems: "center",
-    marginBottom: 3,
-    paddingHorizontal: 5,
+    width: "100%",
+    maxWidth: 340,
   },
-  adicionalText: {
-    color: "#ccc",
+  successIcon: {
+    marginBottom: 16,
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontFamily: "MontserratBold",
+    fontWeight: "bold",
+    color: "#0F172A",
+    marginBottom: 8,
+  },
+  modalMessage: {
+    fontSize: 14,
     fontFamily: "MontserratRegular",
-    fontSize: 11,
-    flex: 1,
-    marginRight: 5,
-  },
-  adicionalQuantity: {
-    color: "#1C1C1E",
-    fontFamily: "MontserratBold",
-    fontSize: 11,
-    minWidth: 25,
+    color: "#64748B",
     textAlign: "center",
+    marginBottom: 20,
+    lineHeight: 20,
   },
-  adicionalPrice: {
-    color: "#000",
+  continueButton: {
+    backgroundColor: "#fa6205",
+    paddingHorizontal: 32,
+    paddingVertical: 14,
+    borderRadius: 16,
+    width: "100%",
+    alignItems: "center",
+  },
+  continueButtonText: {
+    fontSize: 15,
     fontFamily: "MontserratBold",
-    fontSize: 11,
-    minWidth: 60,
-    textAlign: "right",
-  },
-  adicionalesTotal: {
-    marginTop: 5,
-    paddingTop: 5,
-    borderTopWidth: 1,
-    borderTopColor: "#555",
-    alignItems: "flex-end",
-  },
-  adicionalesTotalText: {
-    color: "#000",
-    fontFamily: "MontserratBold",
-    fontSize: 12,
-  },
-
-  // Actualizar el estilo existente
-  productItem: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "flex-start", // Cambiar de "center" a "flex-start"
-    paddingVertical: 0, // Remover padding vertical
-  },
-  mensajeAyuda: {
-    fontSize: 12,
-  },
-  mensajeAyudaSecundaria: {
-    fontSize: 12,
-    fontStyle: 'italic',
-  },
-  mensajeAyudaSecundaria2: {
-    fontSize: 14,
-    fontStyle: 'italic',
-  },
-  actionsContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginTop: 12,
-  },
-  actionButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: 'rgba(76, 217, 100, 0.3)', // Fondo sutil
-    paddingVertical: 10,
-    paddingHorizontal: 12,
-    borderRadius: 8,
-    marginRight: 2,
-  },
-  actionButtonText: {
-    fontFamily: 'MontserratRegular',
-    fontSize: 13,
-    marginLeft: 8,
-    color: '#FFF',
-  },
-  addressCard: {
-    backgroundColor: '#FFF',
-    borderRadius: 14,
-    padding: 14,
-  },
-  addressInputRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingBottom: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: '#F0F0F0',
-  },
-  mapSelectBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#fa6205',
-    borderRadius: 10,
-    paddingVertical: 10,
-    marginTop: 12,
-  },
-  mapSelectBtnText: {
-    color: '#FFF',
-    fontSize: 14,
-    fontFamily: 'MontserratBold',
-    marginLeft: 8,
+    fontWeight: "bold",
+    color: "#FFF",
   },
 });
 

@@ -386,7 +386,7 @@ export default function StepNueve({ route }) {
               <TouchableOpacity style={[styles.actionButton, styles.actionButtonPrimary]} onPress={fetchRiderQrCode} disabled={loadingQr}>
                 <MaterialCommunityIcons name="qrcode-scan" size={20} color="#000" />
                 <Text style={styles.actionButtonTextPrimary}>
-                  "Pago Nequi / Bancolombia"
+                  "Pago Nequi / Bancolombia aaaa"
                 </Text>
               </TouchableOpacity>
 

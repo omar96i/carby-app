@@ -92,12 +92,9 @@ export default function Pedidos({ route }) {
   const navigateToDetails = useCallback((item) => {
     if (!item) return;
     if (item.es_carrera) {
-      navigation.navigate("StepNueve", {
+      navigation.navigate("DetalleCarrera", {
         tripId: item.id,
-        type: "carrera",
-        esCarrera: true,
         carreraId: item.id,
-        esConductor: false,
       });
     } else {
       navigation.navigate("PedidoDetalle", {

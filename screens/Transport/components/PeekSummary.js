@@ -1,26 +1,22 @@
 import React from "react";
 import { TouchableOpacity, View, Text, Image, StyleSheet } from "react-native";
-import { Ionicons } from "@expo/vector-icons";
+import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 
-const VEHICLE_IMAGES = {
-  taxi: require("../../../assets/images/icono-carro.png"),
-  moto: require("../../../assets/images/icono-moto.png"),
-};
-
-export default function PeekSummary({ vehicle, price, eta, onGo, onExpand }) {
-  if (!vehicle) return null;
-
-  const imageSource = VEHICLE_IMAGES[vehicle.type];
+export default function PeekSummary({ service, price, onGo, onExpand }) {
+  if (!service) return null;
 
   return (
     <TouchableOpacity style={styles.container} onPress={onExpand} activeOpacity={0.9}>
       <View style={styles.left}>
         <View style={styles.carVisual}>
-          <Image source={imageSource} style={styles.carImg} resizeMode="contain" />
+          {service.iconUrl ? (
+            <Image source={{ uri: service.iconUrl }} style={styles.carImg} resizeMode="contain" />
+          ) : (
+            <MaterialCommunityIcons name="package-variant-closed" size={24} color="#FF5500" />
+          )}
         </View>
         <View>
-          <Text style={styles.carName}>{vehicle.name}</Text>
-          <Text style={styles.eta}>{eta || "~3 min"}</Text>
+          <Text style={styles.carName}>{service.name}</Text>
         </View>
       </View>
       <View style={styles.right}>
@@ -67,13 +63,6 @@ const styles = StyleSheet.create({
     fontFamily: "MontserratBold",
     fontWeight: "bold",
     color: "#0F172A",
-  },
-  eta: {
-    fontSize: 11,
-    fontFamily: "MontserratBold",
-    fontWeight: "bold",
-    color: "#10B981",
-    marginTop: 2,
   },
   right: {
     flexDirection: "row",

@@ -22,7 +22,7 @@ const NearbyBestSellers = ({ location }) => {
   const fetchBestSellers = async () => {
     try {
       setLoading(true);
-      const url = `${BASE_URL}productos/mas-vendidos?lat=${location.latitude}&lng=${location.longitude}&radio=20`;
+      const url = `${BASE_URL}productos/mas-vendidos?lat=${location.latitude}&lng=${location.longitude}&radio=8`;
       const response = await fetch(url, {
         method: 'GET',
         headers: { Accept: 'application/json', 'Content-Type': 'application/json' },

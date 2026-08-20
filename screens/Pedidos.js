@@ -35,6 +35,7 @@ import { useNavigation, useFocusEffect } from "@react-navigation/native";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { BASE_URL } from "../constants/url";
+import { formatCOP } from "../components/usuario/pedidos/helpers";
 import AlertaModal from "../components/ErrorModal";
 import * as Location from "expo-location";
 import { useNotification } from "../context/NotificationContext";
@@ -2438,13 +2439,10 @@ export default function Pedidos({ route }) {
       if (item.es_carrera) {
         // Para carreras, mantener la navegación existente
         if (tipoUsuario === "usuario" || tipoUsuario === "comercio") {
-          // Usuario regular: navega a StepNueve para carreras
-          navigation.navigate("StepNueve", {
+          // Usuario regular: navega a DetalleCarrera para carreras
+          navigation.navigate("DetalleCarrera", {
             tripId: item.id,
-            type: "carrera",
-            esCarrera: true,
             carreraId: item.id,
-            esConductor: false,
           });
         } else {
           // Rider o comercio con carrera navega a StepTrece
@@ -2990,9 +2988,14 @@ export default function Pedidos({ route }) {
           tipoUsuario === "usuario" || tipoUsuario === "comercio" ? (
             <TouchableOpacity onPress={() => navigateToDetails()}>
               <View style={styles.cardHeader}>
-                <Text style={styles.price}>
-                  {"$"}{parseFloat(item.costo_total || 0).toLocaleString()}
-                </Text>
+                <View style={styles.priceBreakdown}>
+                  <Text style={styles.priceTotal}>
+                    {"$"}{(parseFloat(item.costo_total || 0) + parseFloat(item.costo_envio || 0)).toLocaleString()}
+                  </Text>
+                  <Text style={styles.priceBreakdownText}>
+                    Pedido {formatCOP(item.costo_total)} · Envío {formatCOP(item.costo_envio)}
+                  </Text>
+                </View>
                 <View style={styles.statusContainer}>
                   <Text style={[styles.statusChip, styles.statusPago]}>
                     {metodoPagoLabel}
@@ -3233,9 +3236,14 @@ export default function Pedidos({ route }) {
             // Para riders - No clickeable
             <View>
               <View style={styles.cardHeader}>
-                <Text style={styles.price}>
-                  $ {parseFloat(item.costo_total || 0).toLocaleString()}
-                </Text>
+                <View style={styles.priceBreakdown}>
+                  <Text style={styles.priceTotal}>
+                    {"$"}{(parseFloat(item.costo_total || 0) + parseFloat(item.costo_envio || 0)).toLocaleString()}
+                  </Text>
+                  <Text style={styles.priceBreakdownText}>
+                    Pedido {formatCOP(item.costo_total)} · Envío {formatCOP(item.costo_envio)}
+                  </Text>
+                </View>
                 <View style={styles.statusContainer}>
                   <Text style={[styles.statusChip, styles.statusPago]}>
                     {metodoPagoLabel}
@@ -5134,6 +5142,20 @@ const styles = StyleSheet.create({
     fontFamily: "Montserrat_700Bold",
     color: "#000",
     marginBottom: 4,
+  },
+  priceBreakdown: {
+    flexDirection: "column",
+  },
+  priceTotal: {
+    fontSize: 18,
+    fontFamily: "Montserrat_700Bold",
+    color: "#000",
+    marginBottom: 2,
+  },
+  priceBreakdownText: {
+    fontSize: 11,
+    fontFamily: "Montserrat_600SemiBold",
+    color: "#71717A",
   },
   statusContainer: {
     flexDirection: "row",

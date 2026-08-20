@@ -9,6 +9,8 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useNavigation } from "@react-navigation/native";
 import { useNotification } from "../../context/NotificationContext";
 import { BASE_URL } from "../../constants/url";
+import { fetchActiveCarrera } from "../../utils/activeRide";
+import { fetchActiveDriverCarrera } from "../../utils/activeDriverRide";
 
 // Función para verificar si es un usuario demo
 const isDemoUser = async () => {
@@ -85,14 +87,28 @@ export default function AuthLoadingScreen() {
 
           // Redirigir según el tipo de usuario
           if (user.tipo_usuario === "usuario") {
-            console.log("🧑 Usuario normal, redirigiendo a BottomTabNavigatorUsuario...");
-            navigation.replace("BottomTabNavigatorUsuario");
+            console.log("🧑 Usuario normal, verificando carrera activa...");
+            const activa = await fetchActiveCarrera();
+            if (activa && activa.id) {
+              console.log("🚗 Carrera activa encontrada, redirigiendo a DetalleCarrera...");
+              navigation.replace("DetalleCarrera", { tripId: activa.id, carreraId: activa.id });
+            } else {
+              console.log("🧑 Usuario normal, redirigiendo a BottomTabNavigatorUsuario...");
+              navigation.replace("BottomTabNavigatorUsuario");
+            }
           } else if (user.tipo_usuario === "comercio") {
             console.log("🏪 Usuario comercio, redirigiendo a BottomTabNavigatorAliado...");
             navigation.replace("BottomTabNavigatorAliado");
           } else {
-            console.log("🛵 Usuario delivery, redirigiendo a BottomTabNavigatorDelivery...");
-            navigation.replace("BottomTabNavigatorDelivery");
+            console.log("🛵 Usuario delivery, verificando carrera activa...");
+            const activa = await fetchActiveDriverCarrera();
+            if (activa && activa.id) {
+              console.log("🚗 Carrera activa de conductor encontrada, redirigiendo a DetalleCarreraConductor...");
+              navigation.replace("DetalleCarreraConductor", { tripId: activa.id, carreraId: activa.id });
+            } else {
+              console.log("🛵 Usuario delivery, redirigiendo a BottomTabNavigatorDelivery...");
+              navigation.replace("BottomTabNavigatorDelivery");
+            }
           }
         } else {
           console.log("⚠️ Token encontrado pero sin datos de usuario, redirigiendo a Login...");

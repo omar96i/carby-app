@@ -2,15 +2,21 @@ import React from "react";
 import { TouchableOpacity, View, Text, StyleSheet } from "react-native";
 import { MaterialCommunityIcons, Ionicons } from "@expo/vector-icons";
 
-const TEXTO_PAGO = "Nequi o Bancolombia";
+const PAYMENT_LABELS = {
+  efectivo: "Efectivo",
+  nequi: "Nequi",
+  bancolombia: "Bancolombia",
+};
+
+const PAYMENT_ICONS = {
+  efectivo: "cash",
+  nequi: "cellphone",
+  bancolombia: "bank",
+};
 
 export default function PaymentSelector({ paymentMethod, onPress }) {
-  const iconName = paymentMethod === "efectivo" ? "cash" : "credit-card";
-  const label = paymentMethod === "efectivo"
-    ? "Efectivo"
-    : paymentMethod === "tarjeta"
-      ? TEXTO_PAGO
-      : "Metodo de pago";
+  const iconName = PAYMENT_ICONS[paymentMethod] || "credit-card";
+  const label = PAYMENT_LABELS[paymentMethod] || "Metodo de pago";
 
   return (
     <TouchableOpacity style={styles.row} onPress={onPress} activeOpacity={0.7}>

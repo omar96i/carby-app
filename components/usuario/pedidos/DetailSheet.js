@@ -2,7 +2,7 @@ import React, { useEffect, useRef } from "react";
 import { View, Text, TouchableOpacity, StyleSheet, Modal, ScrollView, Animated, Easing, Dimensions, Linking } from "react-native";
 import MapView, { Marker } from "react-native-maps";
 import { Ionicons } from "@expo/vector-icons";
-import { COLORS, formatCOP, formatDate, metodoPagoLabel, SHADOWS, RADIUS } from "./helpers";
+import { COLORS, formatCOP, formatDate, metodoPagoLabel, SHADOWS, RADIUS, calcOrderCosts } from "./helpers";
 import StatusBadge from "./StatusBadge";
 import RouteStops from "./RouteStops";
 import DriverRow from "./DriverRow";
@@ -92,6 +92,7 @@ export default function DetailSheet({ item, onClose, onNavigate }) {
   }
 
   const isDelivery = !esCarrera && item.pedido_lists?.length > 0;
+  const costs = calcOrderCosts(item);
   const metodo = metodoPagoLabel(item.metodo_pago);
   const isActive = ["pendiente", "aceptado", "activo"].includes(displayStatus);
 
@@ -226,6 +227,20 @@ export default function DetailSheet({ item, onClose, onNavigate }) {
                 </View>
                 <Text style={s.paymentName}>{metodo}</Text>
               </View>
+
+              {isDelivery && (
+                <View style={s.breakdownBox}>
+                  <View style={s.breakdownRow}>
+                    <Text style={s.breakdownLabel}>Productos</Text>
+                    <Text style={s.breakdownValue}>{formatCOP(costs.productos)}</Text>
+                  </View>
+                  <View style={s.breakdownRow}>
+                    <Text style={s.breakdownLabel}>Envío</Text>
+                    <Text style={s.breakdownValue}>{formatCOP(costs.delivery)}</Text>
+                  </View>
+                </View>
+              )}
+
               <View style={s.totalRow}>
                 <Text style={s.totalLabel}>Total</Text>
                 <Text style={s.totalValue}>{formatCOP(item.costo_total)}</Text>
@@ -480,6 +495,29 @@ const s = StyleSheet.create({
     elevation: 2,
   },
   paymentName: {
+    fontSize: 13,
+    fontFamily: "Montserrat_800ExtraBold",
+    color: COLORS.ink,
+  },
+  breakdownBox: {
+    backgroundColor: COLORS.surface,
+    borderRadius: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    marginBottom: 12,
+    gap: 8,
+  },
+  breakdownRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+  breakdownLabel: {
+    fontSize: 13,
+    fontFamily: "Montserrat_600SemiBold",
+    color: COLORS.muted,
+  },
+  breakdownValue: {
     fontSize: 13,
     fontFamily: "Montserrat_800ExtraBold",
     color: COLORS.ink,

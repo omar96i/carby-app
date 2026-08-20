@@ -28,7 +28,7 @@ import Wallet from "../screens/Delivery/Wallet";
 import WalletRider from "../screens/Delivery/WalletRider";
 import MetodosPago from "../screens/MetodosDePago";
 import StepDiecisiete from "../screens/Billetera/StepDiecisiete";
-import PedidoDetalle from '../screens/PedidoDetalle';
+import PedidoDetalle from '../screens/usuario/PedidoDetalle';
 import PedidoDetalleComercio from '../screens/PedidoDetalleComercio';
 import ChatComercioRider from "../screens/ChatComercioRider";
 import ChatRiderComercio from "../screens/ChatRiderComercio";
@@ -38,6 +38,9 @@ import LocationVerificationScreen from "../screens/LocationVerification";
 import PagoScreen from "../screens/CajaMisterio/PagoScreen";
 import PaymentWebView from "../screens/CajaMisterio/PaymentWebView";
 import ConfigurarPalabraSeguridad from "../screens/ConfigurarPalabraSeguridad";
+import DetalleCarrera from "../screens/usuario/DetalleCarrera";
+import DetalleCarreraConductor from "../screens/conductor/DetalleCarreraConductor";
+import HorariosScreen from "../screens/comercio/HorariosScreen";
 const Stack = createStackNavigator();
 
 
@@ -96,6 +99,9 @@ export default function Navigation() {
           options={{ presentation: 'modal' }}
         />
         <Stack.Screen name="ConfigurarPalabraSeguridad" component={ConfigurarPalabraSeguridad} />
+        <Stack.Screen name="DetalleCarrera" component={DetalleCarrera} />
+        <Stack.Screen name="DetalleCarreraConductor" component={DetalleCarreraConductor} />
+        <Stack.Screen name="Horarios" component={HorariosScreen} />
 
       </Stack.Navigator>
     </NavigationContainer>

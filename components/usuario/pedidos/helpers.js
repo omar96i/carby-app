@@ -147,6 +147,20 @@ export function metodoPagoLabel(metodo) {
   return metodo.length > 12 ? metodo.slice(0, 10) + "…" : metodo;
 }
 
+// ── Costos de pedido ──────────────────────────────
+// costo_total = productos del restaurante
+// costo_envio = envío/delivery
+export function calcOrderCosts(item) {
+  const productos = parseFloat(item?.costo_total || 0);
+  const delivery = parseFloat(item?.costo_envio || 0);
+
+  return {
+    productos,
+    delivery,
+    total: productos + delivery,
+  };
+}
+
 // ── Vehículo → icono ──────────────────────────────
 export const VEHICULOS = {
   Moto: { icon: "motorcycle", set: "material-community" },

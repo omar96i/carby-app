@@ -1,7 +1,7 @@
 import React, { useEffect, useRef } from "react";
 import { View, Text, TouchableOpacity, StyleSheet, Animated, Image, Linking } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { COLORS, formatCOP, formatDate, metodoPagoLabel, RADIUS, SHADOWS, VEHICULOS } from "./helpers";
+import { COLORS, formatCOP, formatDate, metodoPagoLabel, RADIUS, SHADOWS, VEHICULOS, calcOrderCosts } from "./helpers";
 import StatusBadge from "./StatusBadge";
 import RouteStops from "./RouteStops";
 import DriverRow from "./DriverRow";
@@ -42,6 +42,8 @@ export default function TripCard({ item, onOpenDetail, onNavigate, onCancel, onC
   }
   const isClickable = esCarrera ? item.estado === "aceptado" : true;
   const metodo = metodoPagoLabel(item.metodo_pago);
+  const costs = calcOrderCosts(item);
+  const showCostBreakdown = !esCarrera && costs.productos > 0;
 
   let tituloServicio, nombreServicio;
   if (esCarrera) {
@@ -168,10 +170,27 @@ export default function TripCard({ item, onOpenDetail, onNavigate, onCancel, onC
       {/* Footer */}
       <View style={s.footer}>
         <View style={s.footerLeft}>
-          <View>
-            <Text style={s.totalLabel}>Total</Text>
-            <Text style={s.totalPrice}>{formatCOP(item.costo_total)}</Text>
-          </View>
+          {showCostBreakdown ? (
+            <View style={s.costsColumn}>
+              <View style={s.costRow}>
+                <Text style={s.costLabel}>Pedido</Text>
+                <Text style={s.costValue}>{formatCOP(costs.productos)}</Text>
+              </View>
+              <View style={s.costRow}>
+                <Text style={s.costLabel}>Envío</Text>
+                <Text style={s.costValue}>{formatCOP(costs.delivery)}</Text>
+              </View>
+              <View style={[s.costRow, s.totalCostRow]}>
+                <Text style={s.totalCostLabel}>Total</Text>
+                <Text style={s.totalCostValue}>{formatCOP(costs.total)}</Text>
+              </View>
+            </View>
+          ) : (
+            <View>
+              <Text style={s.totalLabel}>Total</Text>
+              <Text style={s.totalPrice}>{formatCOP(item.costo_total)}</Text>
+            </View>
+          )}
           <PaymentBadge metodo={metodo} />
         </View>
         <View style={s.footerActions}>
@@ -426,9 +445,49 @@ const s = StyleSheet.create({
   footerLeft: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 8,
+    gap: 10,
     flex: 1,
     overflow: "hidden",
+  },
+  costsColumn: {
+    gap: 2,
+  },
+  costRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+  costLabel: {
+    fontSize: 10,
+    fontFamily: "Montserrat_600SemiBold",
+    color: COLORS.muted,
+    minWidth: 44,
+  },
+  costValue: {
+    fontSize: 12,
+    fontFamily: "Montserrat_700Bold",
+    color: COLORS.ink,
+  },
+  totalCostRow: {
+    marginTop: 2,
+    paddingTop: 2,
+    borderTopWidth: 1,
+    borderTopColor: COLORS.zinc200,
+    borderStyle: "dashed",
+  },
+  totalCostLabel: {
+    fontSize: 10,
+    fontFamily: "Montserrat_800ExtraBold",
+    textTransform: "uppercase",
+    letterSpacing: 0.8,
+    color: COLORS.ink,
+    minWidth: 44,
+  },
+  totalCostValue: {
+    fontSize: 15,
+    fontFamily: "Montserrat_800ExtraBold",
+    color: COLORS.brand,
+    letterSpacing: -0.3,
   },
   totalLabel: {
     fontSize: 9,

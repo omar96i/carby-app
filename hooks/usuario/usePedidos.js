@@ -18,6 +18,7 @@ function normalizePedido(p) {
     es_carrera: false,
     estado: p.estado,
     costo_total: p.costo_total || 0,
+    costo_envio: p.costo_envio || 0,
     metodo_pago: p.metodo_pago || "efectivo",
     created_at: p.created_at,
     comercio: p.comercio || null,

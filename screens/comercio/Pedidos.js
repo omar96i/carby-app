@@ -25,7 +25,7 @@ import PedidosTabs from "../../components/usuario/pedidos/PedidosTabs";
 import TripCard from "../../components/usuario/pedidos/TripCard";
 import EmptyState from "../../components/usuario/pedidos/EmptyState";
 import DetailSheet from "../../components/usuario/pedidos/DetailSheet";
-import { COLORS, SHADOWS, RADIUS, formatCOP, formatDate } from "../../components/usuario/pedidos/helpers";
+import { COLORS, SHADOWS, RADIUS, formatCOP, formatDate, calcOrderCosts } from "../../components/usuario/pedidos/helpers";
 import StatusBadge from "../../components/usuario/pedidos/StatusBadge";
 import RouteStops from "../../components/usuario/pedidos/RouteStops";
 import DriverRow from "../../components/usuario/pedidos/DriverRow";
@@ -230,6 +230,8 @@ export default function PedidosComercio({ route }) {
     const canAccept = item.estado === "pendiente";
     const canShip = item.estado === "aceptado" && !item.carrera;
     const hasCarrera = !!item.carrera;
+    const costs = calcOrderCosts(item);
+    const showCostBreakdown = costs.productos > 0;
 
     return (
       <View style={[cs.card, SHADOWS.card]}>
@@ -305,10 +307,27 @@ export default function PedidosComercio({ route }) {
         {/* Footer */}
         <View style={cs.footer}>
           <View style={cs.footerLeft}>
-            <View>
-              <Text style={cs.footerLabel}>Total</Text>
-              <Text style={cs.footerPrice}>{formatCOP(item.costo_total)}</Text>
-            </View>
+            {showCostBreakdown ? (
+              <View style={cs.costsColumn}>
+                <View style={cs.costRow}>
+                  <Text style={cs.costLabel}>Pedido</Text>
+                  <Text style={cs.costValue}>{formatCOP(costs.productos)}</Text>
+                </View>
+                <View style={cs.costRow}>
+                  <Text style={cs.costLabel}>Envío</Text>
+                  <Text style={cs.costValue}>{formatCOP(costs.delivery)}</Text>
+                </View>
+                <View style={[cs.costRow, cs.totalCostRow]}>
+                  <Text style={cs.totalCostLabel}>Total</Text>
+                  <Text style={cs.totalCostValue}>{formatCOP(costs.total)}</Text>
+                </View>
+              </View>
+            ) : (
+              <View>
+                <Text style={cs.footerLabel}>Total</Text>
+                <Text style={cs.footerPrice}>{formatCOP(item.costo_total)}</Text>
+              </View>
+            )}
             <PaymentBadge metodo={item.metodo_pago || "EFECTIVO"} />
           </View>
           <View style={cs.footerActions}>
@@ -466,7 +485,14 @@ const cs = StyleSheet.create({
   searchingText: { fontSize: 12, fontFamily: "Montserrat_800ExtraBold", color: COLORS.ink },
 
   footer: { flexDirection: "row", justifyContent: "space-between", alignItems: "flex-end", paddingHorizontal: 16, paddingVertical: 12, borderTopWidth: 1, borderTopColor: COLORS.zinc200, borderStyle: "dashed", marginTop: 12, overflow: "hidden" },
-  footerLeft: { flexDirection: "row", alignItems: "center", gap: 8, flex: 1, overflow: "hidden" },
+  footerLeft: { flexDirection: "row", alignItems: "center", gap: 10, flex: 1, overflow: "hidden" },
+  costsColumn: { gap: 2 },
+  costRow: { flexDirection: "row", alignItems: "center", gap: 8 },
+  costLabel: { fontSize: 10, fontFamily: "Montserrat_600SemiBold", color: COLORS.muted, minWidth: 44 },
+  costValue: { fontSize: 12, fontFamily: "Montserrat_700Bold", color: COLORS.ink },
+  totalCostRow: { marginTop: 2, paddingTop: 2, borderTopWidth: 1, borderTopColor: COLORS.zinc200, borderStyle: "dashed" },
+  totalCostLabel: { fontSize: 10, fontFamily: "Montserrat_800ExtraBold", textTransform: "uppercase", letterSpacing: 0.8, color: COLORS.ink, minWidth: 44 },
+  totalCostValue: { fontSize: 15, fontFamily: "Montserrat_800ExtraBold", color: COLORS.brand, letterSpacing: -0.3 },
   footerLabel: { fontSize: 9, fontFamily: "Montserrat_800ExtraBold", textTransform: "uppercase", letterSpacing: 1, color: COLORS.muted },
   footerPrice: { fontSize: 19, fontFamily: "Montserrat_800ExtraBold", color: COLORS.ink },
   footerActions: { flexDirection: "row", gap: 8, flexShrink: 0 },

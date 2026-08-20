@@ -1,22 +1,48 @@
-import React, { useEffect, useRef, useState } from "react";
-import { ActivityIndicator, Dimensions, Image, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
+import React, { useEffect, useRef, useState, useCallback } from "react";
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  FlatList,
+  StyleSheet,
+  ActivityIndicator,
+  Image,
+  KeyboardAvoidingView,
+  Platform,
+  Dimensions,
+} from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as ImagePicker from "expo-image-picker";
 import { Feather, Ionicons } from "@expo/vector-icons";
 import { BASE_URL } from "../constants/url";
 
-const { height } = Dimensions.get("window");
+const { height: SCREEN_H } = Dimensions.get("window");
 
-export default function OrderChatModal({ visible, pedidoId, userInfo, onClose }) {
+export default function OrderChatModal({ visible, pedidoId, userInfo, onClose, peerName = "Comercio", peerRole = "Soporte del pedido" }) {
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState("");
   const [chatImage, setChatImage] = useState(null);
   const [loading, setLoading] = useState(false);
   const [sending, setSending] = useState(false);
-  const scrollViewRef = useRef(null);
+  const flatListRef = useRef(null);
   const intervalRef = useRef(null);
 
-  const loadMessages = async () => {
+  const currentUserId = userInfo?.id;
+
+  const parseMessageContent = (raw) => {
+    if (!raw) return { type: "text", content: "" };
+    if (typeof raw === "object") return raw;
+    try {
+      // Backend sometimes wraps JSON in quotes and escapes it
+      const cleaned = raw.replace(/^"/, "").replace(/"$/, "").replace(/\\"/g, '"');
+      return JSON.parse(cleaned);
+    } catch (e) {
+      return { type: "text", content: raw };
+    }
+  };
+
+  const loadMessages = useCallback(async () => {
     if (!pedidoId) return;
     setLoading(true);
     try {
@@ -24,35 +50,47 @@ export default function OrderChatModal({ visible, pedidoId, userInfo, onClose })
       const response = await fetch(`${BASE_URL}pedido-chat/messages/${pedidoId}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      if (response.ok) {
-        const data = await response.json();
-        const messages = (data.data || data.messages || [])
-          .filter((msg) => msg != null && typeof msg === "object")
-          .map((msg) => ({
-            ...msg,
-            currentUserId: userInfo?.id || 0,
-          }));
-        setMessages(messages);
-        setTimeout(() => scrollViewRef.current?.scrollToEnd({ animated: false }), 100);
-      }
-    } catch (error) { /* noop */ }
-    finally { setLoading(false); }
-  };
+      if (!response.ok) return;
+      const data = await response.json();
+      const list = (data.data || data.messages || [])
+        .filter((msg) => msg != null && typeof msg === "object")
+        .map((msg) => {
+          const parsed = parseMessageContent(msg.message);
+          const senderId = msg.usuario_id || msg.user_id || msg.conductor_id;
+          const isMine = String(senderId) === String(currentUserId);
+          return {
+            id: msg.id?.toString() || `msg-${Math.random()}`,
+            text: parsed.type === "text" ? parsed.content : "",
+            image: parsed.type === "image" || msg.image_url ? (msg.image_url || parsed.content) : null,
+            time: msg.created_at ? new Date(msg.created_at).toLocaleTimeString("es-CO", { hour: "2-digit", minute: "2-digit" }) : "",
+            isMine,
+            status: "sent",
+          };
+        });
+      setMessages(list);
+    } catch (error) {
+      console.error("Error cargando mensajes:", error);
+    } finally {
+      setLoading(false);
+    }
+  }, [pedidoId, currentUserId]);
 
-  const sendMessage = async () => {
-    if (!newMessage.trim() && !chatImage) return;
+  const sendMessage = async (textOverride) => {
+    const text = textOverride || newMessage;
+    if (!text.trim() && !chatImage) return;
     setSending(true);
     try {
       const token = await AsyncStorage.getItem("userToken");
       let requestBody;
       let headers = { Authorization: `Bearer ${token}`, Accept: "application/json" };
+      const rawMessage = { type: chatImage ? "image" : "text", content: text.trim() };
+      const escapedMessage = `"${JSON.stringify(rawMessage).replace(/"/g, '\\"')}"`;
 
       if (chatImage) {
         const formData = new FormData();
         formData.append("pedido_id", String(pedidoId));
-        formData.append("usuario_id", String(userInfo.id));
-        const rawMessage = { type: "text", content: newMessage.trim() };
-        formData.append("message", `"${JSON.stringify(rawMessage).replace(/"/g, '\\"')}"`);
+        formData.append("usuario_id", String(currentUserId));
+        formData.append("message", escapedMessage);
         formData.append("image", {
           uri: Platform.OS === "ios" ? chatImage.replace("file://", "") : chatImage,
           name: chatImage.split("/").pop() || "chat.jpg",
@@ -63,17 +101,31 @@ export default function OrderChatModal({ visible, pedidoId, userInfo, onClose })
         headers["Content-Type"] = "application/json";
         requestBody = JSON.stringify({
           pedido_id: parseInt(pedidoId, 10),
-          usuario_id: parseInt(userInfo.id, 10),
-          message: `"${JSON.stringify({ type: "text", content: newMessage.trim() }).replace(/"/g, '\\"')}"`,
+          usuario_id: parseInt(currentUserId, 10),
+          message: escapedMessage,
         });
       }
 
-      await fetch(`${BASE_URL}pedido-chat/send`, { method: "POST", headers, body: requestBody });
+      const localMsg = {
+        id: `temp-${Date.now()}`,
+        text: text.trim(),
+        image: chatImage,
+        time: new Date().toLocaleTimeString("es-CO", { hour: "2-digit", minute: "2-digit" }),
+        isMine: true,
+        status: "sending",
+      };
+      setMessages((prev) => [...prev, localMsg]);
       setNewMessage("");
       setChatImage(null);
+
+      await fetch(`${BASE_URL}pedido-chat/send`, { method: "POST", headers, body: requestBody });
+      setMessages((prev) => prev.map((m) => (m.id === localMsg.id ? { ...m, status: "sent" } : m)));
       loadMessages();
-    } catch (error) { /* noop */ }
-    finally { setSending(false); }
+    } catch (error) {
+      console.error("Error enviando mensaje:", error);
+    } finally {
+      setSending(false);
+    }
   };
 
   const pickImage = async () => {
@@ -89,64 +141,115 @@ export default function OrderChatModal({ visible, pedidoId, userInfo, onClose })
       intervalRef.current = setInterval(loadMessages, 10000);
     }
     return () => clearInterval(intervalRef.current);
-  }, [visible, pedidoId]);
+  }, [visible, pedidoId, loadMessages]);
+
+  useEffect(() => {
+    if (messages.length && flatListRef.current) {
+      setTimeout(() => flatListRef.current.scrollToEnd({ animated: false }), 100);
+    }
+  }, [messages.length]);
 
   if (!visible) return null;
 
-  const formatTime = (iso) => {
-    if (!iso) return "";
-    return new Date(iso).toLocaleTimeString("es-CO", { hour: "2-digit", minute: "2-digit" });
-  };
+  const quickReplies = ["¿Cuánto tarda?", "Llego en 5 min", "Gracias"];
+
+  const renderMessage = ({ item }) => (
+    <View style={[styles.messageWrapper, item.isMine ? styles.myMessageWrapper : styles.otherMessageWrapper]}>
+      <View style={[styles.bubble, item.isMine ? styles.myBubble : styles.otherBubble]}>
+        {item.image ? (
+          <Image source={{ uri: item.image }} style={styles.messageImage} resizeMode="cover" />
+        ) : (
+          <Text style={[styles.messageText, item.isMine ? styles.myMessageText : styles.otherMessageText]}>{item.text}</Text>
+        )}
+        <View style={styles.metaRow}>
+          <Text style={[styles.time, item.isMine ? styles.myTime : styles.otherTime]}>{item.time}</Text>
+          {item.status === "sending" && <Text style={styles.statusSending}>enviando</Text>}
+          {item.status === "error" && <Text style={styles.statusError}>error</Text>}
+          {item.isMine && item.status !== "sending" && item.status !== "error" && (
+            <Feather name="check" size={10} color="rgba(255,255,255,0.7)" />
+          )}
+        </View>
+      </View>
+    </View>
+  );
 
   return (
     <View style={styles.overlay}>
-      <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : undefined} style={styles.container}>
+      <TouchableOpacity style={styles.backdrop} activeOpacity={1} onPress={onClose} />
+      <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : undefined} style={styles.panel}>
+        {/* Header */}
         <View style={styles.header}>
-          <TouchableOpacity onPress={onClose}><Feather name="chevron-down" size={28} color="#FFF" /></TouchableOpacity>
-          <Text style={styles.headerTitle}>Chat del pedido</Text>
-          <TouchableOpacity onPress={loadMessages}><Feather name="refresh-cw" size={20} color="rgba(255,255,255,0.7)" /></TouchableOpacity>
+          <View style={styles.avatarBox}>
+            <Ionicons name="storefront" size={22} color="#FF5500" />
+          </View>
+          <View style={styles.headerText}>
+            <Text style={styles.headerTitle} numberOfLines={1}>{peerName}</Text>
+            <Text style={styles.headerSub}>{peerRole}</Text>
+          </View>
+          <TouchableOpacity style={styles.closeBtn} onPress={onClose} activeOpacity={0.8}>
+            <Feather name="x" size={20} color="#64748B" />
+          </TouchableOpacity>
         </View>
 
-        <ScrollView
-          ref={scrollViewRef}
-          style={styles.messages}
-          contentContainerStyle={styles.messagesContent}
-        >
-          {loading && <ActivityIndicator size="small" color="#fa6205" style={{ paddingTop: 20 }} />}
-          {!loading && !messages.length && <Text style={styles.empty}>No hay mensajes todavía. Envía el primer mensaje.</Text>}
-          {messages.map((msg, index) => {
-            const isMine = String(msg.currentUserId) === String(msg.usuario_id || msg.user_id);
-            const showAvatar = index === 0 || messages[index - 1]?.usuario_id !== msg.usuario_id;
-            return (
-              <View key={index} style={[styles.bubbleWrap, isMine && styles.bubbleWrapMine]}>
-                {!isMine && showAvatar && <View style={styles.avatar}><Feather name="user" size={16} color="#888" /></View>}
-                {!isMine && !showAvatar && <View style={{ width: 36 }} />}
-                <View style={[styles.bubble, isMine ? styles.bubbleMine : styles.bubbleTheirs]}>
-                  <View style={[styles.tail, isMine ? styles.tailMine : styles.tailTheirs]} />
-                  {!isMine && showAvatar && <Text style={styles.bubbleUser}>{msg.nombre_completo || "Usuario"}</Text>}
-                  {msg.content && <Text style={[styles.bubbleText, isMine && styles.bubbleTextMine]}>{msg.content}</Text>}
-                  {msg.image_url && <Image source={{ uri: msg.image_url }} style={styles.bubbleImage} resizeMode="cover" />}
-                  <Text style={[styles.bubbleTime, isMine && styles.bubbleTimeMine]}>{formatTime(msg.created_at)}</Text>
-                </View>
-                {isMine && showAvatar && <View style={styles.avatarMine}><Ionicons name="person" size={16} color="#FFF" /></View>}
-                {isMine && !showAvatar && <View style={{ width: 36 }} />}
-              </View>
-            );
-          })}
-        </ScrollView>
+        {/* Messages */}
+        {loading && messages.length === 0 ? (
+          <View style={styles.loadingBox}>
+            <ActivityIndicator size="small" color="#FF5500" />
+          </View>
+        ) : messages.length === 0 ? (
+          <View style={styles.emptyBox}>
+            <Text style={styles.emptyText}>No hay mensajes todavía. Envía el primer mensaje.</Text>
+          </View>
+        ) : (
+          <FlatList
+            ref={flatListRef}
+            data={messages}
+            keyExtractor={(item) => item.id}
+            renderItem={renderMessage}
+            contentContainerStyle={styles.messagesContent}
+            keyboardShouldPersistTaps="handled"
+          />
+        )}
 
-        <View style={styles.inputBar}>
+        {/* Quick replies */}
+        <View style={styles.quickReplies}>
+          {quickReplies.map((q) => (
+            <TouchableOpacity key={q} style={styles.quickReply} onPress={() => sendMessage(q)} activeOpacity={0.8}>
+              <Text style={styles.quickReplyText}>{q}</Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+
+        {/* Input */}
+        <View style={styles.inputContainer}>
           {chatImage && (
             <View style={styles.imagePreview}>
-              <Image source={{ uri: chatImage }} style={{ width: 40, height: 40, borderRadius: 6 }} />
-              <TouchableOpacity onPress={() => setChatImage(null)} style={{ marginLeft: 8 }}><Feather name="x" size={16} color="#888" /></TouchableOpacity>
+              <Image source={{ uri: chatImage }} style={styles.imagePreviewThumb} />
+              <TouchableOpacity onPress={() => setChatImage(null)} style={styles.removeImageBtn}>
+                <Feather name="x" size={14} color="#64748B" />
+              </TouchableOpacity>
             </View>
           )}
           <View style={styles.inputRow}>
-            <TouchableOpacity onPress={pickImage} style={styles.attachBtn}><Feather name="image" size={22} color="#888" /></TouchableOpacity>
-            <TextInput value={newMessage} onChangeText={setNewMessage} placeholder="Escribe un mensaje..." style={styles.input} multiline />
-            <TouchableOpacity disabled={sending || (!newMessage.trim() && !chatImage)} onPress={sendMessage} style={[styles.sendBtn, (newMessage.trim() || chatImage) && styles.sendBtnActive]}>
-              {sending ? <ActivityIndicator size="small" color="#FFF" /> : <Feather name="send" size={17} color={(newMessage.trim() || chatImage) ? "#FFF" : "#aaa"} />}
+            <TouchableOpacity style={styles.iconButton} onPress={pickImage} activeOpacity={0.8}>
+              <Feather name="image" size={22} color="#64748B" />
+            </TouchableOpacity>
+            <TextInput
+              style={styles.input}
+              placeholder="Escribe un mensaje..."
+              placeholderTextColor="#94A3B8"
+              value={newMessage}
+              onChangeText={setNewMessage}
+              multiline
+              maxLength={500}
+            />
+            <TouchableOpacity
+              style={[styles.sendButton, (!newMessage.trim() && !chatImage) && styles.sendButtonDisabled]}
+              onPress={() => sendMessage()}
+              disabled={sending || (!newMessage.trim() && !chatImage)}
+              activeOpacity={0.8}
+            >
+              {sending ? <ActivityIndicator size="small" color="#FFFFFF" /> : <Feather name="send" size={18} color="#FFFFFF" />}
             </TouchableOpacity>
           </View>
         </View>
@@ -156,44 +259,243 @@ export default function OrderChatModal({ visible, pedidoId, userInfo, onClose })
 }
 
 const styles = StyleSheet.create({
-  overlay: { ...StyleSheet.absoluteFillObject, backgroundColor: "#FFF", zIndex: 100 },
-  container: { flex: 1 },
+  overlay: {
+    ...StyleSheet.absoluteFillObject,
+    zIndex: 2000,
+  },
+  backdrop: {
+    flex: 1,
+    backgroundColor: "rgba(15,23,42,0.35)",
+  },
+  panel: {
+    position: "absolute",
+    bottom: 0,
+    left: 0,
+    right: 0,
+    height: "80%",
+    backgroundColor: "#FFFFFF",
+    borderTopLeftRadius: 28,
+    borderTopRightRadius: 28,
+    shadowColor: "#0F172A",
+    shadowOffset: { width: 0, height: -10 },
+    shadowOpacity: 0.15,
+    shadowRadius: 30,
+    elevation: 20,
+    overflow: "hidden",
+  },
   header: {
     flexDirection: "row",
-    justifyContent: "space-between",
     alignItems: "center",
-    paddingHorizontal: 20,
-    paddingTop: 56,
-    paddingBottom: 22,
-    backgroundColor: "#1C1C1E",
-    borderBottomLeftRadius: 40,
-    borderBottomRightRadius: 40,
+    gap: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: "#E2E8F0",
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    backgroundColor: "#FF5500",
   },
-  headerTitle: { fontSize: 19, fontWeight: "700", color: "#FFF", letterSpacing: 0.3 },
-  messages: { flex: 1, backgroundColor: "#FFF" },
-  messagesContent: { paddingHorizontal: 14, paddingBottom: 6, paddingTop: 14 },
-  empty: { textAlign: "center", color: "#a1a1aa", fontSize: 14, marginTop: 40 },
-  bubbleWrap: { flexDirection: "row", alignItems: "flex-end", marginBottom: 14 },
-  bubbleWrapMine: { justifyContent: "flex-end" },
-  avatar: { width: 38, height: 38, borderRadius: 19, backgroundColor: "#E8E8ED", justifyContent: "center", alignItems: "center", marginRight: 8 },
-  avatarMine: { width: 38, height: 38, borderRadius: 19, backgroundColor: "#1C1C1E", justifyContent: "center", alignItems: "center", marginLeft: 8 },
-  bubble: { maxWidth: "75%", padding: 14, paddingBottom: 8, borderTopLeftRadius: 24, borderTopRightRadius: 24, overflow: "visible" },
-  bubbleTheirs: { backgroundColor: "#ECECEC", borderBottomLeftRadius: 4, borderBottomRightRadius: 24 },
-  bubbleMine: { backgroundColor: "#1C1C1E", borderBottomLeftRadius: 24, borderBottomRightRadius: 4, shadowColor: "#000", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 4, elevation: 3 },
-  bubbleUser: { fontSize: 12, fontWeight: "700", color: "#71717a", marginBottom: 4 },
-  bubbleText: { fontSize: 16, color: "#1C1C1E", lineHeight: 22 },
-  bubbleTextMine: { color: "#FFF" },
-  bubbleImage: { width: 120, height: 120, borderRadius: 10, marginTop: 6 },
-  bubbleTime: { fontSize: 11, color: "#a1a1aa", marginTop: 4, textAlign: "right" },
-  bubbleTimeMine: { color: "rgba(255,255,255,0.7)" },
-  tail: { position: "absolute", bottom: -5, width: 12, height: 12, transform: [{ rotate: "45deg" }] },
-  tailTheirs: { left: -4, backgroundColor: "#ECECEC" },
-  tailMine: { right: -4, backgroundColor: "#1C1C1E" },
-  inputBar: { borderTopWidth: 1, borderTopColor: "#E5E5EA", backgroundColor: "#FFF", paddingHorizontal: 14, paddingVertical: 10, paddingBottom: Platform.OS === "ios" ? 24 : 10 },
-  imagePreview: { flexDirection: "row", alignItems: "center", marginBottom: 8 },
-  inputRow: { flexDirection: "row", alignItems: "flex-end", gap: 6 },
-  attachBtn: { padding: 6, backgroundColor: "#FFF0E5", borderRadius: 20, width: 38, height: 38, justifyContent: "center", alignItems: "center" },
-  input: { flex: 1, backgroundColor: "#ECECEC", borderRadius: 22, paddingHorizontal: 16, paddingVertical: 10, maxHeight: 100, fontSize: 15, color: "#1C1C1E" },
-  sendBtn: { width: 38, height: 38, borderRadius: 19, backgroundColor: "#e4e4e7", justifyContent: "center", alignItems: "center" },
-  sendBtnActive: { backgroundColor: "#1C1C1E" },
+  avatarBox: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: "#FFFFFF",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  headerText: {
+    flex: 1,
+  },
+  headerTitle: {
+    fontSize: 15,
+    fontFamily: "MontserratBold",
+    fontWeight: "bold",
+    color: "#FFFFFF",
+  },
+  headerSub: {
+    fontSize: 12,
+    fontFamily: "MontserratBold",
+    fontWeight: "bold",
+    color: "rgba(255,255,255,0.85)",
+    marginTop: 2,
+  },
+  closeBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: "rgba(255,255,255,0.25)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  loadingBox: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  emptyBox: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 24,
+  },
+  emptyText: {
+    textAlign: "center",
+    color: "#94A3B8",
+    fontSize: 14,
+    fontFamily: "Montserrat",
+  },
+  messagesContent: {
+    paddingVertical: 12,
+    paddingHorizontal: 14,
+  },
+  messageWrapper: {
+    maxWidth: "78%",
+    marginVertical: 4,
+  },
+  myMessageWrapper: {
+    alignSelf: "flex-end",
+  },
+  otherMessageWrapper: {
+    alignSelf: "flex-start",
+  },
+  bubble: {
+    borderRadius: 18,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+  },
+  myBubble: {
+    backgroundColor: "#FF5500",
+    borderBottomRightRadius: 6,
+  },
+  otherBubble: {
+    backgroundColor: "#F1F5F9",
+    borderBottomLeftRadius: 6,
+  },
+  messageText: {
+    fontSize: 14,
+    lineHeight: 19,
+    fontFamily: "Montserrat",
+  },
+  myMessageText: {
+    color: "#FFFFFF",
+  },
+  otherMessageText: {
+    color: "#0F172A",
+  },
+  messageImage: {
+    width: 220,
+    height: 160,
+    borderRadius: 12,
+  },
+  metaRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "flex-end",
+    gap: 4,
+    marginTop: 4,
+  },
+  time: {
+    fontSize: 10,
+    fontFamily: "Montserrat",
+  },
+  myTime: {
+    color: "rgba(255,255,255,0.75)",
+  },
+  otherTime: {
+    color: "#94A3B8",
+  },
+  statusSending: {
+    fontSize: 10,
+    color: "#94A3B8",
+    fontFamily: "Montserrat",
+  },
+  statusError: {
+    fontSize: 10,
+    color: "#FF4757",
+    fontFamily: "Montserrat",
+  },
+  quickReplies: {
+    flexDirection: "row",
+    gap: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderTopWidth: 1,
+    borderTopColor: "#E2E8F0",
+  },
+  quickReply: {
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: "#E2E8F0",
+    backgroundColor: "#F8FAFC",
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+  },
+  quickReplyText: {
+    fontSize: 11,
+    fontFamily: "Montserrat",
+    color: "#0F172A",
+  },
+  inputContainer: {
+    borderTopWidth: 1,
+    borderTopColor: "#E2E8F0",
+    backgroundColor: "#FFFFFF",
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    paddingBottom: Platform.OS === "ios" ? 24 : 16,
+  },
+  imagePreview: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 8,
+  },
+  imagePreviewThumb: {
+    width: 44,
+    height: 44,
+    borderRadius: 8,
+  },
+  removeImageBtn: {
+    marginLeft: 8,
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    backgroundColor: "#F1F5F9",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  inputRow: {
+    flexDirection: "row",
+    alignItems: "flex-end",
+    gap: 8,
+  },
+  iconButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "#F1F5F9",
+  },
+  input: {
+    flex: 1,
+    minHeight: 42,
+    maxHeight: 110,
+    borderRadius: 22,
+    borderWidth: 1,
+    borderColor: "#E2E8F0",
+    backgroundColor: "#F8FAFC",
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    fontSize: 14,
+    fontFamily: "Montserrat",
+    color: "#0F172A",
+  },
+  sendButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: "#FF5500",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  sendButtonDisabled: {
+    backgroundColor: "#CBD5E1",
+  },
 });

@@ -1,5 +1,5 @@
 import React from "react";
-import { View, Text, TouchableOpacity, StyleSheet, Animated } from "react-native";
+import { View, Text, Pressable, StyleSheet, Animated } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 
 const CHIPS = [
@@ -30,11 +30,11 @@ export default function BidPanel({
     <View style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.title}>Tu oferta</Text>
-        <TouchableOpacity onPress={onReset} activeOpacity={0.7}>
-          <View style={styles.recBadge}>
-            <Text style={styles.recText}>Sugerido: ${suggestedPrice}</Text>
-          </View>
-        </TouchableOpacity>
+        <Pressable onPress={onReset} style={({ pressed }) => [styles.recBadge, pressed && styles.recBadgePressed]}>
+          {({ pressed }) => (
+            <Text style={[styles.recText, pressed && styles.recTextPressed]}>Sugerido: ${suggestedPrice}</Text>
+          )}
+        </Pressable>
       </View>
 
       {isBelowSuggested && (
@@ -45,14 +45,23 @@ export default function BidPanel({
       )}
 
       <View style={styles.controls}>
-        <TouchableOpacity
-          style={[styles.stepBtn, !canDecrease500 && styles.stepBtnDisabled]}
+        <Pressable
           onPress={onDecrease}
-          activeOpacity={0.7}
           disabled={!canDecrease500}
+          style={({ pressed }) => [
+            styles.stepBtn,
+            !canDecrease500 && styles.stepBtnDisabled,
+            pressed && canDecrease500 && styles.stepBtnPressed,
+          ]}
         >
-          <Text style={[styles.stepBtnText, !canDecrease500 && styles.stepBtnTextDisabled]}>- $500</Text>
-        </TouchableOpacity>
+          {({ pressed }) => (
+            <Text style={[
+              styles.stepBtnText,
+              !canDecrease500 && styles.stepBtnTextDisabled,
+              pressed && canDecrease500 && styles.stepBtnTextPressed,
+            ]}>- $500</Text>
+          )}
+        </Pressable>
 
         <Animated.View
           style={[
@@ -89,9 +98,14 @@ export default function BidPanel({
           </Animated.Text>
         </Animated.View>
 
-        <TouchableOpacity style={styles.stepBtn} onPress={onIncrease} activeOpacity={0.7}>
-          <Text style={styles.stepBtnText}>+ $500</Text>
-        </TouchableOpacity>
+        <Pressable
+          onPress={onIncrease}
+          style={({ pressed }) => [styles.stepBtn, pressed && styles.stepBtnPressed]}
+        >
+          {({ pressed }) => (
+            <Text style={[styles.stepBtnText, pressed && styles.stepBtnTextPressed]}>+ $500</Text>
+          )}
+        </Pressable>
       </View>
 
       <View style={styles.chipsRow}>
@@ -99,17 +113,28 @@ export default function BidPanel({
           const isActive = chip.isReset && bidOffset === 0;
           const disabled = chip.delta < 0 && !canDecrease500;
           return (
-            <TouchableOpacity
-              key={i}
-              style={[styles.chip, isActive && styles.chipActive, disabled && styles.chipDisabled]}
-              onPress={() => chip.isReset ? onReset() : onChipDelta(chip.delta)}
-              activeOpacity={0.7}
-              disabled={disabled}
-            >
-              <Text style={[styles.chipText, isActive && styles.chipTextActive, disabled && styles.chipTextDisabled]}>
+          <Pressable
+            key={i}
+            onPress={() => chip.isReset ? onReset() : onChipDelta(chip.delta)}
+            disabled={disabled}
+            style={({ pressed }) => [
+              styles.chip,
+              isActive && styles.chipActive,
+              disabled && styles.chipDisabled,
+              pressed && !disabled && styles.chipPressed,
+            ]}
+          >
+            {({ pressed }) => (
+              <Text style={[
+                styles.chipText,
+                isActive && styles.chipTextActive,
+                disabled && styles.chipTextDisabled,
+                pressed && !disabled && styles.chipTextPressed,
+              ]}>
                 {chip.label}
               </Text>
-            </TouchableOpacity>
+            )}
+          </Pressable>
           );
         })}
       </View>
@@ -148,11 +173,18 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     paddingVertical: 4,
   },
+  recBadgePressed: {
+    backgroundColor: "#FF5500",
+    borderColor: "#FF5500",
+  },
   recText: {
     fontSize: 11,
     fontFamily: "MontserratBold",
     fontWeight: "bold",
     color: "#059669",
+  },
+  recTextPressed: {
+    color: "#FFFFFF",
   },
   warnBadge: {
     flexDirection: "row",
@@ -198,6 +230,9 @@ const styles = StyleSheet.create({
     borderColor: "#e4e4e7",
     backgroundColor: "#F4F4F5",
   },
+  stepBtnPressed: {
+    backgroundColor: "#FF5500",
+  },
   stepBtnText: {
     fontSize: 13,
     fontFamily: "MontserratBold",
@@ -206,6 +241,9 @@ const styles = StyleSheet.create({
   },
   stepBtnTextDisabled: {
     color: "#a1a1aa",
+  },
+  stepBtnTextPressed: {
+    color: "#FFFFFF",
   },
   display: {
     flex: 1,
@@ -257,6 +295,10 @@ const styles = StyleSheet.create({
     shadowRadius: 10,
     elevation: 4,
   },
+  chipPressed: {
+    backgroundColor: "#FF5500",
+    borderColor: "#FF5500",
+  },
   chipDisabled: {
     opacity: 0.3,
     borderColor: "#e4e4e7",
@@ -268,6 +310,9 @@ const styles = StyleSheet.create({
     color: "#475569",
   },
   chipTextActive: {
+    color: "#FFFFFF",
+  },
+  chipTextPressed: {
     color: "#FFFFFF",
   },
   chipTextDisabled: {

@@ -1,20 +1,8 @@
 import React from "react";
 import { TouchableOpacity, View, Text, Image, StyleSheet } from "react-native";
+import { MaterialCommunityIcons } from "@expo/vector-icons";
 
-const VEHICLE_IMAGES = {
-  taxi: require("../../../assets/images/icono-carro.png"),
-  moto: require("../../../assets/images/icono-moto.png"),
-};
-
-const VEHICLE_TAGS = {
-  taxi: "4",
-  moto: "1",
-};
-
-export default function VehicleCard({ type, name, price, eta, selected, onPress }) {
-  const imageSource = VEHICLE_IMAGES[type];
-  const tag = VEHICLE_TAGS[type] || "?";
-
+export default function VehicleCard({ name, iconUrl, price, selected, onPress }) {
   return (
     <TouchableOpacity
       style={[styles.card, selected && styles.cardActive]}
@@ -22,19 +10,19 @@ export default function VehicleCard({ type, name, price, eta, selected, onPress 
       activeOpacity={0.85}
     >
       <View style={styles.topRow}>
-        <Text style={styles.name}>{name}</Text>
-        <View style={[styles.tag, selected && styles.tagActive]}>
-          <Text style={[styles.tagText, selected && styles.tagTextActive]}>{tag}</Text>
-        </View>
+        <Text style={styles.name} numberOfLines={1}>{name}</Text>
       </View>
       <View style={styles.iconWrap}>
-        <Image source={imageSource} style={styles.vehicleImg} resizeMode="contain" />
+        {iconUrl ? (
+          <Image source={{ uri: iconUrl }} style={styles.vehicleImg} resizeMode="contain" />
+        ) : (
+          <MaterialCommunityIcons name="package-variant-closed" size={40} color="#FF5500" />
+        )}
       </View>
       <View style={styles.bottomRow}>
         <Text style={[styles.price, selected && styles.priceActive]}>
           {price ? `$${price}` : "--"}
         </Text>
-        <Text style={styles.eta}>{eta || "~3 min"}</Text>
       </View>
     </TouchableOpacity>
   );
@@ -59,12 +47,13 @@ const styles = StyleSheet.create({
   },
   cardActive: {
     borderColor: "#FF5500",
-    backgroundColor: "#FFF8F5",
+    borderWidth: 2,
+    backgroundColor: "#FFF0E8",
     shadowColor: "#FF5500",
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.25,
-    shadowRadius: 24,
-    elevation: 8,
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.5,
+    shadowRadius: 20,
+    elevation: 10,
   },
   topRow: {
     flexDirection: "row",
@@ -76,27 +65,6 @@ const styles = StyleSheet.create({
     fontFamily: "MontserratBold",
     fontWeight: "bold",
     color: "#0F172A",
-  },
-  tag: {
-    backgroundColor: "#F1F5F9",
-    borderWidth: 1,
-    borderColor: "#E2E8F0",
-    borderRadius: 6,
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-  },
-  tagActive: {
-    backgroundColor: "rgba(255,85,0,0.08)",
-    borderColor: "#FF5500",
-  },
-  tagText: {
-    fontSize: 9,
-    fontFamily: "MontserratBold",
-    fontWeight: "bold",
-    color: "#475569",
-  },
-  tagTextActive: {
-    color: "#FF5500",
   },
   iconWrap: {
     alignItems: "center",
@@ -125,11 +93,5 @@ const styles = StyleSheet.create({
   },
   priceActive: {
     color: "#FF5500",
-  },
-  eta: {
-    fontSize: 10,
-    fontFamily: "MontserratBold",
-    fontWeight: "bold",
-    color: "#10B981",
   },
 });
