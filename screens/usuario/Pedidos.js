@@ -41,7 +41,7 @@ export default function Pedidos({ route }) {
   });
 
   const { pedidos, filteredPedidos, isLoading, error, refreshing, fetchPedidos, onRefresh, setFilteredPedidos, countActivas, countHistorial } = usePedidos();
-  const { reservas, filteredReservas, isLoadingReservas, fetchReservas, setFilteredReservas, filtrarReservas } = useReservas();
+  const { reservas, filteredReservas, isLoadingReservas, fetchReservas, setFilteredReservas, filtrarReservas, cancelReserva } = useReservas();
   const calif = useCalificacion();
 
   const [activeTab, setActiveTab] = useState("activas");
@@ -83,18 +83,23 @@ export default function Pedidos({ route }) {
   useFocusEffect(
     useCallback(() => {
       if (route?.params?.refreshTrigger || route?.params?.newOrderId) {
-        fetchPedidos();
+        fetchPedidos(activeTab);
       }
-    }, [route?.params?.refreshTrigger, route?.params?.newOrderId])
+    }, [route?.params?.refreshTrigger, route?.params?.newOrderId, activeTab])
   );
 
   // ── Navigate to detail ──
   const navigateToDetails = useCallback((item) => {
     if (!item) return;
-    if (item.es_carrera) {
+    if (item.es_carrera && !item.pedido_id) {
       navigation.navigate("DetalleCarrera", {
         tripId: item.id,
         carreraId: item.id,
+      });
+    } else if (item.es_carrera && item.pedido_id) {
+      navigation.navigate("PedidoDetalle", {
+        pedidoId: item.pedido_id,
+        pedidoData: item,
       });
     } else {
       navigation.navigate("PedidoDetalle", {
@@ -137,6 +142,23 @@ export default function Pedidos({ route }) {
     );
   }, [fetchPedidos, activeTab]);
 
+  // ── Cancel reserva ──
+  const handleCancelReserva = useCallback(async (item) => {
+    showAlert(
+      "¿Cancelar esta reserva?",
+      "confirm",
+      async () => {
+        const result = await cancelReserva(item.id);
+        if (result.ok) {
+          showAlert("Tu reserva ha sido cancelada", "success");
+        } else {
+          showAlert("No se pudo cancelar la reserva", "error");
+        }
+      },
+      "Sí, cancelar"
+    );
+  }, [cancelReserva]);
+
   // ── Data dispatch ──
   const listData = activeTab === "reservas" ? filteredReservas : filteredPedidos;
 
@@ -157,7 +179,7 @@ export default function Pedidos({ route }) {
   const renderItem = ({ item }) => {
     const isReserva = item.user_perfil && item.fecha && item.hora_inicio;
     if (activeTab === "reservas" || isReserva) {
-      return <ReservaCard item={item} />;
+      return <ReservaCard item={item} onCancel={handleCancelReserva} />;
     }
     return (
       <TripCard

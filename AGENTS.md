@@ -31,8 +31,7 @@ No test, lint, typecheck, or formatter scripts exist. No CI or pre-commit config
 
 - **Country-specific backend**: `constants/url.js` switches between Peru (`https://back.yariders.com/api/`) and Colombia (`https://co.yariders.com/api/`). The selected country is stored in AsyncStorage under key `pais_seleccionado`. `BASE_URL` is an object with `toString()`/`valueOf()`; use it like a string in template literals.
 - **Role-based nav**: `navigation/index.js` registers three bottom-tab navigators (`BottomTabNavigatorUsuario`, `BottomTabNavigatorDelivery`, `BottomTabNavigatorAliado`). Check the active navigator when adding role-specific screens.
-- **Assets**: `BaseColombia/` holds Colombia geographic JSONs (`colombia.json`, `colombia_departamentos.json`). `assets/sounds/` contains `pedido.wav` and `carrera.wav` used by foreground notification handlers.
-- **Notification channels**: Android channels are created at runtime in `context/NotificationContext.js` with sound names referenced without extension (`pedido.mp3`, `carrera.mp3`) even though source files are `.wav`.
+- **Assets**: `BaseColombia/` holds Colombia geographic JSONs (`colombia.json`, `colombia_departamentos.json`). `assets/sounds/` may contain other UI sounds; push notification channels now use the default system sound.
 - **OTA updates**: `App.js` checks `expo-updates` on launch and shows a blocking alert if an update is available, then reloads.
 - **Version gate**: `App.js` also calls `${BASE_URL}active-version` and forces store redirect if the local version differs from backend.
 

@@ -74,6 +74,43 @@ export default function useReservas() {
     }
   }, []);
 
+  const cancelReserva = useCallback(async (reservaId) => {
+    try {
+      const token = await AsyncStorage.getItem("userToken");
+      if (!token) throw new Error("No se encontró token");
+
+      const endpoint = `${BASE_URL}reservas/${reservaId}`;
+      logger.request("POST", endpoint, { estado: "cancelado" });
+
+      const response = await fetch(endpoint, {
+        method: "POST",
+        headers: {
+          Accept: "application/json",
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ estado: "cancelado" }),
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Error ${response.status}: ${errorText}`);
+      }
+
+      setReservas((prev) =>
+        prev.map((r) => (r.id === reservaId ? { ...r, estado: "cancelado" } : r))
+      );
+      setFilteredReservas((prev) =>
+        prev.map((r) => (r.id === reservaId ? { ...r, estado: "cancelado" } : r))
+      );
+
+      return { ok: true };
+    } catch (error) {
+      console.error("Error cancelando reserva:", error);
+      return { ok: false, error: error.message };
+    }
+  }, []);
+
   return {
     reservas,
     filteredReservas,
@@ -81,5 +118,6 @@ export default function useReservas() {
     fetchReservas,
     setFilteredReservas,
     filtrarReservas,
+    cancelReserva,
   };
 }

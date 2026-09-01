@@ -6,29 +6,24 @@ export default function PedidosHeader() {
   return (
     <View style={s.container}>
       <Text style={s.title}>Mis viajes y pedidos</Text>
-      <Text style={s.sub}>Revisa tus carreras, envíos y reservas en un solo lugar.</Text>
     </View>
   );
 }
 
 const s = StyleSheet.create({
   container: {
-    paddingHorizontal: 20,
+    justifyContent: "center",
+    alignItems: "center",
     paddingTop: 50,
-    paddingBottom: 12,
-    backgroundColor: COLORS.surface,
+    paddingBottom: 22,
+    marginBottom: 16,
+    backgroundColor: "#1C1C1E",
+    borderBottomLeftRadius: 40,
+    borderBottomRightRadius: 40,
   },
   title: {
-    fontSize: 28,
+    fontSize: 18,
     fontFamily: "Montserrat_800ExtraBold",
-    color: COLORS.ink,
-    lineHeight: 30,
-    letterSpacing: -0.5,
-  },
-  sub: {
-    marginTop: 6,
-    fontSize: 13,
-    fontFamily: "Montserrat_600SemiBold",
-    color: COLORS.muted,
+    color: "#FFF",
   },
 });

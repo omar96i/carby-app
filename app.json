@@ -38,11 +38,7 @@
       },
       "config": {
         "googleMapsApiKey": "AIzaSyA5Q7U5qVt_NbzZ5z5vBJv7ECTsGZ9-chM"
-      },
-      "sounds": [
-        "./assets/sounds/pedido.wav",
-        "./assets/sounds/carrera.wav"
-      ]
+      }
     },
     "android": {
       "package": "com.carbycol.app",
@@ -75,7 +71,7 @@
           "apiKey": "AIzaSyA5Q7U5qVt_NbzZ5z5vBJv7ECTsGZ9-chM"
         }
       },
-      "googleServicesFile": "./google-services.json",
+      "googleServicesFile": "./credenciales-google.json",
       "launchMode": "singleTask"
     },
     "runtimeVersion": "1.0.0",
@@ -94,9 +90,7 @@
       [
         "expo-notifications",
         {
-          "icon": "./assets/images/icono_notificacion.png",
           "defaultChannel": "default",
-          "color": "#ffffff",
           "enableBackgroundRemoteNotifications": false
         }
       ],

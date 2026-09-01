@@ -2,6 +2,7 @@ import React, { useRef, useState, useEffect } from "react";
 import {
   View,
   Text,
+  Image,
   TouchableOpacity,
   StyleSheet,
   Animated,
@@ -11,12 +12,12 @@ import {
   Linking,
 } from "react-native";
 import { Feather, Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
-import { formatCurrency, formatDate, metodoPagoLabel, parseJSON, getOrderCoords, calculateProductsTotal, calculateDeliveryCost } from "../utils";
+import { formatCurrency, formatDate, metodoPagoLabel, parseJSON, getOrderCoords, getImageUrl, calculateProductsTotal, calculateDeliveryCost, calculateDiscount } from "../utils";
 import OrderStatusStepper from "../../../../components/OrderStatusStepper";
 
 const { height: SCREEN_H } = Dimensions.get("window");
-const COLLAPSED_H = 130;
-const EXPANDED_H = SCREEN_H * 0.76;
+const COLLAPSED_H = 90;
+const EXPANDED_H = SCREEN_H * 0.5;
 
 const RESTO_STATUS = {
   pendiente: { label: "Pendiente", tone: "amber" },
@@ -59,11 +60,25 @@ export const OrderSheet = ({
   const coords = getOrderCoords(pedido);
   const productsTotal = calculateProductsTotal(pedido?.pedido_lists);
   const deliveryCost = calculateDeliveryCost(pedido);
-  const orderTotal = parseFloat(pedido?.costo_total || 0);
+  const discount = calculateDiscount(pedido);
+  const orderTotal = parseFloat(pedido?.costo_total || 0) + deliveryCost;
+  const pin = pedido?.pin || pedido?.carrera?.pin;
+  const comercioImage =
+    comercio?.foto_documento_file ||
+    comercio?.imagen ||
+    comercio?.logo ||
+    comercio?.foto ||
+    comercio?.foto_perfil ||
+    comercio?.imagen_url ||
+    comercio?.url_imagen ||
+    comercio?.logo_url ||
+    comercio?.foto_url ||
+    null;
   const driver = pedido?.conductor || pedido?.carrera?.conductor;
+  const driverImage = getImageUrl(driver?.foto_documento_file || driver?.foto || driver?.imagen || driver?.logo || null);
   const isFinished = ["entregado", "cancelado"].includes(currentKey);
   const canCancel = !isFinished && currentKey !== "en_camino";
-  const courierAssigned = !!driver && ["aceptado", "confirmado", "preparado", "completado", "en_camino", "entregado"].includes(currentKey);
+  const courierAssigned = !!driver;
 
   const restoSub = RESTO_STATUS[currentKey] || RESTO_STATUS.pendiente;
   const courierSub = COURIER_STATUS[currentKey] || COURIER_STATUS.pendiente;
@@ -108,7 +123,8 @@ export const OrderSheet = ({
   };
 
   const handleCallDriver = () => {
-    if (driver?.numero_telefono) Linking.openURL(`tel:${driver.numero_telefono}`);
+    const phone = driver?.numero_telefono || driver?.telefono || driver?.celular;
+    if (phone) Linking.openURL(`tel:${phone}`);
   };
 
   const renderToneBox = (tone, label, sub) => {
@@ -129,27 +145,37 @@ export const OrderSheet = ({
 
   return (
     <Animated.View style={[styles.sheet, { height: heightAnim }]}>
-      <View style={styles.header} {...panResponder.panHandlers}>
+      <View style={[styles.header, { height: expanded ? 36 : COLLAPSED_H }]} {...panResponder.panHandlers}>
         <View style={styles.handle} />
-        <Animated.View style={[styles.collapsedRow, { opacity: compactOpacity }]}>
-          <View style={styles.commerceIcon}>
-            <Ionicons name="cube" size={20} color="#FF5500" />
-          </View>
-          <View style={styles.collapsedTextBox}>
-            <Text style={styles.collapsedName} numberOfLines={1}>{comercioName}</Text>
-            <Text style={styles.collapsedSub}>Pedido #{pedido?.id} · {formatDate(pedido?.created_at)}</Text>
-          </View>
-          <Feather name="chevron-up" size={20} color="#64748B" />
-        </Animated.View>
+        <View style={styles.collapsedRowWrapper}>
+          <Animated.View style={[styles.collapsedRow, { opacity: compactOpacity }]}>
+            {comercioImage ? (
+              <Image source={{ uri: getImageUrl(comercioImage) }} style={styles.commerceIconImage} resizeMode="cover" />
+            ) : (
+              <View style={styles.commerceIcon}>
+                <Ionicons name="cube" size={20} color="#FF5500" />
+              </View>
+            )}
+            <View style={styles.collapsedTextBox}>
+              <Text style={styles.collapsedName} numberOfLines={1}>{comercioName}</Text>
+              <Text style={styles.collapsedSub}>Pedido #{pedido?.id} · {formatDate(pedido?.created_at)}</Text>
+            </View>
+            <Feather name="chevron-up" size={20} color="#64748B" />
+          </Animated.View>
+        </View>
       </View>
 
-      <Animated.View style={[styles.expandedContent, { opacity: expandedOpacity }]} pointerEvents={expanded ? "auto" : "none"}>
+      <Animated.View style={[styles.expandedContent, { top: expanded ? 36 : COLLAPSED_H, opacity: expandedOpacity }]} pointerEvents={expanded ? "auto" : "none"}>
         <ScrollView style={styles.scroll} contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
           {/* Store header */}
           <View style={styles.storeHeader}>
-            <View style={styles.commerceIconLarge}>
-              <Ionicons name="storefront" size={24} color="#FF5500" />
-            </View>
+            {comercioImage ? (
+              <Image source={{ uri: getImageUrl(comercioImage) }} style={styles.commerceImageLarge} resizeMode="cover" />
+            ) : (
+              <View style={styles.commerceIconLarge}>
+                <Ionicons name="storefront" size={24} color="#FF5500" />
+              </View>
+            )}
             <View style={styles.storeTextBox}>
               <Text style={styles.storeName} numberOfLines={1}>{comercioName}</Text>
               <Text style={styles.storeAddress} numberOfLines={1}>{coords?.startAddress || comercio?.direccion || "Dirección del comercio"}</Text>
@@ -165,13 +191,17 @@ export const OrderSheet = ({
           {/* Courier or searching */}
           {courierAssigned ? (
             <View style={styles.courierCard}>
-              <View style={styles.courierAvatarBox}>
-                <Ionicons name="person" size={22} color="#FF5500" />
-              </View>
+              {driverImage ? (
+                <Image source={{ uri: driverImage }} style={styles.courierAvatarImage} resizeMode="cover" />
+              ) : (
+                <View style={styles.courierAvatarBox}>
+                  <Ionicons name="person" size={22} color="#FF5500" />
+                </View>
+              )}
               <View style={styles.courierInfo}>
-                <Text style={styles.courierName}>{driver.nombre_completo || "Repartidor"}</Text>
-                <Text style={styles.courierVehicle}>{driver.tipo_usuario || "Moto"}</Text>
-                <Text style={styles.courierPlate}>{driver.placa || ""}</Text>
+                <Text style={styles.courierName}>{driver.nombre_completo || driver.name || driver.nombre || "Repartidor"}</Text>
+                <Text style={styles.courierVehicle}>{driver.tipo_vehiculo || driver.vehiculo || driver.tipo_usuario || "Moto"}</Text>
+                <Text style={styles.courierPlate}>{driver.placa || driver.plate || ""}</Text>
               </View>
               <TouchableOpacity style={styles.callBtn} onPress={handleCallDriver} activeOpacity={0.8}>
                 <Feather name="phone" size={18} color="#FFFFFF" />
@@ -188,6 +218,23 @@ export const OrderSheet = ({
               <View style={styles.searchingTextBox}>
                 <Text style={styles.searchingTitle}>Buscando repartidor cercano</Text>
                 <Text style={styles.searchingSub}>Te asignaremos uno apenas el restaurante confirme.</Text>
+              </View>
+            </View>
+          )}
+
+          {/* PIN */}
+          {pin && (
+            <View style={styles.pinSegment}>
+              <View style={styles.pinSegmentTextBox}>
+                <Text style={styles.pinSegmentLabel}>PIN de entrega</Text>
+                <Text style={styles.pinSegmentSub}>Compártelo al recibir tu pedido</Text>
+              </View>
+              <View style={styles.pinSegmentDigits}>
+                {String(pin).split("").map((d, i) => (
+                  <View key={i} style={styles.pinSegmentDigit}>
+                    <Text style={styles.pinSegmentDigitText}>{d}</Text>
+                  </View>
+                ))}
               </View>
             </View>
           )}
@@ -235,6 +282,12 @@ export const OrderSheet = ({
                 </View>
               );
             })}
+            {discount > 0 && (
+              <View style={styles.summaryRow}>
+                <Text style={styles.summaryLabel}>Descuento</Text>
+                <Text style={[styles.summaryValue, styles.discountValue]}>-{formatCurrency(discount)}</Text>
+              </View>
+            )}
             <View style={styles.summaryRow}>
               <Text style={styles.summaryLabel}>Productos</Text>
               <Text style={styles.summaryValue}>{formatCurrency(productsTotal)}</Text>
@@ -259,23 +312,6 @@ export const OrderSheet = ({
               {pedido?.estado_pago === "aprobado" ? "Pagado" : "Pendiente"}
             </Text>
           </View>
-
-          {/* PIN */}
-          {pedido?.pin && (
-            <View style={styles.pinCard}>
-              <View>
-                <Text style={styles.pinLabel}>PIN de entrega</Text>
-                <Text style={styles.pinSub}>Compártelo al recibir tu pedido</Text>
-              </View>
-              <View style={styles.pinDigits}>
-                {String(pedido.pin).split("").map((d, i) => (
-                  <View key={i} style={styles.pinDigit}>
-                    <Text style={styles.pinDigitText}>{d}</Text>
-                  </View>
-                ))}
-              </View>
-            </View>
-          )}
 
           {/* Actions */}
           <View style={styles.actionsRow}>
@@ -323,25 +359,34 @@ const styles = StyleSheet.create({
     borderBottomWidth: 0,
     borderColor: "#E2E8F0",
     shadowColor: "#0F172A",
-    shadowOffset: { width: 0, height: -16 },
-    shadowOpacity: 0.12,
-    shadowRadius: 40,
+    shadowOffset: { width: 0, height: -12 },
+    shadowOpacity: 0.14,
+    shadowRadius: 32,
     elevation: 20,
     overflow: "hidden",
   },
   header: {
-    paddingTop: 8,
-    paddingBottom: 8,
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    paddingTop: 6,
+    paddingBottom: 6,
     paddingHorizontal: 16,
+    zIndex: 10,
+    overflow: "hidden",
   },
   handle: {
-    width: 44,
-    height: 5,
-    borderRadius: 3,
+    width: 40,
+    height: 4,
+    borderRadius: 2,
     backgroundColor: "#E2E8F0",
     alignSelf: "center",
-    marginTop: 2,
-    marginBottom: 10,
+    marginBottom: 6,
+  },
+  collapsedRowWrapper: {
+    flex: 1,
+    justifyContent: "center",
   },
   collapsedRow: {
     flexDirection: "row",
@@ -355,6 +400,12 @@ const styles = StyleSheet.create({
     backgroundColor: "#FDEEE2",
     justifyContent: "center",
     alignItems: "center",
+  },
+  commerceIconImage: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: "#FDEEE2",
   },
   collapsedTextBox: {
     flex: 1,
@@ -372,7 +423,10 @@ const styles = StyleSheet.create({
     marginTop: 3,
   },
   expandedContent: {
-    flex: 1,
+    position: "absolute",
+    left: 0,
+    right: 0,
+    bottom: 0,
   },
   scroll: {
     flex: 1,
@@ -443,6 +497,11 @@ const styles = StyleSheet.create({
     borderColor: "#E2E8F0",
     backgroundColor: "#F8FAFC",
     padding: 12,
+    shadowColor: "#0F172A",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.06,
+    shadowRadius: 12,
+    elevation: 3,
   },
   courierAvatarBox: {
     width: 54,
@@ -451,6 +510,14 @@ const styles = StyleSheet.create({
     backgroundColor: "#FDEEE2",
     justifyContent: "center",
     alignItems: "center",
+    borderWidth: 2,
+    borderColor: "#FF5500",
+  },
+  courierAvatarImage: {
+    width: 54,
+    height: 54,
+    borderRadius: 27,
+    backgroundColor: "#FDEEE2",
     borderWidth: 2,
     borderColor: "#FF5500",
   },
@@ -499,6 +566,11 @@ const styles = StyleSheet.create({
     borderColor: "#E2E8F0",
     backgroundColor: "#F8FAFC",
     padding: 14,
+    shadowColor: "#0F172A",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.06,
+    shadowRadius: 12,
+    elevation: 3,
   },
   searchingIconBox: {
     width: 54,
@@ -544,6 +616,11 @@ const styles = StyleSheet.create({
     backgroundColor: "#F8FAFC",
     padding: 14,
     marginTop: 14,
+    shadowColor: "#0F172A",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.06,
+    shadowRadius: 12,
+    elevation: 3,
   },
   sectionTitle: {
     fontSize: 11,
@@ -564,6 +641,11 @@ const styles = StyleSheet.create({
     borderColor: "#E2E8F0",
     backgroundColor: "#F8FAFC",
     padding: 14,
+    shadowColor: "#0F172A",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.06,
+    shadowRadius: 12,
+    elevation: 3,
   },
   addressTextBox: {
     flex: 1,
@@ -661,6 +743,11 @@ const styles = StyleSheet.create({
     borderColor: "#E2E8F0",
     backgroundColor: "#F8FAFC",
     padding: 14,
+    shadowColor: "#0F172A",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.06,
+    shadowRadius: 12,
+    elevation: 3,
   },
   paymentLabel: {
     fontSize: 10,
@@ -686,50 +773,14 @@ const styles = StyleSheet.create({
   paymentStatusPaid: {
     color: "#10B981",
   },
-  pinCard: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginTop: 14,
-    borderRadius: 20,
-    borderWidth: 1,
-    borderColor: "rgba(255,85,0,0.2)",
+  commerceImageLarge: {
+    width: 52,
+    height: 52,
+    borderRadius: 18,
     backgroundColor: "#FDEEE2",
-    padding: 14,
   },
-  pinLabel: {
-    fontSize: 11,
-    fontFamily: "MontserratBold",
-    fontWeight: "bold",
-    color: "#FF5500",
-    textTransform: "uppercase",
-    letterSpacing: 0.6,
-  },
-  pinSub: {
-    fontSize: 11,
-    fontFamily: "Montserrat",
-    color: "#C2410C",
-    marginTop: 2,
-  },
-  pinDigits: {
-    flexDirection: "row",
-    gap: 6,
-  },
-  pinDigit: {
-    width: 32,
-    height: 40,
-    borderRadius: 10,
-    backgroundColor: "#FFFFFF",
-    justifyContent: "center",
-    alignItems: "center",
-    borderWidth: 1,
-    borderColor: "rgba(255,85,0,0.2)",
-  },
-  pinDigitText: {
-    fontSize: 18,
-    fontFamily: "MontserratBold",
-    fontWeight: "bold",
-    color: "#FF5500",
+  discountValue: {
+    color: "#10B981",
   },
   actionsRow: {
     flexDirection: "row",
@@ -771,6 +822,11 @@ const styles = StyleSheet.create({
     borderColor: "#E2E8F0",
     backgroundColor: "#F8FAFC",
     paddingHorizontal: 14,
+    shadowColor: "#0F172A",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.06,
+    shadowRadius: 12,
+    elevation: 3,
   },
   commerceContactText: {
     flex: 1,
@@ -787,5 +843,58 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontFamily: "Montserrat",
     color: "#94A3B8",
+  },
+  pinSegment: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginTop: 10,
+    borderRadius: 18,
+    borderWidth: 1,
+    borderColor: "rgba(255,85,0,0.2)",
+    backgroundColor: "#FDEEE2",
+    padding: 12,
+    shadowColor: "#0F172A",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.06,
+    shadowRadius: 12,
+    elevation: 3,
+  },
+  pinSegmentTextBox: {
+    flex: 1,
+  },
+  pinSegmentLabel: {
+    fontSize: 11,
+    fontFamily: "MontserratBold",
+    fontWeight: "bold",
+    color: "#FF5500",
+    textTransform: "uppercase",
+    letterSpacing: 0.6,
+  },
+  pinSegmentSub: {
+    fontSize: 11,
+    fontFamily: "Montserrat",
+    color: "#C2410C",
+    marginTop: 2,
+  },
+  pinSegmentDigits: {
+    flexDirection: "row",
+    gap: 6,
+  },
+  pinSegmentDigit: {
+    width: 30,
+    height: 38,
+    borderRadius: 10,
+    backgroundColor: "#FFFFFF",
+    justifyContent: "center",
+    alignItems: "center",
+    borderWidth: 1,
+    borderColor: "rgba(255,85,0,0.2)",
+  },
+  pinSegmentDigitText: {
+    fontSize: 17,
+    fontFamily: "MontserratBold",
+    fontWeight: "bold",
+    color: "#FF5500",
   },
 });

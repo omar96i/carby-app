@@ -18,8 +18,8 @@ import SafetyProtection from "../../../../components/SafetyProtection";
 import ProductList from "../../../../components/usuario/pedidos/ProductList";
 
 const { height: SCREEN_H } = Dimensions.get("window");
-const COLLAPSED_H = 110;
-const EXPANDED_H = SCREEN_H * 0.55;
+const COLLAPSED_H = 100;
+const EXPANDED_H = SCREEN_H * 0.45;
 
 export const ClientSheet = ({
   state,
@@ -54,6 +54,12 @@ export const ClientSheet = ({
   const cost = tripData?.costo;
   const pedido = tripData?.pedido;
   const rating = client?.puntuacion || "4.8";
+
+  const comercio = pedido?.comercio;
+  const comercioImage = getImageUrl(
+    comercio?.foto_documento_file || comercio?.imagen || comercio?.logo || comercio?.foto
+  );
+  const comercioName = comercio?.establecimiento_nombre || comercio?.nombre || "Comercio";
 
   const service = tripData?.service;
   const serviceName = service?.nombre || tripData?.tipo_servicio || "Servicio";
@@ -101,19 +107,21 @@ export const ClientSheet = ({
 
   return (
     <Animated.View style={[styles.sheet, { height: heightAnim }]}>
-      <View style={styles.header} {...panResponder.panHandlers}>
+      <View style={[styles.header, { height: expanded ? 36 : COLLAPSED_H }]} {...panResponder.panHandlers}>
         <View style={styles.handle} />
-        <Animated.View style={[styles.collapsedRow, { opacity: compactOpacity }]}>
-          <Image source={imageUrl ? { uri: imageUrl } : require("../../../../assets/images/nuevo-icono.jpeg")} style={styles.collapsedAvatar} />
-          <View style={styles.collapsedTextBox}>
-            <Text style={styles.collapsedName} numberOfLines={1}>{clientName}</Text>
-            <Text style={styles.collapsedSub}>{trips} viajes · {paymentApproved ? "Pagado" : "Pendiente"}</Text>
-          </View>
-          <Feather name="chevron-up" size={20} color="#64748B" />
-        </Animated.View>
+        <View style={styles.collapsedRowWrapper}>
+          <Animated.View style={[styles.collapsedRow, { opacity: compactOpacity }]}>
+            <Image source={imageUrl ? { uri: imageUrl } : require("../../../../assets/images/nuevo-icono.jpeg")} style={styles.collapsedAvatar} />
+            <View style={styles.collapsedTextBox}>
+              <Text style={styles.collapsedName} numberOfLines={1}>{clientName}</Text>
+              <Text style={styles.collapsedSub}>{trips} viajes · {paymentApproved ? "Pagado" : "Pendiente"}</Text>
+            </View>
+            <Feather name="chevron-up" size={20} color="#64748B" />
+          </Animated.View>
+        </View>
       </View>
 
-      <Animated.View style={[styles.expandedContent, { opacity: expandedOpacity }]} pointerEvents={expanded ? "auto" : "none"}>
+      <Animated.View style={[styles.expandedContent, { top: expanded ? 36 : COLLAPSED_H, opacity: expandedOpacity }]} pointerEvents={expanded ? "auto" : "none"}>
         <ScrollView style={styles.scroll} contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
           {/* Client card */}
           <View style={styles.clientCard}>
@@ -171,22 +179,30 @@ export const ClientSheet = ({
           {pedido && (
             <View style={styles.pedidoCard}>
               <View style={styles.pedidoHeader}>
-                <Ionicons name="cube" size={16} color="#FF5500" />
-                <Text style={styles.pedidoTitle} numberOfLines={1}>{pedido.comercio?.establecimiento_nombre || "Comercio"}</Text>
-              </View>
-              {pedido.comercio?.numero_telefono && (
-                <View style={styles.commercePhoneRow}>
-                  <Ionicons name="call" size={14} color="#64748B" />
-                  <Text style={styles.commercePhoneText}>{pedido.comercio.numero_telefono}</Text>
+                {comercioImage ? (
+                  <Image source={{ uri: comercioImage }} style={styles.commerceImage} resizeMode="cover" />
+                ) : (
+                  <View style={styles.commerceIconFallback}>
+                    <Ionicons name="storefront" size={20} color="#FF5500" />
+                  </View>
+                )}
+                <View style={styles.pedidoHeaderText}>
+                  <Text style={styles.pedidoLabel}>Comercio</Text>
+                  <Text style={styles.pedidoTitle} numberOfLines={1}>{comercioName}</Text>
+                  {comercio?.direccion && (
+                    <Text style={styles.pedidoAddress} numberOfLines={1}>{comercio.direccion}</Text>
+                  )}
+                </View>
+                {comercio?.numero_telefono && (
                   <TouchableOpacity
                     style={styles.callCommerceBtn}
-                    onPress={() => Linking.openURL(`tel:${pedido.comercio.numero_telefono}`)}
+                    onPress={() => Linking.openURL(`tel:${comercio.numero_telefono}`)}
                     activeOpacity={0.8}
                   >
-                    <Text style={styles.callCommerceText}>Llamar</Text>
+                    <Feather name="phone" size={16} color="#FFFFFF" />
                   </TouchableOpacity>
-                </View>
-              )}
+                )}
+              </View>
               {isDelivery && (pedido.pedido_lists || pedido.items)?.length > 0 && (
                 <ProductList pedidoLists={pedido.pedido_lists || pedido.items} compact />
               )}
@@ -199,18 +215,20 @@ export const ClientSheet = ({
           )}
 
           {/* Live location toggle */}
-          <TouchableOpacity style={[styles.liveBtn, clientLive && styles.liveBtnActive]} onPress={onToggleClientLive} activeOpacity={0.8}>
-            <View style={[styles.liveIcon, clientLive && styles.liveIconActive]}>
-              <Feather name="radio" size={18} color={clientLive ? "#FFFFFF" : "#64748B"} />
-            </View>
-            <View style={styles.liveTextBox}>
-              <Text style={styles.liveTitle}>Ubicación del cliente</Text>
-              <Text style={styles.liveSub}>{clientLive ? "En vivo · siguiendo en tiempo real" : "Punto seleccionado por el cliente"}</Text>
-            </View>
-            <View style={[styles.liveBadge, clientLive && styles.liveBadgeActive]}>
-              <Text style={[styles.liveBadgeText, clientLive && styles.liveBadgeTextActive]}>{clientLive ? "EN VIVO" : "FIJO"}</Text>
-            </View>
-          </TouchableOpacity>
+          {!pedido && (
+            <TouchableOpacity style={[styles.liveBtn, clientLive && styles.liveBtnActive]} onPress={onToggleClientLive} activeOpacity={0.8}>
+              <View style={[styles.liveIcon, clientLive && styles.liveIconActive]}>
+                <Feather name="radio" size={18} color={clientLive ? "#FFFFFF" : "#64748B"} />
+              </View>
+              <View style={styles.liveTextBox}>
+                <Text style={styles.liveTitle}>Ubicación del cliente</Text>
+                <Text style={styles.liveSub}>{clientLive ? "En vivo · siguiendo en tiempo real" : "Punto seleccionado por el cliente"}</Text>
+              </View>
+              <View style={[styles.liveBadge, clientLive && styles.liveBadgeActive]}>
+                <Text style={[styles.liveBadgeText, clientLive && styles.liveBadgeTextActive]}>{clientLive ? "EN VIVO" : "FIJO"}</Text>
+              </View>
+            </TouchableOpacity>
+          )}
 
           {/* Notify buttons */}
           {pedido && (
@@ -223,7 +241,7 @@ export const ClientSheet = ({
           )}
 
           {/* Safety */}
-          {state !== "finished" && tripData?.id && (
+          {state !== "finished" && tripData?.id && !pedido && (
             <View style={styles.safetyBox}>
               <SafetyProtection carreraId={tripData.id} role="conductor" />
             </View>
@@ -310,18 +328,27 @@ const styles = StyleSheet.create({
     overflow: "hidden",
   },
   header: {
-    paddingTop: 8,
-    paddingBottom: 8,
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    paddingTop: 6,
+    paddingBottom: 6,
     paddingHorizontal: 16,
+    zIndex: 10,
+    overflow: "hidden",
   },
   handle: {
-    width: 44,
-    height: 5,
-    borderRadius: 3,
+    width: 40,
+    height: 4,
+    borderRadius: 2,
     backgroundColor: "#E2E8F0",
     alignSelf: "center",
-    marginTop: 2,
-    marginBottom: 10,
+    marginBottom: 6,
+  },
+  collapsedRowWrapper: {
+    flex: 1,
+    justifyContent: "center",
   },
   serviceRow: {
     flexDirection: "row",
@@ -406,7 +433,10 @@ const styles = StyleSheet.create({
     marginTop: 3,
   },
   expandedContent: {
-    flex: 1,
+    position: "absolute",
+    left: 0,
+    right: 0,
+    bottom: 0,
   },
   scroll: {
     flex: 1,
@@ -424,6 +454,11 @@ const styles = StyleSheet.create({
     borderColor: "#E2E8F0",
     backgroundColor: "#F8FAFC",
     padding: 12,
+    shadowColor: "#0F172A",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.06,
+    shadowRadius: 12,
+    elevation: 3,
   },
   avatarWrap: {
     position: "relative",
@@ -495,6 +530,11 @@ const styles = StyleSheet.create({
     backgroundColor: "#F8FAFC",
     padding: 14,
     marginTop: 12,
+    shadowColor: "#0F172A",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.06,
+    shadowRadius: 12,
+    elevation: 3,
   },
   routeRow: {
     flexDirection: "row",
@@ -541,19 +581,55 @@ const styles = StyleSheet.create({
     backgroundColor: "#FFFFFF",
     padding: 14,
     marginTop: 12,
+    shadowColor: "#0F172A",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.06,
+    shadowRadius: 12,
+    elevation: 3,
   },
   pedidoHeader: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 8,
-    marginBottom: 8,
+    gap: 12,
+    marginBottom: 12,
+  },
+  commerceImage: {
+    width: 48,
+    height: 48,
+    borderRadius: 14,
+    backgroundColor: "#F8FAFC",
+  },
+  commerceIconFallback: {
+    width: 48,
+    height: 48,
+    borderRadius: 14,
+    backgroundColor: "rgba(255, 85, 0, 0.1)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  pedidoHeaderText: {
+    flex: 1,
+  },
+  pedidoLabel: {
+    fontSize: 10,
+    fontFamily: "MontserratBold",
+    fontWeight: "bold",
+    color: "#FF5500",
+    textTransform: "uppercase",
+    letterSpacing: 0.6,
+    marginBottom: 2,
   },
   pedidoTitle: {
-    flex: 1,
     fontSize: 14,
     fontFamily: "MontserratBold",
     fontWeight: "bold",
     color: "#0F172A",
+  },
+  pedidoAddress: {
+    fontSize: 12,
+    fontFamily: "Montserrat",
+    color: "#64748B",
+    marginTop: 2,
   },
   pedidoItems: {
     fontSize: 12,
@@ -561,31 +637,18 @@ const styles = StyleSheet.create({
     color: "#64748B",
     lineHeight: 17,
   },
-  commercePhoneRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-    marginBottom: 10,
-    paddingBottom: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: "#F1F5F9",
-  },
-  commercePhoneText: {
-    flex: 1,
-    fontSize: 13,
-    fontFamily: "MontserratSemiBold",
-    color: "#0F172A",
-  },
   callCommerceBtn: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
     backgroundColor: "#10B981",
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 8,
-  },
-  callCommerceText: {
-    fontSize: 12,
-    fontFamily: "MontserratBold",
-    color: "#FFFFFF",
+    justifyContent: "center",
+    alignItems: "center",
+    shadowColor: "#10B981",
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.2,
+    shadowRadius: 6,
+    elevation: 3,
   },
   liveBtn: {
     flexDirection: "row",
@@ -597,6 +660,11 @@ const styles = StyleSheet.create({
     borderColor: "#E2E8F0",
     backgroundColor: "#F8FAFC",
     padding: 12,
+    shadowColor: "#0F172A",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.06,
+    shadowRadius: 12,
+    elevation: 3,
   },
   liveBtnActive: {
     borderColor: "rgba(59,130,246,0.4)",
@@ -658,8 +726,13 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     gap: 6,
     backgroundColor: "#FF5500",
-    borderRadius: 16,
-    paddingVertical: 12,
+    borderRadius: 14,
+    paddingVertical: 10,
+    shadowColor: "#FF5500",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 10,
+    elevation: 4,
   },
   notifyText: {
     fontSize: 11,
@@ -686,6 +759,11 @@ const styles = StyleSheet.create({
     borderColor: "#E2E8F0",
     backgroundColor: "#F8FAFC",
     paddingVertical: 12,
+    shadowColor: "#0F172A",
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 2,
   },
   actionBtnOutline: {
     backgroundColor: "#FFFFFF",
@@ -718,18 +796,18 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     gap: 8,
-    marginTop: 14,
+    marginTop: 12,
     backgroundColor: "#FF5500",
-    borderRadius: 18,
-    paddingVertical: 15,
+    borderRadius: 16,
+    paddingVertical: 13,
     shadowColor: "#FF5500",
     shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.25,
+    shadowOpacity: 0.3,
     shadowRadius: 16,
     elevation: 6,
   },
   primaryBtnText: {
-    fontSize: 15,
+    fontSize: 14,
     fontFamily: "MontserratBold",
     fontWeight: "bold",
     color: "#FFFFFF",

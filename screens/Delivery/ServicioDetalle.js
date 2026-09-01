@@ -1370,76 +1370,66 @@ const ServicioDetalle = ({ route, navigation }) => {
           <View>
             <View style={styles.divider} />
             <Text style={styles.sectionLabel}>Selecciona fecha y hora</Text>
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              style={{ marginBottom: 12 }}
-            >
-              {fechasDisponibles.map((fechaDisponible, idx) => {
-                const isSelected =
-                  fecha &&
-                  fecha.toDateString() === fechaDisponible.toDateString();
-                const diaSemana = fechaDisponible.getDay();
-                const diasSemana = [
-                  "Dom",
-                  "Lun",
-                  "Mar",
-                  "Mié",
-                  "Jue",
-                  "Vie",
-                  "Sáb",
-                ];
-                const diaSemanaJS = fechaDisponible.getDay();
-                const diaSemanaAPI = diaSemanaJS === 0 ? 6 : diaSemanaJS - 1;
-                const tieneDisponibilidad = disponibilidadPerfil?.some(
-                  (d) => d.dia_semana === diaSemanaAPI
-                );
-                return (
-                  <TouchableOpacity
-                    key={idx}
-                    style={[
-                      styles.datePill,
-                      isSelected ? styles.datePillSelected : null,
-                      !tieneDisponibilidad ? styles.datePillDisabled : null,
-                    ]}
-                    onPress={() => {
-                      setFecha(fechaDisponible);
-                      setHorariosDisponibles([]);
-                      setHoraInicio(new Date());
-                      setHoraFin(new Date());
-                    }}
-                    disabled={!tieneDisponibilidad}
-                  >
-                    <Text
-                      style={{
-                        color: isSelected
-                          ? "#FFF"
-                          : tieneDisponibilidad
-                          ? "#1C1C1E"
-                          : "#aaa",
-                        fontSize: 12,
-                        fontWeight: "bold",
-                      }}
-                    >
-                      {diasSemana[diaSemana]}
-                    </Text>
-                    <Text
-                      style={{
-                        color: isSelected
-                          ? "#FFF"
-                          : tieneDisponibilidad
-                          ? "#1C1C1E"
-                          : "#aaa",
-                        fontSize: 11,
-                      }}
-                    >
-                      {fechaDisponible.getDate()}/
-                      {fechaDisponible.getMonth() + 1}
-                    </Text>
-                  </TouchableOpacity>
-                );
-              })}
-            </ScrollView>
+            {(() => {
+              const diasSemana = ["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"];
+              return (
+                <ScrollView
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                  style={{ marginBottom: 12 }}
+                >
+                  {fechasDisponibles.map((fechaDisponible, idx) => {
+                    const isSelected =
+                      fecha && fecha.toDateString() === fechaDisponible.toDateString();
+                    const diaSemana = fechaDisponible.getDay();
+                    const diaSemanaJS = fechaDisponible.getDay();
+                    const diaSemanaAPI = diaSemanaJS === 0 ? 6 : diaSemanaJS - 1;
+                    const tieneDisponibilidad = disponibilidadPerfil?.some(
+                      (d) => d.dia_semana === diaSemanaAPI
+                    );
+                    return (
+                      <TouchableOpacity
+                        key={idx}
+                        style={[
+                          styles.datePill,
+                          isSelected ? styles.datePillSelected : null,
+                          !tieneDisponibilidad ? styles.datePillDisabled : null,
+                        ]}
+                        onPress={() => {
+                          setFecha(fechaDisponible);
+                          setHorariosDisponibles([]);
+                          setHoraInicio(new Date());
+                          setHoraFin(new Date());
+                        }}
+                        disabled={!tieneDisponibilidad}
+                      >
+                        <Text
+                          style={[
+                            styles.datePillDay,
+                            isSelected && styles.datePillTextSelected,
+                            !tieneDisponibilidad && styles.datePillTextDisabled,
+                          ]}
+                        >
+                          {diasSemana[diaSemana]}
+                        </Text>
+                        {tieneDisponibilidad ? (
+                          <Text
+                            style={[
+                              styles.datePillNumber,
+                              isSelected && styles.datePillTextSelected,
+                            ]}
+                          >
+                            {fechaDisponible.getDate()}/{fechaDisponible.getMonth() + 1}
+                          </Text>
+                        ) : (
+                          <Text style={styles.datePillUnavailable}>No disp.</Text>
+                        )}
+                      </TouchableOpacity>
+                    );
+                  })}
+                </ScrollView>
+              );
+            })()}
             {fecha ? (
               <>
                 <Text style={{ color: "#1C1C1E", fontSize: 13, marginBottom: 6 }}>
@@ -2021,8 +2011,47 @@ const styles = StyleSheet.create({
     backgroundColor: "#fa6205",
   },
   datePillDisabled: {
-    backgroundColor: "#666",
-    opacity: 0.5,
+    backgroundColor: "#F3F4F6",
+    borderWidth: 1,
+    borderColor: "#E5E7EB",
+  },
+  datePillDay: {
+    fontSize: 12,
+    fontWeight: "bold",
+    color: "#1C1C1E",
+  },
+  datePillNumber: {
+    fontSize: 11,
+    color: "#1C1C1E",
+  },
+  datePillTextSelected: {
+    color: "#FFF",
+  },
+  datePillTextDisabled: {
+    color: "#9CA3AF",
+  },
+  datePillUnavailable: {
+    fontSize: 9,
+    fontWeight: "bold",
+    color: "#9CA3AF",
+    textTransform: "uppercase",
+    marginTop: 2,
+  },
+  noDatesBox: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    backgroundColor: "#F3F4F6",
+    borderRadius: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    marginBottom: 12,
+  },
+  noDatesText: {
+    flex: 1,
+    fontSize: 13,
+    color: "#6B7280",
+    fontFamily: "Montserrat_600SemiBold",
   },
   timePill: {
     backgroundColor: "#fff",

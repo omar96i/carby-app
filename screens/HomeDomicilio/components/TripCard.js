@@ -117,7 +117,7 @@ export default function TripCard({
           <View style={styles.line} />
 
           <View style={styles.pointRow}>
-            <View style={[styles.dot, { backgroundColor: "#FF4757" }]} />
+            <View style={[styles.dot, { backgroundColor: "#DC2626" }]} />
             <Text style={styles.pointLabel}>Entregar</Text>
           </View>
           <Text style={styles.pointText} numberOfLines={2}>
@@ -128,8 +128,13 @@ export default function TripCard({
         {/* Observaciones */}
         {observaciones ? (
           <View style={styles.obsBox}>
-            <Ionicons name="chatbubble-ellipses-outline" size={14} color="#fa6205" />
-            <Text style={styles.obsText} numberOfLines={2}>{observaciones}</Text>
+            <View style={styles.obsIcon}>
+              <Ionicons name="chatbubble-ellipses-outline" size={18} color="#DC2626" />
+            </View>
+            <View style={styles.obsContent}>
+              <Text style={styles.obsLabel}>Observación</Text>
+              <Text style={styles.obsText}>{observaciones}</Text>
+            </View>
           </View>
         ) : null}
 
@@ -139,7 +144,7 @@ export default function TripCard({
         {/* Acciones */}
         <View style={styles.actionButtons}>
           <TouchableOpacity style={styles.rejectBtn} onPress={() => onReject(trip.id)}>
-            <Ionicons name="close" size={28} color="#1C1C1E" />
+            <Ionicons name="close" size={28} color="#DC2626" />
           </TouchableOpacity>
 
           <TouchableOpacity style={styles.acceptBtnContainer} onPress={() => onAccept(trip.id)} activeOpacity={0.8}>
@@ -372,21 +377,39 @@ const styles = StyleSheet.create({
     marginVertical: 2,
   },
   obsBox: {
-    flexDirection: "row",
-    alignItems: "flex-start",
-    backgroundColor: "#FEF3C7",
-    borderRadius: 10,
-    padding: 10,
+    backgroundColor: "#FFFFFF",
+    borderRadius: 14,
+    padding: 14,
     marginBottom: 14,
     borderWidth: 1,
-    borderColor: "rgba(250, 98, 5, 0.2)",
+    borderColor: "#E2E8F0",
+    borderLeftWidth: 4,
+    borderLeftColor: "#DC2626",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.04,
+    shadowRadius: 8,
+    elevation: 2,
+  },
+  obsIcon: {
+    marginBottom: 8,
+  },
+  obsContent: {
+    flex: 1,
+  },
+  obsLabel: {
+    color: "#DC2626",
+    fontFamily: "Montserrat_700Bold",
+    fontSize: 11,
+    textTransform: "uppercase",
+    letterSpacing: 0.6,
+    marginBottom: 4,
   },
   obsText: {
-    flex: 1,
-    color: "#92400E",
+    color: "#374151",
     fontFamily: "Montserrat_500Medium",
-    fontSize: 12,
-    marginLeft: 8,
+    fontSize: 13,
+    lineHeight: 19,
   },
   actionButtons: {
     flexDirection: "row",
@@ -394,15 +417,20 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
   },
   rejectBtn: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-    backgroundColor: "#F0F0F0",
+    width: 52,
+    height: 52,
+    borderRadius: 26,
+    backgroundColor: "#FEF2F2",
     justifyContent: "center",
     alignItems: "center",
-    borderWidth: 1,
-    borderColor: "#FF4757",
+    borderWidth: 2,
+    borderColor: "#DC2626",
     marginRight: 15,
+    shadowColor: "#DC2626",
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.18,
+    shadowRadius: 8,
+    elevation: 4,
   },
   acceptBtnContainer: {
     flex: 1,

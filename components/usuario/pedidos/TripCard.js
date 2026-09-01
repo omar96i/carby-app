@@ -96,13 +96,15 @@ export default function TripCard({ item, onOpenDetail, onNavigate, onCancel, onC
             </View>
           ) : null}
         </View>
-        {item.estado === "pendiente" ? (
-          <Animated.View style={[s.statusChipAnimated, { backgroundColor: colorAnim.interpolate({ inputRange: [0, 1], outputRange: ["#FFE5C4", "#FFD0A0"] }) }]}>
-            <Text style={[s.statusChipText, { color: COLORS.ink }]}>Pendiente</Text>
-          </Animated.View>
-        ) : (
-          <StatusBadge status={displayStatus} type={displayType} />
-        )}
+        <View style={s.statusWrap}>
+          {item.estado === "pendiente" ? (
+            <Animated.View style={[s.statusChipAnimated, { backgroundColor: colorAnim.interpolate({ inputRange: [0, 1], outputRange: ["#FFE5C4", "#FFD0A0"] }) }]}>
+              <Text style={[s.statusChipText, { color: COLORS.ink }]}>Pendiente</Text>
+            </Animated.View>
+          ) : (
+            <StatusBadge status={displayStatus} type={displayType} />
+          )}
+        </View>
       </View>
 
       {/* Route */}
@@ -221,7 +223,7 @@ export default function TripCard({ item, onOpenDetail, onNavigate, onCancel, onC
           </Text>
         </TouchableOpacity>
       )}
-      {esCarrera && !isClickable && !["cancelado", "completado", "entregado"].includes(item.estado) && (
+      {esCarrera && !["cancelado", "completado", "entregado"].includes(item.estado) && (
         <TouchableOpacity style={s.cancelBtn} onPress={() => onCancel?.(item)} activeOpacity={0.7}>
           <Ionicons name="close-circle" size={16} color={COLORS.red600} />
           <Text style={s.cancelBtnText}>Cancelar</Text>
@@ -296,6 +298,10 @@ const s = StyleSheet.create({
     fontFamily: "Montserrat_800ExtraBold",
     color: COLORS.brand,
     letterSpacing: 1,
+  },
+  statusWrap: {
+    flexShrink: 0,
+    maxWidth: "50%",
   },
   statusChipAnimated: {
     paddingHorizontal: 10,
@@ -556,6 +562,9 @@ const s = StyleSheet.create({
     marginBottom: 12,
     borderRadius: 12,
     gap: 6,
+    backgroundColor: "#FEF2F2",
+    borderWidth: 1,
+    borderColor: "#FECACA",
   },
   cancelBtnText: {
     fontSize: 13,

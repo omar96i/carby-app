@@ -38,6 +38,7 @@ import Icon3 from "react-native-vector-icons/Feather";
 import Icon4 from "react-native-vector-icons/MaterialCommunityIcons";
 import * as ImagePicker from "expo-image-picker";
 import AlertaModal from "../../components/ErrorModal";
+import ScreenHeader from "../../components/ScreenHeader";
 
 const { width } = Dimensions.get("window");
 
@@ -341,11 +342,7 @@ export default function PerfilUsuario() {
   return (
     <SafeAreaView style={styles.safeContainer}>
       <StatusBar barStyle="light-content" backgroundColor="#1C1C1E" />
-      {/* 1. Header */}
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>Perfil</Text>
-      </View>
-
+      <ScreenHeader title="Perfil" />
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         
         {/* 2. Compact Profile Row */}
@@ -558,7 +555,6 @@ const styles = StyleSheet.create({
   safeContainer: {
     flex: 1,
     backgroundColor: "#FFF",
-    paddingTop: Platform.OS === "android" ? 40 : 0,
   },
   loadingContainer: {
     flex: 1,
@@ -569,15 +565,6 @@ const styles = StyleSheet.create({
   scrollContent: {
     paddingBottom: 50,
   },
-
-  // --- HEADER ---
-  header: {
-    justifyContent: "center", alignItems: "center",
-    backgroundColor: "#1C1C1E", paddingTop: 50, paddingBottom: 22,
-    borderBottomLeftRadius: 40, borderBottomRightRadius: 40,
-  },
-  iconButton: { width: 36, height: 36, borderRadius: 18, backgroundColor: "rgba(255,255,255,0.1)", justifyContent: "center", alignItems: "center" },
-  headerTitle: { fontSize: 18, fontFamily: "Montserrat_800ExtraBold", color: "#FFF" },
 
   // --- PROFILE ROW (compacta) ---
   profileRow: { flexDirection: "row", alignItems: "center", paddingHorizontal: 16, paddingVertical: 14, gap: 14, backgroundColor: "#FFF", marginHorizontal: 16, marginTop: 16, borderRadius: 16 },
@@ -690,9 +677,9 @@ const styles = StyleSheet.create({
   },
   btnOutlineText: { color: '#1C1C1E', fontFamily: "Montserrat_600SemiBold" },
   btnDestructive: {
-    flex: 1, paddingVertical: 12, backgroundColor: "#FF4757", borderRadius: 10, alignItems: "center"
+    flex: 1, paddingVertical: 12, backgroundColor: "#DC2626", borderRadius: 12, alignItems: "center"
   },
-  btnDestructiveText: { color: '#1C1C1E', fontFamily: "Montserrat_600SemiBold" },
+  btnDestructiveText: { color: "#FFF", fontFamily: "Montserrat_700Bold" },
   btnPrimary: {
     backgroundColor: "#fa6205", paddingVertical: 12, borderRadius: 12, alignItems: "center", width: "100%", paddingHorizontal: 20
   },

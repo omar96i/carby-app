@@ -1,13 +1,13 @@
 {
   "project_info": {
-    "project_number": "964397243756",
-    "project_id": "carby-app-71073",
-    "storage_bucket": "carby-app-71073.firebasestorage.app"
+    "project_number": "21508989950",
+    "project_id": "carby-app-c760a",
+    "storage_bucket": "carby-app-c760a.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:964397243756:android:44af3d05224b2d1a21e749",
+        "mobilesdk_app_id": "1:21508989950:android:06d8eb83143815ef5cd6af",
         "android_client_info": {
           "package_name": "com.carbycol.app"
         }
@@ -15,7 +15,7 @@
       "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIzaSyCrzuzUlw8DiZrDoruuNGjRO8NRDO-9mfw"
+          "current_key": "AIzaSyDB6TwKxl47Cl4hZJk3gMUYoSynntZ2G7M"
         }
       ],
       "services": {

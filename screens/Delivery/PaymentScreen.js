@@ -25,9 +25,12 @@ import { Ionicons } from "@expo/vector-icons";
 import { useNavigation, useRoute, useFocusEffect } from "@react-navigation/native";
 import AlertaModal from "../../components/ErrorModal";
 import {
-  Montserrat_400Regular,
-  Montserrat_700Bold,
   Montserrat_300Light,
+  Montserrat_400Regular,
+  Montserrat_500Medium,
+  Montserrat_600SemiBold,
+  Montserrat_700Bold,
+  Montserrat_800ExtraBold,
 } from "@expo-google-fonts/montserrat";
 import { useFonts } from "expo-font";
 import { GOOGLE_MAPS_API_KEY } from "../../constants/Keys";
@@ -38,7 +41,7 @@ import { manipulateAsync, SaveFormat } from "expo-image-manipulator";
 import MapView, { Marker } from "react-native-maps";
 const { height, width } = Dimensions.get("window");
 const screenH = height;
-const COLLAPSED_SHEET_H = 130;
+const COLLAPSED_SHEET_H = 95;
 const EXPANDED_SHEET_H = Math.round(screenH * 0.5);
 import * as Location from "expo-location";
 const PaymentScreen = () => {
@@ -425,7 +428,7 @@ const PaymentScreen = () => {
 
         setMapSearchResults([]);
         setMapSearchQuery("");
-        setSheetExpanded(false);
+        setSheetExpanded(true);
       }
     } catch (error) {
       console.error("Error obteniendo detalles del lugar:", error);
@@ -435,7 +438,7 @@ const PaymentScreen = () => {
   // Geo-resolve timeout ref for debouncing
   const geoTimeout = useRef(null);
 
-  // Resuelve dirección y distancia desde coordenadas (auto al arrastrar el mapa)
+  // Resuelve dirección desde coordenadas; el cálculo de distancia/envío lo hacen los useEffect
   const resolveAddressFromCoords = useCallback((lat, lng) => {
     if (geoTimeout.current) clearTimeout(geoTimeout.current);
 
@@ -453,24 +456,11 @@ const PaymentScreen = () => {
         }
 
         setUserLocation({ latitude: lat, longitude: lng });
-
-        if (establishmentLocation) {
-          let km;
-          try {
-            km = await calculateDistanceGoogle(establishmentLocation, { latitude: lat, longitude: lng });
-          } catch (err) {
-            km = calculateDistance(establishmentLocation, { latitude: lat, longitude: lng });
-          }
-          setDistance(km);
-          const fee = calculateDeliveryFee(km);
-          setDeliveryFee(fee);
-          setCalculatedDeliveryFee(true);
-        }
       } catch (error) {
         console.error("Error resolviendo dirección:", error);
       }
     }, 400);
-  }, [establishmentLocation]);
+  }, []);
   // Datos del carrito
   const {
     products = [],
@@ -485,9 +475,12 @@ const PaymentScreen = () => {
 
   // Cargar fuentes (no bloqueante)
   const [fontsLoaded] = useFonts({
-    MontserratRegular: Montserrat_400Regular,
-    MontserratBold: Montserrat_700Bold,
-    MontserratLight: Montserrat_300Light,
+    Montserrat_300Light,
+    Montserrat_400Regular,
+    Montserrat_500Medium,
+    Montserrat_600SemiBold,
+    Montserrat_700Bold,
+    Montserrat_800ExtraBold,
   });
 
   // Determinar hora del día al inicializar (optimizado)
@@ -2070,7 +2063,7 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     fontSize: 16,
-    fontFamily: "MontserratBold",
+    fontFamily: "Montserrat_700Bold",
     fontWeight: "bold",
     color: "#0F172A",
     backgroundColor: "rgba(255,255,255,0.95)",
@@ -2127,7 +2120,7 @@ const styles = StyleSheet.create({
   },
   locationLabel: {
     fontSize: 11,
-    fontFamily: "MontserratBold",
+    fontFamily: "Montserrat_700Bold",
     fontWeight: "bold",
     color: "#94A3B8",
     textTransform: "uppercase",
@@ -2136,7 +2129,7 @@ const styles = StyleSheet.create({
   locationText: {
     flex: 1,
     fontSize: 13,
-    fontFamily: "MontserratRegular",
+    fontFamily: "Montserrat_400Regular",
     color: "#0F172A",
   },
   locationTextPlaceholder: {
@@ -2212,27 +2205,28 @@ const styles = StyleSheet.create({
   compactSheet: {
     flexDirection: "row",
     alignItems: "center",
+    justifyContent: "space-between",
     paddingHorizontal: 16,
-    paddingBottom: 10,
+    flex: 1,
   },
   compactLeft: {
     flex: 1,
   },
   compactLabel: {
     fontSize: 11,
-    fontFamily: "MontserratRegular",
+    fontFamily: "Montserrat_400Regular",
     color: "#64748B",
   },
   compactTotal: {
     fontSize: 20,
-    fontFamily: "MontserratBold",
+    fontFamily: "Montserrat_700Bold",
     fontWeight: "bold",
     color: "#0F172A",
     marginTop: 1,
   },
   compactDetail: {
     fontSize: 11,
-    fontFamily: "MontserratRegular",
+    fontFamily: "Montserrat_400Regular",
     color: "#64748B",
     marginTop: 1,
   },
@@ -2260,12 +2254,17 @@ const styles = StyleSheet.create({
 
   // Buscador
   searchCard: {
-    backgroundColor: "#F8FAFC",
+    backgroundColor: "#FFF",
     borderRadius: 16,
     padding: 12,
     marginBottom: 12,
     borderWidth: 1,
     borderColor: "#E2E8F0",
+    shadowColor: "#0F172A",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 8,
+    elevation: 2,
   },
   searchInputWrap: {
     flexDirection: "row",
@@ -2281,7 +2280,7 @@ const styles = StyleSheet.create({
     flex: 1,
     marginLeft: 10,
     fontSize: 14,
-    fontFamily: "MontserratRegular",
+    fontFamily: "Montserrat_400Regular",
     color: "#0F172A",
   },
   searchResults: {
@@ -2291,6 +2290,11 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "#E2E8F0",
     overflow: "hidden",
+    shadowColor: "#0F172A",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.08,
+    shadowRadius: 12,
+    elevation: 4,
   },
   searchResultItem: {
     flexDirection: "row",
@@ -2303,7 +2307,7 @@ const styles = StyleSheet.create({
   searchResultText: {
     flex: 1,
     fontSize: 13,
-    fontFamily: "MontserratRegular",
+    fontFamily: "Montserrat_400Regular",
     color: "#333",
   },
 
@@ -2320,7 +2324,7 @@ const styles = StyleSheet.create({
   },
   pinModeText: {
     fontSize: 13,
-    fontFamily: "MontserratSemiBold",
+    fontFamily: "Montserrat_600SemiBold",
     color: "#fa6205",
   },
 
@@ -2349,13 +2353,13 @@ const styles = StyleSheet.create({
   },
   pinBannerTitle: {
     fontSize: 13,
-    fontFamily: "MontserratBold",
+    fontFamily: "Montserrat_700Bold",
     fontWeight: "bold",
     color: "#0F172A",
   },
   pinBannerAddress: {
     fontSize: 12,
-    fontFamily: "MontserratRegular",
+    fontFamily: "Montserrat_400Regular",
     color: "#64748B",
     marginTop: 2,
   },
@@ -2376,10 +2380,15 @@ const styles = StyleSheet.create({
     alignItems: "center",
     borderWidth: 1,
     borderColor: "#E2E8F0",
+    shadowColor: "#0F172A",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 8,
+    elevation: 2,
   },
   pinCancelText: {
     fontSize: 14,
-    fontFamily: "MontserratSemiBold",
+    fontFamily: "Montserrat_600SemiBold",
     color: "#64748B",
   },
   pinConfirmBtn: {
@@ -2399,19 +2408,24 @@ const styles = StyleSheet.create({
   },
   pinConfirmText: {
     fontSize: 14,
-    fontFamily: "MontserratBold",
+    fontFamily: "Montserrat_700Bold",
     fontWeight: "bold",
     color: "#FFF",
   },
 
   // Cards
   sectionCard: {
-    backgroundColor: "#F8FAFC",
+    backgroundColor: "#FFF",
     borderRadius: 18,
     padding: 14,
     marginBottom: 12,
     borderWidth: 1,
     borderColor: "#E2E8F0",
+    shadowColor: "#0F172A",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 8,
+    elevation: 2,
   },
   sectionHeader: {
     flexDirection: "row",
@@ -2421,7 +2435,7 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     fontSize: 15,
-    fontFamily: "MontserratBold",
+    fontFamily: "Montserrat_700Bold",
     fontWeight: "bold",
     color: "#0F172A",
   },
@@ -2442,10 +2456,15 @@ const styles = StyleSheet.create({
     backgroundColor: "#FFF7ED",
     justifyContent: "center",
     alignItems: "center",
+    shadowColor: "#fa6205",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.08,
+    shadowRadius: 2,
+    elevation: 1,
   },
   productQtyText: {
     fontSize: 12,
-    fontFamily: "MontserratBold",
+    fontFamily: "Montserrat_700Bold",
     fontWeight: "bold",
     color: "#fa6205",
   },
@@ -2454,18 +2473,18 @@ const styles = StyleSheet.create({
   },
   productName: {
     fontSize: 13,
-    fontFamily: "MontserratRegular",
+    fontFamily: "Montserrat_400Regular",
     color: "#0F172A",
   },
   productExtras: {
     fontSize: 11,
-    fontFamily: "MontserratRegular",
+    fontFamily: "Montserrat_400Regular",
     color: "#64748B",
     marginTop: 2,
   },
   productPrice: {
     fontSize: 13,
-    fontFamily: "MontserratBold",
+    fontFamily: "Montserrat_700Bold",
     fontWeight: "bold",
     color: "#0F172A",
   },
@@ -2475,30 +2494,35 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    backgroundColor: "#FFF",
+    backgroundColor: "#F8FAFC",
     borderRadius: 14,
     padding: 12,
     borderWidth: 1,
     borderColor: "#E2E8F0",
+    shadowColor: "#0F172A",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.04,
+    shadowRadius: 4,
+    elevation: 1,
   },
   deliveryServiceInfo: {
     flex: 1,
   },
   deliveryServiceName: {
     fontSize: 14,
-    fontFamily: "MontserratBold",
+    fontFamily: "Montserrat_700Bold",
     fontWeight: "bold",
     color: "#0F172A",
   },
   deliveryServiceDetail: {
     fontSize: 12,
-    fontFamily: "MontserratRegular",
+    fontFamily: "Montserrat_400Regular",
     color: "#64748B",
     marginTop: 2,
   },
   deliveryServicePrice: {
     fontSize: 16,
-    fontFamily: "MontserratBold",
+    fontFamily: "Montserrat_700Bold",
     fontWeight: "bold",
     color: "#fa6205",
   },
@@ -2516,11 +2540,16 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 10,
     marginBottom: 4,
+    shadowColor: "#0F172A",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.04,
+    shadowRadius: 4,
+    elevation: 1,
   },
   paymentHintText: {
     flex: 1,
     fontSize: 13,
-    fontFamily: "MontserratMedium",
+    fontFamily: "Montserrat_500Medium",
     color: "#9A3412",
   },
   paymentCard: {
@@ -2533,10 +2562,20 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
     borderWidth: 1.5,
     borderColor: "#E2E8F0",
+    shadowColor: "#0F172A",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 8,
+    elevation: 2,
   },
   paymentCardActive: {
     borderColor: "#fa6205",
     backgroundColor: "#FFF7ED",
+    shadowColor: "#fa6205",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.12,
+    shadowRadius: 12,
+    elevation: 3,
   },
   paymentIconWrap: {
     width: 44,
@@ -2555,7 +2594,7 @@ const styles = StyleSheet.create({
   },
   paymentCardTitle: {
     fontSize: 15,
-    fontFamily: "MontserratSemiBold",
+    fontFamily: "Montserrat_600SemiBold",
     color: "#0F172A",
   },
   paymentCardTitleActive: {
@@ -2563,7 +2602,7 @@ const styles = StyleSheet.create({
   },
   paymentCardDesc: {
     fontSize: 12,
-    fontFamily: "MontserratRegular",
+    fontFamily: "Montserrat_400Regular",
     color: "#64748B",
   },
   radioOuter: {
@@ -2600,12 +2639,12 @@ const styles = StyleSheet.create({
   },
   payBarLabel: {
     fontSize: 12,
-    fontFamily: "MontserratRegular",
+    fontFamily: "Montserrat_400Regular",
     color: "#64748B",
   },
   payBarTotal: {
     fontSize: 22,
-    fontFamily: "MontserratBold",
+    fontFamily: "Montserrat_700Bold",
     fontWeight: "bold",
     color: "#0F172A",
   },
@@ -2626,7 +2665,7 @@ const styles = StyleSheet.create({
   },
   payButtonText: {
     fontSize: 15,
-    fontFamily: "MontserratBold",
+    fontFamily: "Montserrat_700Bold",
     fontWeight: "bold",
     color: "#FFF",
   },
@@ -2652,14 +2691,14 @@ const styles = StyleSheet.create({
   },
   modalTitle: {
     fontSize: 20,
-    fontFamily: "MontserratBold",
+    fontFamily: "Montserrat_700Bold",
     fontWeight: "bold",
     color: "#0F172A",
     marginBottom: 8,
   },
   modalMessage: {
     fontSize: 14,
-    fontFamily: "MontserratRegular",
+    fontFamily: "Montserrat_400Regular",
     color: "#64748B",
     textAlign: "center",
     marginBottom: 20,
@@ -2675,7 +2714,7 @@ const styles = StyleSheet.create({
   },
   continueButtonText: {
     fontSize: 15,
-    fontFamily: "MontserratBold",
+    fontFamily: "Montserrat_700Bold",
     fontWeight: "bold",
     color: "#FFF",
   },

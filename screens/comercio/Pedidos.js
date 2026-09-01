@@ -3,6 +3,7 @@ import {
   SafeAreaView,
   View,
   FlatList,
+  SectionList,
   TouchableOpacity,
   Text,
   ActivityIndicator,
@@ -81,7 +82,13 @@ export default function PedidosComercio({ route }) {
   }, [activeTab]);
 
   useEffect(() => {
-    if (activeTab === "reservas") fetchPerfiles();
+    if (activeTab === "reservas") {
+      fetchPerfiles().then((lista) => {
+        if (lista && lista.length > 0 && !perfilSeleccionado) {
+          setPerfilSeleccionado(lista[0].id);
+        }
+      });
+    }
   }, [activeTab]);
 
   useEffect(() => {
@@ -97,10 +104,11 @@ export default function PedidosComercio({ route }) {
 
   useFocusEffect(
     useCallback(() => {
-      if (route?.params?.refreshTrigger || route?.params?.newOrderId) {
-        fetchPedidos(activeTab);
+      fetchPedidos(activeTab);
+      if (activeTab === "reservas" && perfilSeleccionado) {
+        fetchReservas(perfilSeleccionado);
       }
-    }, [route?.params?.refreshTrigger, route?.params?.newOrderId])
+    }, [activeTab, perfilSeleccionado])
   );
 
   const navigateToDetails = useCallback((item) => {
@@ -109,9 +117,8 @@ export default function PedidosComercio({ route }) {
 
   const handleAceptar = async (item) => {
     try {
-      showAlert("Aceptando pedido...", "info");
       await aceptarPedido(item.id);
-      showAlert("Tu pedido está en proceso", "success");
+      showAlert("Pedido aceptado", "success");
       fetchPedidos(activeTab);
     } catch (e) {
       showAlert("Error al aceptar el pedido", "error");
@@ -124,7 +131,6 @@ export default function PedidosComercio({ route }) {
       "confirm",
       async () => {
         try {
-          showAlert("Creando carrera...", "info");
           await crearCarrera(item);
           showAlert("Carrera creada exitosamente", "success");
           fetchPedidos(activeTab);
@@ -194,7 +200,9 @@ export default function PedidosComercio({ route }) {
             <Text style={cs.title} numberOfLines={1}>{item.cliente_nombre || "Cliente"}</Text>
             <Text style={cs.sub}>Reserva #{item.id} · {fechaFormateada}</Text>
           </View>
-          <StatusBadge status={item.estado === "confirmado" ? "confirmado" : item.estado} />
+          <View style={cs.statusWrap}>
+            <StatusBadge status={item.estado === "confirmado" ? "confirmado" : item.estado} />
+          </View>
         </View>
         <View style={cs.reservaBody}>
           <View style={cs.infoRow}><Text style={cs.infoLabel}>Perfil:</Text><Text style={cs.infoValue}>{item.servicio_nombre}</Text></View>
@@ -246,7 +254,9 @@ export default function PedidosComercio({ route }) {
             </Text>
             <Text style={cs.sub}>#{item.id} · {formatDate(item.created_at)}</Text>
           </View>
-          <StatusBadge status={item.estado} type="pedido" />
+          <View style={cs.statusWrap}>
+            <StatusBadge status={item.estado} type="pedido" />
+          </View>
         </View>
 
         {/* Products */}
@@ -390,21 +400,29 @@ export default function PedidosComercio({ route }) {
         />
 
         {/* Profile selector for reservas tab */}
-        {activeTab === "reservas" && (
-          <View style={cs.filterBar}>
-            <Text style={cs.filterLabel}>Perfil:</Text>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={cs.filterScroll}>
-              {perfiles.map((p) => (
-                <TouchableOpacity
-                  key={p.id}
-                  style={[cs.filterChip, perfilSeleccionado === p.id && cs.filterChipActive]}
-                  onPress={() => setPerfilSeleccionado(p.id)}
-                >
-                  <Text style={[cs.filterChipText, perfilSeleccionado === p.id && cs.filterChipTextActive]}>
-                    {p.nombre}
-                  </Text>
-                </TouchableOpacity>
-              ))}
+        {activeTab === "reservas" && perfiles.length > 0 && (
+          <View style={cs.profileSelector}>
+            <View style={cs.profileSelectorHeader}>
+              <Ionicons name="people-outline" size={16} color={COLORS.muted} />
+              <Text style={cs.profileSelectorTitle}>Selecciona un perfil</Text>
+            </View>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+              {perfiles.map((p) => {
+                const isSelected = perfilSeleccionado === p.id;
+                return (
+                  <TouchableOpacity
+                    key={p.id}
+                    style={[cs.profileChip, isSelected && cs.profileChipActive]}
+                    onPress={() => setPerfilSeleccionado(p.id)}
+                    activeOpacity={0.8}
+                  >
+                    <View style={[cs.profileDot, isSelected && cs.profileDotActive]} />
+                    <Text style={[cs.profileChipText, isSelected && cs.profileChipTextActive]}>
+                      {p.nombre}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
             </ScrollView>
           </View>
         )}
@@ -417,13 +435,36 @@ export default function PedidosComercio({ route }) {
           <View style={cs.center}><ActivityIndicator size="large" color={COLORS.brand} /></View>
         ) : error ? (
           <View style={cs.center}><EmptyState tab={activeTab} /></View>
+        ) : activeTab === "reservas" ? (
+          <SectionList
+            sections={[
+              {
+                title: "Pendientes",
+                data: reservas.filter((r) => r.estado === "pendiente"),
+              },
+              {
+                title: "Completadas / Canceladas",
+                data: reservas.filter((r) => ["completado", "confirmado", "cancelado"].includes(r.estado)),
+              },
+            ].filter((s) => s.data.length > 0)}
+            renderItem={renderReservaItem}
+            renderSectionHeader={({ section: { title } }) => (
+              <Text style={cs.sectionHeader}>{title}</Text>
+            )}
+            keyExtractor={(item) => `reserva-${item.id}`}
+            contentContainerStyle={cs.list}
+            refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => perfilSeleccionado && fetchReservas(perfilSeleccionado)} colors={[COLORS.brand]} />}
+            ListEmptyComponent={<EmptyState tab="reservas" />}
+            showsVerticalScrollIndicator={false}
+            stickySectionHeadersEnabled={false}
+          />
         ) : (
           <FlatList
             data={listData}
-            renderItem={activeTab === "reservas" ? renderReservaItem : renderItem}
+            renderItem={renderItem}
             keyExtractor={(item) => `${item.id}`}
             contentContainerStyle={cs.list}
-            refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => activeTab === "reservas" ? perfilSeleccionado && fetchReservas(perfilSeleccionado) : onRefresh(activeTab)} colors={[COLORS.brand]} />}
+            refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => onRefresh(activeTab)} colors={[COLORS.brand]} />}
             ListEmptyComponent={<EmptyState tab={activeTab} />}
             showsVerticalScrollIndicator={false}
           />
@@ -466,7 +507,8 @@ const cs = StyleSheet.create({
   card: { backgroundColor: COLORS.surface, borderRadius: 26, borderWidth: 1, borderColor: COLORS.zinc100 },
   header: { flexDirection: "row", alignItems: "center", gap: 12, paddingHorizontal: 16, paddingTop: 16 },
   iconBox: { width: 48, height: 48, borderRadius: 16, backgroundColor: COLORS.zinc50, justifyContent: "center", alignItems: "center", borderWidth: 1, borderColor: COLORS.zinc200 },
-  headerInfo: { flex: 1 },
+  headerInfo: { flex: 1, minWidth: 0 },
+  statusWrap: { flexShrink: 0, maxWidth: "46%" },
   title: { fontSize: 16, fontFamily: "Montserrat_800ExtraBold", color: COLORS.ink },
   sub: { fontSize: 11, fontFamily: "Montserrat_600SemiBold", color: COLORS.muted, marginTop: 1 },
 
@@ -514,13 +556,75 @@ const cs = StyleSheet.create({
   evClose: { alignSelf: "flex-end", width: 36, height: 36, borderRadius: 18, backgroundColor: COLORS.zinc100, justifyContent: "center", alignItems: "center", marginBottom: 10 },
   evTitle: { fontSize: 18, fontFamily: "Montserrat_800ExtraBold", color: COLORS.ink, textAlign: "center", marginBottom: 16 },
   evImage: { width: "100%", height: 300, borderRadius: 12, backgroundColor: COLORS.zinc100 },
-  filterBar: { flexDirection: "row", alignItems: "center", paddingHorizontal: 16, paddingVertical: 8, gap: 8 },
-  filterLabel: { fontSize: 12, fontFamily: "Montserrat_600SemiBold", color: COLORS.muted },
-  filterScroll: { flex: 1 },
-  filterChip: { paddingHorizontal: 14, paddingVertical: 6, borderRadius: 999, backgroundColor: COLORS.zinc100, marginRight: 8 },
-  filterChipActive: { backgroundColor: COLORS.brand },
-  filterChipText: { fontSize: 12, fontFamily: "Montserrat_600SemiBold", color: COLORS.ink },
-  filterChipTextActive: { color: COLORS.surface, fontFamily: "Montserrat_700Bold" },
+  profileSelector: {
+    backgroundColor: COLORS.surface,
+    marginHorizontal: 16,
+    marginBottom: 12,
+    borderRadius: 18,
+    padding: 12,
+    borderWidth: 1,
+    borderColor: COLORS.zinc100,
+    shadowColor: "#0F172A",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 8,
+    elevation: 2,
+  },
+  profileSelectorHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    marginBottom: 10,
+  },
+  profileSelectorTitle: {
+    fontSize: 13,
+    fontFamily: "Montserrat_700Bold",
+    color: COLORS.ink,
+  },
+  profileChip: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 999,
+    backgroundColor: COLORS.zinc50,
+    borderWidth: 1,
+    borderColor: COLORS.zinc200,
+    marginRight: 8,
+  },
+  profileChipActive: {
+    backgroundColor: COLORS.brand,
+    borderColor: COLORS.brand,
+  },
+  profileDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: COLORS.zinc400,
+  },
+  profileDotActive: {
+    backgroundColor: COLORS.surface,
+  },
+  profileChipText: {
+    fontSize: 12,
+    fontFamily: "Montserrat_600SemiBold",
+    color: COLORS.ink,
+  },
+  profileChipTextActive: {
+    color: COLORS.surface,
+    fontFamily: "Montserrat_700Bold",
+  },
+  sectionHeader: {
+    fontSize: 13,
+    fontFamily: "Montserrat_800ExtraBold",
+    color: COLORS.muted,
+    textTransform: "uppercase",
+    letterSpacing: 0.8,
+    marginHorizontal: 16,
+    marginTop: 8,
+    marginBottom: 8,
+  },
   reservaBody: { paddingHorizontal: 16, paddingTop: 8 },
   infoRow: { flexDirection: "row", justifyContent: "space-between", marginBottom: 8 },
   infoLabel: { fontSize: 12, fontFamily: "Montserrat_600SemiBold", color: COLORS.muted },

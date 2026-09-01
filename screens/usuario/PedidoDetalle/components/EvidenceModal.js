@@ -70,8 +70,9 @@ export const EvidenceModal = ({ visible, pedidoId, qrUrl, onClose, onUploaded })
       <View style={styles.backdrop}>
         <View style={styles.sheet}>
           <View style={styles.handleRow}>
+            <View style={styles.spacer} />
             <View style={styles.handle} />
-            <TouchableOpacity onPress={onClose} style={styles.closeBtn}>
+            <TouchableOpacity onPress={onClose} style={styles.closeBtn} activeOpacity={0.8}>
               <Feather name="x" size={20} color="#64748B" />
             </TouchableOpacity>
           </View>
@@ -134,14 +135,17 @@ const styles = StyleSheet.create({
     borderTopRightRadius: 32,
     paddingHorizontal: 20,
     paddingBottom: 34,
-    paddingTop: 12,
+    paddingTop: 16,
+    overflow: "hidden",
   },
   handleRow: {
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "center",
-    marginBottom: 8,
-    position: "relative",
+    justifyContent: "space-between",
+    marginBottom: 12,
+  },
+  spacer: {
+    width: 36,
   },
   handle: {
     width: 44,
@@ -150,8 +154,6 @@ const styles = StyleSheet.create({
     backgroundColor: "#E2E8F0",
   },
   closeBtn: {
-    position: "absolute",
-    right: 0,
     width: 36,
     height: 36,
     borderRadius: 18,

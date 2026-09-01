@@ -101,10 +101,12 @@ export const calculateProductsTotal = (pedidoLists) => {
   }, 0);
 };
 
-export const calculateDeliveryCost = (pedido) => {
+export const calculateDeliveryCost = (pedido) => parseFloat(pedido?.costo_envio || 0);
+
+export const calculateDiscount = (pedido) => {
   const productsTotal = calculateProductsTotal(pedido?.pedido_lists);
   const costoTotal = parseFloat(pedido?.costo_total || 0);
-  return Math.max(0, costoTotal - productsTotal);
+  return Math.max(0, productsTotal - costoTotal);
 };
 
 export const getOrderCoords = (pedido) => {

@@ -1160,8 +1160,7 @@ const Wallet = () => {
 const styles = StyleSheet.create({
   safeContainer: {
     flex: 1,
-    backgroundColor: "#FFFFFF",
-    paddingTop: Platform.OS === "android" ? 40 : 0,
+    backgroundColor: "#FFFFFF"
   },
   loadingContainer: {
     flex: 1,

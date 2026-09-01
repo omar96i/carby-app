@@ -20,6 +20,7 @@ import { BASE_URL } from '../constants/url';
 import { Montserrat_400Regular, Montserrat_500Medium, Montserrat_600SemiBold, Montserrat_700Bold, Montserrat_300Light } from '@expo-google-fonts/montserrat';
 import { useFonts } from 'expo-font';
 import AlertaModal from "../components/ErrorModal";
+import ScreenHeader from "../components/ScreenHeader";
 
 const MetodosPago = () => {
   const navigation = useNavigation();
@@ -385,12 +386,7 @@ const MetodosPago = () => {
 
   return (
     <SafeAreaView style={styles.safeContainer}>
-      <View style={styles.headerBar}>
-        <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()}>
-          <FontAwesome name="arrow-left" size={18} color="#FFF" />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Métodos de Pago</Text>
-      </View>
+      <ScreenHeader title="Métodos de Pago" showBackButton />
       <ScrollView style={styles.container}>
         <Text style={styles.subtitle}>Configura tus métodos para recibir pagos</Text>
 
@@ -525,28 +521,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: "#F2F2F7",
-  },
-  headerBar: {
-    backgroundColor: "#fa6205",
-    flexDirection: "row",
-    alignItems: "center",
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    paddingTop: Platform.OS === "android" ? 40 : 14,
-  },
-  headerTitle: {
-    fontSize: 18,
-    fontFamily: "Montserrat_700Bold",
-    color: "#FFF",
-    marginLeft: 12,
-  },
-  backBtn: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: "rgba(255,255,255,0.2)",
-    justifyContent: "center",
-    alignItems: "center",
   },
   title: {
     fontFamily: "Montserrat_700Bold",

@@ -47,7 +47,7 @@ export const getServiceIconUrl = (icono) => {
 
 export const getUserPhotoUrl = (usuario) => {
   if (!usuario) return null;
-  const raw = usuario.foto_documento_file;
+  const raw = usuario.foto_documento_file || usuario.foto;
   if (!raw) return null;
   if (String(raw).startsWith("http")) return raw;
   return `${BASE_URL.toString().replace("/api", "")}storage/${raw}`;

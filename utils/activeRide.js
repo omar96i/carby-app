@@ -23,7 +23,8 @@ export const fetchActiveCarrera = async () => {
 
     const activa = carreras.find((c) => {
       const estado = (c.estado || "").toLowerCase();
-      return ACTIVE_STATES.includes(estado);
+      const esCarreraIndependiente = !c.pedido_id && !c.pedido?.id;
+      return ACTIVE_STATES.includes(estado) && esCarreraIndependiente;
     });
 
     return activa || null;

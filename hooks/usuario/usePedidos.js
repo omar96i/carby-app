@@ -100,6 +100,7 @@ function normalizeCarrera(c) {
     destino_coords: c.destino || null,
     distancia: c.distancia || null,
     pin: c.pin || null,
+    pedido_id: c.pedido_id || c.pedido?.id || null,
   };
 }
 
@@ -149,11 +150,11 @@ export default function usePedidos() {
       setCountActivas(allActivos.length);
       setCountHistorial(allHistorial.length);
 
-      const items = tab === "activas" ? allActivos : allHistorial;
+      const items = tab === "historial" ? allHistorial : allActivos;
 
       logger.response("ACTIVOS", resActivas.status, `pedidos: ${activosPedidos.length} | carreras: ${activosCarreras.length}`);
       logger.response("HISTORIAL", resHistorial.status, `pedidos: ${historialPedidos.length} | carreras: ${historialCarreras.length}`);
-      logger.summary(tab === "activas" ? "ACTIVOS" : "HISTORIAL", `mostrando: ${items.length} (activas: ${allActivos.length}, historial: ${allHistorial.length})`);
+      logger.summary(tab === "historial" ? "HISTORIAL" : "ACTIVOS", `mostrando: ${items.length} (activas: ${allActivos.length}, historial: ${allHistorial.length})`);
 
       items.forEach((item, i) => {
         logger.response(`ITEM_${i + 1}`, "-", {
@@ -167,7 +168,7 @@ export default function usePedidos() {
 
       setPedidos(items);
       setFilteredPedidos(items);
-      setMostrarCarrerasUsuario((tab === "activas" ? activosCarreras : historialCarreras).length > 0);
+      setMostrarCarrerasUsuario((tab === "historial" ? historialCarreras : activosCarreras).length > 0);
     } catch (err) {
       logger.error("FETCH", "Error fetching pedidos", err);
       setError(err.message || "Error al cargar pedidos");

@@ -24,6 +24,7 @@ import { useFonts } from "expo-font";
 import { useNavigation, useFocusEffect, useRoute } from "@react-navigation/native";
 
 import { BASE_URL } from "../../constants/url";
+import ScreenHeader from "../../components/ScreenHeader";
 
 const { width } = Dimensions.get("window");
 const ITEM_IMG_SIZE = 120;
@@ -266,15 +267,7 @@ export default function CategoriaVertical() {
 
   return (
     <SafeAreaView style={styles.safeContainer}>
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
-          <Ionicons name="arrow-back" size={24} color="#1C1C1E" />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>
-          {esServicios ? "Servicios" : "Restaurantes"}
-        </Text>
-        <View style={styles.backBtn} />
-      </View>
+      <ScreenHeader title={esServicios ? "Servicios" : "Restaurantes"} showBackButton />
 
       <ScrollView showsVerticalScrollIndicator={false}>
         <ScrollView
@@ -314,32 +307,11 @@ const styles = StyleSheet.create({
   safeContainer: {
     flex: 1,
     backgroundColor: "#FFFFFF",
-    paddingTop: Platform.OS === "android" ? 20 : 0,
   },
   loadingContainer: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-  },
-  header: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    borderBottomWidth: 1,
-    borderBottomColor: "#F2F2F2",
-  },
-  backBtn: {
-    width: 40,
-    height: 40,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  headerTitle: {
-    fontSize: 18,
-    fontFamily: "Montserrat_700Bold",
-    color: "#1C1C1E",
   },
   categoriasScroll: {
     flexGrow: 0,

@@ -4,10 +4,14 @@ import { decodePolyline } from "../utils";
 
 export const useRoute = (origin, destination) => {
   const [routeCoords, setRouteCoords] = useState([]);
+  const [distance, setDistance] = useState(null);
+  const [duration, setDuration] = useState(null);
 
   useEffect(() => {
     if (!origin || !destination) {
       setRouteCoords([]);
+      setDistance(null);
+      setDuration(null);
       return;
     }
 
@@ -19,6 +23,11 @@ export const useRoute = (origin, destination) => {
         if (data.routes && data.routes.length > 0) {
           const points = data.routes[0].overview_polyline.points;
           setRouteCoords(decodePolyline(points));
+          const leg = data.routes[0].legs?.[0];
+          if (leg) {
+            setDistance(leg.distance?.value != null ? leg.distance.value / 1000 : null);
+            setDuration(leg.duration?.value != null ? Math.round(leg.duration.value / 60) : null);
+          }
         }
       } catch (e) {
         console.error("Error fetching route:", e);
@@ -28,5 +37,5 @@ export const useRoute = (origin, destination) => {
     fetchRoute();
   }, [origin?.latitude, origin?.longitude, destination?.latitude, destination?.longitude]);
 
-  return routeCoords;
+  return { coords: routeCoords, distance, duration };
 };

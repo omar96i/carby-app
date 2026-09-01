@@ -1,11 +1,11 @@
 import React from "react";
-import { View, Text, StyleSheet } from "react-native";
+import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { COLORS, formatCOP, formatDateShort, metodoPagoLabel, RADIUS, SHADOWS } from "./helpers";
 import StatusBadge from "./StatusBadge";
 import PaymentBadge from "./PaymentBadge";
 
-export default function ReservaCard({ item }) {
+export default function ReservaCard({ item, onCancel }) {
   const clienteNombre = item.user_perfil?.user?.nombre_completo || item.cliente_nombre || "Cliente";
   const servicioNombre = item.servicio_nombre || item.user_perfil?.nombre || "Perfil";
   const servicioDescripcion = item.servicio_descripcion || item.user_perfil?.descripcion || "";
@@ -96,6 +96,13 @@ export default function ReservaCard({ item }) {
           <Text style={s.footerDate}>{fechaFormateada}</Text>
         </View>
       </View>
+
+      {!["completado", "cancelado"].includes(item.estado) && (
+        <TouchableOpacity style={s.cancelBtn} onPress={() => onCancel?.(item)} activeOpacity={0.7}>
+          <Ionicons name="close-circle" size={16} color={COLORS.red600} />
+          <Text style={s.cancelBtnText}>Cancelar reserva</Text>
+        </TouchableOpacity>
+      )}
     </View>
   );
 }
@@ -249,5 +256,23 @@ const s = StyleSheet.create({
     fontSize: 11,
     fontFamily: "Montserrat_600SemiBold",
     color: COLORS.muted,
+  },
+  cancelBtn: {
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
+    paddingVertical: 10,
+    marginHorizontal: 16,
+    marginBottom: 12,
+    borderRadius: 12,
+    gap: 6,
+    backgroundColor: "#FEF2F2",
+    borderWidth: 1,
+    borderColor: "#FECACA",
+  },
+  cancelBtnText: {
+    fontSize: 13,
+    fontFamily: "Montserrat_700Bold",
+    color: COLORS.red600,
   },
 });

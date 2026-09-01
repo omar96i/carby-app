@@ -26,10 +26,10 @@ export const RouteSummary = ({ origin, destination, distance, duration }) => {
             </Text>
           </View>
         </View>
-        <View style={styles.badge}>
-          <Text style={styles.badgeText}>{formatDistance(distance)}</Text>
-          <Text style={styles.badgeSub}>{duration || "~3 min"}</Text>
-        </View>
+          <View style={styles.badge}>
+            <Text style={styles.badgeText}>{formatDistance(distance)}</Text>
+            <Text style={styles.badgeSub}>{duration ? `${duration} min` : "--"}</Text>
+          </View>
       </View>
     </View>
   );

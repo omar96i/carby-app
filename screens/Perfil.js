@@ -756,8 +756,7 @@ export default function Perfil() {
 const styles = StyleSheet.create({
   safeContainer: {
     flex: 1,
-    backgroundColor: "#F4F4F5",
-    paddingTop: Platform.OS === "android" ? 40 : 0,
+    backgroundColor: "#F4F4F5"
   },
   header: { justifyContent: "center", alignItems: "center", backgroundColor: "#1C1C1E", paddingTop: 50, paddingBottom: 20, borderBottomLeftRadius: 24, borderBottomRightRadius: 24 },
   headerTitle: { fontSize: 18, fontFamily: "Montserrat_800ExtraBold", color: "#FFF" },
@@ -942,7 +941,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#E9E9E9",
   },
   continueButton: {
-    backgroundColor: "#D82D2D",
+    backgroundColor: "#DC2626",
   },
   cancelButtonText: {
     color: "#333",
@@ -950,9 +949,9 @@ const styles = StyleSheet.create({
     fontFamily: "Montserrat_300Light",
   },
   continueButtonText: {
-    color: "#1C1C1E",
+    color: "#FFFFFF",
     fontSize: 16,
-    fontFamily: "Montserrat_300Light",
+    fontFamily: "Montserrat_600SemiBold",
   },
   // Estilos para los premios por referidos
   premiosScrollView: {

@@ -1,11 +1,12 @@
 import React from 'react';
-import { Modal, View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { Modal, View, Text, TouchableOpacity, StyleSheet, ScrollView, Dimensions } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+
+const { height: SCREEN_H } = Dimensions.get("window");
 
 const AlertaModal = ({ visible, mensaje, onCerrar, titulo = "Atención", tipo = "error", onPrimary, primaryLabel = "Entendido" }) => {
     const isSuccess = tipo === "success";
     const isConfirm = tipo === "confirm";
-    const isInfo = tipo === "info";
 
     return (
         <Modal
@@ -16,33 +17,38 @@ const AlertaModal = ({ visible, mensaje, onCerrar, titulo = "Atención", tipo = 
         >
             <View style={styles.fondo}>
                 <View style={styles.card}>
-                    {isSuccess && (
-                        <View style={styles.iconCircle}>
-                            <Ionicons name="checkmark-circle" size={48} color="#fa6205" />
-                        </View>
-                    )}
-                    {isConfirm && (
-                        <View style={styles.iconCircle}>
-                            <Ionicons name="help-circle" size={48} color="#fa6205" />
-                        </View>
-                    )}
-                    {tipo === "error" && (
-                        <View style={styles.iconCircle}>
-                            <Ionicons name="alert-circle" size={48} color="#fa6205" />
-                        </View>
-                    )}
-                    <Text style={styles.titulo}>{titulo}</Text>
-                    <Text style={styles.mensaje}>{mensaje}</Text>
+                    <ScrollView
+                        style={styles.scroll}
+                        contentContainerStyle={styles.scrollContent}
+                        showsVerticalScrollIndicator={false}
+                    >
+                        {isSuccess ? (
+                            <View style={styles.iconCircle}>
+                                <Ionicons name="checkmark-circle" size={48} color="#fa6205" />
+                            </View>
+                        ) : isConfirm ? (
+                            <View style={styles.iconCircle}>
+                                <Ionicons name="help-circle" size={48} color="#fa6205" />
+                            </View>
+                        ) : (
+                            <View style={styles.iconCircle}>
+                                <Ionicons name="alert-circle" size={48} color="#fa6205" />
+                            </View>
+                        )}
+                        <Text style={styles.titulo}>{titulo}</Text>
+                        <Text style={styles.mensaje}>{mensaje}</Text>
+                    </ScrollView>
 
                     <View style={styles.botones}>
                         {onPrimary && (
-                            <TouchableOpacity onPress={onPrimary} style={styles.botonPrimario}>
+                            <TouchableOpacity onPress={onPrimary} style={styles.botonPrimario} activeOpacity={0.8}>
                                 <Text style={styles.botonPrimarioTexto}>{primaryLabel}</Text>
                             </TouchableOpacity>
                         )}
                         <TouchableOpacity
                             onPress={onCerrar}
                             style={[styles.botonSecundario, !onPrimary && styles.botonUnico]}
+                            activeOpacity={0.8}
                         >
                             <Text style={[styles.botonSecundarioTexto, !onPrimary && styles.botonUnicoTexto]}>
                                 {onPrimary ? "Volver" : "Entendido"}
@@ -61,20 +67,29 @@ const styles = StyleSheet.create({
         backgroundColor: 'rgba(0,0,0,0.5)',
         justifyContent: 'center',
         alignItems: 'center',
+        paddingHorizontal: 24,
     },
     card: {
         backgroundColor: '#FFFFFF',
-        width: '82%',
-        borderRadius: 24,
-        paddingTop: 32,
-        paddingHorizontal: 28,
-        paddingBottom: 24,
-        alignItems: 'center',
+        width: '100%',
+        maxWidth: 340,
+        maxHeight: SCREEN_H * 0.8,
+        borderRadius: 28,
+        paddingTop: 28,
+        paddingHorizontal: 24,
+        paddingBottom: 20,
         shadowColor: '#000',
-        shadowOffset: { width: 0, height: 8 },
-        shadowOpacity: 0.15,
-        shadowRadius: 24,
-        elevation: 12,
+        shadowOffset: { width: 0, height: 12 },
+        shadowOpacity: 0.18,
+        shadowRadius: 32,
+        elevation: 16,
+    },
+    scroll: {
+        maxHeight: SCREEN_H * 0.55,
+    },
+    scrollContent: {
+        alignItems: 'center',
+        paddingBottom: 8,
     },
     iconCircle: {
         width: 72,
@@ -89,22 +104,22 @@ const styles = StyleSheet.create({
         fontSize: 20,
         fontFamily: 'MontserratBold',
         color: '#1C1C1E',
-        marginBottom: 10,
+        marginBottom: 12,
         textAlign: 'center',
     },
     mensaje: {
         fontSize: 14,
         fontFamily: 'MontserratRegular',
-        color: '#666666',
+        color: '#555555',
         textAlign: 'center',
-        lineHeight: 20,
-        marginBottom: 28,
+        lineHeight: 22,
         paddingHorizontal: 4,
     },
     botones: {
         flexDirection: 'column',
         width: '100%',
         gap: 10,
+        marginTop: 20,
     },
     botonPrimario: {
         backgroundColor: '#fa6205',

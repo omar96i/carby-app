@@ -114,12 +114,13 @@ export default function DetailSheet({ item, onClose, onNavigate }) {
         />
         <Animated.View style={[s.backdrop, { opacity: backdropOpacity }]} pointerEvents="none" />
 
-        <Animated.View style={[s.sheet, { transform: [{ translateY }] }]}>
-          {/* Grabber + close */}
-          <View style={s.topBar}>
-            <View style={s.grabber} />
-              <TouchableOpacity style={s.closeBtn} onPress={handleClose} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-                <Ionicons name="close" size={16} color={COLORS.ink} />
+          <Animated.View style={[s.sheet, { transform: [{ translateY }] }]}>
+          {/* Static modal header */}
+          <View style={s.modalHeader}>
+            <View style={s.headerSpacer} />
+            <Text style={s.modalHeaderTitle}>Detalle</Text>
+            <TouchableOpacity style={s.modalHeaderClose} onPress={handleClose} activeOpacity={0.7}>
+              <Ionicons name="close" size={22} color={COLORS.ink} />
             </TouchableOpacity>
           </View>
 
@@ -298,27 +299,29 @@ const s = StyleSheet.create({
     right: 0,
     position: "absolute",
   },
-  topBar: {
+  modalHeader: {
+    flexDirection: "row",
     alignItems: "center",
-    paddingTop: 12,
-    position: "relative",
+    justifyContent: "space-between",
+    paddingHorizontal: 20,
+    paddingTop: 16,
+    paddingBottom: 12,
   },
-  grabber: {
-    width: 48,
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: COLORS.zinc200,
+  modalHeaderTitle: {
+    fontSize: 18,
+    fontFamily: "Montserrat_800ExtraBold",
+    color: COLORS.ink,
   },
-  closeBtn: {
-    position: "absolute",
-    top: 12,
-    right: 20,
+  modalHeaderClose: {
     width: 36,
     height: 36,
     borderRadius: 18,
     backgroundColor: COLORS.zinc100,
     justifyContent: "center",
     alignItems: "center",
+  },
+  headerSpacer: {
+    width: 36,
   },
   scroll: {
     flexGrow: 0,

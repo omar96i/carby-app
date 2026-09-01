@@ -112,7 +112,7 @@ export const STATUS_LABELS = {
 };
 
 export const PEDIDO_LABELS = {
-  pendiente: "Esperando confirmación",
+  pendiente: "Pendiente",
   aceptado: "Confirmado",
   completado: "Listo para reparto",
   cancelado: "Cancelado",

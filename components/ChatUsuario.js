@@ -407,7 +407,7 @@ const ChatUsuario = ({ tripId }) => {
 
   const flatListRef = useRef(null);
 
-  const quickReplies = ['Ya voy en camino', 'Estoy afuera'];
+  const quickReplies = ['Ya voy en camino', 'Estoy afuera', 'Ya viene?'];
 
   return (
     <KeyboardAvoidingView

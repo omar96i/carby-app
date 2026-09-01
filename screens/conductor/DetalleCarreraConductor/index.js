@@ -171,22 +171,6 @@ export default function DetalleCarreraConductor() {
     setPinModalVisible(true);
   };
 
-  const handleCompleteDelivery = () => {
-    showAlert(
-      "¿Confirmas que entregaste el pedido?",
-      "confirm",
-      async () => {
-        try {
-          await updateEstado("completado");
-          showAlert("Entrega completada", "success", () => navigation.replace("BottomTabNavigatorDelivery"), "Aceptar");
-        } catch (e) {
-          showAlert("No se pudo completar la entrega", "error");
-        }
-      },
-      "Sí, completar"
-    );
-  };
-
   const verifyPin = async () => {
     if (enteredPin !== tripData?.pin) {
       setPinError(true);
@@ -381,7 +365,7 @@ export default function DetalleCarreraConductor() {
               onArrive={handleArrive}
               onStartTrip={handleStartTrip}
               onFinish={handleFinish}
-              onCompleteDelivery={handleCompleteDelivery}
+              onCompleteDelivery={handleFinish}
               onCancel={() =>
                 showAlert(
                   "¿Cancelar carrera?\n\nSi cancelas, esta carrera contará como un viaje y afectará tu historial.",

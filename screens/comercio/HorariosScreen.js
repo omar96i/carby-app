@@ -11,7 +11,6 @@ import {
   StyleSheet,
   Platform,
 } from "react-native";
-import { useNavigation } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
 import {
   useFonts,
@@ -23,6 +22,7 @@ import {
 import DateTimePicker from "@react-native-community/datetimepicker";
 import useHorarios from "../../hooks/comercio/useHorarios";
 import AlertaModal from "../../components/ErrorModal";
+import ScreenHeader from "../../components/ScreenHeader";
 
 const C = { brand: "#fa6205", ink: "#1C1C1E", surface: "#FFF", muted: "#71717A", bg: "#F4F4F5", green: "#10B981" };
 
@@ -51,7 +51,6 @@ function formatTime(d) {
 }
 
 export default function HorariosScreen() {
-  const nav = useNavigation();
   const [fontsLoaded] = useFonts({
     Montserrat_400Regular,
     Montserrat_700Bold,
@@ -113,18 +112,7 @@ export default function HorariosScreen() {
 
   return (
     <SafeAreaView style={hs.safe}>
-      <View style={hs.header}>
-        <TouchableOpacity onPress={() => nav.goBack()} style={hs.backBtn}>
-          <Ionicons name="arrow-back" size={22} color={C.ink} />
-        </TouchableOpacity>
-        <View style={hs.headerText}>
-          <Text style={hs.title}>Horarios de atención</Text>
-          <Text style={hs.headerSub}>{diasActivos} {diasActivos === 1 ? "día activo" : "días activos"}</Text>
-        </View>
-        <View style={hs.headerIconCircle}>
-          <Ionicons name="calendar-outline" size={22} color={C.brand} />
-        </View>
-      </View>
+      <ScreenHeader title="Horarios de atención" showBackButton />
 
       {loading ? (
         <View style={hs.center}>
@@ -141,6 +129,10 @@ export default function HorariosScreen() {
               Activa los días que atiendes y ajusta el rango de horas. Los clientes solo podrán pedir cuando estés abierto.
             </Text>
           </View>
+
+          <Text style={hs.activeDaysLabel}>
+            {diasActivos} {diasActivos === 1 ? "día activo" : "días activos"}
+          </Text>
 
           {DIAS.map((d) => {
             const h = horarios.find((x) => x.dia === d.key) || {};
@@ -258,32 +250,15 @@ export default function HorariosScreen() {
 const hs = StyleSheet.create({
   safe: { flex: 1, backgroundColor: C.bg },
   center: { flex: 1, justifyContent: "center", alignItems: "center" },
-  header: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    paddingHorizontal: 20,
-    paddingTop: 38,
-    paddingBottom: 18,
-    backgroundColor: C.surface,
-    borderBottomWidth: 1,
-    borderBottomColor: "#F0F0F0",
-  },
-  backBtn: { width: 44, height: 44, justifyContent: "center", alignItems: "center", borderRadius: 14, backgroundColor: C.bg },
-  headerText: { flex: 1, marginHorizontal: 12 },
-  title: { fontSize: 20, fontFamily: "Montserrat_800ExtraBold", color: C.ink },
-  headerSub: { fontSize: 12, fontFamily: "Montserrat_600SemiBold", color: C.muted, marginTop: 2 },
-  headerIconCircle: {
-    width: 48,
-    height: 48,
-    borderRadius: 16,
-    backgroundColor: "#FFF0E5",
-    justifyContent: "center",
-    alignItems: "center",
-  },
   container: { flex: 1 },
   scroll: { flex: 1 },
   scrollContent: { padding: 20, paddingTop: 20, paddingBottom: 8 },
+  activeDaysLabel: {
+    fontSize: 12,
+    fontFamily: "Montserrat_600SemiBold",
+    color: C.muted,
+    marginBottom: 12,
+  },
   infoCard: {
     flexDirection: "row",
     alignItems: "center",

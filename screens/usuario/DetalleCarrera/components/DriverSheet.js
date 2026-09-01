@@ -24,6 +24,8 @@ export const DriverSheet = ({
   state,
   tripData,
   parsedInfo,
+  routeDistance,
+  routeDuration,
   shareLive,
   onToggleShare,
   onShowPin,
@@ -221,8 +223,8 @@ export const DriverSheet = ({
             <RouteSummary
               origin={parsedInfo?.addresA}
               destination={parsedInfo?.addresB}
-              distance={tripData?.distancia}
-              duration={tripData?.duracion_estimada}
+              distance={tripData?.distancia || routeDistance}
+              duration={tripData?.duracion_estimada || routeDuration}
             />
           </View>
 

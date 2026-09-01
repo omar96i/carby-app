@@ -7,7 +7,6 @@ import React, {
 } from "react";
 import * as Notifications from "expo-notifications";
 import { registerForPushNotificationsAsync } from "../utils/registerForPushNotification";
-import { useAudioPlayer } from "expo-audio";
 import { Platform } from "react-native";
 
 // --- ID de Canales ---
@@ -27,13 +26,11 @@ async function setupNotificationChannels() {
       await Notifications.setNotificationChannelAsync(PEDIDO_CHANNEL_ID, {
         name: "Nuevos Pedidos",
         importance: Notifications.AndroidImportance.HIGH,
-        sound: "pedido.mp3", // <-- Corregido (sin extensión para Android)
         vibrationPattern: [0, 250, 250, 250],
       });
       await Notifications.setNotificationChannelAsync(CARRERA_CHANNEL_ID, {
         name: "Nuevas Carreras",
         importance: Notifications.AndroidImportance.HIGH,
-        sound: "carrera.mp3", // <-- Corregido (sin extensión para Android)
         vibrationPattern: [0, 500],
       });
       console.log("3 canales (Default, Pedidos, Carreras) configurados.");
@@ -46,14 +43,10 @@ async function setupNotificationChannels() {
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
     shouldShowAlert: true,
-    shouldPlaySound: false,
+    shouldPlaySound: true,
     shouldSetBadge: false,
   }),
 });
-
-// --- Fuentes de Audio ---
-const pedidoAudioSource = require("../assets/sounds/pedido.wav"); // Usando .wav
-const carreraAudioSource = require("../assets/sounds/carrera.wav"); // Usando .wav
 
 const NotificationContext = createContext(undefined);
 
@@ -72,21 +65,6 @@ export const NotificationProvider = ({ children }) => {
   const [notification, setNotification] = useState(null);
   const [error, setError] = useState(null);
 
-  // --- Reproductores de Audio ---
-  const pedidoPlayer = useAudioPlayer(pedidoAudioSource);
-  const carreraPlayer = useAudioPlayer(carreraAudioSource);
-
-  // 👈 1. CREA REFS para guardar los players
-  // Un ref es una "caja" que sobrevive a los re-renders
-  const pedidoPlayerRef = useRef(pedidoPlayer);
-  const carreraPlayerRef = useRef(carreraPlayer);
-
-  // 👈 2. ACTUALIZA los refs si los players cambian
-  useEffect(() => {
-    pedidoPlayerRef.current = pedidoPlayer;
-    carreraPlayerRef.current = carreraPlayer;
-  }, [pedidoPlayer, carreraPlayer]);
-
   const notificationListener = useRef();
   const responseListener = useRef();
 
@@ -102,26 +80,7 @@ export const NotificationProvider = ({ children }) => {
     notificationListener.current =
       Notifications.addNotificationReceivedListener((notification) => {
         console.log("🔔 Notification Received (Primer Plano): ", notification);
-        setNotification(notification); 
-
-        const data = notification.request.content.data;
-
-        if (data && data.estado_pedido === "created") {
-          console.log("Data 'estado_pedido: created' detectada. Reproduciendo sonido de PEDIDO.");
-
-          if (pedidoPlayerRef.current) {
-            pedidoPlayerRef.current.seekTo(0);
-            pedidoPlayerRef.current.play();
-          }
-        } else if (data && data.estado_carrera === "created") {
-          console.log("Data 'estado_carrera: created' detectada. Reproduciendo sonido de CARRERA.");
-          if (carreraPlayerRef.current) {
-            carreraPlayerRef.current.seekTo(0);
-            carreraPlayerRef.current.play();
-          }
-        } else {
-          console.log("Notificación general en primer plano (sin sonido).");
-        }
+        setNotification(notification);
       });
 
     responseListener.current =

@@ -4,7 +4,7 @@ import { Ionicons } from "@expo/vector-icons";
 
 const COLORS = { brand: "#fa6205", ink: "#1C1C1E", surface: "#FFF", muted: "#71717A" };
 
-export default function ShopHeader({ business, image, shopActive }) {
+export default function ShopHeader({ business, image }) {
   return (
     <View style={s.container}>
       <View style={s.info}>
@@ -22,12 +22,6 @@ export default function ShopHeader({ business, image, shopActive }) {
               <Ionicons name="location-outline" size={12} color="#999" /> {business.ubicacion}
             </Text>
           ) : null}
-          <View style={s.statusRow}>
-            <View style={[s.statusDot, { backgroundColor: shopActive ? "#10B981" : "#EF4444" }]} />
-            <Text style={[s.statusText, { color: shopActive ? "#10B981" : "#EF4444" }]}>
-              {shopActive ? "Tienda activa — visible al público" : "Tienda inactiva — toca para activar"}
-            </Text>
-          </View>
         </View>
       </View>
     </View>
@@ -49,7 +43,4 @@ const s = StyleSheet.create({
   infoCol: { flex: 1 },
   name: { fontSize: 22, fontFamily: "Montserrat_800ExtraBold", color: "#FFF", lineHeight: 26 },
   location: { fontSize: 13, fontFamily: "Montserrat_600SemiBold", color: "#AAA", marginTop: 2 },
-  statusRow: { flexDirection: "row", alignItems: "center", gap: 6, marginTop: 8 },
-  statusDot: { width: 8, height: 8, borderRadius: 4 },
-  statusText: { fontSize: 12, fontFamily: "Montserrat_600SemiBold" },
 });

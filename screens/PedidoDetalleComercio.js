@@ -34,6 +34,7 @@ import AlertaModal from "../components/ErrorModal";
 import * as ImagePicker from "expo-image-picker";
 import { manipulateAsync, SaveFormat } from "expo-image-manipulator";
 import { useNotification } from "../context/NotificationContext";
+import usePedidos from "../hooks/comercio/usePedidos";
 
 const { width } = Dimensions.get("window");
 
@@ -87,6 +88,7 @@ const PedidoDetalleComercio = () => {
 
   const [fontTimeout, setFontTimeout] = useState(false);
   const { expoPushToken, notification } = useNotification();
+  const { aceptarPedido, crearCarrera } = usePedidos();
 
   const dingSource = require("../assets/sounds/mario-moneda.mp3");
   const dingPlayer = useAudioPlayer(dingSource);
@@ -312,28 +314,51 @@ const PedidoDetalleComercio = () => {
     }
   };
 
-  const updatePedidoStatus = async (newStatus) => {
+  const getPedidoNormalizado = () => {
+    let dg = {};
+    try {
+      dg = typeof pedido.datos_generales === "string"
+        ? JSON.parse(pedido.datos_generales)
+        : (pedido.datos_generales || {});
+    } catch (e) { dg = {}; }
+
+    return {
+      ...pedido,
+      user_id: pedido.user_id || pedido.user?.id,
+      usuario: pedido.user,
+      routeCoords: pedido.routeCoords || {
+        originLat: parseFloat(dg.start_latitud) || 0,
+        originLng: parseFloat(dg.start_longitud) || 0,
+        destLat: parseFloat(dg.end_latitud) || 0,
+        destLng: parseFloat(dg.end_longitud) || 0,
+      },
+      start_lugar: pedido.start_lugar || dg.start_lugar || "Establecimiento",
+      end_lugar: pedido.end_lugar || dg.end_lugar || "",
+      costo_envio: parseFloat(pedido.costo_envio) || 0,
+    };
+  };
+
+  const handleAceptar = async () => {
     try {
       setUpdatingStatus(true);
-      const token = await AsyncStorage.getItem("userToken");
-      if (!token) throw new Error("No token");
-
-      const response = await fetch(`${BASE_URL}pedidos/${pedidoId}/status`, {
-        method: "PUT",
-        headers: {
-          Accept: "application/json",
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ estado: newStatus }),
-      });
-
-      if (!response.ok) throw new Error("Error status");
-
-      setPedido((prev) => ({ ...prev, estado: newStatus }));
-      showAlert("Éxito", `Estado actualizado a: ${newStatus}`);
+      await aceptarPedido(pedidoId);
+      await fetchPedidoDetails();
+      showAlert("Éxito", "Pedido aceptado correctamente");
     } catch (error) {
-      showAlert("Error", "No se pudo actualizar el estado");
+      showAlert("Error", "No se pudo aceptar el pedido");
+    } finally {
+      setUpdatingStatus(false);
+    }
+  };
+
+  const handleSolicitarConductor = async () => {
+    try {
+      setUpdatingStatus(true);
+      await crearCarrera(getPedidoNormalizado());
+      await fetchPedidoDetails();
+      showAlert("Éxito", "Conductor solicitado correctamente");
+    } catch (error) {
+      showAlert("Error", "No se pudo solicitar el conductor");
     } finally {
       setUpdatingStatus(false);
     }
@@ -417,7 +442,14 @@ const PedidoDetalleComercio = () => {
 
   // --- CÁLCULO PAGO AL CONDUCTOR ---
   const calculateDriverPay = () => {
-    if (!pedido || !pedido.pedido_lists) return 0;
+    if (!pedido) return 0;
+
+    // Si el backend ya envía costo_envio, úsalo directamente
+    if (pedido.costo_envio !== undefined && pedido.costo_envio !== null) {
+      return Math.max(0, parseFloat(pedido.costo_envio));
+    }
+
+    if (!pedido.pedido_lists) return 0;
     const totalProductos = pedido.pedido_lists.reduce((total, prod) => {
         const precioBase = parseFloat(prod.producto?.precio || prod.precio_unitario || 0);
         let adicionales = [];
@@ -514,7 +546,7 @@ const PedidoDetalleComercio = () => {
         {/* STATUS & PRICE CARD */}
         <View style={styles.heroCard}>
           <Text style={styles.heroPrice}>
-            $ {Math.floor(parseFloat(pedido.costo_total || 0)).toLocaleString()}
+            $ {Math.floor((parseFloat(pedido.costo_total || 0)) + (parseFloat(pedido.costo_envio || 0))).toLocaleString()}
           </Text>
           <View style={styles.heroStatusRow}>
             <Text style={styles.heroStatusLabel}>{getCurrentStepLabel()}</Text>
@@ -624,19 +656,20 @@ const PedidoDetalleComercio = () => {
         {/* ACCIONES DEL COMERCIO */}
         <View style={styles.actionsContainer}>
             {pedido.estado === "pendiente" && (
-                <TouchableOpacity style={[styles.mainBtn, {backgroundColor: '#fa6205'}]} onPress={() => updatePedidoStatus("confirmado")} disabled={updatingStatus}>
+                <TouchableOpacity style={[styles.mainBtn, {backgroundColor: '#fa6205'}]} onPress={handleAceptar} disabled={updatingStatus}>
                      {updatingStatus ? <ActivityIndicator color="#FFF"/> : <Text style={styles.mainBtnText}>Aceptar Pedido</Text>}
                 </TouchableOpacity>
             )}
-            {pedido.estado === "confirmado" && (
-                <TouchableOpacity style={[styles.mainBtn, {backgroundColor: '#fa6205'}]} onPress={() => updatePedidoStatus("preparado")} disabled={updatingStatus}>
-                     {updatingStatus ? <ActivityIndicator color="#FFF"/> : <Text style={styles.mainBtnText}>Marcar Preparado</Text>}
+            {pedido.estado === "aceptado" && !pedido.carrera && (
+                <TouchableOpacity style={[styles.mainBtn, {backgroundColor: '#fa6205'}]} onPress={handleSolicitarConductor} disabled={updatingStatus}>
+                     {updatingStatus ? <ActivityIndicator color="#FFF"/> : <Text style={styles.mainBtnText}>Solicitar conductor</Text>}
                 </TouchableOpacity>
             )}
-            {pedido.estado === "preparado" && (
-                <TouchableOpacity style={[styles.mainBtn, {backgroundColor: '#2196F3'}]} onPress={() => updatePedidoStatus("entregado")} disabled={updatingStatus}>
-                     {updatingStatus ? <ActivityIndicator color="#FFF"/> : <Text style={styles.mainBtnText}>Marcar Entregado</Text>}
-                </TouchableOpacity>
+            {pedido.carrera && (
+                <View style={styles.driverAssignedBox}>
+                    <Ionicons name="car" size={20} color="#10B981" />
+                    <Text style={styles.driverAssignedText}>Conductor solicitado</Text>
+                </View>
             )}
 
             {/* BOTÓN CANCELAR */}
@@ -839,6 +872,23 @@ const styles = StyleSheet.create({
       marginBottom: 12,
   },
   cancelText: { color: "#FF4757", fontFamily: "MontserratSemiBold", fontSize: 14 },
+  driverAssignedBox: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+    backgroundColor: "#ECFDF5",
+    paddingVertical: 14,
+    borderRadius: 14,
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: "#A7F3D0",
+  },
+  driverAssignedText: {
+    color: "#059669",
+    fontFamily: "MontserratBold",
+    fontSize: 14,
+  },
 
   // CHAT STYLES
   chatContainer: { flex: 1, backgroundColor: "#F5F0E8" },

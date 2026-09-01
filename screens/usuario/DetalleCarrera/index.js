@@ -58,7 +58,7 @@ export default function DetalleCarrera() {
 
   const pickup = useMemo(() => parseCoords(tripData?.punto_recogida), [tripData?.punto_recogida]);
   const destination = useMemo(() => parseCoords(tripData?.destino), [tripData?.destino]);
-  const routeCoords = useRouteCoords(pickup, destination);
+  const { coords: routeCoords, distance: routeDistance, duration: routeDuration } = useRouteCoords(pickup, destination);
   const state = useMemo(() => getRideState(tripData?.estado, tripData?.conductor), [tripData?.estado, tripData?.conductor]);
   const isFinished = state === "finished";
 
@@ -261,8 +261,8 @@ export default function DetalleCarrera() {
             <SearchingSheet
               origin={parsedInfo?.addresA}
               destination={parsedInfo?.addresB}
-              distance={tripData?.distancia}
-              duration={tripData?.duracion_estimada}
+              distance={tripData?.distancia || routeDistance}
+              duration={tripData?.duracion_estimada || routeDuration}
               onCancel={handleCancel}
             />
           ) : state === "canceled" ? (
@@ -286,6 +286,8 @@ export default function DetalleCarrera() {
               state={state}
               tripData={tripData}
               parsedInfo={parsedInfo}
+              routeDistance={routeDistance}
+              routeDuration={routeDuration}
               shareLive={shareLive}
               onToggleShare={handleToggleShare}
               onShowPin={handleShowPin}

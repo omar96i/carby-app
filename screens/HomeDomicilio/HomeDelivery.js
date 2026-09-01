@@ -12,6 +12,8 @@ import {
   Animated,
   Easing,
   Image,
+  Modal,
+  ScrollView,
 } from "react-native";
 import { useNavigation, useFocusEffect } from "@react-navigation/native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -51,6 +53,9 @@ export default function HomeDelivery() {
   const [showActiveRideModal, setShowActiveRideModal] = useState(false);
   const [showRejectedListModal, setShowRejectedListModal] = useState(false);
   const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);
+  const [showRatingsModal, setShowRatingsModal] = useState(false);
+  const [ratingsData, setRatingsData] = useState(null);
+  const [ratingsLoading, setRatingsLoading] = useState(false);
 
   const [showAcceptModal, setShowAcceptModal] = useState(false);
   const [acceptStep, setAcceptStep] = useState("confirm");
@@ -557,6 +562,32 @@ export default function HomeDelivery() {
     navigation.navigate("WalletRider");
   };
 
+  const fetchDriverRatings = async () => {
+    setRatingsLoading(true);
+    try {
+      const token = await AsyncStorage.getItem("userToken");
+      const response = await fetch(`${BASE_URL}conductor/calificaciones`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const json = await response.json().catch(() => ({}));
+      if (response.ok && json.status) {
+        setRatingsData(json);
+      } else {
+        setRatingsData({ promedio: 0, total: 0, data: [] });
+      }
+    } catch (e) {
+      console.error("Error fetching driver ratings:", e);
+      setRatingsData({ promedio: 0, total: 0, data: [] });
+    } finally {
+      setRatingsLoading(false);
+    }
+  };
+
+  const openRatingsModal = () => {
+    setShowRatingsModal(true);
+    fetchDriverRatings();
+  };
+
   const currentTrip = tripsData.length > 0 ? tripsData[0] : null;
   const nextTrip = tripsData.length > 1 ? tripsData[1] : null;
   const queueCount = tripsData.length - 1;
@@ -599,7 +630,7 @@ export default function HomeDelivery() {
               const dest = parseCoords(currentTrip.destino);
               return dest ? (
                 <Marker coordinate={{ latitude: dest.lat, longitude: dest.lng }} zIndex={5} anchor={{ x: 0.5, y: 0.5 }} tracksViewChanges={tracksViewChanges}>
-                  <View style={[styles.dotMarker, { backgroundColor: "#FF4757", shadowColor: "#FF4757" }]} />
+                  <View style={[styles.dotMarker, { backgroundColor: "#DC2626", shadowColor: "#DC2626" }]} />
                 </Marker>
               ) : null;
             })()}
@@ -635,13 +666,13 @@ export default function HomeDelivery() {
               </View>
             );
           })()}
-          <View>
+          <TouchableOpacity activeOpacity={0.8} onPress={openRatingsModal}>
             <Text style={styles.welcomeText}>Hola, {userData?.nombre_completo?.split(" ")[0]}</Text>
             <View style={styles.ratingRow}>
               <AntDesign name="star" size={12} color="#FFD700" />
               <Text style={styles.ratingText}>{userRating ? parseFloat(userRating).toFixed(1) : "5.0"}</Text>
             </View>
-          </View>
+          </TouchableOpacity>
         </View>
 
         {isEnabled && rejectedTrips.length > 0 && (
@@ -693,6 +724,72 @@ export default function HomeDelivery() {
       <SubscriptionModal visible={showSubscriptionModal} onClose={() => setShowSubscriptionModal(false)} onGoToSubscriptions={goToSubscriptions} />
       <RejectedTripsModal visible={showRejectedListModal} onClose={() => setShowRejectedListModal(false)} trips={rejectedTrips} onRestore={handleRestore} />
       <AcceptModal visible={showAcceptModal} step={acceptStep} errorMsg={acceptErrorMsg} onClose={closeAcceptModal} onConfirm={confirmAcceptation} />
+
+      <Modal visible={showRatingsModal} transparent animationType="slide" onRequestClose={() => setShowRatingsModal(false)}>
+        <View style={styles.ratingsOverlay}>
+          <TouchableOpacity style={styles.ratingsBackdrop} activeOpacity={1} onPress={() => setShowRatingsModal(false)} />
+          <View style={styles.ratingsSheet}>
+            <View style={styles.ratingsHandleRow}>
+              <View style={styles.ratingsSpacer} />
+              <View style={styles.ratingsHandle} />
+              <TouchableOpacity style={styles.ratingsCloseBtn} onPress={() => setShowRatingsModal(false)} activeOpacity={0.8}>
+                <Ionicons name="close" size={20} color="#64748B" />
+              </TouchableOpacity>
+            </View>
+
+            {ratingsLoading ? (
+              <ActivityIndicator size="large" color="#FF5500" style={{ marginVertical: 40 }} />
+            ) : (
+              <>
+                <View style={styles.ratingsAverageBox}>
+                  <Text style={styles.ratingsAverageValue}>{ratingsData?.promedio ? parseFloat(ratingsData.promedio).toFixed(1) : "0.0"}</Text>
+                  <View style={styles.ratingsAverageStars}>
+                    {[1, 2, 3, 4, 5].map((n) => (
+                      <Ionicons key={n} name={n <= Math.round(ratingsData?.promedio || 0) ? "star" : "star-outline"} size={18} color="#FFD700" />
+                    ))}
+                  </View>
+                  <Text style={styles.ratingsAverageTotal}>{ratingsData?.total || 0} calificaciones</Text>
+                </View>
+
+                <ScrollView style={styles.ratingsScroll} showsVerticalScrollIndicator={false}>
+                  {(ratingsData?.data || []).length === 0 ? (
+                    <Text style={styles.ratingsEmpty}>Aún no tienes calificaciones.</Text>
+                  ) : (
+                    (ratingsData?.data || []).map((item) => {
+                      const photoUrl = getUserPhotoUrl(item.usuario);
+                      return (
+                        <View key={item.id?.toString()} style={styles.ratingItem}>
+                          <View style={styles.ratingItemHeader}>
+                            {photoUrl ? (
+                              <Image source={{ uri: photoUrl }} style={styles.ratingItemAvatar} />
+                            ) : (
+                              <View style={styles.ratingItemAvatarFallback}>
+                                <Text style={styles.ratingItemInitial}>{item.usuario?.nombre_completo?.charAt(0) || "U"}</Text>
+                              </View>
+                            )}
+                            <View style={styles.ratingItemInfo}>
+                              <Text style={styles.ratingItemName} numberOfLines={1}>{item.usuario?.nombre_completo || "Usuario"}</Text>
+                              <View style={styles.ratingItemStars}>
+                                {[1, 2, 3, 4, 5].map((n) => (
+                                  <Ionicons key={n} name={n <= (item.puntuacion || 0) ? "star" : "star-outline"} size={12} color="#FFD700" />
+                                ))}
+                              </View>
+                            </View>
+                            <Text style={styles.ratingItemDate}>
+                              {item.created_at ? new Date(item.created_at).toLocaleDateString("es-CO", { day: "2-digit", month: "short" }) : ""}
+                            </Text>
+                          </View>
+                          {item.mensaje ? <Text style={styles.ratingItemMessage}>{item.mensaje}</Text> : null}
+                        </View>
+                      );
+                    })
+                  )}
+                </ScrollView>
+              </>
+            )}
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -711,10 +808,55 @@ const styles = StyleSheet.create({
   ratingText: { color: "#FFD700", fontSize: 12, marginLeft: 4, fontFamily: "Montserrat_500Medium" },
 
   rejectedListBtn: { backgroundColor: "rgba(255, 255, 255, 0.95)", paddingHorizontal: 15, height: 54, borderRadius: 27, alignItems: "center", justifyContent: "center", borderWidth: 1, borderColor: "#DDD", flexDirection: "row" },
-  rejectedBadge: { position: "absolute", top: -5, right: -5, backgroundColor: "#FF4757", width: 20, height: 20, borderRadius: 10, justifyContent: "center", alignItems: "center", zIndex: 2 },
+  rejectedBadge: { position: "absolute", top: -5, right: -5, backgroundColor: "#DC2626", width: 20, height: 20, borderRadius: 10, justifyContent: "center", alignItems: "center", zIndex: 2 },
   rejectedBadgeText: { color: "#FFF", fontSize: 10, fontFamily: "Montserrat_700Bold" },
   rejectedListText: { color: "#1C1C1E", marginLeft: 8, fontFamily: "Montserrat_600SemiBold", fontSize: 12 },
 
   bottomSheetContainer: { position: "absolute", bottom: 30, left: 20, right: 20, zIndex: 20 },
-  powerBtn: { position: "absolute", top: -50, right: 0, width: 40, height: 40, borderRadius: 20, backgroundColor: "#FF4757", justifyContent: "center", alignItems: "center", elevation: 5, shadowColor: "#000", shadowOpacity: 0.3 },
+  powerBtn: { position: "absolute", top: -50, right: 0, width: 40, height: 40, borderRadius: 20, backgroundColor: "#DC2626", justifyContent: "center", alignItems: "center", elevation: 5, shadowColor: "#000", shadowOpacity: 0.3 },
+
+  ratingsOverlay: { flex: 1, backgroundColor: "rgba(15,23,42,0.4)", justifyContent: "flex-end" },
+  ratingsBackdrop: { ...StyleSheet.absoluteFillObject },
+  ratingsSheet: {
+    backgroundColor: "#FFFFFF",
+    borderTopLeftRadius: 32,
+    borderTopRightRadius: 32,
+    paddingHorizontal: 20,
+    paddingBottom: 34,
+    paddingTop: 12,
+    maxHeight: "85%",
+  },
+  ratingsHandleRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 12 },
+  ratingsSpacer: { width: 36 },
+  ratingsHandle: { width: 44, height: 5, borderRadius: 3, backgroundColor: "#E2E8F0" },
+  ratingsCloseBtn: { width: 36, height: 36, borderRadius: 18, backgroundColor: "#F1F5F9", justifyContent: "center", alignItems: "center" },
+  ratingsAverageBox: { alignItems: "center", paddingVertical: 10, marginBottom: 8 },
+  ratingsAverageValue: { fontSize: 48, fontFamily: "Montserrat_800ExtraBold", color: "#0F172A" },
+  ratingsAverageStars: { flexDirection: "row", gap: 4, marginTop: 6 },
+  ratingsAverageTotal: { fontSize: 13, fontFamily: "Montserrat_600SemiBold", color: "#64748B", marginTop: 6 },
+  ratingsScroll: { maxHeight: 400 },
+  ratingsEmpty: { textAlign: "center", fontSize: 14, fontFamily: "Montserrat", color: "#94A3B8", marginTop: 20 },
+  ratingItem: {
+    backgroundColor: "#F8FAFC",
+    borderRadius: 18,
+    borderWidth: 1,
+    borderColor: "#E2E8F0",
+    padding: 14,
+    marginBottom: 10,
+    shadowColor: "#0F172A",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.04,
+    shadowRadius: 8,
+    elevation: 2,
+  },
+  ratingItemHeader: { flexDirection: "row", alignItems: "center", gap: 12 },
+  ratingItemAvatar: { width: 44, height: 44, borderRadius: 22, backgroundColor: "#E2E8F0" },
+  ratingItemAvatarFallback: { width: 44, height: 44, borderRadius: 22, backgroundColor: "#fa6205", justifyContent: "center", alignItems: "center" },
+  ratingItemInitial: { color: "#FFF", fontFamily: "Montserrat_700Bold", fontSize: 16 },
+  ratingItemInfo: { flex: 1 },
+  ratingItemName: { fontSize: 14, fontFamily: "Montserrat_700Bold", color: "#0F172A" },
+  ratingItemStars: { flexDirection: "row", gap: 2, marginTop: 3 },
+  ratingItemDate: { fontSize: 11, fontFamily: "Montserrat_500Medium", color: "#94A3B8" },
+  ratingItemMessage: { fontSize: 13, fontFamily: "Montserrat", color: "#64748B", marginTop: 10, lineHeight: 18 },
 });
+

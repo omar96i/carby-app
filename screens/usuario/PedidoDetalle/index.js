@@ -52,6 +52,7 @@ export default function PedidoDetalle() {
 
   const isActive = !["entregado", "cancelado"].includes(currentKey);
   const { location: userLocation, permissionDenied } = useUserPing(pedidoId > 0);
+  const locationReady = !!userLocation || permissionDenied;
 
   const driverId = pedido?.carrera?.conductor_id;
   const driverLocation = useDriverLocation(driverId, isActive && !!driverId);
@@ -162,6 +163,13 @@ export default function PedidoDetalle() {
           onCancel={handleCancel}
         />
 
+        {!locationReady && (
+          <View style={styles.loadingOverlay}>
+            <ActivityIndicator size="large" color="#FF5500" />
+            <Text style={styles.loadingOverlayText}>Ubicando pedido...</Text>
+          </View>
+        )}
+
         <OrderChatModal
           visible={showChat}
           pedidoId={pedidoId}
@@ -251,5 +259,18 @@ const styles = StyleSheet.create({
     fontFamily: "MontserratBold",
     fontWeight: "bold",
     color: "#B45309",
+  },
+  loadingOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: "rgba(241,245,249,0.92)",
+    justifyContent: "center",
+    alignItems: "center",
+    zIndex: 100,
+  },
+  loadingOverlayText: {
+    marginTop: 16,
+    fontSize: 14,
+    fontFamily: "Montserrat",
+    color: "#64748B",
   },
 });
