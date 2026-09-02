@@ -257,8 +257,12 @@ export default function PerfilUsuario() {
   const cerrarSesion = async () => {
     try {
       const token = await AsyncStorage.getItem("userToken");
+      const preferenciaGuardada = await AsyncStorage.getItem("preferencia_rol");
       if (!token) {
         await AsyncStorage.clear();
+        if (preferenciaGuardada) {
+          await AsyncStorage.setItem("preferencia_rol", preferenciaGuardada);
+        }
         navigation.reset({ index: 0, routes: [{ name: "Login" }] });
         return;
       }
@@ -274,9 +278,16 @@ export default function PerfilUsuario() {
       } catch (e) {}
 
       await AsyncStorage.clear();
+      if (preferenciaGuardada) {
+        await AsyncStorage.setItem("preferencia_rol", preferenciaGuardada);
+      }
       navigation.reset({ index: 0, routes: [{ name: "Login" }] });
     } catch (error) {
+      const preferenciaGuardada = await AsyncStorage.getItem("preferencia_rol");
       await AsyncStorage.clear();
+      if (preferenciaGuardada) {
+        await AsyncStorage.setItem("preferencia_rol", preferenciaGuardada);
+      }
       navigation.reset({ index: 0, routes: [{ name: "Login" }] });
     }
   };
@@ -384,7 +395,10 @@ export default function PerfilUsuario() {
             <TouchableOpacity style={styles.menuItem} onPress={() => setPreferenciaModalVisible(true)}>
                 <View style={styles.menuItemLeft}>
                     <Icon3 name="shuffle" size={20} color="#888" />
-                    <Text style={styles.menuItemText}>Preferencia de ingreso</Text>
+                    <View style={{marginLeft: 12, flex: 1}}>
+                        <Text style={styles.menuItemText}>Preferencia de ingreso</Text>
+                        <Text style={styles.menuItemSubText}>Para iniciar sesión con un rol debes tener acceso previamente</Text>
+                    </View>
                 </View>
                 <Icon3 name="chevron-right" size={20} color="#888" />
             </TouchableOpacity>
@@ -563,7 +577,7 @@ const styles = StyleSheet.create({
     alignItems: "center"
   },
   scrollContent: {
-    paddingBottom: 50,
+    paddingBottom: 20,
   },
 
   // --- PROFILE ROW (compacta) ---

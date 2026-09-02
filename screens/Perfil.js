@@ -302,9 +302,13 @@ export default function Perfil() {
   const cerrarSesion = async () => {
     try {
       const token = await AsyncStorage.getItem("userToken");
+      const preferenciaGuardada = await AsyncStorage.getItem("preferencia_rol");
 
       if (!token) {
         await AsyncStorage.clear();
+        if (preferenciaGuardada) {
+          await AsyncStorage.setItem("preferencia_rol", preferenciaGuardada);
+        }
         navigation.reset({ index: 0, routes: [{ name: "Login" }] });
         return;
       }
@@ -324,6 +328,9 @@ export default function Perfil() {
 
       // Siempre limpia los datos locales
       await AsyncStorage.clear();
+      if (preferenciaGuardada) {
+        await AsyncStorage.setItem("preferencia_rol", preferenciaGuardada);
+      }
       showAlert("Éxito", "Has cerrado sesión correctamente", "success");
       navigation.reset({ index: 0, routes: [{ name: "Login" }] });
     } catch (error) {
@@ -331,7 +338,11 @@ export default function Perfil() {
 
       // Intenta cerrar sesión localmente
       try {
+        const preferenciaGuardada = await AsyncStorage.getItem("preferencia_rol");
         await AsyncStorage.clear();
+        if (preferenciaGuardada) {
+          await AsyncStorage.setItem("preferencia_rol", preferenciaGuardada);
+        }
         showAlert("Éxito", "Se cerró sesión localmente", "success");
         navigation.reset({ index: 0, routes: [{ name: "Login" }] });
       } catch (storageError) {

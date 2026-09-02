@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from "react";
 import {
   SafeAreaView, View, FlatList, TouchableOpacity, Text,
   ActivityIndicator, RefreshControl, StyleSheet, Linking, Image, ScrollView,
+  Modal,
 } from "react-native";
 import { useNavigation, useFocusEffect } from "@react-navigation/native";
 import { useFonts, Montserrat_400Regular, Montserrat_700Bold, Montserrat_300Light, Montserrat_600SemiBold, Montserrat_800ExtraBold } from "@expo-google-fonts/montserrat";
@@ -22,6 +23,13 @@ import { COLORS, SHADOWS, formatCOP, formatDate, metodoPagoLabel } from "../../c
 
 import usePedidos from "../../hooks/conductor/usePedidos";
 import { BASE_URL } from "../../constants/url";
+import ChatRiderComercio from "../../screens/ChatRiderComercio";
+
+const getCommerceImageUrl = (path) => {
+  if (!path) return null;
+  if (path.startsWith("http")) return path;
+  return `${BASE_URL.toString().replace("/api", "")}/storage/${path}`;
+};
 
 export default function PedidosConductor({ route }) {
   const navigation = useNavigation();
@@ -40,6 +48,7 @@ export default function PedidosConductor({ route }) {
 
   const [activeTab, setActiveTab] = useState("activas");
   const [selectedItem, setSelectedItem] = useState(null);
+  const [chatItem, setChatItem] = useState(null);
   const [alertVisible, setAlertVisible] = useState(false);
   const [alertData, setAlertData] = useState({ message: "", type: "info", onPrimary: null, primaryLabel: "" });
 
@@ -77,10 +86,24 @@ export default function PedidosConductor({ route }) {
       showAlert("No hay información del comercio", "info");
       return;
     }
-    navigation.navigate("ChatRiderComercio", {
+    const comercio = item.pedido.comercio;
+    const comercioImage =
+      comercio?.foto_documento_file ||
+      comercio?.imagen ||
+      comercio?.logo ||
+      comercio?.foto ||
+      comercio?.foto_perfil ||
+      comercio?.imagen_url ||
+      comercio?.url_imagen ||
+      comercio?.logo_url ||
+      comercio?.foto_url ||
+      null;
+    setChatItem({
       pedidoId: item.pedido.id,
       carreraId: item.id,
-      comercioNombre: item.pedido.comercio.establecimiento_nombre || "Comercio",
+      comercioId: comercio.id || item.pedido.comercio_id,
+      comercioNombre: comercio.establecimiento_nombre || "Comercio",
+      comercioImage,
       tipo: "rider-comercio",
     });
   };
@@ -213,6 +236,57 @@ export default function PedidosConductor({ route }) {
         visible={alertVisible} mensaje={alertData.message} tipo={alertData.type}
         onCerrar={() => setAlertVisible(false)} onPrimary={alertData.onPrimary} primaryLabel={alertData.primaryLabel}
       />
+
+      <Modal
+        visible={!!chatItem}
+        animationType="slide"
+        transparent={true}
+        onRequestClose={() => setChatItem(null)}
+      >
+        {chatItem && (
+          <View style={ds.chatOverlay}>
+            <TouchableOpacity
+              style={ds.chatBackdrop}
+              activeOpacity={1}
+              onPress={() => setChatItem(null)}
+            />
+            <View style={ds.chatPanel}>
+              <View style={ds.chatHeader}>
+              <View style={ds.chatAvatar}>
+                {chatItem.comercioImage ? (
+                  <Image source={{ uri: getCommerceImageUrl(chatItem.comercioImage) }} style={ds.chatAvatarImage} resizeMode="cover" />
+                ) : (
+                  <Ionicons name="storefront" size={20} color="#FFFFFF" />
+                )}
+              </View>
+                <View style={ds.chatHeaderText}>
+                  <Text style={ds.chatTitle} numberOfLines={1}>
+                    {chatItem.comercioNombre || "Comercio"}
+                  </Text>
+                </View>
+                <TouchableOpacity
+                  style={ds.closeChatBtn}
+                  onPress={() => setChatItem(null)}
+                  activeOpacity={0.7}
+                >
+                  <Ionicons name="close" size={20} color="#FFFFFF" />
+                </TouchableOpacity>
+              </View>
+              <View style={ds.chatBody}>
+                <ChatRiderComercio
+                  pedidoId={chatItem.pedidoId}
+                  carreraId={chatItem.carreraId}
+                  comercioId={chatItem.comercioId}
+                  comercioNombre={chatItem.comercioNombre}
+                  tipo={chatItem.tipo}
+                  onClose={() => setChatItem(null)}
+                  modalMode={true}
+                />
+              </View>
+            </View>
+          </View>
+        )}
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -250,4 +324,15 @@ const ds = StyleSheet.create({
   callBtnText: { fontSize: 14, fontFamily: "Montserrat_800ExtraBold", color: COLORS.surface },
   chatBtn: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 6, paddingVertical: 8 },
   chatBtnText: { fontSize: 13, fontFamily: "Montserrat_700Bold", color: COLORS.brand },
+
+  chatOverlay: { flex: 1, justifyContent: "flex-end", backgroundColor: "rgba(15,23,42,0.35)" },
+  chatBackdrop: { ...StyleSheet.absoluteFillObject },
+  chatPanel: { height: "85%", backgroundColor: "#FFFFFF", borderTopLeftRadius: 28, borderTopRightRadius: 28, overflow: "hidden" },
+  chatHeader: { flexDirection: "row", alignItems: "center", gap: 12, backgroundColor: "#FF5500", paddingHorizontal: 16, paddingVertical: 14 },
+  chatAvatar: { width: 44, height: 44, borderRadius: 22, backgroundColor: "rgba(255,255,255,0.25)", justifyContent: "center", alignItems: "center", overflow: "hidden" },
+  chatAvatarImage: { width: 44, height: 44, borderRadius: 22 },
+  chatHeaderText: { flex: 1 },
+  chatTitle: { fontSize: 16, fontFamily: "Montserrat_700Bold", color: "#FFFFFF" },
+  closeChatBtn: { width: 36, height: 36, borderRadius: 18, backgroundColor: "rgba(255,255,255,0.25)", justifyContent: "center", alignItems: "center" },
+  chatBody: { flex: 1 },
 });

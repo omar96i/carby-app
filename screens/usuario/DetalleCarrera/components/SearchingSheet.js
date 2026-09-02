@@ -8,20 +8,21 @@ import {
   PanResponder,
   Dimensions,
   ActivityIndicator,
+  ScrollView,
 } from "react-native";
 import { Feather, MaterialCommunityIcons } from "@expo/vector-icons";
 import { RouteSummary } from "./RouteSummary";
 
 const { height: SCREEN_H } = Dimensions.get("window");
 const COLLAPSED_H = 120;
-const EXPANDED_H = SCREEN_H * 0.78;
+const EXPANDED_H = SCREEN_H * 0.6;
 
 export const SearchingSheet = ({ origin, destination, distance, duration, onCancel }) => {
   const [expanded, setExpanded] = useState(false);
 
   const heightAnim = useRef(new Animated.Value(COLLAPSED_H)).current;
-  const compactOpacity = useRef(new Animated.Value(1)).current;
   const expandedOpacity = useRef(new Animated.Value(0)).current;
+  const collapsedHeight = useRef(new Animated.Value(1)).current;
 
   const pulse1 = useRef(new Animated.Value(0)).current;
   const pulse2 = useRef(new Animated.Value(0)).current;
@@ -46,10 +47,10 @@ export const SearchingSheet = ({ origin, destination, distance, duration, onCanc
         friction: 9,
         tension: 60,
       }),
-      Animated.timing(compactOpacity, {
+      Animated.timing(collapsedHeight, {
         toValue: expanded ? 0 : 1,
         duration: 200,
-        useNativeDriver: true,
+        useNativeDriver: false,
       }),
       Animated.timing(expandedOpacity, {
         toValue: expanded ? 1 : 0,
@@ -63,11 +64,6 @@ export const SearchingSheet = ({ origin, destination, distance, duration, onCanc
     PanResponder.create({
       onStartShouldSetPanResponder: () => true,
       onMoveShouldSetPanResponder: (_, gesture) => Math.abs(gesture.dy) > 5,
-      onPanResponderMove: (_, gesture) => {
-        const base = expanded ? EXPANDED_H : COLLAPSED_H;
-        const newHeight = Math.max(COLLAPSED_H, base - gesture.dy);
-        heightAnim.setValue(newHeight);
-      },
       onPanResponderRelease: (_, gesture) => {
         const wasTap = Math.abs(gesture.dy) < 10 && Math.abs(gesture.dx) < 10;
         if (wasTap) {
@@ -75,10 +71,10 @@ export const SearchingSheet = ({ origin, destination, distance, duration, onCanc
           return;
         }
         if (expanded) {
-          if (gesture.dy > 80 || (gesture.vy || 0) > 0.5) setExpanded(false);
+          if (gesture.dy > 30 || (gesture.vy || 0) > 0.3) setExpanded(false);
           else setExpanded(true);
         } else {
-          if (gesture.dy < -80 || (gesture.vy || 0) < -0.5) setExpanded(true);
+          if (gesture.dy < -30 || (gesture.vy || 0) < -0.3) setExpanded(true);
           else setExpanded(false);
         }
       },
@@ -94,7 +90,16 @@ export const SearchingSheet = ({ origin, destination, distance, duration, onCanc
     <Animated.View style={[styles.sheet, { height: heightAnim }]}>
       <View style={styles.header} {...panResponder.panHandlers}>
         <View style={styles.handle} />
-        <Animated.View style={[styles.collapsedRow, { opacity: compactOpacity }]}>
+        <Animated.View
+          style={[
+            styles.collapsedRow,
+            {
+              opacity: collapsedHeight.interpolate({ inputRange: [0, 1], outputRange: [0, 1] }),
+              height: collapsedHeight.interpolate({ inputRange: [0, 1], outputRange: [0, 64] }),
+              overflow: "hidden",
+            },
+          ]}
+        >
           <View style={styles.iconWrapSmall}>
             <Animated.View style={[styles.sonarSmall, sonarStyle(pulse1)]} />
             <Animated.View style={[styles.sonarSmall, sonarStyle(pulse2)]} />
@@ -114,29 +119,35 @@ export const SearchingSheet = ({ origin, destination, distance, duration, onCanc
         style={[styles.expandedContent, { opacity: expandedOpacity }]}
         pointerEvents={expanded ? "auto" : "none"}
       >
-        <View style={styles.iconWrap}>
-          <Animated.View style={[styles.sonar, sonarStyle(pulse1)]} />
-          <Animated.View style={[styles.sonar, sonarStyle(pulse2)]} />
-          <View style={styles.iconCircle}>
-            <MaterialCommunityIcons name="car" size={32} color="#FF5500" />
+        <ScrollView
+          style={styles.scroll}
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
+        >
+          <View style={styles.iconWrap}>
+            <Animated.View style={[styles.sonar, sonarStyle(pulse1)]} />
+            <Animated.View style={[styles.sonar, sonarStyle(pulse2)]} />
+            <View style={styles.iconCircle}>
+              <MaterialCommunityIcons name="car" size={32} color="#FF5500" />
+            </View>
           </View>
-        </View>
 
-        <Text style={styles.title}>Buscando tu conductor</Text>
-        <Text style={styles.subtitle}>
-          Estamos contactando a los conductores mejor calificados cerca de ti.
-        </Text>
+          <Text style={styles.title}>Buscando tu conductor</Text>
+          <Text style={styles.subtitle}>
+            Estamos contactando a los conductores mejor calificados cerca de ti.
+          </Text>
 
-        <View style={styles.progressTrack}>
-          <View style={styles.progressBar} />
-        </View>
+          <View style={styles.progressTrack}>
+            <View style={styles.progressBar} />
+          </View>
 
-        <RouteSummary origin={origin} destination={destination} distance={distance} duration={duration} />
+          <RouteSummary origin={origin} destination={destination} distance={distance} duration={duration} />
 
-        <TouchableOpacity style={styles.cancelBtn} onPress={onCancel} activeOpacity={0.8}>
-          <Feather name="x" size={16} color="#0F172A" />
-          <Text style={styles.cancelText}>Cancelar solicitud</Text>
-        </TouchableOpacity>
+          <TouchableOpacity style={styles.cancelBtn} onPress={onCancel} activeOpacity={0.8}>
+            <Feather name="x" size={16} color="#0F172A" />
+            <Text style={styles.cancelText}>Cancelar solicitud</Text>
+          </TouchableOpacity>
+        </ScrollView>
       </Animated.View>
     </Animated.View>
   );
@@ -162,8 +173,8 @@ const styles = StyleSheet.create({
     overflow: "hidden",
   },
   header: {
-    paddingTop: 8,
-    paddingBottom: 8,
+    paddingTop: 6,
+    paddingBottom: 6,
     paddingHorizontal: 16,
   },
   handle: {
@@ -172,8 +183,8 @@ const styles = StyleSheet.create({
     borderRadius: 3,
     backgroundColor: "#E2E8F0",
     alignSelf: "center",
-    marginTop: 2,
-    marginBottom: 10,
+    marginTop: 0,
+    marginBottom: 6,
   },
   collapsedRow: {
     flexDirection: "row",
@@ -216,9 +227,19 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   expandedContent: {
+    flex: 1,
+    paddingTop: 4,
     paddingHorizontal: 20,
-    paddingBottom: 30,
+  },
+  scroll: {
+    flex: 1,
+  },
+  scrollContent: {
+    flexGrow: 1,
     alignItems: "center",
+    justifyContent: "center",
+    paddingBottom: 50,
+    paddingTop: 10,
   },
   iconWrap: {
     width: 96,

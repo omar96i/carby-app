@@ -1,7 +1,7 @@
 import React, { useState } from "react";
-import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
+import { View, Text, TouchableOpacity, StyleSheet, Image } from "react-native";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
-import { formatPrice } from "../utils";
+import { formatPrice, getCommerceImageUrl, getProductImageUrl, getAdicionalImageUrl } from "../utils";
 
 export default function OrderDetails({ pedido }) {
   const [expanded, setExpanded] = useState(false);
@@ -10,13 +10,18 @@ export default function OrderDetails({ pedido }) {
 
   const comercio = pedido.comercio;
   const items = pedido.pedido_lists || [];
+  const commerceImageUrl = getCommerceImageUrl(comercio);
 
   return (
     <View style={styles.container}>
       <TouchableOpacity style={styles.header} onPress={() => setExpanded(!expanded)} activeOpacity={0.8}>
         <View style={styles.headerLeft}>
           <View style={styles.iconBox}>
-            <MaterialCommunityIcons name="store" size={18} color="#fa6205" />
+            {commerceImageUrl ? (
+              <Image source={{ uri: commerceImageUrl }} style={styles.commerceImage} resizeMode="cover" />
+            ) : (
+              <MaterialCommunityIcons name="store" size={18} color="#fa6205" />
+            )}
           </View>
           <View>
             <Text style={styles.title}>Incluye pedido</Text>
@@ -43,15 +48,51 @@ export default function OrderDetails({ pedido }) {
           )}
 
           <Text style={styles.itemsTitle}>Items</Text>
-          {items.map((item) => (
-            <View key={item.id?.toString()} style={styles.itemRow}>
-              <Text style={styles.itemQty}>{item.cantidad}x</Text>
-              <Text style={styles.itemName} numberOfLines={1}>
-                {item.producto?.nombre || "Producto"}
-              </Text>
-              <Text style={styles.itemPrice}>{formatPrice(item.producto?.precio)}</Text>
-            </View>
-          ))}
+          {items.map((item) => {
+            const productImageUrl = getProductImageUrl(item.producto);
+            const adicionales = item.pedido_list_adicionals || [];
+            return (
+              <View key={item.id?.toString()} style={styles.itemBlock}>
+                <View style={styles.itemRow}>
+                  {productImageUrl ? (
+                    <Image source={{ uri: productImageUrl }} style={styles.productImage} resizeMode="cover" />
+                  ) : (
+                    <View style={styles.productImageFallback}>
+                      <Ionicons name="cube" size={14} color="#fa6205" />
+                    </View>
+                  )}
+                  <Text style={styles.itemQty}>{item.cantidad}x</Text>
+                  <Text style={styles.itemName} numberOfLines={1}>
+                    {item.producto?.nombre || "Producto"}
+                  </Text>
+                  <Text style={styles.itemPrice}>{formatPrice(item.producto?.precio)}</Text>
+                </View>
+                {adicionales.length > 0 && (
+                  <View style={styles.adicionalesBox}>
+                    {adicionales.map((adicionalItem) => {
+                      const adicional = adicionalItem.producto_adicional;
+                      const adicionalImageUrl = getAdicionalImageUrl(adicional);
+                      return (
+                        <View key={adicionalItem.id?.toString()} style={styles.adicionalRow}>
+                          {adicionalImageUrl ? (
+                            <Image source={{ uri: adicionalImageUrl }} style={styles.adicionalImage} resizeMode="cover" />
+                          ) : (
+                            <View style={styles.adicionalImageFallback}>
+                              <Ionicons name="add-circle" size={10} color="#fa6205" />
+                            </View>
+                          )}
+                          <Text style={styles.adicionalName} numberOfLines={1}>
+                            + {adicional?.nombre || "Adicional"}
+                          </Text>
+                          <Text style={styles.adicionalPrice}>{formatPrice(adicional?.precio)}</Text>
+                        </View>
+                      );
+                    })}
+                  </View>
+                )}
+              </View>
+            );
+          })}
 
           <View style={styles.totalRow}>
             <Text style={styles.totalLabel}>Total pedido</Text>
@@ -91,6 +132,12 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     marginRight: 12,
+    overflow: "hidden",
+  },
+  commerceImage: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
   },
   title: {
     fontFamily: "Montserrat_700Bold",
@@ -133,12 +180,30 @@ const styles = StyleSheet.create({
     letterSpacing: 0.5,
     marginBottom: 8,
   },
-  itemRow: {
-    flexDirection: "row",
-    alignItems: "center",
+  itemBlock: {
     paddingVertical: 6,
     borderBottomWidth: 1,
     borderBottomColor: "rgba(0,0,0,0.05)",
+  },
+  itemRow: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  productImage: {
+    width: 32,
+    height: 32,
+    borderRadius: 8,
+    marginRight: 8,
+    backgroundColor: "#E2E8F0",
+  },
+  productImageFallback: {
+    width: 32,
+    height: 32,
+    borderRadius: 8,
+    backgroundColor: "rgba(250, 98, 5, 0.1)",
+    justifyContent: "center",
+    alignItems: "center",
+    marginRight: 8,
   },
   itemQty: {
     fontFamily: "Montserrat_700Bold",
@@ -156,6 +221,42 @@ const styles = StyleSheet.create({
     fontFamily: "Montserrat_600SemiBold",
     fontSize: 12,
     color: "#666",
+  },
+  adicionalesBox: {
+    marginTop: 6,
+    paddingLeft: 40,
+  },
+  adicionalRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: 4,
+  },
+  adicionalImage: {
+    width: 22,
+    height: 22,
+    borderRadius: 6,
+    marginRight: 8,
+    backgroundColor: "#E2E8F0",
+  },
+  adicionalImageFallback: {
+    width: 22,
+    height: 22,
+    borderRadius: 6,
+    backgroundColor: "rgba(250, 98, 5, 0.1)",
+    justifyContent: "center",
+    alignItems: "center",
+    marginRight: 8,
+  },
+  adicionalName: {
+    flex: 1,
+    fontFamily: "Montserrat_500Medium",
+    fontSize: 12,
+    color: "#666",
+  },
+  adicionalPrice: {
+    fontFamily: "Montserrat_600SemiBold",
+    fontSize: 11,
+    color: "#888",
   },
   totalRow: {
     flexDirection: "row",

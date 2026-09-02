@@ -10,6 +10,7 @@ import {
   PanResponder,
   Dimensions,
   ScrollView,
+  Modal,
 } from "react-native";
 import { Feather } from "@expo/vector-icons";
 import { RouteSummary } from "./RouteSummary";
@@ -17,8 +18,8 @@ import { formatCurrency, getImageUrl } from "../utils";
 import SafetyProtection from "../../../../components/SafetyProtection";
 
 const { height: SCREEN_H } = Dimensions.get("window");
-const COLLAPSED_H = 130;
-const EXPANDED_H = SCREEN_H * 0.55;
+const COLLAPSED_H = 90;
+const EXPANDED_H = SCREEN_H * 0.5;
 
 export const DriverSheet = ({
   state,
@@ -35,6 +36,7 @@ export const DriverSheet = ({
   hasNewMessages,
 }) => {
   const [expanded, setExpanded] = useState(false);
+  const [photoModalVisible, setPhotoModalVisible] = useState(false);
 
   const heightAnim = useRef(new Animated.Value(COLLAPSED_H)).current;
   const compactOpacity = useRef(new Animated.Value(1)).current;
@@ -73,11 +75,6 @@ export const DriverSheet = ({
     PanResponder.create({
       onStartShouldSetPanResponder: () => true,
       onMoveShouldSetPanResponder: (_, gesture) => Math.abs(gesture.dy) > 5,
-      onPanResponderMove: (_, gesture) => {
-        const base = expanded ? EXPANDED_H : COLLAPSED_H;
-        const newHeight = Math.max(COLLAPSED_H, base - gesture.dy);
-        heightAnim.setValue(newHeight);
-      },
       onPanResponderRelease: (_, gesture) => {
         const wasTap = Math.abs(gesture.dy) < 10 && Math.abs(gesture.dx) < 10;
         if (wasTap) {
@@ -85,10 +82,10 @@ export const DriverSheet = ({
           return;
         }
         if (expanded) {
-          if (gesture.dy > 80 || (gesture.vy || 0) > 0.5) setExpanded(false);
+          if (gesture.dy > 30 || (gesture.vy || 0) > 0.3) setExpanded(false);
           else setExpanded(true);
         } else {
-          if (gesture.dy < -80 || (gesture.vy || 0) < -0.5) setExpanded(true);
+          if (gesture.dy < -30 || (gesture.vy || 0) < -0.3) setExpanded(true);
           else setExpanded(false);
         }
       },
@@ -103,9 +100,10 @@ export const DriverSheet = ({
 
   return (
     <Animated.View style={[styles.sheet, { height: heightAnim }]}>
-      <View style={styles.header} {...panResponder.panHandlers}>
+      <View style={[styles.header, { height: expanded ? 36 : COLLAPSED_H }]} {...panResponder.panHandlers}>
         <View style={styles.handle} />
-        <Animated.View style={[styles.collapsedRow, { opacity: compactOpacity }]}>
+        <View style={styles.collapsedRowWrapper}>
+          <Animated.View style={[styles.collapsedRow, { opacity: compactOpacity }]}>
           <Image
             source={imageUrl ? { uri: imageUrl } : require("../../../../assets/images/nuevo-icono.jpeg")}
             style={styles.collapsedAvatar}
@@ -119,16 +117,17 @@ export const DriverSheet = ({
           </View>
           <Feather name="chevron-up" size={20} color="#64748B" />
         </Animated.View>
+        </View>
       </View>
 
       <Animated.View
-        style={[styles.expandedContent, { opacity: expandedOpacity }]}
+        style={[styles.expandedContent, { top: expanded ? 36 : COLLAPSED_H, opacity: expandedOpacity }]}
         pointerEvents={expanded ? "auto" : "none"}
       >
         <ScrollView style={styles.scroll} contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
           {/* Driver card */}
           <View style={styles.driverCard}>
-            <View style={styles.avatarWrap}>
+            <TouchableOpacity style={styles.avatarWrap} onPress={() => setPhotoModalVisible(true)} activeOpacity={0.85}>
               <Image
                 source={imageUrl ? { uri: imageUrl } : require("../../../../assets/images/nuevo-icono.jpeg")}
                 style={styles.avatar}
@@ -137,7 +136,7 @@ export const DriverSheet = ({
               <View style={styles.ratingBadge}>
                 <Text style={styles.ratingText}>{rating}</Text>
               </View>
-            </View>
+            </TouchableOpacity>
             <View style={styles.driverInfo}>
               <Text style={styles.driverName} numberOfLines={1}>
                 {conductor?.nombre_completo || "Asignando..."}
@@ -250,6 +249,24 @@ export const DriverSheet = ({
           </TouchableOpacity>
         </ScrollView>
       </Animated.View>
+
+      <Modal visible={photoModalVisible} transparent animationType="fade" onRequestClose={() => setPhotoModalVisible(false)}>
+        <TouchableOpacity style={styles.photoModalBackdrop} activeOpacity={1} onPress={() => setPhotoModalVisible(false)}>
+          <View style={styles.photoModalHeader}>
+            <Text style={styles.photoModalName} numberOfLines={1}>
+              {conductor?.nombre_completo || "Conductor"}
+            </Text>
+            <TouchableOpacity style={styles.photoModalClose} onPress={() => setPhotoModalVisible(false)} activeOpacity={0.8}>
+              <Feather name="x" size={22} color="#FFFFFF" />
+            </TouchableOpacity>
+          </View>
+          <Image
+            source={imageUrl ? { uri: imageUrl } : require("../../../../assets/images/nuevo-icono.jpeg")}
+            style={styles.photoModalImage}
+            resizeMode="contain"
+          />
+        </TouchableOpacity>
+      </Modal>
     </Animated.View>
   );
 };
@@ -274,23 +291,32 @@ const styles = StyleSheet.create({
     overflow: "hidden",
   },
   header: {
-    paddingTop: 8,
-    paddingBottom: 8,
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    paddingTop: 6,
+    paddingBottom: 6,
     paddingHorizontal: 16,
+    zIndex: 10,
+    overflow: "hidden",
   },
   handle: {
-    width: 44,
-    height: 5,
-    borderRadius: 3,
+    width: 40,
+    height: 4,
+    borderRadius: 2,
     backgroundColor: "#E2E8F0",
     alignSelf: "center",
-    marginTop: 2,
-    marginBottom: 10,
+    marginBottom: 6,
   },
   collapsedRow: {
     flexDirection: "row",
     alignItems: "center",
     gap: 12,
+  },
+  collapsedRowWrapper: {
+    flex: 1,
+    justifyContent: "center",
   },
   collapsedAvatar: {
     width: 44,
@@ -323,7 +349,10 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   expandedContent: {
-    flex: 1,
+    position: "absolute",
+    left: 0,
+    right: 0,
+    bottom: 0,
   },
   scroll: {
     flex: 1,
@@ -683,5 +712,41 @@ const styles = StyleSheet.create({
     fontFamily: "MontserratBold",
     fontWeight: "bold",
     color: "#FF4757",
+  },
+  photoModalBackdrop: {
+    flex: 1,
+    backgroundColor: "rgba(15,23,42,0.95)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  photoModalHeader: {
+    position: "absolute",
+    top: 50,
+    left: 16,
+    right: 16,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    zIndex: 10,
+  },
+  photoModalName: {
+    flex: 1,
+    fontSize: 16,
+    fontFamily: "MontserratBold",
+    fontWeight: "bold",
+    color: "#FFFFFF",
+    marginRight: 12,
+  },
+  photoModalClose: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: "rgba(255,255,255,0.15)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  photoModalImage: {
+    width: "90%",
+    height: "70%",
   },
 });

@@ -48,9 +48,10 @@ export default function DetalleCarrera() {
   const [alertVisible, setAlertVisible] = useState(false);
   const [alertData, setAlertData] = useState({ message: "", type: "info", onPrimary: null, primaryLabel: "" });
   const [ratingLoading, setRatingLoading] = useState(false);
+  const [isTyping, setIsTyping] = useState(false);
   const arrivedSoundTimes = useRef(0);
 
-  const { tripData, isLoading, error, refetch } = useRideData(tripId);
+  const { tripData, isLoading, error, refetch } = useRideData(tripId, isTyping);
   const driverLocation = useDriverLocation(tripData?.conductor?.id);
   const { messageCount } = useChatPolling(tripId);
   const arrivedPlayer = useAudioPlayer(require("../../../assets/sounds/sonido_close_carro.mp3"));
@@ -198,7 +199,7 @@ export default function DetalleCarrera() {
         setRatingLoading(false);
       }
     }
-    navigation.navigate("Home");
+    goHome();
   };
 
   if (isLoading) {
@@ -249,8 +250,8 @@ export default function DetalleCarrera() {
           {/* Top Bar */}
           <TopBar
             state={state}
-            showBack={showBack}
-            onBack={() => navigation.goBack()}
+            showBack={true}
+            onBack={goHome}
           />
 
           {/* Arrived banner */}
@@ -280,6 +281,7 @@ export default function DetalleCarrera() {
               driverName={tripData?.conductor?.nombre_completo}
               onDone={handleDone}
               loading={ratingLoading}
+              onTypingChange={setIsTyping}
             />
           ) : (
             <DriverSheet

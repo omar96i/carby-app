@@ -9,13 +9,14 @@ const Star = ({ filled, onPress }) => (
   </TouchableOpacity>
 );
 
-export const FinishedSheet = ({ tripData, driverName, onDone, loading }) => {
+export const FinishedSheet = ({ tripData, driverName, onDone, loading, onTypingChange }) => {
   const [rating, setRating] = useState(5);
   const [message, setMessage] = useState("");
   const cost = tripData?.costo;
   const firstName = driverName ? driverName.split(" ")[0] : "conductor";
 
   const handleDone = () => {
+    onTypingChange?.(false);
     onDone({ rating, message });
   };
 
@@ -52,6 +53,8 @@ export const FinishedSheet = ({ tripData, driverName, onDone, loading }) => {
           multiline
           maxLength={1000}
           editable={!loading}
+          onFocus={() => onTypingChange?.(true)}
+          onBlur={() => onTypingChange?.(false)}
         />
 
         <TouchableOpacity

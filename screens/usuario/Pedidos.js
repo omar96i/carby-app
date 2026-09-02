@@ -48,6 +48,7 @@ export default function Pedidos({ route }) {
   const [selectedItem, setSelectedItem] = useState(null);
   const [alertVisible, setAlertVisible] = useState(false);
   const [alertData, setAlertData] = useState({ message: "", type: "info", onPrimary: null, primaryLabel: "" });
+  const hasFetchedReservasRef = useRef(false);
 
   const showAlert = (message, type = "info", onPrimary = null, primaryLabel = null) => {
     setAlertData({ message, type, onPrimary, primaryLabel });
@@ -58,7 +59,10 @@ export default function Pedidos({ route }) {
   useEffect(() => {
     setFilteredPedidos([]);
     fetchPedidos(activeTab);
-    fetchReservas();
+    if (!hasFetchedReservasRef.current) {
+      hasFetchedReservasRef.current = true;
+      fetchReservas();
+    }
   }, [activeTab]);
 
   useEffect(() => {
@@ -67,7 +71,8 @@ export default function Pedidos({ route }) {
     } else if (activeTab === "historial") {
       setFilteredReservas(filtrarReservas(reservas, "historial"));
     }
-    if (activeTab === "reservas" && reservas.length === 0) {
+    if (activeTab === "reservas" && reservas.length === 0 && !hasFetchedReservasRef.current) {
+      hasFetchedReservasRef.current = true;
       fetchReservas();
     }
   }, [activeTab, reservas]);
@@ -219,7 +224,11 @@ export default function Pedidos({ route }) {
             refreshControl={
               <RefreshControl
                 refreshing={refreshing}
-                onRefresh={() => onRefresh(activeTab)}
+                onRefresh={() => {
+                  hasFetchedReservasRef.current = false;
+                  onRefresh(activeTab);
+                  fetchReservas();
+                }}
                 colors={[COLORS.brand]}
               />
             }

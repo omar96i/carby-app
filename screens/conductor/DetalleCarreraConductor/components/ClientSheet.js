@@ -15,11 +15,11 @@ import {
 import { Feather, Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { formatCurrency, getImageUrl, formatPaymentMethod } from "../utils";
 import SafetyProtection from "../../../../components/SafetyProtection";
-import ProductList from "../../../../components/usuario/pedidos/ProductList";
+import OrderDetailsCard from "./OrderDetailsCard";
 
 const { height: SCREEN_H } = Dimensions.get("window");
 const COLLAPSED_H = 100;
-const EXPANDED_H = SCREEN_H * 0.45;
+const EXPANDED_H = SCREEN_H * 0.5;
 
 export const ClientSheet = ({
   state,
@@ -83,18 +83,14 @@ export const ClientSheet = ({
     PanResponder.create({
       onStartShouldSetPanResponder: () => true,
       onMoveShouldSetPanResponder: (_, g) => Math.abs(g.dy) > 5,
-      onPanResponderMove: (_, g) => {
-        const base = expanded ? EXPANDED_H : COLLAPSED_H;
-        heightAnim.setValue(Math.max(COLLAPSED_H, base - g.dy));
-      },
       onPanResponderRelease: (_, g) => {
         const tap = Math.abs(g.dy) < 10 && Math.abs(g.dx) < 10;
         if (tap) return setExpanded(!expanded);
         if (expanded) {
-          if (g.dy > 80 || (g.vy || 0) > 0.5) setExpanded(false);
+          if (g.dy > 30 || (g.vy || 0) > 0.3) setExpanded(false);
           else setExpanded(true);
         } else {
-          if (g.dy < -80 || (g.vy || 0) < -0.5) setExpanded(true);
+          if (g.dy < -30 || (g.vy || 0) < -0.3) setExpanded(true);
           else setExpanded(false);
         }
       },
@@ -200,21 +196,16 @@ export const ClientSheet = ({
                     activeOpacity={0.8}
                   >
                     <Feather name="phone" size={16} color="#FFFFFF" />
-                  </TouchableOpacity>
-                )}
-              </View>
-              {isDelivery && (pedido.pedido_lists || pedido.items)?.length > 0 && (
-                <ProductList pedidoLists={pedido.pedido_lists || pedido.items} compact />
-              )}
-              {!isDelivery && pedido.items?.length > 0 && (
-                <Text style={styles.pedidoItems} numberOfLines={3}>
-                  {pedido.items.map((p) => `${p.cantidad}x ${p.producto?.nombre || "Producto"}`).join(", ")}
-                </Text>
+                </TouchableOpacity>
               )}
             </View>
-          )}
+          </View>
+        )}
 
-          {/* Live location toggle */}
+        {/* Order details - independent card */}
+        {pedido && <OrderDetailsCard pedido={pedido} />}
+
+        {/* Live location toggle */}
           {!pedido && (
             <TouchableOpacity style={[styles.liveBtn, clientLive && styles.liveBtnActive]} onPress={onToggleClientLive} activeOpacity={0.8}>
               <View style={[styles.liveIcon, clientLive && styles.liveIconActive]}>
@@ -443,7 +434,7 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     paddingHorizontal: 16,
-    paddingBottom: 30,
+    paddingBottom: 15,
   },
   clientCard: {
     flexDirection: "row",

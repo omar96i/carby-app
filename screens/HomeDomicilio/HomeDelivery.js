@@ -81,32 +81,37 @@ export default function HomeDelivery() {
     Montserrat_500Medium,
   });
 
+  const refreshUserRating = useCallback(async () => {
+    try {
+      const storedUserData = await AsyncStorage.getItem("userData");
+      const userToken = await AsyncStorage.getItem("userToken");
+      if (!storedUserData || !userToken) return;
+      const parsed = JSON.parse(storedUserData);
+      const response = await fetch(`${BASE_URL}usuario/${parsed.id}`, {
+        headers: { Authorization: `Bearer ${userToken}` },
+      });
+      const json = await response.json();
+      if (json.status && json.data) {
+        const updatedUser = { ...parsed, ...json.data };
+        setUserData(updatedUser);
+        const r = updatedUser.tipo_usuario?.includes("rider")
+          ? json.data.promedio_puntuacion_conductor
+          : json.data.promedio_puntuacion_usuario;
+        setUserRating(r);
+      }
+    } catch (err) {
+      console.log("[HomeDelivery] refreshUserRating error:", err.message);
+    }
+  }, []);
+
   useFocusEffect(
     useCallback(() => {
       const loadInitial = async () => {
         const storedUserData = await AsyncStorage.getItem("userData");
-        const userToken = await AsyncStorage.getItem("userToken");
-
         if (storedUserData) {
           const parsed = JSON.parse(storedUserData);
-          console.log("[HomeDelivery] STORED userData keys:", Object.keys(parsed).join(","));
-          console.log("[HomeDelivery] STORED foto_documento_file:", parsed.foto_documento_file);
           setUserData(parsed);
-          fetch(`${BASE_URL}usuario/${parsed.id}`, { headers: { Authorization: `Bearer ${userToken}` } })
-            .then((r) => r.json())
-            .then((json) => {
-              console.log("[HomeDelivery] FETCH usuario response:", JSON.stringify(json).substring(0, 1000));
-              if (json.status && json.data) {
-                const updatedUser = { ...parsed, ...json.data };
-                setUserData(updatedUser);
-                console.log("[HomeDelivery] UPDATED userData foto:", updatedUser.foto_documento_file);
-                const r = updatedUser.tipo_usuario?.includes("rider")
-                  ? json.data.promedio_puntuacion_conductor
-                  : json.data.promedio_puntuacion_usuario;
-                setUserRating(r);
-              }
-            })
-            .catch((err) => console.log("[HomeDelivery] FETCH usuario error:", err.message));
+          refreshUserRating();
         }
         const storedSwitch = await AsyncStorage.getItem("isEnabled");
         if (storedSwitch === "true") setIsEnabled(true);
@@ -114,7 +119,7 @@ export default function HomeDelivery() {
         fetchAvailability();
       };
       loadInitial();
-    }, [])
+    }, [refreshUserRating])
   );
 
   useEffect(() => {

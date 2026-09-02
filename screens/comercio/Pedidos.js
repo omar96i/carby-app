@@ -26,6 +26,7 @@ import PedidosTabs from "../../components/usuario/pedidos/PedidosTabs";
 import TripCard from "../../components/usuario/pedidos/TripCard";
 import EmptyState from "../../components/usuario/pedidos/EmptyState";
 import DetailSheet from "../../components/usuario/pedidos/DetailSheet";
+import ChatComercioRider from "../ChatComercioRider";
 import { COLORS, SHADOWS, RADIUS, formatCOP, formatDate, calcOrderCosts } from "../../components/usuario/pedidos/helpers";
 import StatusBadge from "../../components/usuario/pedidos/StatusBadge";
 import RouteStops from "../../components/usuario/pedidos/RouteStops";
@@ -70,6 +71,7 @@ export default function PedidosComercio({ route }) {
   // Evidencia modal
   const [evidenciaVisible, setEvidenciaVisible] = useState(false);
   const [evidenciaUrl, setEvidenciaUrl] = useState(null);
+  const [chatItem, setChatItem] = useState(null);
 
   const showAlert = (message, type = "info", onPrimary = null, primaryLabel = null) => {
     setAlertData({ message, type, onPrimary, primaryLabel });
@@ -147,11 +149,12 @@ export default function PedidosComercio({ route }) {
       showAlert("No hay conductor asignado aún", "info");
       return;
     }
-    navigation.navigate("ChatComercioRider", {
+    setChatItem({
       pedidoId: item.id,
       carreraId: item.carrera?.id,
       conductorId: item.carrera.conductor.id,
       conductorNombre: item.carrera.conductor.nombre_completo || "Conductor",
+      comercioId: item.comercio?.id || item.comercio_id,
       tipo: "comercio-rider",
     });
   };
@@ -297,6 +300,11 @@ export default function PedidosComercio({ route }) {
                 <View style={{ flex: 1 }}>
                   <DriverRow driver={item.conductor} showEta />
                 </View>
+                {item.carrera?.id && (
+                  <TouchableOpacity style={cs.chatIconBtn} onPress={() => handleChatRider(item)}>
+                    <Ionicons name="chatbubble" size={18} color={COLORS.surface} />
+                  </TouchableOpacity>
+                )}
                 {item.conductor.phone ? (
                   <TouchableOpacity style={cs.callBtn} onPress={() => Linking.openURL(`tel:${item.conductor.phone}`)}>
                     <Ionicons name="call" size={18} color={COLORS.surface} />
@@ -362,12 +370,6 @@ export default function PedidosComercio({ route }) {
             <TouchableOpacity style={cs.shipBtn} onPress={() => handleCrearCarrera(item)}>
               <Ionicons name="car" size={18} color={COLORS.surface} />
               <Text style={cs.shipText}>Solicitar conductor</Text>
-            </TouchableOpacity>
-          )}
-          {hasCarrera && item.conductor && (
-            <TouchableOpacity style={cs.chatBtn} onPress={() => handleChatRider(item)}>
-              <Ionicons name="chatbubble" size={16} color={COLORS.brand} />
-              <Text style={cs.chatText}>Chat con conductor</Text>
             </TouchableOpacity>
           )}
           {item.archivo_evidencia && (
@@ -494,6 +496,54 @@ export default function PedidosComercio({ route }) {
         onPrimary={alertData.onPrimary}
         primaryLabel={alertData.primaryLabel}
       />
+
+      <Modal
+        visible={!!chatItem}
+        animationType="slide"
+        transparent={true}
+        onRequestClose={() => setChatItem(null)}
+      >
+        {chatItem && (
+          <View style={cs.chatOverlay}>
+            <TouchableOpacity
+              style={cs.chatBackdrop}
+              activeOpacity={1}
+              onPress={() => setChatItem(null)}
+            />
+            <View style={cs.chatPanel}>
+              <View style={cs.chatHeader}>
+                <View style={cs.chatAvatar}>
+                  <Ionicons name="person" size={20} color="#FFFFFF" />
+                </View>
+                <View style={cs.chatHeaderText}>
+                  <Text style={cs.chatTitle} numberOfLines={1}>
+                    {chatItem.conductorNombre || "Conductor"}
+                  </Text>
+                </View>
+                <TouchableOpacity
+                  style={cs.closeChatBtn}
+                  onPress={() => setChatItem(null)}
+                  activeOpacity={0.7}
+                >
+                  <Ionicons name="close" size={20} color="#FFFFFF" />
+                </TouchableOpacity>
+              </View>
+              <View style={cs.chatBody}>
+                <ChatComercioRider
+                  pedidoId={chatItem.pedidoId}
+                  carreraId={chatItem.carreraId}
+                  conductorId={chatItem.conductorId}
+                  conductorNombre={chatItem.conductorNombre}
+                  comercioId={chatItem.comercioId}
+                  tipo={chatItem.tipo}
+                  onClose={() => setChatItem(null)}
+                  modalMode={true}
+                />
+              </View>
+            </View>
+          </View>
+        )}
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -521,7 +571,8 @@ const cs = StyleSheet.create({
   routeSection: { paddingHorizontal: 16, paddingTop: 16 },
   driverSection: { marginHorizontal: 16, marginTop: 12, backgroundColor: COLORS.zinc50, borderRadius: 16, padding: 12 },
   driverRow: { flexDirection: "row", alignItems: "center", gap: 10 },
-  callBtn: { width: 40, height: 40, borderRadius: 20, backgroundColor: COLORS.brand, justifyContent: "center", alignItems: "center" },
+  callBtn: { width: 40, height: 40, borderRadius: 20, backgroundColor: COLORS.brand, justifyContent: "center", alignItems: "center", ...SHADOWS.ctaDark },
+  chatIconBtn: { width: 40, height: 40, borderRadius: 20, backgroundColor: COLORS.ink, justifyContent: "center", alignItems: "center", marginRight: 8, ...SHADOWS.ctaDark },
   searchingRow: { flexDirection: "row", alignItems: "center", gap: 10 },
   searchingIcon: { width: 36, height: 36, borderRadius: 18, backgroundColor: COLORS.surface, justifyContent: "center", alignItems: "center", shadowColor: "#000", shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.06, shadowRadius: 4, elevation: 2 },
   searchingText: { fontSize: 12, fontFamily: "Montserrat_800ExtraBold", color: COLORS.ink },
@@ -629,4 +680,14 @@ const cs = StyleSheet.create({
   infoRow: { flexDirection: "row", justifyContent: "space-between", marginBottom: 8 },
   infoLabel: { fontSize: 12, fontFamily: "Montserrat_600SemiBold", color: COLORS.muted },
   infoValue: { fontSize: 12, fontFamily: "Montserrat_700Bold", color: COLORS.ink },
+
+  chatOverlay: { flex: 1, justifyContent: "flex-end", backgroundColor: "rgba(15,23,42,0.35)" },
+  chatBackdrop: { ...StyleSheet.absoluteFillObject },
+  chatPanel: { height: "85%", backgroundColor: "#FFFFFF", borderTopLeftRadius: 28, borderTopRightRadius: 28, overflow: "hidden" },
+  chatHeader: { flexDirection: "row", alignItems: "center", gap: 12, backgroundColor: "#FF5500", paddingHorizontal: 16, paddingVertical: 14 },
+  chatAvatar: { width: 44, height: 44, borderRadius: 22, backgroundColor: "rgba(255,255,255,0.25)", justifyContent: "center", alignItems: "center" },
+  chatHeaderText: { flex: 1 },
+  chatTitle: { fontSize: 16, fontFamily: "Montserrat_700Bold", color: "#FFFFFF" },
+  closeChatBtn: { width: 36, height: 36, borderRadius: 18, backgroundColor: "rgba(255,255,255,0.25)", justifyContent: "center", alignItems: "center" },
+  chatBody: { flex: 1 },
 });

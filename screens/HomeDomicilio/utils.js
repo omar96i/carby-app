@@ -53,6 +53,24 @@ export const getUserPhotoUrl = (usuario) => {
   return `${BASE_URL.toString().replace("/api", "")}storage/${raw}`;
 };
 
+export const getCommerceImageUrl = (comercio) => {
+  if (!comercio) return null;
+  const raw = comercio.foto_documento_file;
+  if (!raw) return null;
+  if (String(raw).startsWith("http")) return raw;
+  return `${BASE_URL.toString().replace("/api", "")}storage/${raw}`;
+};
+
+const buildStorageUrl = (raw) => {
+  if (!raw) return null;
+  if (String(raw).startsWith("http")) return raw;
+  return `${BASE_URL.toString().replace("/api", "")}storage/${raw}`;
+};
+
+export const getProductImageUrl = (producto) => buildStorageUrl(producto?.foto);
+
+export const getAdicionalImageUrl = (adicional) => buildStorageUrl(adicional?.file);
+
 export const formatPaymentMethod = (metodo) => {
   if (!metodo) return "Efectivo";
   const m = String(metodo).toLowerCase().trim();

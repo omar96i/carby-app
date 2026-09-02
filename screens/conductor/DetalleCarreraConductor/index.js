@@ -270,21 +270,24 @@ export default function DetalleCarreraConductor() {
     }
   };
 
-  const handleDone = async ({ rating, message }) => {
-    setRatingLoading(true);
-    try {
-      const token = await AsyncStorage.getItem("userToken");
-      await fetch(`${BASE_URL}carrera/${activeId}/calificar-pasajero`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ puntuacion: rating, mensaje: message || "" }),
-      });
-    } catch (e) {
-      console.error("Error calificando:", e);
-    } finally {
-      setRatingLoading(false);
-      navigation.replace("BottomTabNavigatorDelivery");
+  const handleDone = async ({ rating, message } = {}) => {
+    // Las carreras con pedido no requieren calificación; solo las normales.
+    if (rating) {
+      setRatingLoading(true);
+      try {
+        const token = await AsyncStorage.getItem("userToken");
+        await fetch(`${BASE_URL}carrera/${activeId}/calificar-pasajero`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+          body: JSON.stringify({ puntuacion: rating, mensaje: message || "" }),
+        });
+      } catch (e) {
+        console.error("Error calificando:", e);
+      } finally {
+        setRatingLoading(false);
+      }
     }
+    navigation.replace("BottomTabNavigatorDelivery");
   };
 
   const openMaps = () => {
@@ -338,7 +341,7 @@ export default function DetalleCarreraConductor() {
             />
           </View>
 
-          <TopBar state={state} isDelivery={isDelivery} />
+          <TopBar state={state} isDelivery={isDelivery} onBack={() => navigation.replace("BottomTabNavigatorDelivery")} />
 
           <TouchableOpacity style={styles.mapsBtnTop} onPress={openMaps} activeOpacity={0.8}>
             <MaterialCommunityIcons name="google-maps" size={22} color="#0F172A" />
@@ -350,6 +353,7 @@ export default function DetalleCarreraConductor() {
               clientName={tripData?.usuario?.nombre_completo}
               onDone={handleDone}
               loading={ratingLoading}
+              showRating={!isDelivery}
             />
           ) : (
             <ClientSheet

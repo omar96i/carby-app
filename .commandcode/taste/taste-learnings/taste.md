@@ -1,0 +1,16 @@
+# Taste Learnings
+- Communicates in Spanish (informal, uses "bueno", "te comento"). Confidence: 0.9
+- References code locations using `@path\To\File.ext` notation (Windows-style absolute paths). Confidence: 0.7
+- When reporting a bug, provides detailed step-by-step reproduction of the observed behavior (action → observed → expected). Confidence: 0.85
+- Asks for analysis/diagnosis of bugs before requesting a fix ("me ayudas a analizar que seria ese bug"). Wants to understand root cause first. Confidence: 0.8
+- Prefers adding informative subtitles/labels below menu items when a feature has a prerequisite or access requirement (e.g., "you must have prior access to..."). Confidence: 0.85
+- When clarifying UI behavior, prefers explicit, user-facing text rather than relying on tooltips or hidden info. Confidence: 0.7
+- When reporting a flow that "doesn't work", walks through the exact sequence of actions taken (login → tap menu → select option → logout → re-login) to reproduce it step-by-step. Confidence: 0.9
+- Insists on persistence across session boundaries (logout/login cycle) for user preferences and selections — expects local storage to survive the session even when other session data is cleared. Confidence: 0.85
+- Uses casual Spanish confirmations like "si dale" to greenlight implementation without further discussion once a fix is proposed. Confidence: 0.75
+- Very attentive to whitespace/spacing in UI components (bottom sheets, headers, handles, stacked cards) — flags subtle padding/margin issues that make layouts look "feo", leave blank gaps, or leave sections visually "pegado" (glued) together, and wants proper separation between distinct stacked blocks. Confidence: 0.85
+- Prefers compact collapsed/minimized UI states (e.g., bottom sheets) — asks to reduce fixed heights so more of the underlying content (map) stays visible. Confidence: 0.75
+- Gives iterative, incremental UI feedback ("esta mejor pero..."), acknowledging progress then requesting one small adjustment at a time. Confidence: 0.8
+- When an attempted fix doesn't resolve the issue ("sigue igual"), points the assistant to a parallel/analogous component elsewhere in the codebase that already works correctly and asks it to investigate the difference ("revisa como se comporta la parte de X que tiene este mismo sheet y alli no tiene espacios"). Prefers using existing working implementations as reference rather than re-deriving from scratch. Confidence: 0.85
+- Prefers "fetch once per component mount" semantics for data loading on screens: wants fetches to run only on initial mount, and only re-run on explicit user action (pull-to-refresh, reload). Uses `useRef` flags instead of `useState` flags to avoid the effect re-firing when the flag itself changes. Explicitly states "solo se ejecute una vez y si la persona recarga ahi si se vuelve a consultar". Confidence: 0.9
+- Prefers grouping contextual action buttons directly next to the entity they relate to (e.g., chat with driver placed beside the driver info / call button) rather than in a separate, generic "actions" block below. Wants compact icon-style buttons (40x40 circular) when actions sit alongside entity info. Confidence: 0.85

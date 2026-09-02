@@ -9,13 +9,13 @@ const Star = ({ filled, onPress }) => (
   </TouchableOpacity>
 );
 
-export const FinishedSheet = ({ tripData, clientName, onDone, loading }) => {
+export const FinishedSheet = ({ tripData, clientName, onDone, loading, showRating = true }) => {
   const [rating, setRating] = useState(5);
   const [message, setMessage] = useState("");
   const earning = tripData?.costo || 0;
 
   const handleDone = () => {
-    onDone({ rating, message });
+    onDone(showRating ? { rating, message } : {});
   };
 
   return (
@@ -33,23 +33,27 @@ export const FinishedSheet = ({ tripData, clientName, onDone, loading }) => {
           <Text style={styles.earningValue}>{formatCurrency(earning)}</Text>
         </View>
 
-        <Text style={styles.rateLabel}>Califica al pasajero</Text>
-        <View style={styles.starsRow}>
-          {[1, 2, 3, 4, 5].map((n) => (
-            <Star key={n} filled={n <= rating} onPress={() => setRating(n)} />
-          ))}
-        </View>
+        {showRating && (
+          <>
+            <Text style={styles.rateLabel}>Califica al pasajero</Text>
+            <View style={styles.starsRow}>
+              {[1, 2, 3, 4, 5].map((n) => (
+                <Star key={n} filled={n <= rating} onPress={() => setRating(n)} />
+              ))}
+            </View>
 
-        <TextInput
-          style={styles.messageInput}
-          placeholder="Comentario opcional..."
-          placeholderTextColor="#94A3B8"
-          value={message}
-          onChangeText={setMessage}
-          multiline
-          maxLength={1000}
-          editable={!loading}
-        />
+            <TextInput
+              style={styles.messageInput}
+              placeholder="Comentario opcional..."
+              placeholderTextColor="#94A3B8"
+              value={message}
+              onChangeText={setMessage}
+              multiline
+              maxLength={1000}
+              editable={!loading}
+            />
+          </>
+        )}
 
         <TouchableOpacity style={[styles.doneBtn, loading && styles.doneBtnDisabled]} onPress={handleDone} disabled={loading} activeOpacity={0.8}>
           {loading ? <ActivityIndicator size="small" color="#FFFFFF" /> : <Text style={styles.doneText}>Buscar nueva carrera</Text>}

@@ -196,12 +196,18 @@ export default function LoginScreen() {
         });
         const retryData = await retryRes.json();
         if (retryRes.status === 200 && retryData.token) {
+          await AsyncStorage.setItem("preferencia_rol", "usuario");
           await finalizarLogin(retryData);
           return;
         }
         setIsLoading(false);
+        await AsyncStorage.setItem("preferencia_rol", "usuario");
         manejarErrorNegocio(retryData, API_URL);
         return;
+      }
+
+      if (isRoleError && preferencia !== "usuario") {
+        await AsyncStorage.setItem("preferencia_rol", "usuario");
       }
 
       setIsLoading(false);

@@ -129,6 +129,7 @@ export default function Pedidos({ route }) {
   const [reservas, setReservas] = useState([]);
   const [filteredReservas, setFilteredReservas] = useState([]);
   const [isLoadingReservas, setIsLoadingReservas] = useState(false);
+  const hasFetchedReservasRef = useRef(false);
   const [sound, setSound] = useState(null);
   const [previousPendingCount, setPreviousPendingCount] = useState(0);
   const [calificacionModalVisible, setCalificacionModalVisible] =
@@ -913,7 +914,8 @@ export default function Pedidos({ route }) {
     if (
       activeTab === "reservas" &&
       tipoUsuario === "usuario" &&
-      reservas.length === 0
+      reservas.length === 0 &&
+      !hasFetchedReservasRef.current
     ) {
       fetchReservas();
     }
@@ -1127,6 +1129,7 @@ export default function Pedidos({ route }) {
       setError(error.message);
     } finally {
       setIsLoadingReservas(false);
+      hasFetchedReservasRef.current = true;
       setRefreshing(false);
     }
   }; // Función para obtener perfiles con servicios (solo para comercios)
@@ -1687,7 +1690,7 @@ export default function Pedidos({ route }) {
   useEffect(() => {
     fetchPedidos();
     // Solo cargar reservas automáticamente para usuarios normales, NO para comercios
-    if (tipoUsuario === "usuario") {
+    if (tipoUsuario === "usuario" && !hasFetchedReservasRef.current) {
       fetchReservas();
     }
   }, [tipoUsuario]);

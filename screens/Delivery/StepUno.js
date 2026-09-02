@@ -604,7 +604,13 @@ export default function StepUno() {
 
   const confirmPinLocation = async () => {
     const { latitude, longitude } = mapRegion;
-    const address = pinAddress || (await getAddressFromCoordinates(latitude, longitude));
+    let address = pinAddress || (await getAddressFromCoordinates(latitude, longitude));
+    if (/^[\w\d]+\+\w+/.test(address)) {
+      address = await getAddressFromCoordinates(latitude, longitude);
+      if (/^[\w\d]+\+\w+/.test(address)) {
+        address = `Lat: ${latitude.toFixed(5)}, Lng: ${longitude.toFixed(5)}`;
+      }
+    }
     if (isLocationPickup) {
       setPickupAddress(address);
       setPickupCoord({ latitude, longitude });
@@ -1144,7 +1150,7 @@ export default function StepUno() {
     } else {
       updatePriceDisplay(0);
     }
-  }, [pickupAddress, deliveryAddress, selectedServiceId]);
+  }, [pickupAddress, deliveryAddress, selectedServiceId, pickupCoord, deliveryCoord]);
 
   // Actualizar display cuando cambia el bid offset
   useEffect(() => {

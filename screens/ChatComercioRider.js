@@ -9,16 +9,17 @@ import {
   SafeAreaView,
   KeyboardAvoidingView,
   Platform,
+  Image,
+  ActivityIndicator,
 } from 'react-native';
-import { FontAwesome } from '@expo/vector-icons';
+import { Feather } from '@expo/vector-icons';
+import * as ImagePicker from 'expo-image-picker';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { BASE_URL } from '../constants/url';
 import { useNotification } from "../context/NotificationContext";
 import AlertaModal from "../components/ErrorModal";
 
-export default function ChatComercioRider({ route, navigation }) {
-  const { pedidoId, conductorId, carreraId, conductorNombre, comercioId, tipo } = route.params;
-  console.log('ChatComercioRider params:', route.params);
+export default function ChatComercioRider({ pedidoId, conductorId, carreraId, conductorNombre, comercioId, tipo, onClose, modalMode = false }) {
   const [mensajes, setMensajes] = useState([]);
   const [nuevoMensaje, setNuevoMensaje] = useState('');
   const [cargando, setCargando] = useState(true);
@@ -31,34 +32,17 @@ export default function ChatComercioRider({ route, navigation }) {
     setAlertData({ message, type, onPrimary, primaryLabel });
     setAlertVisible(true);
   };
+
   const flatListRef = useRef(null);
-
-
-  const { expoPushToken, notification } = useNotification();
-
+  const { notification } = useNotification();
 
   useEffect(() => {
-    if (notification) {
-      cargarMensajes()
-    }
+    if (notification) cargarMensajes();
   }, [notification]);
-
 
   useEffect(() => {
     obtenerInfoUsuario();
     cargarMensajes();
-
-    // Configurar navegación
-    navigation.setOptions({
-      title: `Chat - ${conductorNombre}`,
-      headerStyle: {
-        backgroundColor: '#fa6205',
-      },
-      headerTintColor: '#fff',
-      headerTitleStyle: {
-        fontWeight: 'bold',
-      },
-    });
   }, []);
 
   const obtenerInfoUsuario = async () => {
@@ -67,12 +51,9 @@ export default function ChatComercioRider({ route, navigation }) {
       if (userData) {
         const user = JSON.parse(userData);
         setUserInfo(user);
-        console.log('ℹ️ Info usuario cargada:', user);
-      } else {
-        console.log('⚠️ No se encontró userData en AsyncStorage');
       }
     } catch (error) {
-      console.error('❌ Error obteniendo info usuario:', error);
+      console.error('Error obteniendo info usuario:', error);
     }
   };
 
@@ -83,12 +64,7 @@ export default function ChatComercioRider({ route, navigation }) {
         showAlert('No se encontró token de autenticación', "error");
         return;
       }
-
-      // Endpoint para obtener mensajes del chat usando pedidoId
       const endpoint = `${BASE_URL}carrera-pedido-chat/messages/${pedidoId}`;
-
-      console.log('Cargando mensajes desde:', endpoint);
-
       const response = await fetch(endpoint, {
         method: 'GET',
         headers: {
@@ -96,16 +72,10 @@ export default function ChatComercioRider({ route, navigation }) {
           'Authorization': `Bearer ${token}`,
         },
       });
-
       if (response.ok) {
         const data = await response.json();
-        console.log('Datos de mensajes recibidos:', data);
-        // Los mensajes pueden estar en data.data, data.mensajes, o directamente en data
         const messages = data.data || data.mensajes || data || [];
         setMensajes(messages);
-        console.log('Mensajes cargados:', messages.length);
-      } else {
-        console.log('No hay mensajes previos o error al cargar');
       }
     } catch (error) {
       console.error('Error cargando mensajes:', error);
@@ -117,13 +87,7 @@ export default function ChatComercioRider({ route, navigation }) {
   const enviarMensaje = async () => {
     if (!nuevoMensaje.trim()) return;
 
-    // Validar que tengamos todos los parámetros necesarios
     if (!carreraId || !pedidoId || !comercioId || !conductorId) {
-      console.error('❌ Faltan parámetros obligatorios:');
-      console.log('carreraId:', carreraId);
-      console.log('pedidoId:', pedidoId);
-      console.log('comercioId:', comercioId);
-      console.log('conductorId:', conductorId);
       showAlert('Faltan datos necesarios para enviar el mensaje', "error");
       return;
     }
@@ -136,55 +100,30 @@ export default function ChatComercioRider({ route, navigation }) {
         return;
       }
 
-      // Crear el mensaje como objeto y luego convertirlo a string JSON
-      const messageObject = {
-        type: "text",
-        content: nuevoMensaje.trim(),
-      };
-
-      // Usar el mismo formato que funciona en PedidoDetalle.js
+      const messageObject = { type: "text", content: nuevoMensaje.trim() };
       const escapedJson = JSON.stringify(messageObject).replace(/"/g, '\\"');
       const formattedMessage = `"${escapedJson}"`;
 
-      console.log('messageObject:', messageObject);
-      console.log('escapedJson:', escapedJson);
-      console.log('formattedMessage:', formattedMessage);
-
-      // Preparar el cuerpo de la solicitud con la nueva estructura
       const requestBody = {
-        carrera_id: parseInt(carreraId), // Asegurar que sea número
-        pedido_id: parseInt(pedidoId),   // Asegurar que sea número
-        negocio_id: parseInt(comercioId), // Asegurar que sea número
-        //conductor_id: parseInt(conductorId), // Asegurar que sea número
-        message: formattedMessage, // Usar el formato que funciona
+        carrera_id: parseInt(carreraId),
+        pedido_id: parseInt(pedidoId),
+        negocio_id: parseInt(comercioId),
+        message: formattedMessage,
       };
 
-      // Console logs para debugging
-      console.log('=== ENVIANDO MENSAJE DE CHAT ===');
-      console.log('URL:', `${BASE_URL}carrera-pedido-chat/send`);
-      console.log('Request body:', JSON.stringify(requestBody, null, 2));
-      console.log('Token existe:', !!token);
-      console.log('carreraId:', carreraId);
-      console.log('conductorId:', conductorId);
-      console.log('pedidoId:', pedidoId);
-      console.log('comercioId:', comercioId);
-      console.log('Request body completo:', requestBody);
-
-      // Agregar mensaje localmente primero
       const nuevoMensajeLocal = {
-        id: Date.now(),
+        id: `temp-${Date.now()}`,
         remitente_id: comercioId,
         destinatario_id: conductorId,
         mensaje: nuevoMensaje.trim(),
         remitente: userInfo,
-        estado: 'enviando',
+        estado: 'sending',
         timestamp: new Date().toISOString(),
       };
 
       setMensajes(prev => [...prev, nuevoMensajeLocal]);
       setNuevoMensaje('');
 
-      // Enviar a la API usando la nueva ruta y estructura
       const response = await fetch(`${BASE_URL}carrera-pedido-chat/send`, {
         method: 'POST',
         headers: {
@@ -195,385 +134,484 @@ export default function ChatComercioRider({ route, navigation }) {
       });
 
       const responseText = await response.text();
-      // Console log para ver la respuesta del servidor
-      console.log('=== RESPUESTA DEL SERVIDOR ===');
-      console.log('Status:', response.status);
-      console.log('Status text:', response.statusText);
-      console.log('Response body:', responseText);
 
       if (!response.ok) {
-        let errorMessage = `Error HTTP ${response.status}: ${response.statusText}`;
-        let errorDetails = responseText;
-
+        let errorMessage = `Error HTTP ${response.status}`;
         try {
           const errorData = JSON.parse(responseText);
-          if (errorData.message) {
-            errorMessage = errorData.message;
-          } else if (errorData.error) {
-            errorMessage = errorData.error;
-          } else if (errorData.errors) {
-            // Si hay múltiples errores de validación
+          errorMessage = errorData.message || errorData.error || errorMessage;
+          if (errorData.errors) {
             const firstError = Object.values(errorData.errors)[0];
-            if (Array.isArray(firstError)) {
-              errorMessage = firstError[0];
-            } else {
-              errorMessage = firstError;
-            }
+            errorMessage = Array.isArray(firstError) ? firstError[0] : firstError;
           }
-          errorDetails = JSON.stringify(errorData, null, 2);
-        } catch (parseError) {
-          console.log("No se pudo parsear el error como JSON:", parseError);
-        }
-
-        // Marcar mensaje local como error
+        } catch (e) {}
         setMensajes(prev =>
           prev.map(msg =>
-            msg.id === nuevoMensajeLocal.id
-              ? { ...msg, estado: 'error' }
-              : msg
+            msg.id === nuevoMensajeLocal.id ? { ...msg, estado: 'error' } : msg
           )
         );
-
         showAlert(errorMessage, "error");
         return;
       }
 
-      let responseData;
-
-      try {
-        // Intentar parsear la respuesta como JSON
-        responseData = JSON.parse(responseText);
-        console.log('Parsed response data:', responseData);
-      } catch (e) {
-        console.error('Error parsing response:', e);
-        // Si no es JSON válido pero la respuesta es OK, asumir éxito
-        responseData = { success: true };
-      }
-
-      console.log('✅ Mensaje enviado exitosamente');
-      // Actualizar mensaje local con datos del servidor si los hay
       setMensajes(prev =>
         prev.map(msg =>
-          msg.id === nuevoMensajeLocal.id
-            ? { ...nuevoMensajeLocal, estado: 'enviado', ...responseData.data }
-            : msg
+          msg.id === nuevoMensajeLocal.id ? { ...msg, estado: 'sent' } : msg
         )
       );
 
-      // Limpiar input
-      setNuevoMensaje('');
-
-      // Recargar mensajes para asegurar sincronización
-      setTimeout(() => {
-        cargarMensajes();
-      }, 1000);
+      setTimeout(() => cargarMensajes(), 800);
     } catch (error) {
-      console.error('❌ Error enviando mensaje:', error);
-      console.error('Error completo:', error);
-      console.error('Error name:', error.name);
-      console.error('Error message:', error.message);
-
-      // Marcar mensaje local como error si no se marcó antes
-      setMensajes(prev =>
-        prev.map(msg =>
-          msg.id === nuevoMensajeLocal.id
-            ? { ...msg, estado: 'error' }
-            : msg
-        )
-      );
-
-      let errorMessage = "No se pudo enviar el mensaje";
-
-      // Si es un error de red
-      if (error.message.includes('Network request failed') ||
-        error.message.includes('Failed to fetch')) {
-        errorMessage = "Error de conexión. Verifica tu internet.";
-      } else if (error.message.includes('timeout')) {
-        errorMessage = "La solicitud tardó demasiado. Inténtalo de nuevo.";
-      } else if (error.message) {
-        errorMessage = error.message;
-      }
-
-      showAlert(errorMessage, "error");
+      console.error('Error enviando mensaje:', error);
+      showAlert("No se pudo enviar el mensaje", "error");
     } finally {
-      console.log('🔄 Finalizando envío de mensaje');
       setEnviando(false);
     }
   };
 
-  const renderMensaje = ({ item }) => {
-    const esMio = item.remitente_id === comercioId || item.negocio_id === comercioId;
+  const handlePickImageAndSend = async () => {
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== 'granted') {
+      showAlert('Se necesita acceso a tu galería para enviar imágenes', "info");
+      return;
+    }
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      quality: 0.7,
+    });
+    if (!result.cancelled) {
+      const image = result.assets ? result.assets[0] : result;
+      enviarImagen(image);
+    }
+  };
 
-    // Extraer el contenido del mensaje de acuerdo con la estructura
+  const enviarImagen = async (image) => {
+    if (!carreraId || !pedidoId || !comercioId) {
+      showAlert('Faltan datos necesarios para enviar la imagen', "error");
+      return;
+    }
+    setEnviando(true);
+    try {
+      const token = await AsyncStorage.getItem('userToken');
+      if (!token) {
+        showAlert('No se encontró token de autenticación', "error");
+        return;
+      }
+
+      const messageObject = { type: "image", content: "Imagen enviada" };
+      const escapedJson = JSON.stringify(messageObject).replace(/"/g, '\\"');
+
+      const formData = new FormData();
+      formData.append("carrera_id", String(carreraId));
+      formData.append("pedido_id", String(pedidoId));
+      formData.append("negocio_id", String(comercioId));
+      formData.append("message", `"${escapedJson}"`);
+      formData.append("image", {
+        uri: image.uri,
+        name: "photo.jpg",
+        type: "image/jpeg",
+      });
+
+      const nuevoMensajeLocal = {
+        id: `temp-${Date.now()}`,
+        remitente_id: comercioId,
+        destinatario_id: conductorId,
+        mensaje: 'Imagen',
+        image: image.uri,
+        remitente: userInfo,
+        estado: 'sending',
+        timestamp: new Date().toISOString(),
+      };
+
+      setMensajes(prev => [...prev, nuevoMensajeLocal]);
+
+      const response = await fetch(`${BASE_URL}carrera-pedido-chat/send`, {
+        method: 'POST',
+        headers: {
+          'Accept': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: formData,
+      });
+
+      if (!response.ok) {
+        setMensajes(prev =>
+          prev.map(msg =>
+            msg.id === nuevoMensajeLocal.id ? { ...msg, estado: 'error' } : msg
+          )
+        );
+        showAlert("No se pudo enviar la imagen", "error");
+        return;
+      }
+
+      setMensajes(prev =>
+        prev.map(msg =>
+          msg.id === nuevoMensajeLocal.id ? { ...msg, estado: 'sent' } : msg
+        )
+      );
+    } catch (error) {
+      console.error('Error enviando imagen:', error);
+      showAlert("No se pudo enviar la imagen", "error");
+    } finally {
+      setEnviando(false);
+    }
+  };
+
+  const extraerContenido = (item) => {
     let contenido = item.mensaje;
-
-    // Si el mensaje viene en formato JSON string, intentar parsearlo
     if (item.message && typeof item.message === 'string') {
       try {
-        // Intentar parsear directamente
-        const parsedMessage = JSON.parse(item.message);
-        if (parsedMessage.content) {
-          contenido = parsedMessage.content;
-        }
+        const parsed = JSON.parse(item.message);
+        if (parsed.content) contenido = parsed.content;
       } catch (e) {
-        // Si falla, puede ser porque está doblemente escapado
         try {
-          // Eliminar comillas externas y escapados
-          const cleanedString = item.message.replace(/^"|"$/g, '').replace(/\\"/g, '"');
-          const parsedMessage = JSON.parse(cleanedString);
-          if (parsedMessage.content) {
-            contenido = parsedMessage.content;
-          }
+          const cleaned = item.message.replace(/^"|"$/g, '').replace(/\\"/g, '"');
+          const parsed = JSON.parse(cleaned);
+          if (parsed.content) contenido = parsed.content;
         } catch (e2) {
-          console.error('Error parsing message:', e2);
-          // Usar el mensaje tal cual si no se puede parsear
-          contenido = item.message || item.mensaje || 'Mensaje no disponible';
+          contenido = item.message || item.mensaje || '';
         }
       }
     }
+    return contenido;
+  };
+
+  const extraerImagen = (item) => {
+    if (item.image) return item.image;
+    if (item.message && typeof item.message === 'string') {
+      try {
+        const parsed = JSON.parse(item.message);
+        if (parsed.type === 'file' || parsed.type === 'image') {
+          return `https://back.carbycol.com/storage/${parsed.content}`;
+        }
+      } catch (e) {}
+    }
+    return null;
+  };
+
+  const renderMensaje = ({ item }) => {
+    const esMio = item.remitente_id === comercioId || item.negocio_id === comercioId;
+    const contenido = extraerContenido(item);
+    const imageUri = extraerImagen(item);
 
     return (
-      <View style={[
-        styles.mensajeContainer,
-        esMio ? styles.mensajeMio : styles.mensajeOtro
-      ]}>
-        <View style={[
-          styles.burbujaMensaje,
-          esMio ? styles.burbujaMia : styles.burbujaOtra
-        ]}>
-          <Text style={[
-            styles.textoMensaje,
-            esMio ? styles.textoMio : styles.textoOtro
-          ]}>
-            {contenido}
-          </Text>
-          <Text style={[
-            styles.horaMensaje,
-            esMio ? styles.horaMia : styles.horaOtra
-          ]}>
-            {new Date(item.timestamp || item.created_at || Date.now()).toLocaleTimeString('es-ES', {
-              hour: '2-digit',
-              minute: '2-digit'
-            })}
-          </Text>
+      <View style={[s.messageWrapper, esMio ? s.myMessageWrapper : s.otherMessageWrapper]}>
+        <View style={[s.bubble, esMio ? s.myBubble : s.otherBubble]}>
+          {imageUri ? (
+            <Image source={{ uri: imageUri }} style={s.messageImage} />
+          ) : (
+            <Text style={[s.messageText, esMio ? s.myMessageText : s.otherMessageText]}>
+              {typeof contenido === 'string' ? contenido : ''}
+            </Text>
+          )}
+          <View style={s.metaRow}>
+            <Text style={[s.time, esMio ? s.myTime : s.otherTime]}>
+              {new Date(item.timestamp || item.created_at || Date.now()).toLocaleTimeString('es-ES', {
+                hour: '2-digit',
+                minute: '2-digit',
+              })}
+            </Text>
+            {item.estado === 'sending' && <Text style={s.statusSending}>enviando</Text>}
+            {item.estado === 'error' && <Text style={s.statusError}>error</Text>}
+            {esMio && item.estado !== 'sending' && item.estado !== 'error' && (
+              <Feather name="check" size={10} color="rgba(255,255,255,0.75)" />
+            )}
+          </View>
         </View>
-        {item.estado === 'enviando' && (
-          <FontAwesome name="clock-o" size={12} color="#999" style={styles.estadoIcon} />
-        )}
-        {item.estado === 'error' && (
-          <FontAwesome name="exclamation-circle" size={12} color="#ff4444" style={styles.estadoIcon} />
-        )}
       </View>
     );
   };
 
-  return (
-    <SafeAreaView style={styles.container}>
-      <KeyboardAvoidingView
-        style={styles.container}
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      >
-        {/* Header con botón de volver */}
-        <View style={styles.headerContainer}>
-          <TouchableOpacity
-            style={styles.botonVolver}
-            onPress={() => navigation.goBack()}
-          >
-            <FontAwesome name="arrow-left" size={20} color="#FFF" />
-          </TouchableOpacity>
+  const quickReplies = ['Pedido listo', 'Estamos preparando el pedido', 'Gracias por tu servicio'];
 
-          <View style={styles.infoPedido}>
-            <Text style={styles.textoPedido}>Pedido #{pedidoId}</Text>
-            <Text style={styles.textoRider}>{conductorNombre}</Text>
+  return (
+    <SafeAreaView style={s.safe}>
+      <KeyboardAvoidingView
+        style={s.container}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
+      >
+        {!modalMode && (
+          <View style={s.header}>
+            <View style={s.headerIcon}>
+              <Feather name="message-circle" size={18} color="#FFFFFF" />
+            </View>
+            <View style={s.headerCenter}>
+              <Text style={s.headerTitle} numberOfLines={1}>
+                {conductorNombre || 'Conductor'}
+              </Text>
+              <Text style={s.headerSub}>Chat del pedido</Text>
+            </View>
+            <TouchableOpacity style={s.closeBtn} onPress={onClose} activeOpacity={0.7}>
+              <Feather name="x" size={20} color="#FFFFFF" />
+            </TouchableOpacity>
+          </View>
+        )}
+
+        <View style={{ flex: 1 }}>
+          <View style={s.chatContainer}>
+            {cargando ? (
+              <View style={s.loadingContainer}>
+                <ActivityIndicator size="large" color="#FF5500" />
+                <Text style={s.loadingText}>Cargando mensajes anteriores...</Text>
+              </View>
+            ) : (
+              <FlatList
+                ref={flatListRef}
+                style={s.messagesList}
+                inverted
+                data={[...mensajes].reverse()}
+                keyExtractor={(item) => item.id?.toString() || Math.random().toString()}
+                renderItem={renderMensaje}
+                onRefresh={cargarMensajes}
+                refreshing={cargando}
+                keyboardShouldPersistTaps="handled"
+                contentContainerStyle={s.messagesContent}
+              />
+            )}
           </View>
 
-          <View style={styles.espaciador} />
-        </View>
+          {/* Quick replies */}
+          <View style={s.quickReplies}>
+            {quickReplies.map((q) => (
+              <TouchableOpacity key={q} style={s.quickReply} onPress={() => setNuevoMensaje(q)} activeOpacity={0.8}>
+                <Text style={s.quickReplyText}>{q}</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
 
-        {/* Lista de mensajes */}
-        <FlatList
-          ref={flatListRef}
-          data={mensajes}
-          keyExtractor={(item) => item.id?.toString() || Math.random().toString()}
-          renderItem={renderMensaje}
-          style={styles.listaMensajes}
-          onContentSizeChange={() => flatListRef.current?.scrollToEnd()}
-          onLayout={() => flatListRef.current?.scrollToEnd()}
-          ListEmptyComponent={
-            <View style={styles.sinMensajes}>
-              <FontAwesome name="comments" size={50} color="#ccc" />
-              <Text style={styles.textoSinMensajes}>
-                {cargando ? 'Cargando mensajes...' : 'Inicia la conversación con el rider'}
-              </Text>
-            </View>
-          }
-        />
-
-        {/* Input para escribir mensaje */}
-        <View style={styles.inputContainer}>
-          <TextInput
-            style={styles.textInput}
-            value={nuevoMensaje}
-            onChangeText={setNuevoMensaje}
-            placeholder="Escribe un mensaje..."
-            placeholderTextColor="#999"
-            multiline
-            maxLength={500}
-          />
-          <TouchableOpacity
-            style={[styles.botonEnviar, (!nuevoMensaje.trim() || enviando) && styles.botonDeshabilitado]}
-            onPress={enviarMensaje}
-            disabled={!nuevoMensaje.trim() || enviando}
-          >
-            <FontAwesome
-              name={enviando ? "clock-o" : "send"}
-              size={20}
-              color="#FFF"
+          <View style={s.inputContainer}>
+            <TouchableOpacity style={s.iconButton} onPress={handlePickImageAndSend} activeOpacity={0.8}>
+              <Feather name="camera" size={22} color="#64748B" />
+            </TouchableOpacity>
+            <TextInput
+              style={s.input}
+              placeholder="Escribe un mensaje..."
+              placeholderTextColor="#94A3B8"
+              value={nuevoMensaje}
+              onChangeText={setNuevoMensaje}
+              editable={!enviando}
+              multiline
+              maxLength={500}
             />
-          </TouchableOpacity>
+            <TouchableOpacity
+              style={[s.sendButton, (!nuevoMensaje.trim() || enviando) && s.sendButtonDisabled]}
+              onPress={enviarMensaje}
+              disabled={enviando || !nuevoMensaje.trim()}
+              activeOpacity={0.8}
+            >
+              {enviando ? (
+                <ActivityIndicator size="small" color="#FFFFFF" />
+              ) : (
+                <Feather name="send" size={18} color="#FFFFFF" />
+              )}
+            </TouchableOpacity>
+          </View>
         </View>
+
+        <AlertaModal
+          visible={alertVisible}
+          mensaje={alertData.message}
+          tipo={alertData.type}
+          onCerrar={() => setAlertVisible(false)}
+          onPrimary={alertData.onPrimary}
+          primaryLabel={alertData.primaryLabel}
+        />
       </KeyboardAvoidingView>
-      <AlertaModal
-        visible={alertVisible}
-        mensaje={alertData.message}
-        tipo={alertData.type}
-        onCerrar={() => setAlertVisible(false)}
-        onPrimary={alertData.onPrimary}
-        primaryLabel={alertData.primaryLabel}
-      />
     </SafeAreaView>
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#f5f5f5',
-  },
-  headerContainer: {
+const s = StyleSheet.create({
+  safe: { flex: 1, backgroundColor: '#FFFFFF' },
+  container: { flex: 1, backgroundColor: '#FFFFFF' },
+  header: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#fa6205',
-    paddingVertical: 40,
-    paddingHorizontal: 15,
-
+    backgroundColor: '#FF5500',
+    paddingHorizontal: 12,
+    paddingTop: Platform.OS === 'ios' ? 14 : 14,
+    paddingBottom: 14,
+    gap: 8,
   },
-  botonVolver: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+  backBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: 'rgba(255,255,255,0.18)',
     justifyContent: 'center',
     alignItems: 'center',
   },
-  infoPedido: {
+  headerIcon: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: 'rgba(255,255,255,0.18)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  closeBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: 'rgba(255,255,255,0.18)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  headerCenter: {
     flex: 1,
     alignItems: 'center',
   },
-  espaciador: {
-    width: 40,
-  },
-  textoPedido: {
-    color: '#FFF',
-    fontSize: 16,
+  headerTitle: {
+    color: '#FFFFFF',
+    fontSize: 15,
+    fontFamily: 'Montserrat_700Bold',
     fontWeight: 'bold',
   },
-  textoRider: {
-    color: '#FFF',
-    fontSize: 14,
-    opacity: 0.9,
+  headerSub: {
+    color: 'rgba(255,255,255,0.85)',
+    fontSize: 11,
+    fontFamily: 'Montserrat_500Medium',
+    marginTop: 2,
   },
-  listaMensajes: {
-    flex: 1,
-    padding: 10,
+  chatContainer: { flex: 1 },
+  messagesList: { flex: 1 },
+  messagesContent: {
+    paddingVertical: 12,
+    paddingHorizontal: 14,
   },
-  sinMensajes: {
+  loadingContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    paddingVertical: 50,
+    padding: 20,
   },
-  textoSinMensajes: {
-    marginTop: 15,
-    fontSize: 16,
-    color: '#999',
-    textAlign: 'center',
+  loadingText: {
+    marginTop: 10,
+    color: '#64748B',
+    fontFamily: 'Montserrat_400Regular',
+    fontSize: 13,
   },
-  mensajeContainer: {
-    marginVertical: 2,
-    maxWidth: '80%',
+  messageImage: {
+    width: 220,
+    height: 160,
+    borderRadius: 12,
+    resizeMode: 'cover',
   },
-  mensajeMio: {
-    alignSelf: 'flex-end',
+  messageWrapper: {
+    maxWidth: '78%',
+    marginVertical: 4,
   },
-  mensajeOtro: {
-    alignSelf: 'flex-start',
-  },
-  burbujaMensaje: {
-    padding: 12,
+  myMessageWrapper: { alignSelf: 'flex-end' },
+  otherMessageWrapper: { alignSelf: 'flex-start' },
+  bubble: {
     borderRadius: 18,
-    maxWidth: '100%',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
   },
-  burbujaMia: {
-    backgroundColor: '#fa6205',
+  myBubble: {
+    backgroundColor: '#FF5500',
+    borderBottomRightRadius: 6,
   },
-  burbujaOtra: {
-    backgroundColor: '#fff',
-    borderWidth: 1,
-    borderColor: '#e0e0e0',
+  otherBubble: {
+    backgroundColor: '#F1F5F9',
+    borderBottomLeftRadius: 6,
   },
-  textoMensaje: {
-    fontSize: 16,
-    lineHeight: 20,
+  messageText: {
+    fontSize: 14,
+    lineHeight: 19,
+    fontFamily: 'Montserrat_400Regular',
   },
-  textoMio: {
-    color: '#FFF',
-  },
-  textoOtro: {
-    color: '#333',
-  },
-  horaMensaje: {
-    fontSize: 12,
+  myMessageText: { color: '#FFFFFF' },
+  otherMessageText: { color: '#0F172A' },
+  metaRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'flex-end',
+    gap: 4,
     marginTop: 4,
   },
-  horaMia: {
-    color: 'rgba(255,255,255,0.7)',
-    alignSelf: 'flex-end',
+  time: {
+    fontSize: 10,
+    fontFamily: 'Montserrat_400Regular',
   },
-  horaOtra: {
-    color: '#999',
-    alignSelf: 'flex-end',
+  myTime: { color: 'rgba(255,255,255,0.75)' },
+  otherTime: { color: '#94A3B8' },
+  statusSending: {
+    fontSize: 10,
+    color: '#94A3B8',
+    fontFamily: 'Montserrat_400Regular',
   },
-  estadoIcon: {
-    marginTop: 2,
-    alignSelf: 'flex-end',
+  statusError: {
+    fontSize: 10,
+    color: '#FF4757',
+    fontFamily: 'Montserrat_400Regular',
+  },
+  quickReplies: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    alignItems: 'center',
+  },
+  quickReply: {
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    backgroundColor: '#F8FAFC',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    justifyContent: 'center',
+  },
+  quickReplyText: {
+    fontSize: 11,
+    fontFamily: 'Montserrat_400Regular',
+    color: '#0F172A',
   },
   inputContainer: {
     flexDirection: 'row',
-    padding: 15,
-    backgroundColor: '#fff',
     alignItems: 'flex-end',
+    gap: 8,
     borderTopWidth: 1,
-    borderTopColor: '#e0e0e0',
-  },
-  textInput: {
-    flex: 1,
-    backgroundColor: '#F5F5F5',
-    borderRadius: 20,
-    paddingHorizontal: 15,
+    borderTopColor: '#E2E8F0',
+    backgroundColor: '#FFFFFF',
+    paddingHorizontal: 14,
     paddingVertical: 10,
-    marginRight: 10,
-    maxHeight: 100,
-    fontSize: 16,
+    paddingBottom: Platform.OS === 'ios' ? 24 : 16,
   },
-  botonEnviar: {
-    backgroundColor: '#fa6205',
+  input: {
+    flex: 1,
+    minHeight: 42,
+    maxHeight: 110,
+    borderRadius: 22,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    backgroundColor: '#F8FAFC',
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    fontSize: 14,
+    fontFamily: 'Montserrat_400Regular',
+    color: '#0F172A',
+  },
+  sendButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: '#FF5500',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: Platform.OS === 'ios' ? 0 : -2,
+  },
+  sendButtonDisabled: { backgroundColor: '#CBD5E1' },
+  iconButton: {
     width: 44,
     height: 44,
     borderRadius: 22,
     justifyContent: 'center',
     alignItems: 'center',
-  },
-  botonDeshabilitado: {
-    backgroundColor: '#ccc',
+    backgroundColor: '#F1F5F9',
+    marginBottom: Platform.OS === 'ios' ? 0 : -2,
   },
 });

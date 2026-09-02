@@ -21,11 +21,28 @@ import { BASE_URL } from "../constants/url";
 import { useNotification } from "../context/NotificationContext";
 import AlertaModal from "../components/ErrorModal";
 
-export default function ChatRiderComercio({ route }) {
-  const { pedidoId, carreraId, comercioId, comercioNombre, riderId, tipo } = route.params;
+export default function ChatRiderComercio({
+  route,
+  pedidoId: propPedidoId,
+  carreraId: propCarreraId,
+  comercioId: propComercioId,
+  comercioNombre: propComercioNombre,
+  riderId: propRiderId,
+  tipo: propTipo,
+  onClose,
+  modalMode = false,
+}) {
   const navigation = useNavigation();
+  const routeParams = route?.params || {};
 
-  console.log("🚀 ChatRiderComercio iniciado con params:", route.params);
+  const pedidoId = propPedidoId ?? routeParams.pedidoId;
+  const carreraId = propCarreraId ?? routeParams.carreraId;
+  const comercioId = propComercioId ?? routeParams.comercioId;
+  const comercioNombre = propComercioNombre ?? routeParams.comercioNombre;
+  const riderId = propRiderId ?? routeParams.riderId;
+  const tipo = propTipo ?? routeParams.tipo;
+
+  console.log("🚀 ChatRiderComercio iniciado con params:", { routeParams, propPedidoId, propCarreraId, propComercioId, propComercioNombre, propRiderId, propTipo });
   console.log("📋 Parámetros extraídos:", { pedidoId, carreraId, comercioId, comercioNombre, riderId, tipo });
 
   // Validar que existe pedidoId antes de renderizar el chat
@@ -64,7 +81,7 @@ export default function ChatRiderComercio({ route }) {
   };
   const flatListRef = useRef(null);
 
-  const { expoPushToken, notification } = useNotification();
+  const { notification } = useNotification();
 
 
   useEffect(() => {
@@ -199,13 +216,29 @@ export default function ChatRiderComercio({ route }) {
   const enviarMensaje = async () => {
     if (!mensaje.trim()) return;
 
-    // Validar que tengamos todos los parámetros necesarios
-    if (!carreraId || !pedidoId || !comercioId) {
+    // El backend solo exige pedido_id, carrera_id y (conductor_id o negocio_id).
+    // Cuando el conductor escribe al comercio no hace falta comercioId.
+    if (!carreraId || !pedidoId) {
       console.error('❌ Faltan parámetros obligatorios:');
       console.log('carreraId:', carreraId);
       console.log('pedidoId:', pedidoId);
-      console.log('comercioId:', comercioId);
       showAlert('Faltan datos necesarios para enviar el mensaje', "error");
+      return;
+    }
+
+    // Asegurar ID del conductor remitente
+    let senderId = riderId || currentUserId;
+    if (!senderId) {
+      try {
+        const storedUserData = await AsyncStorage.getItem('userData');
+        const storedUserInfo = storedUserData ? JSON.parse(storedUserData) : null;
+        senderId = storedUserInfo?.id;
+        if (senderId) setCurrentUserId(senderId);
+      } catch (e) {}
+    }
+
+    if (!senderId) {
+      showAlert('No se encontró la información del conductor', "error");
       return;
     }
 
@@ -235,7 +268,7 @@ export default function ChatRiderComercio({ route }) {
       const requestBody = {
         carrera_id: parseInt(carreraId),
         pedido_id: parseInt(pedidoId),
-        conductor_id: parseInt(riderId), // El rider actual es quien envía
+        conductor_id: parseInt(senderId), // El rider actual es quien envía
         message: formattedMessage,
       };
 
@@ -347,77 +380,89 @@ export default function ChatRiderComercio({ route }) {
     });
   };
 
+  // Respuestas rápidas para el rider hablando con el comercio
+  const quickReplies = ['Ya llegué al comercio', '¿Pedido listo?', 'Voy en camino'];
+
+  const extraerContenido = (item) => {
+    let contenido = item.mensaje;
+    if (item.message && typeof item.message === 'string') {
+      try {
+        const parsed = JSON.parse(item.message);
+        if (parsed.content) contenido = parsed.content;
+      } catch (e) {
+        try {
+          const cleaned = item.message.replace(/^"|"$/g, '').replace(/\\"/g, '"');
+          const parsed = JSON.parse(cleaned);
+          if (parsed.content) contenido = parsed.content;
+        } catch (e2) {
+          contenido = item.message || item.mensaje || '';
+        }
+      }
+    }
+    return contenido;
+  };
+
+  const extraerImagen = (item) => {
+    if (item.image) return item.image;
+    if (item.message && typeof item.message === 'string') {
+      try {
+        const parsed = JSON.parse(item.message);
+        if (parsed.type === 'file' || parsed.type === 'image') {
+          return `https://back.carbycol.com/storage/${parsed.content}`;
+        }
+      } catch (e) {
+        try {
+          const cleaned = item.message.replace(/^"|"$/g, '').replace(/\\"/g, '"');
+          const parsed = JSON.parse(cleaned);
+          if (parsed.type === 'file' || parsed.type === 'image') {
+            return `https://back.carbycol.com/storage/${parsed.content}`;
+          }
+        } catch (e2) {}
+      }
+    }
+    return null;
+  };
+
   // Renderizar un mensaje individual
   const renderMensaje = ({ item }) => {
-    // Determinar si el mensaje es del rider (usuario actual) o del comercio
-    // Los mensajes del rider van a la derecha, los del comercio a la izquierda
-    // Verificamos tanto remitente_id como conductor_id para mayor compatibilidad
     const esDelRider = item.remitente_id === currentUserId || item.conductor_id === currentUserId;
+    const contenido = extraerContenido(item);
+    const imageUri = extraerImagen(item);
 
     console.log('🔍 Analizando mensaje:', {
       messageId: item.id,
       remitente_id: item.remitente_id,
       conductor_id: item.conductor_id,
       currentUserId: currentUserId,
-      esDelRider: esDelRider,
-      contenido: item.mensaje || item.message
+      esDelRider,
+      contenido,
+      imageUri,
     });
 
-    // Extraer el contenido del mensaje de acuerdo con la estructura
-    let contenido = item.mensaje;
-
-    // Si el mensaje viene en formato JSON string, intentar parsearlo
-    if (item.message && typeof item.message === 'string') {
-      try {
-        const parsedMessage = JSON.parse(item.message);
-        if (parsedMessage.content) {
-          contenido = parsedMessage.content;
-        }
-      } catch (e) {
-        try {
-          const cleanedString = item.message.replace(/^"|"$/g, '').replace(/\\"/g, '"');
-          const parsedMessage = JSON.parse(cleanedString);
-          if (parsedMessage.content) {
-            contenido = parsedMessage.content;
-          }
-        } catch (e2) {
-          console.error('Error parsing message:', e2);
-          contenido = item.message || item.mensaje || 'Mensaje no disponible';
-        }
-      }
-    }
-
     return (
-      <View style={[
-        styles.mensajeContainer,
-        esDelRider ? styles.mensajeEnviado : styles.mensajeRecibido
-      ]}>
-        <View style={[
-          styles.burbujaMensaje,
-          esDelRider ? styles.burbujaEnviada : styles.burbujaRecibida
-        ]}>
-          <Text style={[
-            styles.mensajeTexto,
-            esDelRider ? styles.mensajeTextoEnviado : styles.mensajeTextoRecibido
-          ]}>
-            {contenido}
-          </Text>
-          <Text style={[
-            styles.mensajeHora,
-            esDelRider ? styles.mensajeHoraEnviada : styles.mensajeHoraRecibida
-          ]}>
-            {new Date(item.timestamp || item.created_at || Date.now()).toLocaleTimeString('es-ES', {
-              hour: '2-digit',
-              minute: '2-digit'
-            })}
-          </Text>
+      <View style={[styles.messageWrapper, esDelRider ? styles.myMessageWrapper : styles.otherMessageWrapper]}>
+        <View style={[styles.bubble, esDelRider ? styles.myBubble : styles.otherBubble]}>
+          {imageUri ? (
+            <Image source={{ uri: imageUri }} style={styles.messageImage} />
+          ) : (
+            <Text style={[styles.messageText, esDelRider ? styles.myMessageText : styles.otherMessageText]}>
+              {typeof contenido === 'string' ? contenido : ''}
+            </Text>
+          )}
+          <View style={styles.metaRow}>
+            <Text style={[styles.time, esDelRider ? styles.myTime : styles.otherTime]}>
+              {new Date(item.timestamp || item.created_at || Date.now()).toLocaleTimeString('es-ES', {
+                hour: '2-digit',
+                minute: '2-digit',
+              })}
+            </Text>
+            {item.estado === 'enviando' && <Text style={styles.statusSending}>enviando</Text>}
+            {item.estado === 'error' && <Text style={styles.statusError}>error</Text>}
+            {esDelRider && item.estado !== 'enviando' && item.estado !== 'error' && (
+              <FontAwesome name="check" size={10} color="rgba(255,255,255,0.7)" />
+            )}
+          </View>
         </View>
-        {item.estado === 'enviando' && (
-          <FontAwesome name="clock-o" size={12} color="#999" style={styles.estadoIcon} />
-        )}
-        {item.estado === 'error' && (
-          <FontAwesome name="exclamation-circle" size={12} color="#ff4444" style={styles.estadoIcon} />
-        )}
       </View>
     );
   };
@@ -426,31 +471,32 @@ export default function ChatRiderComercio({ route }) {
   if (!fontsLoaded) {
     return (
       <View style={styles.loaderContainer}>
-        <ActivityIndicator size="large" color="#fa6205" />
+        <ActivityIndicator size="large" color="#FF5500" />
       </View>
     );
   }
 
   return (
     <SafeAreaView style={styles.container}>
-      {/* Header del chat */}
-      <View style={styles.header}>
-        <TouchableOpacity
-          style={styles.backButton}
-          onPress={() => navigation.goBack()}
-        >
-          <FontAwesome name="arrow-left" size={20} color="#FFF" />
-        </TouchableOpacity>
+      {!modalMode && (
+        <View style={styles.header}>
+          <TouchableOpacity
+            style={styles.backButton}
+            onPress={() => onClose ? onClose() : navigation.goBack()}
+          >
+            <FontAwesome name="arrow-left" size={20} color="#FFF" />
+          </TouchableOpacity>
 
-        <View style={styles.headerInfo}>
-          <Text style={styles.headerTitle}>
-            Chat con {comercioNombre || comercioInfo?.establecimiento_nombre || 'Comercio'}
-          </Text>
-          <Text style={styles.headerSubtitle}>
-            Pedido #{pedidoId} {carreraId ? `- Carrera #${carreraId}` : ''}
-          </Text>
+          <View style={styles.headerInfo}>
+            <Text style={styles.headerTitle}>
+              Chat con {comercioNombre || comercioInfo?.establecimiento_nombre || 'Comercio'}
+            </Text>
+            <Text style={styles.headerSubtitle}>
+              Pedido #{pedidoId} {carreraId ? `- Carrera #${carreraId}` : ''}
+            </Text>
+          </View>
         </View>
-      </View>
+      )}
 
       {/* Contenido del chat */}
       <KeyboardAvoidingView
@@ -460,7 +506,7 @@ export default function ChatRiderComercio({ route }) {
       >
         {cargando && mensajes.length === 0 ? (
           <View style={styles.loaderContainer}>
-            <ActivityIndicator size="large" color="#fa6205" />
+            <ActivityIndicator size="large" color="#FF5500" />
             <Text style={styles.loaderText}>Cargando conversación...</Text>
           </View>
         ) : error ? (
@@ -474,22 +520,30 @@ export default function ChatRiderComercio({ route }) {
             </TouchableOpacity>
           </View>
         ) : (
-          <FlatList
-            ref={flatListRef}
-            data={mensajes}
-            renderItem={renderMensaje}
-            keyExtractor={(item) => item.id.toString()}
-            contentContainerStyle={styles.mensajesList}
-            onContentSizeChange={() => flatListRef.current?.scrollToEnd({ animated: true })}
-            onLayout={() => flatListRef.current?.scrollToEnd({ animated: true })}
-            ListEmptyComponent={
-              <View style={styles.emptyContainer}>
-                <FontAwesome name="comments-o" size={50} color="#ccc" />
-                <Text style={styles.emptyText}>No hay mensajes aún</Text>
-                <Text style={styles.emptySubtext}>Envía un mensaje para comenzar la conversación</Text>
-              </View>
-            }
-          />
+          <>
+            <FlatList
+              ref={flatListRef}
+              inverted
+              data={[...mensajes].reverse()}
+              renderItem={renderMensaje}
+              keyExtractor={(item) => item.id?.toString() || Math.random().toString()}
+              contentContainerStyle={styles.mensajesList}
+              ListEmptyComponent={
+                <View style={styles.emptyContainer}>
+                  <FontAwesome name="comments-o" size={50} color="#ccc" />
+                  <Text style={styles.emptyText}>No hay mensajes aún</Text>
+                  <Text style={styles.emptySubtext}>Envía un mensaje para comenzar la conversación</Text>
+                </View>
+              }
+            />
+            <View style={styles.quickReplies}>
+              {quickReplies.map((q) => (
+                <TouchableOpacity key={q} style={styles.quickReply} onPress={() => setMensaje(q)} activeOpacity={0.8}>
+                  <Text style={styles.quickReplyText}>{q}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          </>
         )}
 
         {/* Input para escribir mensajes */}
@@ -547,7 +601,7 @@ const styles = StyleSheet.create({
     fontFamily: 'Montserrat_400Regular',
   },
   header: {
-    backgroundColor: '#fa6205',
+    backgroundColor: '#FF5500',
     flexDirection: 'row',
     alignItems: 'center',
     padding: 15,
@@ -571,7 +625,7 @@ const styles = StyleSheet.create({
     fontFamily: 'Montserrat_700Bold',
   },
   headerSubtitle: {
-    color: '#fa6205',
+    color: '#FF5500',
     fontSize: 12,
     fontFamily: 'Montserrat_400Regular',
   },
@@ -579,87 +633,135 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   mensajesList: {
-    paddingVertical: 15,
-    paddingHorizontal: 10,
+    paddingVertical: 12,
+    paddingHorizontal: 14,
   },
-  mensajeContainer: {
-    marginBottom: 10,
-    maxWidth: '80%',
-    alignSelf: 'flex-start',
-  },
-  mensajeEnviado: {
-    alignSelf: 'flex-end', // Mensajes del rider a la derecha
-  },
-  mensajeRecibido: {
-    alignSelf: 'flex-start', // Mensajes del comercio a la izquierda
-  },
-  burbujaMensaje: {
+  messageImage: {
+    width: 220,
+    height: 160,
     borderRadius: 12,
-    padding: 10,
-    minWidth: 100,
+    resizeMode: 'cover',
   },
-  burbujaEnviada: {
-    backgroundColor: '#fa6205', // Verde para mensajes del rider
+  messageWrapper: {
+    maxWidth: '78%',
+    marginVertical: 4,
   },
-  burbujaRecibida: {
-    backgroundColor: '#fff', // Blanco para mensajes del comercio
-    borderWidth: 1,
-    borderColor: '#ddd',
-  },
-  mensajeTexto: {
-    fontSize: 14,
-    fontFamily: 'Montserrat_400Regular',
-  },
-  mensajeTextoEnviado: {
-    color: '#FFF',
-  },
-  mensajeTextoRecibido: {
-    color: '#333',
-  },
-  mensajeHora: {
-    fontSize: 10,
-    marginTop: 4,
+  myMessageWrapper: {
     alignSelf: 'flex-end',
   },
-  mensajeHoraEnviada: {
-    color: 'rgba(255,255,255,0.7)',
+  otherMessageWrapper: {
+    alignSelf: 'flex-start',
   },
-  mensajeHoraRecibida: {
-    color: '#777',
+  bubble: {
+    borderRadius: 18,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+  },
+  myBubble: {
+    backgroundColor: '#FF5500',
+    borderBottomRightRadius: 6,
+  },
+  otherBubble: {
+    backgroundColor: '#F1F5F9',
+    borderBottomLeftRadius: 6,
+  },
+  messageText: {
+    fontSize: 14,
+    lineHeight: 19,
+    fontFamily: 'Montserrat_400Regular',
+  },
+  myMessageText: {
+    color: '#FFFFFF',
+  },
+  otherMessageText: {
+    color: '#0F172A',
+  },
+  metaRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'flex-end',
+    gap: 4,
+    marginTop: 4,
+  },
+  time: {
+    fontSize: 10,
+    fontFamily: 'Montserrat_400Regular',
+  },
+  myTime: {
+    color: 'rgba(255,255,255,0.75)',
+  },
+  otherTime: {
+    color: '#94A3B8',
+  },
+  statusSending: {
+    fontSize: 10,
+    color: '#94A3B8',
+    fontFamily: 'Montserrat_400Regular',
+  },
+  statusError: {
+    fontSize: 10,
+    color: '#FF4757',
+    fontFamily: 'Montserrat_400Regular',
   },
   inputContainer: {
     flexDirection: 'row',
-    padding: 10,
-    backgroundColor: '#fff',
+    alignItems: 'flex-end',
+    gap: 8,
     borderTopWidth: 1,
-    borderColor: '#ddd',
-    alignItems: 'center',
+    borderTopColor: '#E2E8F0',
+    backgroundColor: '#FFFFFF',
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    paddingBottom: Platform.OS === 'ios' ? 24 : 16,
   },
   input: {
     flex: 1,
-    backgroundColor: '#f0f0f0',
-    borderRadius: 20,
-    paddingHorizontal: 15,
+    minHeight: 42,
+    maxHeight: 110,
+    borderRadius: 22,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    backgroundColor: '#F8FAFC',
+    paddingHorizontal: 16,
     paddingVertical: 10,
-    marginRight: 10,
     fontSize: 14,
     fontFamily: 'Montserrat_400Regular',
-    maxHeight: 100,
+    color: '#0F172A',
   },
   sendButton: {
-    backgroundColor: '#fa6205',
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: '#FF5500',
     justifyContent: 'center',
     alignItems: 'center',
+    marginBottom: Platform.OS === 'ios' ? 0 : -2,
   },
   sendButtonDisabled: {
     backgroundColor: '#ccc',
   },
-  estadoIcon: {
-    marginTop: 2,
-    alignSelf: 'flex-end',
+  quickReplies: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
+  },
+  quickReply: {
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    backgroundColor: '#F8FAFC',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    justifyContent: 'center',
+  },
+  quickReplyText: {
+    fontSize: 11,
+    fontFamily: 'Montserrat_400Regular',
+    color: '#0F172A',
   },
   emptyContainer: {
     flex: 1,
@@ -695,7 +797,7 @@ const styles = StyleSheet.create({
     marginBottom: 15,
   },
   retryButton: {
-    backgroundColor: '#fa6205',
+    backgroundColor: '#FF5500',
     paddingHorizontal: 20,
     paddingVertical: 10,
     borderRadius: 20,

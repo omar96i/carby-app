@@ -52,10 +52,18 @@ export default function ProductList({ pedidoLists, compact = false }) {
 
 const s = StyleSheet.create({
   container: {
-    backgroundColor: COLORS.zinc50,
-    borderRadius: 16,
-    padding: 12,
+    backgroundColor: COLORS.surface,
+    borderRadius: 18,
+    padding: 14,
     marginTop: 12,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: COLORS.zinc100,
+    shadowColor: "#0F172A",
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.06,
+    shadowRadius: 14,
+    elevation: 3,
   },
   header: {
     flexDirection: "row",
