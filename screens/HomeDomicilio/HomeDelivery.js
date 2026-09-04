@@ -114,9 +114,16 @@ export default function HomeDelivery() {
           refreshUserRating();
         }
         const storedSwitch = await AsyncStorage.getItem("isEnabled");
-        if (storedSwitch === "true") setIsEnabled(true);
-
-        fetchAvailability();
+        if (storedSwitch === "true") {
+          const canConnect = await validateCanConnect({ allowActiveRide: true });
+          if (canConnect) {
+            setIsEnabled(true);
+          } else {
+            await disconnect();
+          }
+        } else {
+          fetchAvailability();
+        }
       };
       loadInitial();
     }, [refreshUserRating])
@@ -297,19 +304,22 @@ export default function HomeDelivery() {
   const fetchAvailability = async () => {
     try {
       const token = await AsyncStorage.getItem("userToken");
-      if (!token) return;
+      if (!token) return null;
       const response = await fetch(`${BASE_URL}conductor/disponibilidad`, {
         method: "GET",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
       });
-      if (!response.ok) return;
+      if (!response.ok) return null;
       const json = await response.json();
       console.log("[HomeDelivery] AVAILABILITY ->", JSON.stringify(json));
       if (json.status && json.data) {
         setAvailability(json.data);
+        return json.data;
       }
+      return null;
     } catch (error) {
       console.log("[HomeDelivery] AVAILABILITY ERROR ->", error.message);
+      return null;
     }
   };
 
@@ -403,38 +413,48 @@ export default function HomeDelivery() {
     } catch (e) {}
   };
 
+  const disconnect = async () => {
+    setIsEnabled(false);
+    await AsyncStorage.setItem("isEnabled", "false");
+  };
+
+  const validateCanConnect = async ({ allowActiveRide = false } = {}) => {
+    setCheckingSubscription(true);
+
+    const currentAvailability = await fetchAvailability();
+    const hasActive = await checkActiveRide();
+
+    if (hasActive) {
+      setCheckingSubscription(false);
+      if (!allowActiveRide) setShowActiveRideModal(true);
+      return allowActiveRide;
+    }
+
+    if (currentAvailability && currentAvailability.disponibles <= 0) {
+      setCheckingSubscription(false);
+      setShowSubscriptionModal(true);
+      return false;
+    }
+
+    const hasSub = await checkActiveSuscriptions();
+    setCheckingSubscription(false);
+    if (!hasSub) {
+      setShowSubscriptionModal(true);
+      return false;
+    }
+
+    return true;
+  };
+
   const toggleConnection = async () => {
     if (!isEnabled) {
-      setCheckingSubscription(true);
-
-      // Refrescar disponibilidad antes de conectar
-      await fetchAvailability();
-
-      const hasActive = await checkActiveRide();
-      if (hasActive) {
-        setCheckingSubscription(false);
-        setShowActiveRideModal(true);
-        return;
+      const canConnect = await validateCanConnect({ allowActiveRide: false });
+      if (canConnect) {
+        setIsEnabled(true);
+        await AsyncStorage.setItem("isEnabled", "true");
       }
-
-      // Validar que tenga viajes disponibles
-      if (availability && availability.disponibles <= 0) {
-        setCheckingSubscription(false);
-        setShowSubscriptionModal(true);
-        return;
-      }
-
-      const hasSub = await checkActiveSuscriptions();
-      setCheckingSubscription(false);
-      if (!hasSub) {
-        setShowSubscriptionModal(true);
-        return;
-      }
-      setIsEnabled(true);
-      await AsyncStorage.setItem("isEnabled", "true");
     } else {
-      setIsEnabled(false);
-      await AsyncStorage.setItem("isEnabled", "false");
+      await disconnect();
     }
   };
 
@@ -462,16 +482,8 @@ export default function HomeDelivery() {
   };
 
   const handlePressAccept = async (tripId) => {
-    if (hasActiveRide) {
-      setShowActiveRideModal(true);
-      return;
-    }
-
-    const isActiveNow = await checkActiveRide();
-    if (isActiveNow) {
-      setShowActiveRideModal(true);
-      return;
-    }
+    const canConnect = await validateCanConnect({ allowActiveRide: false });
+    if (!canConnect) return;
 
     setIsInteractionPaused(true);
     setSelectedTripId(tripId);

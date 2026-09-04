@@ -336,7 +336,7 @@ export default function DetalleCarreraConductor() {
               driverLocation={driverLocation}
               passengerLocation={passengerLocation}
               driverType={tripData?.conductor?.tipo_usuario}
-              route={routeCoords}
+              route={state === "to_destination" ? routeCoords.coords : []}
               state={state}
             />
           </View>
