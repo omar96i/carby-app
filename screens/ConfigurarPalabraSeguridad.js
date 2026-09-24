@@ -53,7 +53,7 @@ export default function ConfigurarPalabraSeguridad() {
       <View style={styles.content}>
         <View style={styles.icon}><Feather name="shield" size={34} color="#fa6205" /></View>
         <Text style={styles.heading}>Configura una palabra de ayuda</Text>
-        <Text style={styles.description}>Durante una carrera podrás activar la protección. Si el sistema escucha esta palabra, detendrá la grabación y enviará una alerta con tu ubicación.</Text>
+        <Text style={styles.description}>Durante un arrendamiento podrás activar la protección. Si el sistema escucha esta palabra, detendrá la grabación y enviará una alerta con tu ubicación.</Text>
         <Text style={styles.label}>Palabra o frase</Text>
         <View style={styles.inputRow}><TextInput value={word} onChangeText={setWord} secureTextEntry={!visible} autoCapitalize="none" style={styles.input} placeholder="Ej. necesito ayuda" /><TouchableOpacity onPress={() => setVisible((value) => !value)}><Feather name={visible ? "eye-off" : "eye"} size={20} color="#888" /></TouchableOpacity></View>
         <Text style={styles.label}>Confirmar</Text>

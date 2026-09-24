@@ -29,9 +29,12 @@ export const ClientSheet = ({
   clientLive,
   onToggleClientLive,
   onShowChat,
-  onNotifyCommerce,
+  onShowCommerceChat,
+  hasNewCommerceMessages,
   onApprovePayment,
   onArrive,
+  onArriveAtStore,
+  onPickupOrder,
   onStartTrip,
   onFinish,
   onCompleteDelivery,
@@ -49,7 +52,6 @@ export const ClientSheet = ({
   const client = tripData?.usuario;
   const imageUrl = getImageUrl(client?.foto_documento_file);
   const clientName = client?.nombre_completo || "Pasajero";
-  const phone = client?.numero_telefono;
   const trips = client?.usuario_carreras_count ?? 0;
   const cost = tripData?.costo;
   const pedido = tripData?.pedido;
@@ -97,10 +99,6 @@ export const ClientSheet = ({
     })
   ).current;
 
-  const handleCall = () => {
-    if (phone) Linking.openURL(`tel:${phone}`);
-  };
-
   return (
     <Animated.View style={[styles.sheet, { height: heightAnim }]}>
       <View style={[styles.header, { height: expanded ? 36 : COLLAPSED_H }]} {...panResponder.panHandlers}>
@@ -127,11 +125,13 @@ export const ClientSheet = ({
             </View>
             <View style={styles.clientInfo}>
               <Text style={styles.clientName} numberOfLines={1}>{clientName}</Text>
-              <Text style={styles.clientPhone}>{phone || "Sin teléfono"}</Text>
               <Text style={styles.clientTrips}>{trips} viajes completados</Text>
             </View>
-            <TouchableOpacity style={styles.callBtn} onPress={handleCall} activeOpacity={0.8}>
-              <Feather name="phone" size={20} color="#FFFFFF" />
+            <TouchableOpacity style={styles.chatClientBtn} onPress={onShowChat} activeOpacity={0.8}>
+              <View style={styles.actionIconWrap}>
+                <Feather name="message-circle" size={18} color="#FFFFFF" />
+                {hasNewMessages && <View style={styles.badge} />}
+              </View>
             </TouchableOpacity>
           </View>
 
@@ -189,18 +189,30 @@ export const ClientSheet = ({
                     <Text style={styles.pedidoAddress} numberOfLines={1}>{comercio.direccion}</Text>
                   )}
                 </View>
-                {comercio?.numero_telefono && (
+                <View style={styles.contactBtns}>
                   <TouchableOpacity
-                    style={styles.callCommerceBtn}
-                    onPress={() => Linking.openURL(`tel:${comercio.numero_telefono}`)}
+                    style={styles.chatCommerceBtn}
+                    onPress={onShowCommerceChat}
                     activeOpacity={0.8}
                   >
-                    <Feather name="phone" size={16} color="#FFFFFF" />
-                </TouchableOpacity>
-              )}
+                    <View style={styles.actionIconWrap}>
+                      <Feather name="message-circle" size={16} color="#FFFFFF" />
+                      {hasNewCommerceMessages && <View style={styles.badge} />}
+                    </View>
+                  </TouchableOpacity>
+                  {comercio?.numero_telefono && (
+                    <TouchableOpacity
+                      style={styles.callCommerceBtn}
+                      onPress={() => Linking.openURL(`tel:${comercio.numero_telefono}`)}
+                      activeOpacity={0.8}
+                    >
+                      <Feather name="phone" size={16} color="#FFFFFF" />
+                    </TouchableOpacity>
+                  )}
+                </View>
+              </View>
             </View>
-          </View>
-        )}
+          )}
 
         {/* Order details - independent card */}
         {pedido && <OrderDetailsCard pedido={pedido} />}
@@ -221,16 +233,6 @@ export const ClientSheet = ({
             </TouchableOpacity>
           )}
 
-          {/* Notify buttons */}
-          {pedido && (
-            <View style={styles.notifyRow}>
-              <TouchableOpacity style={styles.notifyBtn} onPress={onNotifyCommerce} activeOpacity={0.8}>
-                <Ionicons name="storefront" size={18} color="#FFFFFF" />
-                <Text style={styles.notifyText}>Llegué al comercio</Text>
-              </TouchableOpacity>
-            </View>
-          )}
-
           {/* Safety */}
           {state !== "finished" && tripData?.id && !pedido && (
             <View style={styles.safetyBox}>
@@ -240,14 +242,6 @@ export const ClientSheet = ({
 
           {/* Actions */}
           <View style={styles.actionsRow}>
-            <TouchableOpacity style={styles.actionBtn} onPress={onShowChat} activeOpacity={0.8}>
-              <View style={styles.actionIconWrap}>
-                <Feather name="message-circle" size={18} color="#3B82F6" />
-                {hasNewMessages && <View style={styles.badge} />}
-              </View>
-              <Text style={styles.actionText}>Chat</Text>
-            </TouchableOpacity>
-
             {!paymentApproved ? (
               <TouchableOpacity style={[styles.actionBtn, styles.actionBtnOutline]} onPress={onApprovePayment} disabled={approvingPayment} activeOpacity={0.8}>
                 {approvingPayment ? <ActivityIndicator size="small" color="#FF5500" /> : <Feather name="check-circle" size={18} color="#FF5500" />}
@@ -263,10 +257,22 @@ export const ClientSheet = ({
 
           {/* Primary action */}
           {isDelivery && state !== "finished" ? (
-            <TouchableOpacity style={styles.primaryBtn} onPress={onCompleteDelivery} activeOpacity={0.8}>
-              <MaterialCommunityIcons name="check-circle" size={20} color="#FFFFFF" />
-              <Text style={styles.primaryBtnText}>Completar entrega</Text>
-            </TouchableOpacity>
+            state === "accepted" ? (
+              <TouchableOpacity style={styles.primaryBtn} onPress={onArriveAtStore} activeOpacity={0.8}>
+                <Feather name="map-pin" size={20} color="#FFFFFF" />
+                <Text style={styles.primaryBtnText}>Llegué al comercio</Text>
+              </TouchableOpacity>
+            ) : state === "at_store" ? (
+              <TouchableOpacity style={styles.primaryBtn} onPress={onPickupOrder} activeOpacity={0.8}>
+                <MaterialCommunityIcons name="package-variant" size={20} color="#FFFFFF" />
+                <Text style={styles.primaryBtnText}>Pedido recogido · en camino al usuario</Text>
+              </TouchableOpacity>
+            ) : (
+              <TouchableOpacity style={styles.primaryBtn} onPress={onCompleteDelivery} activeOpacity={0.8}>
+                <MaterialCommunityIcons name="check-circle" size={20} color="#FFFFFF" />
+                <Text style={styles.primaryBtnText}>Completar entrega</Text>
+              </TouchableOpacity>
+            )
           ) : (
             <>
               {state === "to_pickup" && (
@@ -284,15 +290,17 @@ export const ClientSheet = ({
               {state === "to_destination" && (
                 <TouchableOpacity style={styles.primaryBtn} onPress={onFinish} activeOpacity={0.8}>
                   <MaterialCommunityIcons name="flag-checkered" size={20} color="#FFFFFF" />
-                  <Text style={styles.primaryBtnText}>Finalizar carrera (PIN)</Text>
+                  <Text style={styles.primaryBtnText}>Finalizar arrendamiento (PIN)</Text>
                 </TouchableOpacity>
               )}
             </>
           )}
 
-          <TouchableOpacity style={styles.cancelLink} onPress={onCancel} activeOpacity={0.8}>
-            <Text style={styles.cancelLinkText}>Cancelar servicio</Text>
-          </TouchableOpacity>
+          {state !== "to_customer" && (
+            <TouchableOpacity style={styles.cancelLink} onPress={onCancel} activeOpacity={0.8}>
+              <Text style={styles.cancelLinkText}>Cancelar servicio</Text>
+            </TouchableOpacity>
+          )}
         </ScrollView>
       </Animated.View>
     </Animated.View>
@@ -481,6 +489,7 @@ const styles = StyleSheet.create({
   },
   clientInfo: {
     flex: 1,
+    minWidth: 0,
   },
   clientName: {
     fontSize: 15,
@@ -488,31 +497,12 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     color: "#0F172A",
   },
-  clientPhone: {
-    fontSize: 12,
-    fontFamily: "Montserrat",
-    color: "#64748B",
-    marginTop: 2,
-  },
   clientTrips: {
     fontSize: 11,
     fontFamily: "MontserratBold",
     fontWeight: "bold",
     color: "#10B981",
     marginTop: 2,
-  },
-  callBtn: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: "#10B981",
-    justifyContent: "center",
-    alignItems: "center",
-    shadowColor: "#10B981",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.25,
-    shadowRadius: 8,
-    elevation: 4,
   },
   routeCard: {
     borderRadius: 18,
@@ -641,6 +631,29 @@ const styles = StyleSheet.create({
     shadowRadius: 6,
     elevation: 3,
   },
+  contactBtns: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    flexShrink: 0,
+  },
+  chatClientBtn: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: "#0F172A",
+    justifyContent: "center",
+    alignItems: "center",
+    flexShrink: 0,
+  },
+  chatCommerceBtn: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: "#0F172A",
+    justifyContent: "center",
+    alignItems: "center",
+  },
   liveBtn: {
     flexDirection: "row",
     alignItems: "center",
@@ -703,32 +716,6 @@ const styles = StyleSheet.create({
     color: "#64748B",
   },
   liveBadgeTextActive: {
-    color: "#FFFFFF",
-  },
-  notifyRow: {
-    flexDirection: "row",
-    gap: 10,
-    marginTop: 12,
-  },
-  notifyBtn: {
-    flex: 1,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 6,
-    backgroundColor: "#FF5500",
-    borderRadius: 14,
-    paddingVertical: 10,
-    shadowColor: "#FF5500",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
-    shadowRadius: 10,
-    elevation: 4,
-  },
-  notifyText: {
-    fontSize: 11,
-    fontFamily: "MontserratBold",
-    fontWeight: "bold",
     color: "#FFFFFF",
   },
   safetyBox: {

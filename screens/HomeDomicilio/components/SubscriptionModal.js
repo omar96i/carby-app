@@ -13,7 +13,7 @@ export default function SubscriptionModal({ visible, onClose, onGoToSubscription
 
           <Text style={styles.title}>¡Activa tu plan y sigue rodando!</Text>
           <Text style={styles.subtitle}>
-            Para recibir carreras necesitas un plan activo. Con tu suscripción desbloqueas:
+            Para recibir arrendamientos necesitas un plan activo. Con tu suscripción desbloqueas:
           </Text>
 
           <View style={styles.benefits}>
@@ -23,7 +23,7 @@ export default function SubscriptionModal({ visible, onClose, onGoToSubscription
             </View>
             <View style={styles.benefitRow}>
               <Ionicons name="checkmark-circle" size={20} color="#10B981" />
-              <Text style={styles.benefitText}>Prioridad en carreras cercanas</Text>
+              <Text style={styles.benefitText}>Prioridad en arrendamientos cercanos</Text>
             </View>
             <View style={styles.benefitRow}>
               <Ionicons name="checkmark-circle" size={20} color="#10B981" />

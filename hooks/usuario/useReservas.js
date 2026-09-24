@@ -55,7 +55,6 @@ export default function useReservas() {
         ...reserva,
         costo_total: reserva.costo_total || 0,
         cliente_nombre: reserva.user_perfil?.user?.nombre_completo || "Cliente",
-        cliente_telefono: reserva.user_perfil?.user?.numero_telefono || "",
         servicio_nombre: reserva.user_perfil?.nombre || "Servicio",
         servicio_descripcion: reserva.user_perfil?.descripcion || "",
         servicio_imagen: reserva.user_perfil?.file || null,

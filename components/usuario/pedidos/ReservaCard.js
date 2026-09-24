@@ -1,15 +1,26 @@
 import React from "react";
-import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
+import { View, Text, Image, TouchableOpacity, StyleSheet } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import { BASE_URL } from "../../../constants/url";
 import { COLORS, formatCOP, formatDateShort, metodoPagoLabel, RADIUS, SHADOWS } from "./helpers";
 import StatusBadge from "./StatusBadge";
 import PaymentBadge from "./PaymentBadge";
 
-export default function ReservaCard({ item, onCancel }) {
+const getPerfilImageUrl = (path) => {
+  if (!path) return null;
+  if (path.startsWith("http")) return path;
+  const base = BASE_URL.toString().replace(/\/api\/?$/, "").replace(/\/$/, "");
+  return `${base}/storage/${path}`;
+};
+
+export default function ReservaCard({ item, onCancel, onChat }) {
   const clienteNombre = item.user_perfil?.user?.nombre_completo || item.cliente_nombre || "Cliente";
   const servicioNombre = item.servicio_nombre || item.user_perfil?.nombre || "Perfil";
   const servicioDescripcion = item.servicio_descripcion || item.user_perfil?.descripcion || "";
   const metodo = metodoPagoLabel(item.metodo_pago);
+  const perfilFoto = getPerfilImageUrl(
+    item.servicio_imagen || item.user_perfil?.file || item.user_perfil?.user?.foto_documento_file
+  );
   const fechaFormateada = item.fecha_formateada || formatDateShort(item.fecha);
   const horaInicio = item.hora_inicio_formateada || item.hora_inicio?.slice(0, 5) || "";
   const horaFin = item.hora_fin_formateada || item.hora_fin?.slice(0, 5) || "";
@@ -26,12 +37,26 @@ export default function ReservaCard({ item, onCancel }) {
     <View style={[s.card, SHADOWS.card]}>
       {/* Header */}
       <View style={s.header}>
-        <View style={s.headerInfo}>
-          <Text style={s.clienteNombre}>{clienteNombre}</Text>
+        <View style={s.perfilRow}>
+          {perfilFoto ? (
+            <Image source={{ uri: perfilFoto }} style={s.avatar} />
+          ) : (
+            <View style={s.avatarFallback}>
+              <Ionicons name="person" size={20} color={COLORS.muted} />
+            </View>
+          )}
+          <View style={s.headerInfo}>
+            <Text style={s.clienteNombre}>{clienteNombre}</Text>
+          </View>
+          {item.estado === "aceptado" && (
+            <TouchableOpacity style={s.chatBtn} onPress={() => onChat?.(item)} activeOpacity={0.7}>
+              <Ionicons name="chatbubble-ellipses" size={18} color="#FFFFFF" />
+            </TouchableOpacity>
+          )}
         </View>
         <View style={s.headerChips}>
           <PaymentBadge metodo={metodo} />
-          <StatusBadge status={item.estado === "confirmado" ? "confirmado" : item.estado} />
+          <StatusBadge status={item.estado} />
         </View>
         <Text style={s.reservaId}>Reserva #{item.id}</Text>
       </View>
@@ -120,7 +145,35 @@ const s = StyleSheet.create({
     paddingTop: 16,
   },
   headerInfo: {
+    flex: 1,
+  },
+  perfilRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
     marginBottom: 8,
+  },
+  avatar: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: COLORS.zinc100,
+  },
+  avatarFallback: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: COLORS.zinc100,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  chatBtn: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: COLORS.ink,
+    justifyContent: "center",
+    alignItems: "center",
   },
   clienteNombre: {
     fontSize: 16,

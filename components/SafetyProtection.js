@@ -175,7 +175,7 @@ export default function SafetyProtection({ carreraId, role }) {
       ? "Procesando el fragmento de audio de forma segura."
       : session
         ? "Escuchando tu palabra configurada y enviando ubicación cada 2 segundos."
-        : "Actívala manualmente durante esta carrera.";
+        : "Actívala manualmente durante este arrendamiento.";
   return (
     <View style={[styles.card, alerted && styles.alertCard]}>
       <View style={styles.header}>

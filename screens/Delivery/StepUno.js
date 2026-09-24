@@ -1017,7 +1017,7 @@ export default function StepUno() {
         body: JSON.stringify(carreraData),
       });
       const data = await response.json();
-      if (!response.ok) throw new Error(data.message || "Error al crear la carrera");
+      if (!response.ok) throw new Error(data.message || "Error al crear el arrendamiento");
       console.log("Carrera creada exitosamente:", data);
       let newCarreraId = null;
       if (data && data.carrera && data.carrera.id) {
@@ -1649,13 +1649,13 @@ export default function StepUno() {
               setTimeout(() => navigation.getParent()?.navigate("Pedidos"), 200);
             }
           }}
-          primaryLabel={createdCarreraId ? "Ver mi carrera" : "Ver mis viajes"}
+          primaryLabel={createdCarreraId ? "Ver mi arrendamiento" : "Ver mis viajes"}
         />
 
         {/* Modal de error */}
         <AlertaModal
           visible={isErrorModalVisible}
-          mensaje="No se pudo crear la carrera. Intenta de nuevo."
+          mensaje="No se pudo crear el arrendamiento. Intenta de nuevo."
           onCerrar={() => setErrorModalVisible(false)}
         />
 
@@ -1705,7 +1705,7 @@ export default function StepUno() {
                       <Ionicons name="car-sport" size={48} color="#FF5500" />
                     </Animated.View>
                   </View>
-                  <Text style={styles.creatingRideTitle}>Se está creando tu carrera</Text>
+                  <Text style={styles.creatingRideTitle}>Se está creando tu arrendamiento</Text>
                   <Text style={styles.creatingRideSub}>Buscando el mejor conductor para ti...</Text>
                 </>
               ) : (
@@ -1713,10 +1713,10 @@ export default function StepUno() {
                   <View style={styles.creatingRideSuccessIcon}>
                     <Ionicons name="checkmark-circle" size={64} color="#10B981" />
                   </View>
-                  <Text style={styles.creatingRideTitle}>¡Carrera creada!</Text>
+                  <Text style={styles.creatingRideTitle}>¡Arrendamiento creado!</Text>
                   <Text style={styles.creatingRideSub}>Tu solicitud fue enviada exitosamente.</Text>
                   <TouchableOpacity style={styles.goToRideBtn} onPress={handleGoToRide} activeOpacity={0.8}>
-                    <Text style={styles.goToRideBtnText}>Ir a mi carrera</Text>
+                    <Text style={styles.goToRideBtnText}>Ir a mi arrendamiento</Text>
                   </TouchableOpacity>
                 </>
               )}

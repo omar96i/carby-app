@@ -3,8 +3,9 @@ import { View, Text, StyleSheet, Animated } from "react-native";
 import { COLORS, STATUS_STYLES, obtenerLabelEstado } from "./helpers";
 
 export default function StatusBadge({ status, type }) {
-  const style = STATUS_STYLES[status] || STATUS_STYLES.pendiente;
-  const label = obtenerLabelEstado(status, type);
+  const key = String(status || "pendiente").toLowerCase();
+  const style = STATUS_STYLES[key] || STATUS_STYLES.pendiente;
+  const label = obtenerLabelEstado(key, type);
   const pulseAnim = useRef(new Animated.Value(1)).current;
 
   useEffect(() => {

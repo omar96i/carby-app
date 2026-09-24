@@ -14,11 +14,14 @@ import {
   KeyboardAvoidingView,
   Platform,
   Dimensions,
+  Linking,
 } from "react-native";
 import { Ionicons, FontAwesome, MaterialIcons, Feather, MaterialCommunityIcons } from "@expo/vector-icons";
 import { useAudioPlayer } from "expo-audio";
 import OrderStatusStepper from "../components/OrderStatusStepper";
 import OrderChatModal from "../components/OrderChatModal";
+import FullscreenImageViewer from "../components/usuario/pedidos/FullscreenImageViewer";
+import { WebView } from "react-native-webview";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import {
   Montserrat_400Regular,
@@ -31,8 +34,6 @@ import { useFonts } from "expo-font";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { BASE_URL } from "../constants/url";
 import AlertaModal from "../components/ErrorModal";
-import * as ImagePicker from "expo-image-picker";
-import { manipulateAsync, SaveFormat } from "expo-image-manipulator";
 import { useNotification } from "../context/NotificationContext";
 import usePedidos from "../hooks/comercio/usePedidos";
 
@@ -43,7 +44,8 @@ const pasosPedidoComercio = [
   { key: 'confirmado', label: 'Confirmado', icon: 'check' },
   { key: 'preparado', label: 'Preparando', icon: 'cutlery' },
   { key: 'completado', label: 'Listo', icon: 'shopping-bag' },
-  { key: 'en_camino', label: 'En camino', icon: 'motorcycle' },
+  { key: 'en_comercio', label: 'En tienda', icon: 'mci-storefront' },
+  { key: 'recogido', label: 'En camino', icon: 'motorcycle' },
   { key: 'entregado', label: 'Entregado', icon: 'check-circle' },
 ];
 
@@ -59,12 +61,6 @@ const PedidoDetalleComercio = () => {
 
   // Estados para chat
   const [showChatModal, setShowChatModal] = useState(false);
-  const [chatMessages, setChatMessages] = useState([]);
-  const [newMessage, setNewMessage] = useState("");
-  const [chatImage, setChatImage] = useState(null);
-  const [sendingMessage, setSendingMessage] = useState(false);
-  const [loadingChat, setLoadingChat] = useState(false);
-  const chatScrollViewRef = useRef(null);
 
   // Estados para AlertaModal
   const [alertVisible, setAlertVisible] = useState(false);
@@ -76,6 +72,10 @@ const PedidoDetalleComercio = () => {
 
   // Estados para acciones del pedido
   const [updatingStatus, setUpdatingStatus] = useState(false);
+  const [approvingPayment, setApprovingPayment] = useState(false);
+  const [viewerUri, setViewerUri] = useState(null);
+  const [evidenceWebview, setEvidenceWebview] = useState(false);
+  const chatModalRef = useRef(null);
 
   // Cargar fuentes
   const [fontsLoaded] = useFonts({
@@ -110,8 +110,8 @@ const PedidoDetalleComercio = () => {
         const response = await fetch(`${BASE_URL}pedidos/${pedidoId}`, { headers: { Authorization: `Bearer ${token}` } });
         if (!response.ok) return;
         const data = await response.json();
-        const newPedido = data.data || data;
-        if (!newPedido) return;
+        const newPedido = data.pedido || data.data || data;
+        if (!newPedido?.id) return;
         const newStatus = newPedido.estado;
         const newCarreraStatus = newPedido.carrera?.estado || "";
         if (newStatus && newStatus !== previousStatusRef.current) {
@@ -132,7 +132,12 @@ const PedidoDetalleComercio = () => {
   }, [pedidoId]);
 
   useEffect(() => {
-    if (notification && showChatModal) loadChatMessages();
+    if (notification && showChatModal) {
+      chatModalRef.current?.reload?.();
+    }
+    if (notification) {
+      fetchPedidoDetails(true);
+    }
   }, [notification]);
 
   useEffect(() => {
@@ -153,6 +158,7 @@ const PedidoDetalleComercio = () => {
 
         if (pedidoData) {
           setPedido(pedidoData);
+          await fetchPedidoDetails(true);
         } else if (pedidoId) {
           setLoading(true);
           await fetchPedidoDetails();
@@ -165,7 +171,7 @@ const PedidoDetalleComercio = () => {
     loadInitialData();
   }, [pedidoId, pedidoData]);
 
-  const fetchPedidoDetails = async () => {
+  const fetchPedidoDetails = async (silent = false) => {
     try {
       const token = await AsyncStorage.getItem("userToken");
       if (!token || !pedidoId) throw new Error("Token o ID no disponible");
@@ -187,130 +193,25 @@ const PedidoDetalleComercio = () => {
 
       if (!response.ok) throw new Error(`Error ${response.status}`);
       const data = await response.json();
-      setPedido(data.pedido || data);
+      const newPedido = data.pedido || data;
+      const newStatus = newPedido?.estado;
+      const newCarreraStatus = newPedido?.carrera?.estado || "";
+      if (newStatus && newStatus !== previousStatusRef.current) {
+        previousStatusRef.current = newStatus;
+        playDing();
+      }
+      if (newCarreraStatus && newCarreraStatus !== previousCarreraStatusRef.current) {
+        previousCarreraStatusRef.current = newCarreraStatus;
+        playDing();
+      }
+      setPedido(newPedido);
     } catch (error) {
+      if (!silent) {
         console.error(error);
         showAlert("Error", "No se pudieron cargar los detalles.");
+      }
     } finally {
       setLoading(false);
-    }
-  };
-
-  const loadChatMessages = async () => {
-    try {
-      setLoadingChat(true);
-      const token = await AsyncStorage.getItem("userToken");
-      if (!token || !pedidoId || !userInfo) return;
-
-      const response = await fetch(`${BASE_URL}pedido-chat/messages/${pedidoId}`, {
-        method: "GET",
-        headers: {
-          Accept: "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        const messages = data.data || data.messages || data || [];
-        const messagesWithUserInfo = messages.map((msg) => ({
-          ...msg,
-          currentNegocioId: userInfo.id,
-        }));
-        setChatMessages(messagesWithUserInfo);
-        setTimeout(() => {
-          chatScrollViewRef.current?.scrollToEnd({ animated: true });
-        }, 100);
-      }
-    } catch (error) {
-      console.error("Error loading chat:", error);
-    } finally {
-      setLoadingChat(false);
-    }
-  };
-
-  const pickChatImage = async () => {
-    try {
-      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-      if (status !== "granted") {
-        showAlert("Permisos requeridos", "Necesitamos acceso a tu galería.", "info");
-        return;
-      }
-      const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions.Images,
-        allowsEditing: false,
-        aspect: [4, 3],
-        quality: 0.8,
-      });
-
-      if (!result.canceled && result.assets && result.assets.length > 0) {
-        const manipResult = await manipulateAsync(
-          result.assets[0].uri,
-          [{ resize: { width: 800 } }],
-          { format: SaveFormat.JPEG, compress: 0.7 }
-        );
-        setChatImage(manipResult.uri);
-      }
-    } catch (error) {
-      showAlert("Error", "No se pudo seleccionar la imagen.");
-    }
-  };
-
-  const sendChatMessage = async () => {
-    if (!newMessage.trim() && !chatImage) {
-      showAlert("Error", "Escribe un mensaje o selecciona imagen.");
-      return;
-    }
-    setSendingMessage(true);
-    try {
-      const token = await AsyncStorage.getItem("userToken");
-      if (!token || !userInfo) throw new Error("Auth error");
-
-      const headers = { Authorization: `Bearer ${token}`, Accept: "application/json" };
-      let requestBody;
-
-      if (chatImage) {
-        const formData = new FormData();
-        formData.append("pedido_id", pedidoId.toString());
-        formData.append("negocio_id", userInfo.id.toString());
-        
-        const rawMessage = { type: "text", content: newMessage.trim() };
-        const escapedJson = JSON.stringify(rawMessage).replace(/"/g, '\\"');
-        formData.append("message", `"${escapedJson}"`);
-
-        const filename = chatImage.split("/").pop();
-        formData.append("image", {
-          uri: Platform.OS === "ios" ? chatImage.replace("file://", "") : chatImage,
-          name: filename || "image.jpg",
-          type: "image/jpeg",
-        });
-        requestBody = formData;
-      } else {
-        headers["Content-Type"] = "application/json";
-        const rawMessage = { type: "text", content: newMessage.trim() };
-        const escapedJson = JSON.stringify(rawMessage).replace(/"/g, '\\"');
-        requestBody = JSON.stringify({
-          pedido_id: parseInt(pedidoId),
-          negocio_id: parseInt(userInfo.id),
-          message: `"${escapedJson}"`,
-        });
-      }
-
-      const response = await fetch(`${BASE_URL}pedido-chat/send`, {
-        method: "POST",
-        headers: headers,
-        body: requestBody,
-      });
-
-      if (!response.ok) throw new Error("Error envío");
-
-      setNewMessage("");
-      setChatImage(null);
-      await loadChatMessages();
-    } catch (error) {
-      showAlert("Error", "No se pudo enviar el mensaje");
-    } finally {
-      setSendingMessage(false);
     }
   };
 
@@ -348,6 +249,25 @@ const PedidoDetalleComercio = () => {
       showAlert("Error", "No se pudo aceptar el pedido");
     } finally {
       setUpdatingStatus(false);
+    }
+  };
+
+  const handleAprobarPago = async () => {
+    try {
+      const token = await AsyncStorage.getItem("userToken");
+      if (!token || !pedidoId) throw new Error("Token o ID no disponible");
+      setApprovingPayment(true);
+      const response = await fetch(`${BASE_URL}pedidos/aprobar-pago/${pedidoId}`, {
+        method: "GET",
+        headers: { Accept: "application/json", Authorization: `Bearer ${token}` },
+      });
+      if (!response.ok) throw new Error(`Error ${response.status}`);
+      await fetchPedidoDetails(true);
+      showAlert("Éxito", "Pago aprobado correctamente");
+    } catch (error) {
+      showAlert("Error", "No se pudo aprobar el pago");
+    } finally {
+      setApprovingPayment(false);
     }
   };
 
@@ -405,7 +325,8 @@ const PedidoDetalleComercio = () => {
   const getImageUrl = (path) => {
     if (!path) return null;
     if (path.startsWith("http")) return path;
-    return `${BASE_URL.toString().replace("/api", "")}/storage/${path}`;
+    const base = BASE_URL.toString().replace(/\/api\/?$/, "").replace(/\/$/, "");
+    return `${base}/storage/${String(path).replace(/^\//, "")}`;
   };
 
   const getCurrentStepKey = () => {
@@ -413,7 +334,9 @@ const PedidoDetalleComercio = () => {
     const carreraEstado = pedido?.carrera?.estado;
 
     if (estado === 'entregado' || carreraEstado === 'completado') return 'entregado';
-    if (carreraEstado === 'aceptado') return 'en_camino';
+    if (carreraEstado === 'recogido') return 'recogido';
+    if (carreraEstado === 'en_comercio') return 'en_comercio';
+    if (carreraEstado === 'aceptado' || carreraEstado === 'en_camino' || carreraEstado === 'activo') return 'completado';
     if (estado === 'completado') return 'completado';
     if (estado === 'preparado') return 'preparado';
     if (estado === 'confirmado') return 'confirmado';
@@ -426,8 +349,9 @@ const PedidoDetalleComercio = () => {
       pendiente: 'Pedido pendiente de aceptacion',
       confirmado: 'Pedido confirmado para preparacion',
       preparado: 'Pedido en preparacion',
-      completado: 'Pedido listo para delivery',
-      en_camino: 'El conductor va en camino',
+      completado: 'Pedido listo · esperando repartidor',
+      en_comercio: 'El repartidor está en tu tienda',
+      recogido: 'El repartidor va en camino al cliente',
       entregado: 'Pedido entregado correctamente',
     };
     if (pedido?.estado === 'cancelado') return 'Pedido cancelado';
@@ -576,16 +500,10 @@ const PedidoDetalleComercio = () => {
                 <View style={{flex: 1}}>
                     <Text style={styles.cardTitle}>Cliente</Text>
                     <Text style={styles.clientName}>{pedido.user?.nombre_completo || "Cliente Anónimo"}</Text>
-                    {pedido.user?.telefono && (
-                         <View style={styles.phoneRow}>
-                             <Feather name="phone" size={14} color="#CCC" />
-                             <Text style={styles.clientPhone}> {pedido.user.telefono}</Text>
-                         </View>
-                    )}
                 </View>
                 <TouchableOpacity 
                     style={styles.chatBtn}
-                    onPress={() => { setShowChatModal(true); loadChatMessages(); }}
+                    onPress={() => setShowChatModal(true)}
                 >
                     <Feather name="message-circle" size={24} color="#FFF" />
                 </TouchableOpacity>
@@ -651,6 +569,31 @@ const PedidoDetalleComercio = () => {
                     {pedido.estado_pago || "Pendiente"}
                 </Text>
             </View>
+            {pedido.archivo_evidencia ? (
+                <View style={styles.evidenceBox}>
+                    {evidenceWebview ? (
+                      <WebView
+                        source={{ uri: getImageUrl(pedido.archivo_evidencia) }}
+                        style={styles.evidenceWebview}
+                        scalesPageToFit
+                        startInLoadingState
+                        renderLoading={() => <ActivityIndicator color="#fa6205" style={styles.evidenceLoading} />}
+                      />
+                    ) : (
+                      <TouchableOpacity onPress={() => setViewerUri(getImageUrl(pedido.archivo_evidencia))} activeOpacity={0.8} style={styles.evidenceImageBtn}>
+                        <Image
+                          source={{ uri: getImageUrl(pedido.archivo_evidencia) }}
+                          style={styles.evidenceImage}
+                          resizeMode="contain"
+                          onError={() => setEvidenceWebview(true)}
+                        />
+                      </TouchableOpacity>
+                    )}
+                    <Text style={styles.evidenceHint}>Toca la imagen para ampliar</Text>
+                </View>
+            ) : (
+                <Text style={styles.evidenceEmpty}>Sin comprobante</Text>
+            )}
         </View>
 
         {/* ACCIONES DEL COMERCIO */}
@@ -658,6 +601,11 @@ const PedidoDetalleComercio = () => {
             {pedido.estado === "pendiente" && (
                 <TouchableOpacity style={[styles.mainBtn, {backgroundColor: '#fa6205'}]} onPress={handleAceptar} disabled={updatingStatus}>
                      {updatingStatus ? <ActivityIndicator color="#FFF"/> : <Text style={styles.mainBtnText}>Aceptar Pedido</Text>}
+                </TouchableOpacity>
+            )}
+            {pedido.archivo_evidencia && pedido.estado_pago !== 'completado' && pedido.estado_pago !== 'pagado' && pedido.estado_pago !== 'aprobado' && (
+                <TouchableOpacity style={[styles.mainBtn, {backgroundColor: '#10B981'}]} onPress={handleAprobarPago} disabled={approvingPayment}>
+                     {approvingPayment ? <ActivityIndicator color="#FFF"/> : <Text style={styles.mainBtnText}>Aprobar pago</Text>}
                 </TouchableOpacity>
             )}
             {pedido.estado === "aceptado" && !pedido.carrera && (
@@ -668,7 +616,13 @@ const PedidoDetalleComercio = () => {
             {pedido.carrera && (
                 <View style={styles.driverAssignedBox}>
                     <Ionicons name="car" size={20} color="#10B981" />
-                    <Text style={styles.driverAssignedText}>Conductor solicitado</Text>
+                    <Text style={styles.driverAssignedText}>
+                      {pedido.carrera?.estado === 'recogido'
+                        ? 'Repartidor en camino al cliente'
+                        : pedido.carrera?.estado === 'en_comercio'
+                          ? 'Repartidor en tu tienda'
+                          : 'Conductor solicitado'}
+                    </Text>
                 </View>
             )}
 
@@ -686,7 +640,17 @@ const PedidoDetalleComercio = () => {
       </ScrollView>
 
       {/* MODAL CHAT */}
-      <OrderChatModal visible={showChatModal} pedidoId={pedidoId} userInfo={userInfo} onClose={() => setShowChatModal(false)} />
+      <OrderChatModal
+        ref={chatModalRef}
+        visible={showChatModal}
+        pedidoId={pedidoId}
+        userInfo={userInfo}
+        onClose={() => setShowChatModal(false)}
+        peerName={pedido?.user?.nombre_completo || "Cliente"}
+        peerRole={`Pedido #${pedidoId}`}
+        peerAvatar={getImageUrl(pedido?.user?.foto_documento_file)}
+        senderRole="comercio"
+      />
 
       <AlertaModal
         visible={alertVisible}
@@ -697,6 +661,7 @@ const PedidoDetalleComercio = () => {
         onPrimary={alertData.onConfirm}
         primaryLabel={alertData.primaryLabel || "Entendido"}
       />
+      <FullscreenImageViewer uri={viewerUri} onClose={() => setViewerUri(null)} />
     </SafeAreaView>
   );
 };
@@ -829,8 +794,6 @@ const styles = StyleSheet.create({
   // CLIENT
   rowBetween: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 },
   clientName: { color: "#1C1C1E", fontSize: 18, fontFamily: "MontserratBold" },
-  phoneRow: { flexDirection: 'row', alignItems: 'center', marginTop: 6 },
-  clientPhone: { color: "#71717a", fontSize: 13, fontFamily: "MontserratRegular" },
   chatBtn: { backgroundColor: "#fa6205", width: 44, height: 44, borderRadius: 22, justifyContent: 'center', alignItems: 'center' },
 
   // PRODUCTS
@@ -845,6 +808,14 @@ const styles = StyleSheet.create({
   // PAY INFO
   payLabel: { color: "#71717a", fontFamily: "MontserratMedium", fontSize: 14 },
   payValue: { color: "#1C1C1E", fontFamily: "MontserratBold", fontSize: 14 },
+  evidenceBox: { marginTop: 12, alignItems: "center" },
+  evidenceImageBtn: { width: "100%" },
+  evidenceImage: { width: "100%", height: 320, borderRadius: 14, backgroundColor: "#0F172A" },
+  evidenceWebview: { width: "100%", height: 320, borderRadius: 14, backgroundColor: "#FFFFFF" },
+  evidenceLoading: { position: "absolute", top: 0, left: 0, right: 0, bottom: 0 },
+  evidenceUrl: { color: "#2563EB", fontFamily: "MontserratMedium", fontSize: 12, marginTop: 8, textDecorationLine: "underline" },
+  evidenceHint: { color: "#71717a", fontFamily: "MontserratMedium", fontSize: 12, marginTop: 6 },
+  evidenceEmpty: { color: "#71717a", fontFamily: "MontserratMedium", fontSize: 13, marginTop: 12 },
 
   // ACTIONS
   actionsContainer: { marginTop: 8, paddingHorizontal: 0 },

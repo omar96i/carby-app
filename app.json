@@ -90,6 +90,8 @@
       [
         "expo-notifications",
         {
+          "icon": "./assets/images/imagen-notification.png",
+          "color": "#000000",
           "defaultChannel": "default",
           "enableBackgroundRemoteNotifications": false
         }
@@ -97,7 +99,7 @@
       [
         "expo-audio",
         {
-          "microphonePermission": "Permite que YaRiders escuche tu palabra de seguridad durante una carrera.",
+          "microphonePermission": "Permite que YaRiders escuche tu palabra de seguridad durante un arrendamiento.",
           "enableBackgroundRecording": false
         }
       ],

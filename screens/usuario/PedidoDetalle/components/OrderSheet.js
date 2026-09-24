@@ -35,7 +35,9 @@ const COURIER_STATUS = {
   aceptado: { label: "Repartidor asignado", tone: "emerald" },
   confirmado: { label: "Repartidor asignado", tone: "emerald" },
   preparado: { label: "Repartidor asignado", tone: "emerald" },
-  completado: { label: "Esperando repartidor", tone: "primary" },
+  completado: { label: "En el comercio", tone: "primary" },
+  en_comercio: { label: "En el comercio", tone: "primary" },
+  recogido: { label: "En camino a ti", tone: "primary" },
   en_camino: { label: "En camino a ti", tone: "primary" },
   entregado: { label: "Entregado", tone: "emerald" },
   cancelado: { label: "Cancelado", tone: "muted" },
@@ -45,6 +47,8 @@ export const OrderSheet = ({
   pedido,
   currentKey,
   onOpenChat,
+  onOpenDriverChat,
+  hasNewDriverMessages,
   onOpenEvidence,
   onCancel,
 }) => {
@@ -77,8 +81,15 @@ export const OrderSheet = ({
   const driver = pedido?.conductor || pedido?.carrera?.conductor;
   const driverImage = getImageUrl(driver?.foto_documento_file || driver?.foto || driver?.imagen || driver?.logo || null);
   const isFinished = ["entregado", "cancelado"].includes(currentKey);
-  const canCancel = !isFinished && currentKey !== "en_camino";
+  const canCancel = !isFinished && !["recogido", "en_camino"].includes(currentKey);
   const courierAssigned = !!driver;
+  const payMethod = (pedido?.metodo_pago || "").toLowerCase();
+  const showEvidenceBtn =
+    (payMethod.includes("qr") ||
+      payMethod.includes("nequi") ||
+      payMethod.includes("transfer") ||
+      payMethod.includes("bancolombia")) &&
+    pedido?.estado_pago !== "aprobado";
 
   const restoSub = RESTO_STATUS[currentKey] || RESTO_STATUS.pendiente;
   const courierSub = COURIER_STATUS[currentKey] || COURIER_STATUS.pendiente;
@@ -180,6 +191,14 @@ export const OrderSheet = ({
               <Text style={styles.storeName} numberOfLines={1}>{comercioName}</Text>
               <Text style={styles.storeAddress} numberOfLines={1}>{coords?.startAddress || comercio?.direccion || "Dirección del comercio"}</Text>
             </View>
+            <View style={styles.contactBtns}>
+              <TouchableOpacity style={styles.chatIconBtn} onPress={onOpenChat} activeOpacity={0.8}>
+                <Feather name="message-circle" size={18} color="#FFFFFF" />
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.callIconBtn} onPress={handleCallCommerce} activeOpacity={0.8}>
+                <Feather name="phone" size={18} color="#FFFFFF" />
+              </TouchableOpacity>
+            </View>
           </View>
 
           {/* Dual status */}
@@ -203,9 +222,17 @@ export const OrderSheet = ({
                 <Text style={styles.courierVehicle}>{driver.tipo_vehiculo || driver.vehiculo || driver.tipo_usuario || "Moto"}</Text>
                 <Text style={styles.courierPlate}>{driver.placa || driver.plate || ""}</Text>
               </View>
-              <TouchableOpacity style={styles.callBtn} onPress={handleCallDriver} activeOpacity={0.8}>
-                <Feather name="phone" size={18} color="#FFFFFF" />
-              </TouchableOpacity>
+              <View style={styles.contactBtns}>
+                <TouchableOpacity style={styles.chatIconBtnGreen} onPress={onOpenDriverChat} activeOpacity={0.8}>
+                  <View style={styles.actionIconWrap}>
+                    <Feather name="message-circle" size={18} color="#FFFFFF" />
+                    {hasNewDriverMessages && <View style={styles.badge} />}
+                  </View>
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.callBtn} onPress={handleCallDriver} activeOpacity={0.8}>
+                  <Feather name="phone" size={18} color="#FFFFFF" />
+                </TouchableOpacity>
+              </View>
             </View>
           ) : (
             <View style={styles.searchingCard}>
@@ -249,7 +276,8 @@ export const OrderSheet = ({
                 { key: "confirmado", label: "Confirmado", icon: "check" },
                 { key: "preparado", label: "Preparado", icon: "cutlery" },
                 { key: "completado", label: "Listo", icon: "shopping-bag" },
-                { key: "en_camino", label: "En camino", icon: "motorcycle" },
+                { key: "en_comercio", label: "En comercio", icon: "mci-storefront" },
+                { key: "recogido", label: "En camino", icon: "motorcycle" },
                 { key: "entregado", label: "Entregado", icon: "check" },
               ]}
               currentStatus={currentKey}
@@ -314,26 +342,14 @@ export const OrderSheet = ({
           </View>
 
           {/* Actions */}
-          <View style={styles.actionsRow}>
-            <TouchableOpacity style={styles.actionBtn} onPress={onOpenChat} activeOpacity={0.8}>
-              <Feather name="message-circle" size={18} color="#3B82F6" />
-              <Text style={styles.actionText}>Chat</Text>
-            </TouchableOpacity>
-
-            {pedido?.metodo_pago?.toLowerCase() === "qr" && pedido?.estado_pago !== "aprobado" && (
+          {showEvidenceBtn && (
+            <View style={styles.actionsRow}>
               <TouchableOpacity style={[styles.actionBtn, styles.actionBtnOutline]} onPress={onOpenEvidence} activeOpacity={0.8}>
                 <Feather name="image" size={18} color="#FF5500" />
                 <Text style={[styles.actionText, styles.actionTextOutline]}>Evidencia</Text>
               </TouchableOpacity>
-            )}
-          </View>
-
-          {/* Commerce contact */}
-          <TouchableOpacity style={styles.commerceContactRow} onPress={handleCallCommerce} activeOpacity={0.8}>
-            <Feather name="phone" size={16} color="#64748B" />
-            <Text style={styles.commerceContactText}>Llamar al comercio</Text>
-            <Feather name="chevron-right" size={16} color="#94A3B8" />
-          </TouchableOpacity>
+            </View>
+          )}
 
           {canCancel && (
             <TouchableOpacity style={styles.cancelLink} onPress={onCancel} activeOpacity={0.8}>
@@ -450,6 +466,7 @@ const styles = StyleSheet.create({
   },
   storeTextBox: {
     flex: 1,
+    minWidth: 0,
   },
   storeName: {
     fontSize: 16,
@@ -808,32 +825,57 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     color: "#0F172A",
   },
-  actionTextOutline: {
-    color: "#FF5500",
+  actionTextBox: {
+    flex: 1,
   },
-  commerceContactRow: {
+  contactBtns: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 10,
-    marginTop: 14,
-    paddingVertical: 12,
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: "#E2E8F0",
-    backgroundColor: "#F8FAFC",
-    paddingHorizontal: 14,
-    shadowColor: "#0F172A",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.06,
-    shadowRadius: 12,
-    elevation: 3,
+    gap: 8,
+    flexShrink: 0,
   },
-  commerceContactText: {
-    flex: 1,
-    fontSize: 13,
-    fontFamily: "MontserratBold",
-    fontWeight: "bold",
-    color: "#0F172A",
+  chatIconBtn: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: "#0F172A",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  chatIconBtnGreen: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: "#0F172A",
+    justifyContent: "center",
+    alignItems: "center",
+    borderWidth: 1.5,
+    borderColor: "#10B981",
+  },
+  callIconBtn: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: "#FF5500",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  actionIconWrap: {
+    position: "relative",
+  },
+  badge: {
+    position: "absolute",
+    top: -3,
+    right: -3,
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    backgroundColor: "#FF5500",
+    borderWidth: 1.5,
+    borderColor: "#FFFFFF",
+  },
+  actionTextOutline: {
+    color: "#FF5500",
   },
   cancelLink: {
     alignItems: "center",

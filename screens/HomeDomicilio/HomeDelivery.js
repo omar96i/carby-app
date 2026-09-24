@@ -540,7 +540,7 @@ export default function HomeDelivery() {
           navigation.navigate("StepTrece", { carreraId: selectedTripId });
         }, 1500);
       } else {
-        const msg = json.message || "No se pudo aceptar la carrera (ya fue tomada).";
+        const msg = json.message || "No se pudo aceptar el arrendamiento (ya fue tomado).";
         setAcceptErrorMsg(msg);
         setAcceptStep("error");
         fetchNearbyTrips();

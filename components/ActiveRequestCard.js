@@ -91,12 +91,12 @@ const ActiveRequestCard = ({ tripData, onAccept, onReject, disabled }) => {
       console.log("Respuesta de actualización:", responseData);
 
       // Mostrar mensaje de éxito
-      showAlert("Has aceptado exitosamente esta carrera.", "success");
+      showAlert("Has aceptado exitosamente este arrendamiento.", "success");
 
       return true;
     } catch (error) {
       console.error("Error al actualizar el estado de la carrera:", error);
-      showAlert("No se pudo actualizar el estado de la carrera", "error");
+      showAlert("No se pudo actualizar el estado del arrendamiento", "error");
       return false;
     }
   };
@@ -241,14 +241,14 @@ const ActiveRequestCard = ({ tripData, onAccept, onReject, disabled }) => {
   const handleAccept = async () => {
     // Verificar si está deshabilitado por tener una carrera activa
     if (disabled) {
-      showAlert("Ya tienes una carrera activa. Completa o cancela tu carrera actual antes de aceptar una nueva.", "info");
+      showAlert("Ya tienes un arrendamiento activo. Completa o cancela tu arrendamiento actual antes de aceptar uno nuevo.", "info");
       return;
     }
 
     // Verificación adicional en tiempo real
     const hasActiveRide = await checkActiveRide();
     if (hasActiveRide) {
-      showAlert("Ya tienes una carrera activa. Completa o cancela tu carrera actual antes de aceptar una nueva.", "info");
+      showAlert("Ya tienes un arrendamiento activo. Completa o cancela tu arrendamiento actual antes de aceptar uno nuevo.", "info");
       return;
     }
 

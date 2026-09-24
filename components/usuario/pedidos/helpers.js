@@ -93,6 +93,9 @@ export const STATUS_STYLES = {
   pendiente:   { bg: "#FFFBEB", text: "#B45309", dot: "#F59E0B", pulse: true },
   aceptado:    { bg: "#FDEEE2", text: "#fa6205", dot: "#fa6205", pulse: true },
   activo:      { bg: "#ECFDF5", text: "#047857", dot: "#10B981", pulse: true },
+  en_comercio: { bg: "#EFF6FF", text: "#1D4ED8", dot: "#3B82F6", pulse: true },
+  recogido:    { bg: "#ECFDF5", text: "#047857", dot: "#10B981", pulse: true },
+  en_camino:   { bg: "#ECFDF5", text: "#047857", dot: "#10B981", pulse: true },
   completado:  { bg: "#F4F4F5", text: "#52525B", dot: "#A1A1AA", pulse: false },
   entregado:   { bg: "#F4F4F5", text: "#52525B", dot: "#A1A1AA", pulse: false },
   cancelado:   { bg: "#FEF2F2", text: "#DC2626", dot: "#EF4444", pulse: false },
@@ -104,6 +107,9 @@ export const STATUS_LABELS = {
   pendiente: "Pendiente",
   aceptado: "Aceptado",
   activo: "En curso",
+  en_comercio: "En comercio",
+  recogido: "En camino",
+  en_camino: "En camino",
   completado: "Completado",
   entregado: "Entregado",
   cancelado: "Cancelado",
@@ -114,14 +120,23 @@ export const STATUS_LABELS = {
 export const PEDIDO_LABELS = {
   pendiente: "Pendiente",
   aceptado: "Confirmado",
+  confirmado: "Confirmado",
+  preparado: "En preparación",
   completado: "Listo para reparto",
+  en_comercio: "En comercio",
+  recogido: "En camino",
+  en_camino: "En camino",
   cancelado: "Cancelado",
+  entregado: "Entregado",
   en_reparto: "En reparto",
 };
 
 export const CARRERA_LABELS = {
   pendiente: "Buscando conductor",
   aceptado: "Conductor asignado",
+  en_comercio: "En el comercio",
+  recogido: "En camino",
+  en_camino: "En camino",
   activo: "En curso",
   completado: "Completado",
   entregado: "Entregado",
@@ -129,9 +144,11 @@ export const CARRERA_LABELS = {
 };
 
 export function obtenerLabelEstado(estado, tipo) {
-  if (tipo === "carrera") return CARRERA_LABELS[estado] || estado || "Pendiente";
-  if (tipo === "pedido") return PEDIDO_LABELS[estado] || estado || "Pendiente";
-  return STATUS_LABELS[estado] || estado || "Pendiente";
+  if (!estado) return "Pendiente";
+  const key = String(estado).toLowerCase();
+  if (tipo === "carrera") return CARRERA_LABELS[key] || STATUS_LABELS[key] || estado;
+  if (tipo === "pedido") return PEDIDO_LABELS[key] || STATUS_LABELS[key] || estado;
+  return STATUS_LABELS[key] || estado;
 }
 
 // ── Método de pago → label ────────────────────────

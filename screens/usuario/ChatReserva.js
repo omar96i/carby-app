@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   View,
   Text,
@@ -16,18 +16,37 @@ import {
 import { Feather } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { BASE_URL } from '../constants/url';
-import { useNotification } from "../context/NotificationContext";
-import AlertaModal from "../components/ErrorModal";
-import FullscreenImageViewer from "../components/usuario/pedidos/FullscreenImageViewer";
-import { chatLog } from "../utils/chatDebug";
+import { useNavigation, useRoute, useFocusEffect } from '@react-navigation/native';
+import { BASE_URL } from '../../constants/url';
+import { useNotification } from "../../context/NotificationContext";
+import AlertaModal from "../../components/ErrorModal";
+import FullscreenImageViewer from "../../components/usuario/pedidos/FullscreenImageViewer";
+import { chatLog } from "../../utils/chatDebug";
 
-export default function ChatComercioRider({ pedidoId, conductorId, carreraId, conductorNombre, comercioId, tipo, onClose, modalMode = false }) {
+const getImageUrl = (path) => {
+  if (!path) return null;
+  if (path.startsWith("http")) return path;
+  return `${BASE_URL.toString().replace("/api", "")}/storage/${path}`;
+};
+
+export default function ChatReserva({ reservaId: propReservaId, perfilNombre: propPerfilNombre, perfilFoto: propPerfilFoto, userPerfilId: propUserPerfilId, chatTitle: propChatTitle, chatAvatar: propChatAvatar, quickReplies: propQuickReplies, onClose, modalMode = false }) {
+  const navigation = useNavigation();
+  const route = useRoute();
+  const routeParams = route?.params || {};
+
+  const reservaId = propReservaId ?? routeParams.reservaId;
+  const perfilNombre = propPerfilNombre ?? routeParams.perfilNombre;
+  const perfilFoto = propPerfilFoto ?? routeParams.perfilFoto;
+  const senderPerfilId = propUserPerfilId ?? routeParams.userPerfilId ?? routeParams.user_perfil_id ?? null;
+  const isPerfilMode = senderPerfilId != null;
+  const chatTitle = propChatTitle ?? routeParams.chatTitle ?? perfilNombre;
+  const chatAvatar = propChatAvatar ?? routeParams.chatAvatar ?? perfilFoto;
+
   const [mensajes, setMensajes] = useState([]);
   const [nuevoMensaje, setNuevoMensaje] = useState('');
   const [cargando, setCargando] = useState(true);
   const [enviando, setEnviando] = useState(false);
-  const [userInfo, setUserInfo] = useState(null);
+  const [currentUserId, setCurrentUserId] = useState(null);
   const [fullscreenImage, setFullscreenImage] = useState(null);
   const [alertVisible, setAlertVisible] = useState(false);
   const [alertData, setAlertData] = useState({ message: "", type: "info", onPrimary: null, primaryLabel: "" });
@@ -42,44 +61,23 @@ export default function ChatComercioRider({ pedidoId, conductorId, carreraId, co
   const { notification } = useNotification();
 
   useEffect(() => {
-    if (notification) cargarMensajes();
-  }, [notification]);
-
-  useEffect(() => {
     const sub = Keyboard.addListener("keyboardDidHide", () => {
-      chatLog("ChatComercioRider", "keyboardHide-blur");
+      chatLog("ChatReserva", "keyboardHide-blur");
       inputRef.current?.blur();
     });
     return () => sub.remove();
   }, []);
 
-  useEffect(() => {
-    obtenerInfoUsuario();
-    cargarMensajes();
-    chatLog("ChatComercioRider", "mount", { pedidoId, carreraId });
-  }, []);
-
-  const obtenerInfoUsuario = async () => {
+  const cargarMensajes = useCallback(async (mostrarCargando = true) => {
+    if (!reservaId) return;
     try {
-      const userData = await AsyncStorage.getItem('userData');
-      if (userData) {
-        const user = JSON.parse(userData);
-        setUserInfo(user);
-      }
-    } catch (error) {
-      console.error('Error obteniendo info usuario:', error);
-    }
-  };
-
-  const cargarMensajes = async () => {
-    try {
+      if (mostrarCargando) setCargando(true);
       const token = await AsyncStorage.getItem('userToken');
       if (!token) {
-        showAlert('No se encontró token de autenticación', "error");
+        if (mostrarCargando) showAlert('No se encontró token de autenticación', "error");
         return;
       }
-      const endpoint = `${BASE_URL}carrera-pedido-chat/messages/${pedidoId}`;
-      const response = await fetch(endpoint, {
+      const response = await fetch(`${BASE_URL}reserva-chat/messages/${reservaId}`, {
         method: 'GET',
         headers: {
           'Accept': 'application/json',
@@ -88,21 +86,75 @@ export default function ChatComercioRider({ pedidoId, conductorId, carreraId, co
       });
       if (response.ok) {
         const data = await response.json();
-        const messages = data.data || data.mensajes || data || [];
-        setMensajes(messages);
+        setMensajes(data.data || []);
       }
     } catch (error) {
-      console.error('Error cargando mensajes:', error);
+      console.error('Error cargando mensajes de reserva:', error);
     } finally {
       setCargando(false);
+    }
+  }, [reservaId]);
+
+  useEffect(() => {
+    chatLog("ChatReserva", "mount", { reservaId });
+    if (notification?.request?.content?.data?.tipo === "chat_reserva") {
+      cargarMensajes(false);
+    }
+  }, [notification, cargarMensajes]);
+
+  useFocusEffect(
+    useCallback(() => {
+      const init = async () => {
+        try {
+          const userData = await AsyncStorage.getItem('userData');
+          if (userData) {
+            const user = JSON.parse(userData);
+            setCurrentUserId(user.id);
+          } else {
+            const userId = await AsyncStorage.getItem('userId');
+            if (userId) setCurrentUserId(Number(userId) || userId);
+          }
+        } catch (e) {}
+      };
+      init();
+      cargarMensajes();
+      const intervalId = setInterval(() => cargarMensajes(false), 10000);
+      return () => clearInterval(intervalId);
+    }, [cargarMensajes])
+  );
+
+  if (!reservaId) {
+    return (
+      <SafeAreaView style={s.safe}>
+        <View style={s.loadingContainer}>
+          <Text style={s.loadingText}>No se encontró la reserva</Text>
+          <TouchableOpacity style={s.retryBtn} onPress={() => onClose ? onClose() : navigation.goBack()}>
+            <Text style={s.retryText}>Volver</Text>
+          </TouchableOpacity>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  const resolveSenderId = async () => {
+    if (isPerfilMode) return senderPerfilId;
+    if (currentUserId) return currentUserId;
+    try {
+      const storedUserData = await AsyncStorage.getItem('userData');
+      const senderId = storedUserData ? JSON.parse(storedUserData)?.id : await AsyncStorage.getItem('userId');
+      if (senderId) setCurrentUserId(senderId);
+      return senderId;
+    } catch (e) {
+      return null;
     }
   };
 
   const enviarMensaje = async () => {
     if (!nuevoMensaje.trim()) return;
 
-    if (!carreraId || !pedidoId || !comercioId || !conductorId) {
-      showAlert('Faltan datos necesarios para enviar el mensaje', "error");
+    const senderId = await resolveSenderId();
+    if (!senderId) {
+      showAlert('No se encontró tu información de usuario', "error");
       return;
     }
 
@@ -118,27 +170,32 @@ export default function ChatComercioRider({ pedidoId, conductorId, carreraId, co
       const escapedJson = JSON.stringify(messageObject).replace(/"/g, '\\"');
       const formattedMessage = `"${escapedJson}"`;
 
-      const requestBody = {
-        carrera_id: parseInt(carreraId),
-        pedido_id: parseInt(pedidoId),
-        negocio_id: parseInt(comercioId),
-        message: formattedMessage,
-      };
+      const requestBody = isPerfilMode
+        ? {
+            reserva_id: parseInt(reservaId),
+            user_perfil_id: parseInt(senderId),
+            message: formattedMessage,
+          }
+        : {
+            reserva_id: parseInt(reservaId),
+            usuario_id: parseInt(senderId),
+            message: formattedMessage,
+          };
 
       const nuevoMensajeLocal = {
         id: `temp-${Date.now()}`,
-        remitente_id: comercioId,
-        destinatario_id: conductorId,
-        mensaje: nuevoMensaje.trim(),
-        remitente: userInfo,
+        reserva_id: reservaId,
+        usuario_id: isPerfilMode ? null : senderId,
+        user_perfil_id: isPerfilMode ? senderId : null,
+        message: formattedMessage,
+        created_at: new Date().toISOString(),
         estado: 'sending',
-        timestamp: new Date().toISOString(),
       };
 
       setMensajes(prev => [...prev, nuevoMensajeLocal]);
       setNuevoMensaje('');
 
-      const response = await fetch(`${BASE_URL}carrera-pedido-chat/send`, {
+      const response = await fetch(`${BASE_URL}reserva-chat/send`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -174,7 +231,7 @@ export default function ChatComercioRider({ pedidoId, conductorId, carreraId, co
         )
       );
 
-      setTimeout(() => cargarMensajes(), 800);
+      setTimeout(() => cargarMensajes(false), 800);
     } catch (error) {
       console.error('Error enviando mensaje:', error);
       showAlert("No se pudo enviar el mensaje", "error");
@@ -194,15 +251,16 @@ export default function ChatComercioRider({ pedidoId, conductorId, carreraId, co
       allowsEditing: true,
       quality: 0.7,
     });
-    if (!result.cancelled) {
+    if (!result.canceled && !result.cancelled) {
       const image = result.assets ? result.assets[0] : result;
       enviarImagen(image);
     }
   };
 
   const enviarImagen = async (image) => {
-    if (!carreraId || !pedidoId || !comercioId) {
-      showAlert('Faltan datos necesarios para enviar la imagen', "error");
+    const senderId = await resolveSenderId();
+    if (!senderId) {
+      showAlert('No se encontró tu información de usuario', "error");
       return;
     }
     setEnviando(true);
@@ -217,9 +275,12 @@ export default function ChatComercioRider({ pedidoId, conductorId, carreraId, co
       const escapedJson = JSON.stringify(messageObject).replace(/"/g, '\\"');
 
       const formData = new FormData();
-      formData.append("carrera_id", String(carreraId));
-      formData.append("pedido_id", String(pedidoId));
-      formData.append("negocio_id", String(comercioId));
+      formData.append("reserva_id", String(reservaId));
+      if (isPerfilMode) {
+        formData.append("user_perfil_id", String(senderId));
+      } else {
+        formData.append("usuario_id", String(senderId));
+      }
       formData.append("message", `"${escapedJson}"`);
       formData.append("image", {
         uri: image.uri,
@@ -229,18 +290,18 @@ export default function ChatComercioRider({ pedidoId, conductorId, carreraId, co
 
       const nuevoMensajeLocal = {
         id: `temp-${Date.now()}`,
-        remitente_id: comercioId,
-        destinatario_id: conductorId,
-        mensaje: 'Imagen',
+        reserva_id: reservaId,
+        usuario_id: isPerfilMode ? null : senderId,
+        user_perfil_id: isPerfilMode ? senderId : null,
+        message: `"${escapedJson}"`,
         image: image.uri,
-        remitente: userInfo,
+        created_at: new Date().toISOString(),
         estado: 'sending',
-        timestamp: new Date().toISOString(),
       };
 
       setMensajes(prev => [...prev, nuevoMensajeLocal]);
 
-      const response = await fetch(`${BASE_URL}carrera-pedido-chat/send`, {
+      const response = await fetch(`${BASE_URL}reserva-chat/send`, {
         method: 'POST',
         headers: {
           'Accept': 'application/json',
@@ -264,6 +325,8 @@ export default function ChatComercioRider({ pedidoId, conductorId, carreraId, co
           msg.id === nuevoMensajeLocal.id ? { ...msg, estado: 'sent' } : msg
         )
       );
+
+      setTimeout(() => cargarMensajes(false), 800);
     } catch (error) {
       console.error('Error enviando imagen:', error);
       showAlert("No se pudo enviar la imagen", "error");
@@ -273,39 +336,49 @@ export default function ChatComercioRider({ pedidoId, conductorId, carreraId, co
   };
 
   const extraerContenido = (item) => {
-    let contenido = item.mensaje;
+    if (item.image && item.id?.toString().startsWith('temp-')) return item.mensaje || 'Imagen';
     if (item.message && typeof item.message === 'string') {
       try {
         const parsed = JSON.parse(item.message);
-        if (parsed.content) contenido = parsed.content;
+        if (parsed.content) return parsed.content;
       } catch (e) {
         try {
           const cleaned = item.message.replace(/^"|"$/g, '').replace(/\\"/g, '"');
           const parsed = JSON.parse(cleaned);
-          if (parsed.content) contenido = parsed.content;
+          if (parsed.content) return parsed.content;
         } catch (e2) {
-          contenido = item.message || item.mensaje || '';
+          return item.message || '';
         }
       }
     }
-    return contenido;
+    return '';
   };
 
   const extraerImagen = (item) => {
     if (item.image) return item.image;
     if (item.message && typeof item.message === 'string') {
-      try {
-        const parsed = JSON.parse(item.message);
-        if (parsed.type === 'file' || parsed.type === 'image') {
-          return `https://back.carbycol.com/storage/${parsed.content}`;
-        }
-      } catch (e) {}
+      const tryParse = (raw) => {
+        try {
+          const parsed = JSON.parse(raw);
+          if (parsed.type === 'file' || parsed.type === 'image') {
+            return getImageUrl(parsed.content);
+          }
+        } catch (e) {}
+        return null;
+      };
+      return tryParse(item.message)
+        ?? tryParse(item.message.replace(/^"|"$/g, '').replace(/\\"/g, '"'));
     }
     return null;
   };
 
   const renderMensaje = ({ item }) => {
-    const esMio = item.remitente_id === comercioId || item.negocio_id === comercioId;
+    const esMio = isPerfilMode
+      ? (item.user_perfil_id != null
+        && String(item.user_perfil_id) === String(senderPerfilId))
+      : (item.usuario_id != null
+        && currentUserId != null
+        && String(item.usuario_id) === String(currentUserId));
     const contenido = extraerContenido(item);
     const imageUri = extraerImagen(item);
 
@@ -323,7 +396,7 @@ export default function ChatComercioRider({ pedidoId, conductorId, carreraId, co
           )}
           <View style={s.metaRow}>
             <Text style={[s.time, esMio ? s.myTime : s.otherTime]}>
-              {new Date(item.timestamp || item.created_at || Date.now()).toLocaleTimeString('es-ES', {
+              {new Date(item.created_at || Date.now()).toLocaleTimeString('es-ES', {
                 hour: '2-digit',
                 minute: '2-digit',
               })}
@@ -339,7 +412,11 @@ export default function ChatComercioRider({ pedidoId, conductorId, carreraId, co
     );
   };
 
-  const quickReplies = ['Pedido listo', 'Estamos preparando el pedido', 'Gracias por tu servicio'];
+  const quickReplies = propQuickReplies ?? (isPerfilMode
+    ? ['Hola, tu reserva fue aceptada', 'Te esperamos a la hora acordada', 'Gracias por preferirnos']
+    : ['Hola, ¿puedo ir antes al servicio?', '¿El servicio es a domicilio o en el local?', 'Gracias']);
+
+  const avatarUri = getImageUrl(chatAvatar);
 
   return (
     <SafeAreaView style={s.safe}>
@@ -350,18 +427,27 @@ export default function ChatComercioRider({ pedidoId, conductorId, carreraId, co
       >
         {!modalMode && (
           <View style={s.header}>
-            <View style={s.headerIcon}>
-              <Feather name="message-circle" size={18} color="#FFFFFF" />
-            </View>
+            <TouchableOpacity style={s.backBtn} onPress={() => onClose ? onClose() : navigation.goBack()} activeOpacity={0.7}>
+              <Feather name="arrow-left" size={20} color="#FFFFFF" />
+            </TouchableOpacity>
+            {avatarUri ? (
+              <Image source={{ uri: avatarUri }} style={s.headerAvatar} />
+            ) : (
+              <View style={s.headerIcon}>
+                <Feather name="message-circle" size={18} color="#FFFFFF" />
+              </View>
+            )}
             <View style={s.headerCenter}>
               <Text style={s.headerTitle} numberOfLines={1}>
-                {conductorNombre || 'Conductor'}
+                {chatTitle || 'Perfil'}
               </Text>
-              <Text style={s.headerSub}>Chat del pedido</Text>
+              <Text style={s.headerSub}>Reserva #{reservaId}</Text>
             </View>
-            <TouchableOpacity style={s.closeBtn} onPress={onClose} activeOpacity={0.7}>
-              <Feather name="x" size={20} color="#FFFFFF" />
-            </TouchableOpacity>
+            {modalMode || onClose ? (
+              <TouchableOpacity style={s.closeBtn} onPress={onClose} activeOpacity={0.7}>
+                <Feather name="x" size={20} color="#FFFFFF" />
+              </TouchableOpacity>
+            ) : null}
           </View>
         )}
 
@@ -380,15 +466,21 @@ export default function ChatComercioRider({ pedidoId, conductorId, carreraId, co
                 data={[...mensajes].reverse()}
                 keyExtractor={(item) => item.id?.toString() || Math.random().toString()}
                 renderItem={renderMensaje}
-                onRefresh={cargarMensajes}
+                onRefresh={() => cargarMensajes()}
                 refreshing={cargando}
                 keyboardShouldPersistTaps="handled"
                 contentContainerStyle={s.messagesContent}
+                ListEmptyComponent={
+                  <View style={s.emptyContainer}>
+                    <Feather name="message-circle" size={44} color="#CBD5E1" />
+                    <Text style={s.emptyText}>No hay mensajes aún</Text>
+                    <Text style={s.emptySubtext}>Escríbele al perfil para coordinar tu reserva</Text>
+                  </View>
+                }
               />
             )}
           </View>
 
-          {/* Quick replies */}
           <View style={s.quickReplies}>
             {quickReplies.map((q) => (
               <TouchableOpacity key={q} style={s.quickReply} onPress={() => setNuevoMensaje(q)} activeOpacity={0.8}>
@@ -408,14 +500,14 @@ export default function ChatComercioRider({ pedidoId, conductorId, carreraId, co
               placeholderTextColor="#94A3B8"
               value={nuevoMensaje}
               onChangeText={(t) => {
-                chatLog("ChatComercioRider", "change", { len: t.length });
+                chatLog("ChatReserva", "change", { len: t.length });
                 setNuevoMensaje(t);
               }}
-              onFocus={() => chatLog("ChatComercioRider", "focus", { len: nuevoMensaje.length })}
-              onBlur={() => chatLog("ChatComercioRider", "blur", { len: nuevoMensaje.length })}
-              onSelectionChange={(e) => chatLog("ChatComercioRider", "selection", e.nativeEvent.selection)}
-              onPressIn={() => chatLog("ChatComercioRider", "pressIn")}
-              onTouchStart={() => chatLog("ChatComercioRider", "touchStart")}
+              onFocus={() => chatLog("ChatReserva", "focus", { len: nuevoMensaje.length })}
+              onBlur={() => chatLog("ChatReserva", "blur", { len: nuevoMensaje.length })}
+              onSelectionChange={(e) => chatLog("ChatReserva", "selection", e.nativeEvent.selection)}
+              onPressIn={() => chatLog("ChatReserva", "pressIn")}
+              onTouchStart={() => chatLog("ChatReserva", "touchStart")}
               editable={!enviando}
               multiline
               maxLength={500}
@@ -477,6 +569,12 @@ const s = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
+  headerAvatar: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: 'rgba(255,255,255,0.18)',
+  },
   closeBtn: {
     width: 36,
     height: 36,
@@ -498,7 +596,6 @@ const s = StyleSheet.create({
   headerSub: {
     color: 'rgba(255,255,255,0.85)',
     fontSize: 11,
-    fontFamily: 'Montserrat_500Medium',
     marginTop: 2,
   },
   chatContainer: { flex: 1 },
@@ -506,6 +603,7 @@ const s = StyleSheet.create({
   messagesContent: {
     paddingVertical: 12,
     paddingHorizontal: 14,
+    flexGrow: 1,
   },
   loadingContainer: {
     flex: 1,
@@ -516,9 +614,33 @@ const s = StyleSheet.create({
   loadingText: {
     marginTop: 10,
     color: '#64748B',
-    fontFamily: 'Montserrat_400Regular',
     fontSize: 13,
   },
+  emptyContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: 48,
+    gap: 6,
+  },
+  emptyText: {
+    fontSize: 14,
+    color: '#64748B',
+    marginTop: 12,
+  },
+  emptySubtext: {
+    fontSize: 12,
+    color: '#94A3B8',
+    textAlign: 'center',
+  },
+  retryBtn: {
+    marginTop: 12,
+    backgroundColor: '#FF5500',
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 20,
+  },
+  retryText: { color: '#FFF' },
   messageImage: {
     width: 220,
     height: 160,
@@ -547,7 +669,6 @@ const s = StyleSheet.create({
   messageText: {
     fontSize: 14,
     lineHeight: 19,
-    fontFamily: 'Montserrat_400Regular',
   },
   myMessageText: { color: '#FFFFFF' },
   otherMessageText: { color: '#0F172A' },
@@ -560,19 +681,16 @@ const s = StyleSheet.create({
   },
   time: {
     fontSize: 10,
-    fontFamily: 'Montserrat_400Regular',
   },
   myTime: { color: 'rgba(255,255,255,0.75)' },
   otherTime: { color: '#94A3B8' },
   statusSending: {
     fontSize: 10,
     color: '#94A3B8',
-    fontFamily: 'Montserrat_400Regular',
   },
   statusError: {
     fontSize: 10,
     color: '#FF4757',
-    fontFamily: 'Montserrat_400Regular',
   },
   quickReplies: {
     flexDirection: 'row',
@@ -593,7 +711,6 @@ const s = StyleSheet.create({
   },
   quickReplyText: {
     fontSize: 11,
-    fontFamily: 'Montserrat_400Regular',
     color: '#0F172A',
   },
   inputContainer: {
@@ -618,7 +735,6 @@ const s = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 10,
     fontSize: 14,
-    fontFamily: 'Montserrat_400Regular',
     color: '#0F172A',
   },
   sendButton: {

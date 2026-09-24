@@ -25,7 +25,7 @@ export const FinishedSheet = ({ tripData, clientName, onDone, loading, showRatin
         <View style={styles.iconCircle}>
           <Feather name="check" size={36} color="#10B981" />
         </View>
-        <Text style={styles.title}>Carrera finalizada</Text>
+        <Text style={styles.title}>Arrendamiento finalizado</Text>
         <Text style={styles.subtitle}>El PIN fue verificado y el pago quedó confirmado.</Text>
 
         <View style={styles.earningBox}>
@@ -56,7 +56,7 @@ export const FinishedSheet = ({ tripData, clientName, onDone, loading, showRatin
         )}
 
         <TouchableOpacity style={[styles.doneBtn, loading && styles.doneBtnDisabled]} onPress={handleDone} disabled={loading} activeOpacity={0.8}>
-          {loading ? <ActivityIndicator size="small" color="#FFFFFF" /> : <Text style={styles.doneText}>Buscar nueva carrera</Text>}
+          {loading ? <ActivityIndicator size="small" color="#FFFFFF" /> : <Text style={styles.doneText}>Buscar nuevo arrendamiento</Text>}
         </TouchableOpacity>
       </View>
     </View>

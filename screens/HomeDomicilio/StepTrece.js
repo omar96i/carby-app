@@ -333,7 +333,7 @@ export default function StepTrece({ route }) {
               body: JSON.stringify({ estado: 'cancelado' }),
           });
           navigation.goBack();
-          showAlert("Cancelado", "Carrera cancelada.");
+          showAlert("Cancelado", "Arrendamiento cancelado.");
       } catch (e) { showAlert("Error", "No se pudo cancelar"); }
   };
 
@@ -435,7 +435,6 @@ export default function StepTrece({ route }) {
                     )}
                     <View style={styles.userInfo}>
                         <Text style={styles.userName}>{tripData?.usuario?.nombre_completo || "Usuario"}</Text>
-                        <Text style={styles.userPhone}>{tripData?.usuario?.numero_telefono || "Sin teléfono"}</Text>
                         <TouchableOpacity style={[styles.ratingBtnSmall, hasRated && {backgroundColor: '#CCC'}]} onPress={() => setRatingModalVisible(true)} disabled={hasRated}>
                             <FontAwesome name="star" size={11} color={hasRated ? "#FFF" : "#FFF"} />
                             <Text style={styles.ratingBtnText}>{hasRated ? "Calificado" : "Calificar"}</Text>
@@ -507,7 +506,7 @@ export default function StepTrece({ route }) {
                 )}
 
                 <TouchableOpacity style={styles.finishBtn} onPress={() => setModalVisible(true)}>
-                    <Text style={styles.finishBtnText}>Finalizar Carrera</Text>
+                    <Text style={styles.finishBtnText}>Finalizar Arrendamiento</Text>
                     <MaterialCommunityIcons name="flag-checkered" size={20} color="#FFF" />
                 </TouchableOpacity>
 
@@ -629,7 +628,6 @@ const styles = StyleSheet.create({
   userAvatarInitial: { color: '#FFF', fontSize: 20, fontFamily: 'Inter_700Bold' },
   userInfo: { flex: 1, marginLeft: 15 },
   userName: { color: '#1C1C1E', fontSize: 16, fontFamily: 'Inter_700Bold' },
-  userPhone: { color: '#888', fontSize: 12 },
   ratingBtnSmall: { backgroundColor: '#fa6205', flexDirection: 'row', alignSelf: 'flex-start', paddingHorizontal: 10, paddingVertical: 5, borderRadius: 8, marginTop: 6, alignItems: 'center' },
   ratingBtnText: { color: '#FFF', fontSize: 11, fontFamily: 'Inter_700Bold', marginLeft: 4 },
   routeCard: { backgroundColor: '#FFFFFF', padding: 16, borderRadius: 16, marginBottom: 14, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.06, shadowRadius: 8, elevation: 3 },

@@ -3,10 +3,16 @@ import {
   SafeAreaView,
   View,
   FlatList,
+  SectionList,
   ActivityIndicator,
   RefreshControl,
   StyleSheet,
+  Modal,
+  TouchableOpacity,
+  Text,
+  Image,
 } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
 import { useNavigation, useFocusEffect } from "@react-navigation/native";
 import { useFonts, Montserrat_400Regular, Montserrat_700Bold, Montserrat_300Light, Montserrat_600SemiBold, Montserrat_800ExtraBold } from "@expo-google-fonts/montserrat";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -22,11 +28,18 @@ import ReservaCard from "../../components/usuario/pedidos/ReservaCard";
 import EmptyState from "../../components/usuario/pedidos/EmptyState";
 import DetailSheet from "../../components/usuario/pedidos/DetailSheet";
 import CalificationModal from "../../components/usuario/pedidos/CalificationModal";
+import ChatReserva from "./ChatReserva";
 import { COLORS } from "../../components/usuario/pedidos/helpers";
 
 import usePedidos from "../../hooks/usuario/usePedidos";
 import useReservas from "../../hooks/usuario/useReservas";
 import useCalificacion from "../../hooks/usuario/useCalificacion";
+
+const getReservaImageUrl = (path) => {
+  if (!path) return null;
+  if (path.startsWith("http")) return path;
+  return `${BASE_URL.toString().replace(/\/api\/?$/, "").replace(/\/$/, "")}/storage/${path}`;
+};
 
 export default function Pedidos({ route }) {
   const navigation = useNavigation();
@@ -46,6 +59,7 @@ export default function Pedidos({ route }) {
 
   const [activeTab, setActiveTab] = useState("activas");
   const [selectedItem, setSelectedItem] = useState(null);
+  const [chatReserva, setChatReserva] = useState(null);
   const [alertVisible, setAlertVisible] = useState(false);
   const [alertData, setAlertData] = useState({ message: "", type: "info", onPrimary: null, primaryLabel: "" });
   const hasFetchedReservasRef = useRef(false);
@@ -134,13 +148,13 @@ export default function Pedidos({ route }) {
             body: JSON.stringify({ estado: "cancelado" }),
           });
           if (!response.ok) {
-            showAlert("No se pudo cancelar la carrera", "error");
+            showAlert("No se pudo cancelar el arrendamiento", "error");
             return;
           }
-          showAlert("Tu viaje ha sido cancelado", "success");
+          showAlert("Tu arrendamiento ha sido cancelado", "success");
           fetchPedidos(activeTab);
         } catch (e) {
-          showAlert("Hubo un problema al cancelar la carrera", "error");
+          showAlert("Hubo un problema al cancelar el arrendamiento", "error");
         }
       },
       "Sí, cancelar"
@@ -164,8 +178,24 @@ export default function Pedidos({ route }) {
     );
   }, [cancelReserva]);
 
+  // ── Chat reserva (modal 70%) ──
+  const handleChatReserva = useCallback((item) => {
+    if (!item) return;
+    setChatReserva({
+      reservaId: item.id,
+      perfilNombre: item.servicio_nombre || item.user_perfil?.nombre || "Perfil",
+      perfilFoto: getReservaImageUrl(item.servicio_imagen || item.user_perfil?.file || item.user_perfil?.user?.foto_documento_file),
+    });
+  }, []);
+
   // ── Data dispatch ──
   const listData = activeTab === "reservas" ? filteredReservas : filteredPedidos;
+
+  const reservaSections = [
+    { title: "Pendientes", data: reservas.filter((r) => r.estado === "pendiente") },
+    { title: "Aceptadas", data: reservas.filter((r) => r.estado === "aceptado") },
+    { title: "Completadas / Canceladas", data: reservas.filter((r) => ["completado", "confirmado", "cancelado"].includes(r.estado)) },
+  ].filter((s) => s.data.length > 0);
 
   const counts = {
     activas: countActivas,
@@ -181,10 +211,14 @@ export default function Pedidos({ route }) {
     );
   }
 
+  const renderReservaItem = ({ item }) => (
+    <ReservaCard item={item} onCancel={handleCancelReserva} onChat={handleChatReserva} />
+  );
+
   const renderItem = ({ item }) => {
     const isReserva = item.user_perfil && item.fecha && item.hora_inicio;
     if (activeTab === "reservas" || isReserva) {
-      return <ReservaCard item={item} onCancel={handleCancelReserva} />;
+      return <ReservaCard item={item} onCancel={handleCancelReserva} onChat={handleChatReserva} />;
     }
     return (
       <TripCard
@@ -212,6 +246,30 @@ export default function Pedidos({ route }) {
           <View style={s.loadingContainer}>
             <EmptyState tab={activeTab} />
           </View>
+        ) : activeTab === "reservas" ? (
+          <SectionList
+            sections={reservaSections}
+            renderItem={renderReservaItem}
+            renderSectionHeader={({ section: { title } }) => (
+              <Text style={s.sectionHeader}>{title}</Text>
+            )}
+            keyExtractor={(item) => `reserva-${item.id}`}
+            contentContainerStyle={s.listContent}
+            refreshControl={
+              <RefreshControl
+                refreshing={refreshing}
+                onRefresh={() => {
+                  hasFetchedReservasRef.current = false;
+                  onRefresh(activeTab);
+                  fetchReservas();
+                }}
+                colors={[COLORS.brand]}
+              />
+            }
+            ListEmptyComponent={<EmptyState tab={activeTab} />}
+            showsVerticalScrollIndicator={false}
+            stickySectionHeadersEnabled={false}
+          />
         ) : (
           <FlatList
             data={listData}
@@ -239,6 +297,56 @@ export default function Pedidos({ route }) {
       </View>
 
       <DetailSheet item={selectedItem} onClose={() => setSelectedItem(null)} onNavigate={navigateToDetails} />
+
+      <Modal
+        visible={!!chatReserva}
+        animationType="slide"
+        transparent={true}
+        onRequestClose={() => setChatReserva(null)}
+      >
+        {chatReserva && (
+          <View style={s.chatOverlay}>
+            <TouchableOpacity
+              style={s.chatBackdrop}
+              activeOpacity={1}
+              onPress={() => setChatReserva(null)}
+            />
+            <View style={s.chatPanel}>
+              <View style={s.chatHeader}>
+                {chatReserva.perfilFoto ? (
+                  <Image source={{ uri: chatReserva.perfilFoto }} style={s.chatAvatarImg} />
+                ) : (
+                  <View style={s.chatAvatar}>
+                    <Ionicons name="person" size={20} color="#FFFFFF" />
+                  </View>
+                )}
+                <View style={s.chatHeaderText}>
+                  <Text style={s.chatTitle} numberOfLines={1}>
+                    {chatReserva.perfilNombre || "Perfil"}
+                  </Text>
+                  <Text style={s.chatSub}>Reserva #{chatReserva.reservaId}</Text>
+                </View>
+                <TouchableOpacity
+                  style={s.closeChatBtn}
+                  onPress={() => setChatReserva(null)}
+                  activeOpacity={0.7}
+                >
+                  <Ionicons name="close" size={20} color="#FFFFFF" />
+                </TouchableOpacity>
+              </View>
+              <View style={s.chatBody}>
+                <ChatReserva
+                  reservaId={chatReserva.reservaId}
+                  perfilNombre={chatReserva.perfilNombre}
+                  perfilFoto={chatReserva.perfilFoto}
+                  onClose={() => setChatReserva(null)}
+                  modalMode={true}
+                />
+              </View>
+            </View>
+          </View>
+        )}
+      </Modal>
 
       <CalificationModal
         visible={calif.modalVisible}
@@ -277,9 +385,29 @@ const s = StyleSheet.create({
     paddingBottom: 32,
     gap: 14,
   },
+  sectionHeader: {
+    fontSize: 13,
+    fontFamily: "Montserrat_800ExtraBold",
+    color: COLORS.muted,
+    textTransform: "uppercase",
+    letterSpacing: 0.8,
+    marginBottom: 8,
+    marginTop: 8,
+  },
   loadingContainer: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
   },
+  chatOverlay: { flex: 1, justifyContent: "flex-end", backgroundColor: "rgba(15,23,42,0.35)" },
+  chatBackdrop: { ...StyleSheet.absoluteFillObject },
+  chatPanel: { height: "70%", backgroundColor: "#FFFFFF", borderTopLeftRadius: 28, borderTopRightRadius: 28, overflow: "hidden" },
+  chatHeader: { flexDirection: "row", alignItems: "center", gap: 12, backgroundColor: "#FF5500", paddingHorizontal: 16, paddingVertical: 14 },
+  chatAvatar: { width: 44, height: 44, borderRadius: 22, backgroundColor: "rgba(255,255,255,0.25)", justifyContent: "center", alignItems: "center" },
+  chatAvatarImg: { width: 44, height: 44, borderRadius: 22, backgroundColor: "rgba(255,255,255,0.25)" },
+  chatHeaderText: { flex: 1 },
+  chatTitle: { fontSize: 16, fontFamily: "Montserrat_700Bold", color: "#FFFFFF" },
+  chatSub: { fontSize: 11, fontFamily: "Montserrat_600SemiBold", color: "rgba(255,255,255,0.85)", marginTop: 2 },
+  closeChatBtn: { width: 36, height: 36, borderRadius: 18, backgroundColor: "rgba(255,255,255,0.25)", justifyContent: "center", alignItems: "center" },
+  chatBody: { flex: 1 },
 });

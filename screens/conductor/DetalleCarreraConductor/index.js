@@ -22,7 +22,7 @@ import { useTripData } from "./hooks/useTripData";
 import { usePassengerLocation } from "./hooks/usePassengerLocation";
 import { useDriverPing } from "./hooks/useDriverPing";
 import { useRoute as useRouteCoords } from "../../usuario/DetalleCarrera/hooks/useRoute";
-import { parseCoords, getTripState, formatCurrency, getImageUrl } from "./utils";
+import { parseCoords, getTripState, getPedidoState, formatCurrency, getImageUrl } from "./utils";
 import { BASE_URL } from "../../../constants/url";
 
 import { TopBar } from "./components/TopBar";
@@ -31,6 +31,8 @@ import { ClientSheet } from "./components/ClientSheet";
 import { FinishedSheet } from "./components/FinishedSheet";
 import { PinModal } from "./components/PinModal";
 import ChatScreen from "../../../components/ChatScreen";
+import ChatRiderComercio from "../../../screens/ChatRiderComercio";
+import { useNotification } from "../../../context/NotificationContext";
 import AlertaModal from "../../../components/ErrorModal";
 
 export default function DetalleCarreraConductor() {
@@ -43,6 +45,7 @@ export default function DetalleCarreraConductor() {
   const [parsedInfo, setParsedInfo] = useState({ origen: "", destino: "", observaciones: "" });
   const [clientLive, setClientLive] = useState(true);
   const [showChat, setShowChat] = useState(false);
+  const [showCommerceChat, setShowCommerceChat] = useState(false);
   const [pinModalVisible, setPinModalVisible] = useState(false);
   const [enteredPin, setEnteredPin] = useState("");
   const [pinError, setPinError] = useState(false);
@@ -59,7 +62,14 @@ export default function DetalleCarreraConductor() {
     setAlertVisible(true);
   };
 
-  const { tripData, isLoading, error, refetch } = useTripData(activeId);
+  const { tripData, isLoading, error, refetch } = useTripData(activeId, showChat || showCommerceChat);
+  const { notification } = useNotification();
+
+  // Refetch ante push (estado o chat)
+  useEffect(() => {
+    if (!notification) return;
+    refetch();
+  }, [notification, refetch]);
   useDriverPing(true);
   const passengerLocation = usePassengerLocation(tripData?.usuario_id, clientLive);
 
@@ -82,9 +92,26 @@ export default function DetalleCarreraConductor() {
   const pickup = useMemo(() => parseCoords(tripData?.punto_recogida), [tripData?.punto_recogida]);
   const destination = useMemo(() => parseCoords(tripData?.destino), [tripData?.destino]);
   const routeCoords = useRouteCoords(pickup, destination);
-  const state = useMemo(() => getTripState(tripData?.estado), [tripData?.estado]);
-  const isFinished = state === "finished";
   const isDelivery = !!tripData?.pedido;
+  const pedido = tripData?.pedido;
+  const comercio = pedido?.comercio;
+  const comercioFotoRaw =
+    comercio?.foto_documento_file ||
+    comercio?.imagen ||
+    comercio?.logo ||
+    comercio?.foto ||
+    comercio?.foto_perfil ||
+    null;
+  const comercioFoto = comercioFotoRaw
+    ? (comercioFotoRaw.startsWith("http")
+      ? comercioFotoRaw
+      : `${BASE_URL.toString().replace(/\/api\/?$/, "").replace(/\/$/, "")}/storage/${comercioFotoRaw}`)
+    : null;
+  const state = useMemo(
+    () => (isDelivery ? getPedidoState(tripData?.estado) : getTripState(tripData?.estado)),
+    [tripData?.estado, isDelivery]
+  );
+  const isFinished = state === "finished";
 
   useEffect(() => {
     if (tripData?.estado_pago === "aprobado") setPaymentApproved(true);
@@ -146,21 +173,16 @@ export default function DetalleCarreraConductor() {
     }
   };
 
+  const handleArriveAtStore = async () => {
+    await updateEstado("en_comercio");
+  };
+
   const handleArrive = async () => {
     await updateEstado("llegado");
+  };
 
-    // Intentar notificar al pasajero en segundo plano; si no tiene token, no bloqueamos
-    if (tripData?.usuario_id) {
-      try {
-        const token = await AsyncStorage.getItem("userToken");
-        await fetch(`${BASE_URL}enviar-usuario/${tripData.usuario_id}`, {
-          method: "GET",
-          headers: { Authorization: `Bearer ${token}` },
-        });
-      } catch (e) {
-        console.log("Notificación no enviada:", e.message);
-      }
-    }
+  const handlePickupOrder = async () => {
+    await updateEstado("recogido");
   };
 
   const handleStartTrip = () => {
@@ -191,28 +213,6 @@ export default function DetalleCarreraConductor() {
       }, 1500);
     } catch (e) {
       showAlert("Error al finalizar en servidor", "error");
-    }
-  };
-
-  const handleNotify = async (type) => {
-    try {
-      let url = "";
-      if (type === "comercio") {
-        if (!tripData?.pedido_id) return;
-        url = `${BASE_URL}enviar-comercio/${tripData.pedido_id}`;
-      } else {
-        if (!tripData?.usuario_id) return;
-        url = `${BASE_URL}enviar-usuario/${tripData.usuario_id}`;
-      }
-      const token = await AsyncStorage.getItem("userToken");
-      const response = await fetch(url, {
-        method: "GET",
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      if (!response.ok) throw new Error("Error notificando");
-      showAlert(`Se notificó al ${type === "comercio" ? "comercio" : "cliente"}`, "success");
-    } catch (e) {
-      showAlert("No se pudo enviar la notificación", "error");
     }
   };
 
@@ -263,7 +263,7 @@ export default function DetalleCarreraConductor() {
         throw new Error(data.message || `HTTP ${response.status}`);
       }
 
-      showAlert("Carrera cancelada", "success", () => navigation.replace("BottomTabNavigatorDelivery"), "Aceptar");
+      showAlert("Arrendamiento cancelado", "success", () => navigation.replace("BottomTabNavigatorDelivery"), "Aceptar");
     } catch (e) {
       console.error("Error cancelando:", e);
       showAlert(`No se pudo cancelar: ${e.message}`, "error");
@@ -336,7 +336,7 @@ export default function DetalleCarreraConductor() {
               driverLocation={driverLocation}
               passengerLocation={passengerLocation}
               driverType={tripData?.conductor?.tipo_usuario}
-              route={state === "to_destination" ? routeCoords.coords : []}
+              route={(state === "to_destination" || state === "to_customer") ? routeCoords.coords : []}
               state={state}
             />
           </View>
@@ -364,15 +364,17 @@ export default function DetalleCarreraConductor() {
               clientLive={clientLive}
               onToggleClientLive={() => setClientLive((v) => !v)}
               onShowChat={() => setShowChat(true)}
-              onNotifyCommerce={() => handleNotify("comercio")}
+              onShowCommerceChat={() => setShowCommerceChat(true)}
               onApprovePayment={handleApprovePayment}
               onArrive={handleArrive}
+              onArriveAtStore={handleArriveAtStore}
+              onPickupOrder={handlePickupOrder}
               onStartTrip={handleStartTrip}
               onFinish={handleFinish}
               onCompleteDelivery={handleFinish}
               onCancel={() =>
                 showAlert(
-                  "¿Cancelar carrera?\n\nSi cancelas, esta carrera contará como un viaje y afectará tu historial.",
+                  "¿Cancelar arrendamiento?\n\nSi cancelas, este arrendamiento contará como un viaje y afectará tu historial.",
                   "confirm",
                   handleCancel,
                   "Sí, cancelar"
@@ -409,11 +411,52 @@ export default function DetalleCarreraConductor() {
                     <Text style={styles.chatStatus}>Pasajero</Text>
                   </View>
                   <TouchableOpacity onPress={() => setShowChat(false)} style={styles.closeChatBtn}>
-                    <Feather name="x" size={20} color="#64748B" />
+                    <Feather name="x" size={20} color="#FFFFFF" />
                   </TouchableOpacity>
                 </View>
                 <View style={styles.chatBody}>
                   <ChatScreen tripId={activeId} />
+                </View>
+              </View>
+            </View>
+          )}
+
+          {showCommerceChat && pedido?.id && (
+            <View style={styles.chatOverlay}>
+              <TouchableOpacity
+                style={styles.chatBackdrop}
+                activeOpacity={1}
+                onPress={() => setShowCommerceChat(false)}
+              />
+              <View style={styles.chatPanel}>
+                <View style={styles.chatHeader}>
+                  {comercioFoto ? (
+                    <Image source={{ uri: comercioFoto }} style={styles.chatAvatar} />
+                  ) : (
+                    <View style={[styles.chatAvatar, styles.chatAvatarFallback]}>
+                      <Feather name="message-circle" size={20} color="#FFFFFF" />
+                    </View>
+                  )}
+                  <View style={styles.chatHeaderText}>
+                    <Text style={styles.chatTitle} numberOfLines={1}>
+                      {comercio?.establecimiento_nombre || comercio?.nombre || "Comercio"}
+                    </Text>
+                    <Text style={styles.chatStatus}>Chat del pedido</Text>
+                  </View>
+                  <TouchableOpacity onPress={() => setShowCommerceChat(false)} style={styles.closeChatBtn}>
+                    <Feather name="x" size={20} color="#FFFFFF" />
+                  </TouchableOpacity>
+                </View>
+                <View style={styles.chatBody}>
+                  <ChatRiderComercio
+                    pedidoId={pedido.id}
+                    carreraId={activeId}
+                    comercioId={comercio?.id || pedido.comercio_id}
+                    comercioNombre={comercio?.establecimiento_nombre || comercio?.nombre || "Comercio"}
+                    tipo="rider-comercio"
+                    onClose={() => setShowCommerceChat(false)}
+                    modalMode={true}
+                  />
                 </View>
               </View>
             </View>
@@ -533,6 +576,12 @@ const styles = StyleSheet.create({
     backgroundColor: "#FFFFFF",
     borderWidth: 2,
     borderColor: "#FFFFFF",
+  },
+  chatAvatarFallback: {
+    backgroundColor: "rgba(255,255,255,0.25)",
+    borderWidth: 0,
+    justifyContent: "center",
+    alignItems: "center",
   },
   chatHeaderText: {
     flex: 1,

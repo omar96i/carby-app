@@ -10,7 +10,7 @@ export default function AcceptModal({ visible, step, errorMsg, onClose, onConfir
           {step === "confirm" && (
             <>
               <MaterialCommunityIcons name="help-circle-outline" size={50} color="#fa6205" />
-              <Text style={styles.modalTitle}>¿Aceptar Carrera?</Text>
+              <Text style={styles.modalTitle}>¿Aceptar Arrendamiento?</Text>
               <Text style={styles.modalText}>El servicio se asignará a tu cuenta inmediatamente.</Text>
               <View style={styles.modalButtons}>
                 <TouchableOpacity style={[styles.modalButton, styles.cancelButton]} onPress={onClose}>
@@ -27,14 +27,14 @@ export default function AcceptModal({ visible, step, errorMsg, onClose, onConfir
             <>
               <ActivityIndicator size="large" color="#fa6205" style={{ marginVertical: 20 }} />
               <Text style={styles.modalTitle}>Procesando...</Text>
-              <Text style={styles.modalText}>Validando disponibilidad de la carrera.</Text>
+              <Text style={styles.modalText}>Validando disponibilidad del arrendamiento.</Text>
             </>
           )}
 
           {step === "success" && (
             <>
               <MaterialCommunityIcons name="check-circle" size={50} color="#fa6205" />
-              <Text style={styles.modalTitle}>¡Carrera Asignada!</Text>
+              <Text style={styles.modalTitle}>¡Arrendamiento Asignado!</Text>
               <Text style={styles.modalText}>Prepárate para recoger el pedido.</Text>
             </>
           )}

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import { View, Text, TextInput, TouchableOpacity, FlatList, StyleSheet, ActivityIndicator, Image, KeyboardAvoidingView, Keyboard, Platform } from "react-native";
 import { Feather } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -6,13 +6,15 @@ import * as ImagePicker from 'expo-image-picker';
 import { BASE_URL } from "../constants/url";
 import { useNotification } from "../context/NotificationContext";
 import AlertaModal from "../components/ErrorModal";
+import FullscreenImageViewer from "../components/usuario/pedidos/FullscreenImageViewer";
+import { chatLog } from "../utils/chatDebug";
 
 const ChatUsuario = ({ tripId }) => {
   const [messages, setMessages] = useState([]);
   const [inputText, setInputText] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [isLoadingHistory, setIsLoadingHistory] = useState(false);
-  const [keyboardVisible, setKeyboardVisible] = useState(false);
+  const [fullscreenImage, setFullscreenImage] = useState(null);
   const [alertVisible, setAlertVisible] = useState(false);
   const [alertData, setAlertData] = useState({ message: "", type: "info", onPrimary: null, primaryLabel: "" });
 
@@ -22,19 +24,16 @@ const ChatUsuario = ({ tripId }) => {
   };
 
   useEffect(() => {
-    const showSubscription = Keyboard.addListener("keyboardDidShow", () => {
-      console.log("entre")
-      setKeyboardVisible(true);
-    });
-    const hideSubscription = Keyboard.addListener("keyboardDidHide", () => {
-      console.log("entre false")
-      setKeyboardVisible(false);
-    });
+    chatLog("ChatUsuario", "mount", { tripId });
+  }, []);
 
-    return () => {
-      showSubscription.remove();
-      hideSubscription.remove();
-    };
+  const inputRef = useRef(null);
+  useEffect(() => {
+    const sub = Keyboard.addListener("keyboardDidHide", () => {
+      chatLog("ChatUsuario", "keyboardHide-blur");
+      inputRef.current?.blur();
+    });
+    return () => sub.remove();
   }, []);
 
   useEffect(() => {
@@ -48,15 +47,15 @@ const ChatUsuario = ({ tripId }) => {
 
   useEffect(() => {
     if (notification) {
-      fetchPreviousMessages()
+      fetchPreviousMessages(false)
     }
   }, [notification]);
 
   // Función para obtener mensajes anteriores
-  const fetchPreviousMessages = async () => {
+  const fetchPreviousMessages = useCallback(async (mostrarCargando = true) => {
     if (!tripId) return;
 
-    setIsLoadingHistory(true);
+    if (mostrarCargando) setIsLoadingHistory(true);
 
     try {
       const token = await AsyncStorage.getItem("userToken");
@@ -198,9 +197,9 @@ const ChatUsuario = ({ tripId }) => {
     } catch (error) {
       console.error("Error fetching messages:", error);
     } finally {
-      setIsLoadingHistory(false);
+      if (mostrarCargando) setIsLoadingHistory(false);
     }
-  };
+  }, [tripId]);
 
   // Función para enviar mensajes de texto
   const sendMessage = async () => {
@@ -382,7 +381,9 @@ const ChatUsuario = ({ tripId }) => {
         item.isMyMessage ? styles.myBubble : styles.otherBubble
       ]}>
         {item.image ? (
-          <Image source={{ uri: item.image }} style={styles.messageImage} />
+          <TouchableOpacity onPress={() => setFullscreenImage(item.image)} activeOpacity={0.85}>
+            <Image source={{ uri: item.image }} style={styles.messageImage} />
+          </TouchableOpacity>
         ) : (
           <Text style={[
             styles.messageText,
@@ -452,11 +453,20 @@ const ChatUsuario = ({ tripId }) => {
             <Feather name="camera" size={22} color="#64748B" />
           </TouchableOpacity>
           <TextInput
+            ref={inputRef}
             style={styles.input}
             placeholder="Escribe un mensaje..."
             placeholderTextColor="#94A3B8"
             value={inputText}
-            onChangeText={setInputText}
+            onChangeText={(t) => {
+              chatLog("ChatUsuario", "change", { len: t.length });
+              setInputText(t);
+            }}
+            onFocus={() => chatLog("ChatUsuario", "focus", { len: inputText.length })}
+            onBlur={() => chatLog("ChatUsuario", "blur", { len: inputText.length })}
+            onSelectionChange={(e) => chatLog("ChatUsuario", "selection", e.nativeEvent.selection)}
+            onPressIn={() => chatLog("ChatUsuario", "pressIn")}
+            onTouchStart={() => chatLog("ChatUsuario", "touchStart")}
             editable={!isLoading}
             multiline={true}
             maxLength={500}
@@ -483,6 +493,7 @@ const ChatUsuario = ({ tripId }) => {
         onPrimary={alertData.onPrimary}
         primaryLabel={alertData.primaryLabel}
       />
+      <FullscreenImageViewer uri={fullscreenImage} onClose={() => setFullscreenImage(null)} />
     </KeyboardAvoidingView>
   );
 };

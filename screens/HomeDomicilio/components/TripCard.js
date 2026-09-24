@@ -42,7 +42,7 @@ export default function TripCard({
           <View style={styles.queueBar}>
             <MaterialCommunityIcons name="layers-triple-outline" size={14} color="#fa6205" />
             <Text style={styles.queueText}>
-              {queueCount === 1 ? "1 carrera más en espera" : `${queueCount} carreras más en espera`}
+              {queueCount === 1 ? "1 arrendamiento más en espera" : `${queueCount} arrendamientos más en espera`}
               {nextTrip && <Text style={styles.queueNextPrice}> • Sig: {formatPrice(nextTrip.costo)}</Text>}
             </Text>
           </View>
@@ -94,9 +94,6 @@ export default function TripCard({
             <Text style={styles.customerName} numberOfLines={1}>
               {usuario?.nombre_completo || "Usuario"}
             </Text>
-            {usuario?.numero_telefono && (
-              <Text style={styles.customerPhone}>{usuario.numero_telefono}</Text>
-            )}
           </View>
           <View style={styles.ratingBadge}>
             <Ionicons name="star" size={12} color="#FFD700" />
@@ -149,7 +146,7 @@ export default function TripCard({
 
           <TouchableOpacity style={styles.acceptBtnContainer} onPress={() => onAccept(trip.id)} activeOpacity={0.8}>
             <Animated.View style={[styles.acceptBtnProgress, { width: widthInterpolate }]} />
-            <Text style={styles.acceptText}>ACEPTAR CARRERA</Text>
+            <Text style={styles.acceptText}>ACEPTAR ARRENDAMIENTO</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -318,12 +315,6 @@ const styles = StyleSheet.create({
     color: "#1C1C1E",
     fontFamily: "Montserrat_700Bold",
     fontSize: 13,
-  },
-  customerPhone: {
-    color: "#666",
-    fontFamily: "Montserrat_500Medium",
-    fontSize: 12,
-    marginTop: 2,
   },
   ratingBadge: {
     flexDirection: "row",

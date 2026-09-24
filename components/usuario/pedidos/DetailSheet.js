@@ -132,7 +132,7 @@ export default function DetailSheet({ item, onClose, onNavigate }) {
               </View>
               <View style={s.titleCol}>
                 <Text style={s.title} numberOfLines={1}>
-                  {esCarrera ? `Viaje en ${item.tipo_viaje || "Estándar"}` : (item.comercio?.establecimiento_nombre || "Pedido")}
+                  {esCarrera ? `Arrendamiento en ${item.tipo_viaje || "Estándar"}` : (item.comercio?.establecimiento_nombre || "Pedido")}
                 </Text>
                 <Text style={s.titleSub}>#{item.id} · {formatDate(item.created_at || item.fecha)}</Text>
                 {(item.pin || item.carrera?.pin) ? (

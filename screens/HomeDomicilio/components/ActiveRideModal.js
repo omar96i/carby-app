@@ -8,7 +8,7 @@ export default function ActiveRideModal({ visible, onClose }) {
       <View style={styles.modalOverlay}>
         <View style={styles.modalContent}>
           <MaterialCommunityIcons name="bike-fast" size={40} color="#fa6205" />
-          <Text style={styles.modalTitle}>Carrera en Curso</Text>
+          <Text style={styles.modalTitle}>Arrendamiento en Curso</Text>
           <Text style={styles.modalText}>Termina tu servicio actual.</Text>
           <TouchableOpacity style={styles.modalActionBtn} onPress={onClose}>
             <Text style={styles.modalActionText}>ENTENDIDO</Text>

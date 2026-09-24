@@ -240,7 +240,7 @@ const CajaMisterioScreen = () => {
                         <View style={styles.header}>
                             <Text style={styles.title}>Fidelización Clientes Carby</Text>
                             <Text style={styles.subtitle}>
-                                Ganas puntos con tus compras y carreras para canjear por premios increíbles. ¡Sigue así!
+                                Ganas puntos con tus compras y arrendamientos para canjear por premios increíbles. ¡Sigue así!
                             </Text>
                         </View>
                     </>
@@ -321,7 +321,7 @@ const CajaMisterioScreen = () => {
                     <View style={styles.tooltipContent}>
                         <Text style={styles.tooltipTitle}>¿Cómo ganar puntos?</Text>
                         <Text style={styles.tooltipText}>
-                            Acumulas puntos de fidelidad automáticamente al completar compras en nuestro marketplace, usar nuestros servicios de delivery o realizar carreras de transporte. ¡Mientras más uses la app, más ganas!
+                            Acumulas puntos de fidelidad automáticamente al completar compras en nuestro marketplace, usar nuestros servicios de delivery o realizar arrendamientos de transporte. ¡Mientras más uses la app, más ganas!
                         </Text>
                     </View>
                 </TouchableOpacity>

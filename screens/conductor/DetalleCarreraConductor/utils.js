@@ -34,12 +34,27 @@ export const formatCurrency = (value) => {
   return "$" + Math.round(num).toLocaleString("es-CO");
 };
 
+export const CARRERA_ESTADOS = {
+  pendiente: { label: "Buscando conductor", interno: "to_pickup" },
+  aceptado: { label: "Conductor aceptó el arrendamiento", interno: "to_pickup" },
+  llegado: { label: "Conductor llegó donde el usuario", interno: "arrived" },
+  activo: { label: "En camino al lugar de llegada", interno: "to_destination" },
+  completado: { label: "Arrendamiento completado", interno: "finished" },
+  cancelado: { label: "Arrendamiento cancelado", interno: "canceled" },
+};
+
 export const getTripState = (estado) => {
   if (!estado) return "to_pickup";
   const e = estado.toLowerCase();
-  if (["completado", "finalizado"].includes(e)) return "finished";
-  if (["activo", "iniciado", "en_viaje"].includes(e)) return "to_destination";
+  if (e === "pendiente") return "to_pickup";
+  if (e === "aceptado") return "to_pickup";
   if (e === "llegado") return "arrived";
+  if (e === "activo") return "to_destination";
+  if (e === "completado") return "finished";
+  if (e === "cancelado") return "canceled";
+  if (e === "finalizado") return "finished";
+  if (["iniciado", "en_viaje"].includes(e)) return "to_destination";
+  if (["en_camino", "en_curso"].includes(e)) return "to_pickup";
   return "to_pickup";
 };
 
@@ -69,9 +84,33 @@ export const getVehicleIcon = (tipoUsuario) => {
   }
 };
 
+export const PEDIDO_ESTADOS = {
+  aceptado: { label: "Pedido aceptado", interno: "accepted" },
+  en_comercio: { label: "Llegó al comercio", interno: "at_store" },
+  recogido: { label: "Pedido recogido · en camino al usuario", interno: "to_customer" },
+  completado: { label: "Pedido entregado", interno: "finished" },
+  cancelado: { label: "Pedido cancelado", interno: "canceled" },
+};
+
+export const getPedidoState = (estado) => {
+  if (!estado) return "accepted";
+  const e = estado.toLowerCase();
+  if (e === "aceptado") return "accepted";
+  if (e === "en_comercio") return "at_store";
+  if (e === "recogido") return "to_customer";
+  if (e === "completado") return "finished";
+  if (e === "cancelado") return "canceled";
+  if (e === "pendiente") return "accepted";
+  return "accepted";
+};
+
 export const HEADER_TEXT = {
-  to_pickup: { title: "En camino a recoger", sub: "Dirígete al punto de recogida", tone: "#FF5500" },
-  arrived: { title: "Llegaste al punto de recogida", sub: "Avisa al pasajero que ya estás aquí", tone: "#10B981" },
-  to_destination: { title: "En viaje al destino", sub: "Lleva al pasajero a su destino", tone: "#FF5500" },
-  finished: { title: "Carrera finalizada", sub: "Pago confirmado con PIN", tone: "#10B981" },
+  to_pickup: { title: "Conductor aceptó · en camino a recoger", sub: "Dirígete al punto de recogida", tone: "#FF5500" },
+  arrived: { title: "Llegaste donde el usuario", sub: "Avisa al pasajero que ya estás aquí", tone: "#10B981" },
+  to_destination: { title: "En camino al lugar de llegada", sub: "Lleva al pasajero a su destino", tone: "#FF5500" },
+  finished: { title: "Arrendamiento completado", sub: "Pago confirmado con PIN", tone: "#10B981" },
+  canceled: { title: "Arrendamiento cancelado", sub: "Este servicio fue cancelado", tone: "#FF4757" },
+  accepted: { title: "Pedido aceptado", sub: "Dirígete al comercio a recogerlo", tone: "#FF5500" },
+  at_store: { title: "Llegaste al comercio", sub: "Recoge el pedido y confirma", tone: "#10B981" },
+  to_customer: { title: "Pedido recogido · en camino al usuario", sub: "Entrégalo y confirma con PIN", tone: "#FF5500" },
 };

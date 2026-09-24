@@ -6,6 +6,7 @@ export function usePedido(pedidoId, initialData = null) {
   const [pedido, setPedido] = useState(initialData);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [driverMessageCount, setDriverMessageCount] = useState(0);
   const previousStatusRef = useRef((initialData?.estado || "").toLowerCase());
   const previousCarreraStatusRef = useRef((initialData?.carrera?.estado || "").toLowerCase());
 
@@ -77,5 +78,33 @@ export function usePedido(pedidoId, initialData = null) {
     await fetchPedido();
   }, [pedidoId, pedido, fetchPedido]);
 
-  return { pedido, loading, error, refetch: fetchPedido, cancelar, previousStatusRef, previousCarreraStatusRef };
+  // Polling silencioso de mensajes con el repartidor (carrera-chat de la carrera del pedido)
+  const carreraId = pedido?.carrera?.id;
+  useEffect(() => {
+    if (!carreraId) {
+      setDriverMessageCount(0);
+      return;
+    }
+    let alive = true;
+    const poll = async () => {
+      try {
+        const token = await AsyncStorage.getItem("userToken");
+        const response = await fetch(`${BASE_URL}carrera-chat/${carreraId}/messages`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (!response.ok) return;
+        const data = await response.json();
+        const list = data?.data || [];
+        if (alive) setDriverMessageCount(list.length);
+      } catch (e) { /* noop */ }
+    };
+    poll();
+    const interval = setInterval(poll, 10000);
+    return () => {
+      alive = false;
+      clearInterval(interval);
+    };
+  }, [carreraId]);
+
+  return { pedido, loading, error, refetch: fetchPedido, cancelar, driverMessageCount, previousStatusRef, previousCarreraStatusRef };
 }

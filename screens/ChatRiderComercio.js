@@ -8,6 +8,7 @@ import {
   StyleSheet,
   SafeAreaView,
   KeyboardAvoidingView,
+  Keyboard,
   Platform,
   ActivityIndicator,
   Image
@@ -17,9 +18,12 @@ import { FontAwesome } from '@expo/vector-icons';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Constants from 'expo-constants';
+import * as ImagePicker from 'expo-image-picker';
 import { BASE_URL } from "../constants/url";
 import { useNotification } from "../context/NotificationContext";
 import AlertaModal from "../components/ErrorModal";
+import FullscreenImageViewer from "../components/usuario/pedidos/FullscreenImageViewer";
+import { chatLog } from "../utils/chatDebug";
 
 export default function ChatRiderComercio({
   route,
@@ -72,6 +76,7 @@ export default function ChatRiderComercio({
   const [comercioInfo, setComercioInfo] = useState(null);
   const [pedidoInfo, setPedidoInfo] = useState(null);
   const [currentUserId, setCurrentUserId] = useState(null);
+  const [fullscreenImage, setFullscreenImage] = useState(null);
   const [alertVisible, setAlertVisible] = useState(false);
   const [alertData, setAlertData] = useState({ message: "", type: "info", onPrimary: null, primaryLabel: "" });
 
@@ -98,6 +103,17 @@ export default function ChatRiderComercio({
   });
 
   // Efecto para cargar la información inicial y configurar el intervalo de actualización
+  const inputRef = useRef(null);
+  useEffect(() => {
+    chatLog("ChatRiderComercio", "mount", { pedidoId, carreraId });
+  }, []);
+  useEffect(() => {
+    const sub = Keyboard.addListener("keyboardDidHide", () => {
+      chatLog("ChatRiderComercio", "keyboardHide-blur");
+      inputRef.current?.blur();
+    });
+    return () => sub.remove();
+  }, []);
   useFocusEffect(
     useCallback(() => {
       // Obtener el ID del usuario actual
@@ -168,7 +184,7 @@ export default function ChatRiderComercio({
   };
 
   // Función para cargar mensajes
-  const cargarMensajes = async (mostrarCargando = true) => {
+  const cargarMensajes = useCallback(async (mostrarCargando = true) => {
     try {
       if (mostrarCargando) {
         setCargando(true);
@@ -177,7 +193,7 @@ export default function ChatRiderComercio({
       const token = await AsyncStorage.getItem('userToken');
 
       if (!token) {
-        setError('No se encontró token de autenticación');
+        if (mostrarCargando) setError('No se encontró token de autenticación');
         setCargando(false);
         return;
       }
@@ -194,23 +210,27 @@ export default function ChatRiderComercio({
       });
 
       if (!response.ok) {
-        throw new Error(`Error al cargar mensajes: ${response.status}`);
+        if (response.status !== 404) {
+          throw new Error(`Error al cargar mensajes: ${response.status}`);
+        }
+        setMensajes((prev) => (prev.length === 0 ? prev : []));
+        return;
       }
 
       const data = await response.json();
 
       // Los mensajes pueden estar en data.data, data.mensajes, o directamente en data
       const messages = data.data || data.mensajes || data || [];
-      setMensajes(messages);
-      console.log('Mensajes cargados:', messages.length);
+      setMensajes(Array.isArray(messages) ? messages : []);
+      console.log('Mensajes cargados:', Array.isArray(messages) ? messages.length : 0);
 
     } catch (error) {
       console.error('Error al cargar mensajes:', error);
-      setError('Error al cargar mensajes');
+      if (mostrarCargando) setError('Error al cargar mensajes');
     } finally {
       setCargando(false);
     }
-  };
+  }, [pedidoId]);
 
   // Función para enviar un mensaje
   const enviarMensaje = async () => {
@@ -349,7 +369,7 @@ export default function ChatRiderComercio({
         )
       );
 
-      // Recargar mensajes para asegurar sincronización
+      // Recargar mensajes para asegurar sincronización (silencioso para no bloquear la vista)
       setTimeout(() => {
         cargarMensajes(false);
       }, 1000);
@@ -382,6 +402,104 @@ export default function ChatRiderComercio({
 
   // Respuestas rápidas para el rider hablando con el comercio
   const quickReplies = ['Ya llegué al comercio', '¿Pedido listo?', 'Voy en camino'];
+
+  const handlePickImageAndSend = async () => {
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== 'granted') {
+      showAlert('Se necesita acceso a tu galería para enviar imágenes', "info");
+      return;
+    }
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      quality: 0.7,
+    });
+    if (!result.canceled && !result.cancelled) {
+      const image = result.assets ? result.assets[0] : result;
+      enviarImagen(image);
+    }
+  };
+
+  const enviarImagen = async (image) => {
+    let senderId = riderId || currentUserId;
+    if (!senderId) {
+      try {
+        const storedUserData = await AsyncStorage.getItem('userData');
+        senderId = storedUserData ? JSON.parse(storedUserData)?.id : null;
+        if (senderId) setCurrentUserId(senderId);
+      } catch (e) {}
+    }
+    if (!carreraId || !pedidoId || !senderId) {
+      showAlert('Faltan datos necesarios para enviar la imagen', "error");
+      return;
+    }
+    setEnviando(true);
+    try {
+      const token = await AsyncStorage.getItem('userToken');
+      if (!token) {
+        showAlert('No se encontró token de autenticación', "error");
+        return;
+      }
+
+      const messageObject = { type: "file", content: "chat" };
+      const escapedJson = JSON.stringify(messageObject).replace(/"/g, '\\"');
+
+      const formData = new FormData();
+      formData.append("carrera_id", String(carreraId));
+      formData.append("pedido_id", String(pedidoId));
+      formData.append("conductor_id", String(senderId));
+      formData.append("message", `"${escapedJson}"`);
+      formData.append("image", {
+        uri: image.uri,
+        name: "photo.jpg",
+        type: "image/jpeg",
+      });
+
+      const nuevoMensajeLocal = {
+        id: Date.now(),
+        remitente_id: senderId,
+        destinatario_id: comercioId,
+        mensaje: 'Imagen',
+        image: image.uri,
+        estado: 'enviando',
+        timestamp: new Date().toISOString(),
+      };
+
+      setMensajes(prev => [...prev, nuevoMensajeLocal]);
+
+      const response = await fetch(`${BASE_URL}carrera-pedido-chat/send`, {
+        method: 'POST',
+        headers: {
+          'Accept': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: formData,
+      });
+
+      if (!response.ok) {
+        setMensajes(prev =>
+          prev.map(msg =>
+            msg.id === nuevoMensajeLocal.id ? { ...msg, estado: 'error' } : msg
+          )
+        );
+        showAlert("No se pudo enviar la imagen", "error");
+        return;
+      }
+
+      setMensajes(prev =>
+        prev.map(msg =>
+          msg.id === nuevoMensajeLocal.id ? { ...msg, estado: 'enviado' } : msg
+        )
+      );
+
+      setTimeout(() => cargarMensajes(false), 800);
+    } catch (error) {
+      console.error('Error enviando imagen:', error);
+      showAlert("No se pudo enviar la imagen", "error");
+    } finally {
+      setEnviando(false);
+    }
+  };
 
   const extraerContenido = (item) => {
     let contenido = item.mensaje;
@@ -443,7 +561,9 @@ export default function ChatRiderComercio({
       <View style={[styles.messageWrapper, esDelRider ? styles.myMessageWrapper : styles.otherMessageWrapper]}>
         <View style={[styles.bubble, esDelRider ? styles.myBubble : styles.otherBubble]}>
           {imageUri ? (
-            <Image source={{ uri: imageUri }} style={styles.messageImage} />
+            <TouchableOpacity onPress={() => setFullscreenImage(imageUri)} activeOpacity={0.85}>
+              <Image source={{ uri: imageUri }} style={styles.messageImage} />
+            </TouchableOpacity>
           ) : (
             <Text style={[styles.messageText, esDelRider ? styles.myMessageText : styles.otherMessageText]}>
               {typeof contenido === 'string' ? contenido : ''}
@@ -492,7 +612,7 @@ export default function ChatRiderComercio({
               Chat con {comercioNombre || comercioInfo?.establecimiento_nombre || 'Comercio'}
             </Text>
             <Text style={styles.headerSubtitle}>
-              Pedido #{pedidoId} {carreraId ? `- Carrera #${carreraId}` : ''}
+              Pedido #{pedidoId} {carreraId ? `- Arrendamiento #${carreraId}` : ''}
             </Text>
           </View>
         </View>
@@ -500,77 +620,93 @@ export default function ChatRiderComercio({
 
       {/* Contenido del chat */}
       <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         style={styles.chatContainer}
         keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
       >
-        {cargando && mensajes.length === 0 ? (
-          <View style={styles.loaderContainer}>
-            <ActivityIndicator size="large" color="#FF5500" />
-            <Text style={styles.loaderText}>Cargando conversación...</Text>
+        <View style={{ flex: 1 }}>
+          {cargando && mensajes.length === 0 ? (
+            <View style={styles.loaderContainer}>
+              <ActivityIndicator size="large" color="#FF5500" />
+              <Text style={styles.loaderText}>Cargando conversación...</Text>
+            </View>
+          ) : error ? (
+            <View style={styles.errorContainer}>
+              <Text style={styles.errorText}>{error}</Text>
+              <TouchableOpacity
+                style={styles.retryButton}
+                onPress={() => cargarMensajes()}
+              >
+                <Text style={styles.retryText}>Reintentar</Text>
+              </TouchableOpacity>
+            </View>
+          ) : (
+            <View style={styles.chatListWrap}>
+              <FlatList
+                ref={flatListRef}
+                inverted
+                data={[...mensajes].reverse()}
+                renderItem={renderMensaje}
+                keyExtractor={(item) => item.id?.toString() || Math.random().toString()}
+                contentContainerStyle={styles.mensajesList}
+                keyboardShouldPersistTaps="handled"
+                ListEmptyComponent={
+                  <View style={styles.emptyContainer}>
+                    <FontAwesome name="comments-o" size={50} color="#ccc" />
+                    <Text style={styles.emptyText}>No hay mensajes aún</Text>
+                    <Text style={styles.emptySubtext}>Envía un mensaje para comenzar la conversación</Text>
+                  </View>
+                }
+              />
+            </View>
+          )}
+
+          <View style={styles.quickReplies}>
+            {quickReplies.map((q) => (
+              <TouchableOpacity key={q} style={styles.quickReply} onPress={() => setMensaje(q)} activeOpacity={0.8}>
+                <Text style={styles.quickReplyText}>{q}</Text>
+              </TouchableOpacity>
+            ))}
           </View>
-        ) : error ? (
-          <View style={styles.errorContainer}>
-            <Text style={styles.errorText}>{error}</Text>
+
+          {/* Input para escribir mensajes */}
+          <View style={styles.inputContainer}>
+            <TouchableOpacity style={styles.iconBtn} onPress={handlePickImageAndSend} activeOpacity={0.8}>
+              <FontAwesome name="camera" size={20} color="#64748B" />
+            </TouchableOpacity>
+            <TextInput
+              ref={inputRef}
+              style={styles.input}
+              placeholder="Escribe un mensaje..."
+              placeholderTextColor="#999"
+              value={mensaje}
+              onChangeText={(t) => {
+                chatLog("ChatRiderComercio", "change", { len: t.length });
+                setMensaje(t);
+              }}
+              onFocus={() => chatLog("ChatRiderComercio", "focus", { len: mensaje.length })}
+              onBlur={() => chatLog("ChatRiderComercio", "blur", { len: mensaje.length })}
+              onSelectionChange={(e) => chatLog("ChatRiderComercio", "selection", e.nativeEvent.selection)}
+              onPressIn={() => chatLog("ChatRiderComercio", "pressIn")}
+              onTouchStart={() => chatLog("ChatRiderComercio", "touchStart")}
+              multiline
+              maxLength={500}
+            />
             <TouchableOpacity
-              style={styles.retryButton}
-              onPress={() => cargarMensajes()}
+              style={[
+                styles.sendButton,
+                (!mensaje.trim() || enviando) && styles.sendButtonDisabled
+              ]}
+              onPress={enviarMensaje}
+              disabled={!mensaje.trim() || enviando}
             >
-              <Text style={styles.retryText}>Reintentar</Text>
+              {enviando ? (
+                <ActivityIndicator size="small" color="#FFF" />
+              ) : (
+                <FontAwesome name="send" size={20} color="#FFF" />
+              )}
             </TouchableOpacity>
           </View>
-        ) : (
-          <>
-            <FlatList
-              ref={flatListRef}
-              inverted
-              data={[...mensajes].reverse()}
-              renderItem={renderMensaje}
-              keyExtractor={(item) => item.id?.toString() || Math.random().toString()}
-              contentContainerStyle={styles.mensajesList}
-              ListEmptyComponent={
-                <View style={styles.emptyContainer}>
-                  <FontAwesome name="comments-o" size={50} color="#ccc" />
-                  <Text style={styles.emptyText}>No hay mensajes aún</Text>
-                  <Text style={styles.emptySubtext}>Envía un mensaje para comenzar la conversación</Text>
-                </View>
-              }
-            />
-            <View style={styles.quickReplies}>
-              {quickReplies.map((q) => (
-                <TouchableOpacity key={q} style={styles.quickReply} onPress={() => setMensaje(q)} activeOpacity={0.8}>
-                  <Text style={styles.quickReplyText}>{q}</Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-          </>
-        )}
-
-        {/* Input para escribir mensajes */}
-        <View style={styles.inputContainer}>
-          <TextInput
-            style={styles.input}
-            placeholder="Escribe un mensaje..."
-            placeholderTextColor="#999"
-            value={mensaje}
-            onChangeText={setMensaje}
-            multiline
-            maxLength={500}
-          />
-          <TouchableOpacity
-            style={[
-              styles.sendButton,
-              (!mensaje.trim() || enviando) && styles.sendButtonDisabled
-            ]}
-            onPress={enviarMensaje}
-            disabled={!mensaje.trim() || enviando}
-          >
-            {enviando ? (
-              <ActivityIndicator size="small" color="#FFF" />
-            ) : (
-              <FontAwesome name="send" size={20} color="#FFF" />
-            )}
-          </TouchableOpacity>
         </View>
       </KeyboardAvoidingView>
       <AlertaModal
@@ -581,6 +717,7 @@ export default function ChatRiderComercio({
         onPrimary={alertData.onPrimary}
         primaryLabel={alertData.primaryLabel}
       />
+      <FullscreenImageViewer uri={fullscreenImage} onClose={() => setFullscreenImage(null)} />
     </SafeAreaView>
   );
 }
@@ -630,6 +767,9 @@ const styles = StyleSheet.create({
     fontFamily: 'Montserrat_400Regular',
   },
   chatContainer: {
+    flex: 1,
+  },
+  chatListWrap: {
     flex: 1,
   },
   mensajesList: {
@@ -733,6 +873,15 @@ const styles = StyleSheet.create({
     height: 44,
     borderRadius: 22,
     backgroundColor: '#FF5500',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: Platform.OS === 'ios' ? 0 : -2,
+  },
+  iconBtn: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: '#F1F5F9',
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: Platform.OS === 'ios' ? 0 : -2,

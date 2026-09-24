@@ -1,18 +1,20 @@
-import React, { useState, useEffect, useRef } from "react";
-import { View, Text, TextInput, TouchableOpacity, FlatList, StyleSheet, ActivityIndicator, Image, KeyboardAvoidingView, Keyboard, Platform } from "react-native";
+import React, { useState, useEffect, useRef, useCallback } from "react";
+import { View, Text, TouchableOpacity, FlatList, StyleSheet, ActivityIndicator, Image, KeyboardAvoidingView, Keyboard, Platform } from "react-native";
 import { Feather } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as ImagePicker from 'expo-image-picker';
 import { BASE_URL } from "../constants/url";
 import { useNotification } from "../context/NotificationContext";
 import AlertaModal from "../components/ErrorModal";
+import FullscreenImageViewer from "../components/usuario/pedidos/FullscreenImageViewer";
+import ChatInput from "./ChatInput";
 
 const ChatScreen = ({ tripId }) => {
   const [messages, setMessages] = useState([]);
   const [inputText, setInputText] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [isLoadingHistory, setIsLoadingHistory] = useState(false);
-  const [keyboardVisible, setKeyboardVisible] = useState(false);
+  const [fullscreenImage, setFullscreenImage] = useState(null);
   const [alertVisible, setAlertVisible] = useState(false);
   const [alertData, setAlertData] = useState({ message: "", type: "info", onPrimary: null, primaryLabel: "" });
 
@@ -20,20 +22,6 @@ const ChatScreen = ({ tripId }) => {
     setAlertData({ message, type, onPrimary, primaryLabel });
     setAlertVisible(true);
   };
-
-  useEffect(() => {
-    const showSubscription = Keyboard.addListener("keyboardDidShow", () => {
-      setKeyboardVisible(true);
-    });
-    const hideSubscription = Keyboard.addListener("keyboardDidHide", () => {
-      setKeyboardVisible(false);
-    });
-
-    return () => {
-      showSubscription.remove();
-      hideSubscription.remove();
-    };
-  }, []);
 
   useEffect(() => {
     if (tripId) {
@@ -45,15 +33,14 @@ const ChatScreen = ({ tripId }) => {
 
   useEffect(() => {
     if (notification) {
-      fetchPreviousMessages()
+      fetchPreviousMessages(false)
     }
-  }, [notification]);
+  }, [notification, fetchPreviousMessages]);
 
-  // Función para obtener mensajes anteriores
-  const fetchPreviousMessages = async () => {
+  const fetchPreviousMessages = useCallback(async (mostrarCargando = true) => {
     if (!tripId) return;
 
-    setIsLoadingHistory(true);
+    if (mostrarCargando) setIsLoadingHistory(true);
 
     try {
       const token = await AsyncStorage.getItem("userToken");
@@ -155,12 +142,12 @@ const ChatScreen = ({ tripId }) => {
     } catch (error) {
       console.error("Error fetching messages:", error);
     } finally {
-      setIsLoadingHistory(false);
+      if (mostrarCargando) setIsLoadingHistory(false);
     }
-  };
+  }, [tripId]);
 
   // Función para enviar mensajes de texto
-  const sendMessage = async () => {
+  const sendMessage = useCallback(async () => {
     if (!inputText.trim()) return;
 
     setIsLoading(true);
@@ -230,7 +217,7 @@ const ChatScreen = ({ tripId }) => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [inputText, tripId]);
 
   // Función para enviar imágenes
   const sendImage = async (image) => {
@@ -339,7 +326,9 @@ const ChatScreen = ({ tripId }) => {
         item.isMyMessage ? styles.myBubble : styles.otherBubble
       ]}>
         {item.image ? (
-          <Image source={{ uri: item.image }} style={styles.messageImage} />
+          <TouchableOpacity onPress={() => setFullscreenImage(item.image)} activeOpacity={0.85}>
+            <Image source={{ uri: item.image }} style={styles.messageImage} />
+          </TouchableOpacity>
         ) : (
           <Text style={[
             styles.messageText,
@@ -404,33 +393,14 @@ const ChatScreen = ({ tripId }) => {
           ))}
         </View>
 
-        <View style={styles.inputContainer}>
-          <TouchableOpacity style={styles.iconButton} onPress={handlePickImageAndSend}>
-            <Feather name="camera" size={22} color="#64748B" />
-          </TouchableOpacity>
-          <TextInput
-            style={styles.input}
-            placeholder="Escribe un mensaje..."
-            placeholderTextColor="#94A3B8"
-            value={inputText}
-            onChangeText={setInputText}
-            editable={!isLoading}
-            multiline={true}
-            maxLength={500}
-          />
-          <TouchableOpacity
-            style={[styles.sendButton, (!inputText.trim() || isLoading) && styles.sendButtonDisabled]}
-            onPress={sendMessage}
-            disabled={isLoading || !inputText.trim()}
-            activeOpacity={0.8}
-          >
-            {isLoading ? (
-              <ActivityIndicator size="small" color="#FFFFFF" />
-            ) : (
-              <Feather name="send" size={18} color="#FFFFFF" />
-            )}
-          </TouchableOpacity>
-        </View>
+        <ChatInput
+          tag="ChatScreen"
+          value={inputText}
+          onChangeText={setInputText}
+          onSend={sendMessage}
+          sending={isLoading}
+          onPickImage={handlePickImageAndSend}
+        />
       </View>
       <AlertaModal
         visible={alertVisible}
@@ -440,6 +410,7 @@ const ChatScreen = ({ tripId }) => {
         onPrimary={alertData.onPrimary}
         primaryLabel={alertData.primaryLabel}
       />
+      <FullscreenImageViewer uri={fullscreenImage} onClose={() => setFullscreenImage(null)} />
     </KeyboardAvoidingView>
   );
 };

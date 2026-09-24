@@ -12,6 +12,7 @@ import { Feather } from "@expo/vector-icons";
 import * as ImagePicker from "expo-image-picker";
 import { manipulateAsync, SaveFormat } from "expo-image-manipulator";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { Platform } from "react-native";
 import { BASE_URL } from "../../../../constants/url";
 
 export const EvidenceModal = ({ visible, pedidoId, qrUrl, onClose, onUploaded }) => {
@@ -40,23 +41,30 @@ export const EvidenceModal = ({ visible, pedidoId, qrUrl, onClose, onUploaded })
     setUploading(true);
     try {
       const token = await AsyncStorage.getItem("userToken");
+      const filename = image.split("/").pop() || "evidencia.jpg";
       const formData = new FormData();
       formData.append("archivo_evidencia", {
-        uri: image.replace("file://", ""),
-        name: image.split("/").pop() || "evidencia.jpg",
+        uri: Platform.OS === "ios" ? image.replace("file://", "") : image,
+        name: filename,
         type: "image/jpeg",
       });
 
       const response = await fetch(`${BASE_URL}pedidos/${pedidoId}/evidencia`, {
         method: "POST",
-        headers: { Authorization: `Bearer ${token}` },
+        headers: {
+          Authorization: `Bearer ${token}`,
+          Accept: "application/json",
+        },
         body: formData,
       });
 
+      const responseText = await response.text();
       if (response.ok) {
         onUploaded?.();
         onClose();
         setImage(null);
+      } else {
+        console.error("Error subiendo evidencia:", response.status, responseText);
       }
     } catch (e) {
       console.error("Error subiendo evidencia:", e);

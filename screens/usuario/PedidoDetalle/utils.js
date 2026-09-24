@@ -26,8 +26,9 @@ export const ORDER_STEPS = [
   { key: "aceptado", label: "Aceptado", desc: "El comercio aceptó tu pedido" },
   { key: "confirmado", label: "Confirmado", desc: "Pedido confirmado" },
   { key: "preparado", label: "Preparado", desc: "El comercio prepara tu pedido" },
-  { key: "completado", label: "Listo", desc: "Pedido listo para reparto" },
-  { key: "en_camino", label: "En camino", desc: "Tu pedido va en camino" },
+  { key: "completado", label: "Listo", desc: "Pedido listo · buscando repartidor" },
+  { key: "en_comercio", label: "En comercio", desc: "El repartidor llegó al comercio" },
+  { key: "recogido", label: "En camino", desc: "Tu pedido va en camino" },
   { key: "entregado", label: "Entregado", desc: "Pedido entregado" },
 ];
 
@@ -38,7 +39,9 @@ export const getCurrentStepKey = (pedido) => {
 
   if (estado === "cancelado") return "cancelado";
   if (estado === "entregado" || carreraEstado === "completado") return "entregado";
-  if (carreraEstado === "aceptado" || carreraEstado === "en_camino" || carreraEstado === "activo") return "en_camino";
+  if (carreraEstado === "recogido") return "recogido";
+  if (carreraEstado === "en_comercio") return "en_comercio";
+  if (carreraEstado === "aceptado" || carreraEstado === "en_camino" || carreraEstado === "activo") return "completado";
   if (estado === "completado") return "completado";
   if (estado === "preparado") return "preparado";
   if (estado === "confirmado") return "confirmado";
@@ -61,8 +64,9 @@ export const HEADER_TEXT = {
   aceptado: { title: "Pedido aceptado", sub: "El comercio preparará tu orden", tone: "#FF5500" },
   confirmado: { title: "Pedido confirmado", sub: "El comercio lo está preparando", tone: "#FF5500" },
   preparado: { title: "Pedido en preparación", sub: "La cocina está trabajando", tone: "#FF5500" },
-  completado: { title: "Listo para reparto", sub: "Esperando que un conductor lo recoja", tone: "#3B82F6" },
-  en_camino: { title: "En camino", sub: "Tu pedido va rumbo a la entrega", tone: "#10B981" },
+  completado: { title: "Listo para reparto", sub: "Buscando repartidor cercano", tone: "#3B82F6" },
+  en_comercio: { title: "Repartidor en el comercio", sub: "Están recogiendo tu pedido", tone: "#3B82F6" },
+  recogido: { title: "Pedido en camino", sub: "Tu repartidor va hacia ti", tone: "#10B981" },
   entregado: { title: "Entregado", sub: "Pedido entregado correctamente", tone: "#10B981" },
   cancelado: { title: "Pedido cancelado", sub: "Este pedido fue cancelado", tone: "#EF4444" },
 };

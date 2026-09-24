@@ -27,6 +27,7 @@ import TripCard from "../../components/usuario/pedidos/TripCard";
 import EmptyState from "../../components/usuario/pedidos/EmptyState";
 import DetailSheet from "../../components/usuario/pedidos/DetailSheet";
 import ChatComercioRider from "../ChatComercioRider";
+import ChatReserva from "../usuario/ChatReserva";
 import { COLORS, SHADOWS, RADIUS, formatCOP, formatDate, calcOrderCosts } from "../../components/usuario/pedidos/helpers";
 import StatusBadge from "../../components/usuario/pedidos/StatusBadge";
 import RouteStops from "../../components/usuario/pedidos/RouteStops";
@@ -60,7 +61,7 @@ export default function PedidosComercio({ route }) {
   const {
     reservas, isLoading: loadingReservas,
     perfiles, perfilSeleccionado, setPerfilSeleccionado,
-    fetchPerfiles, fetchReservas, aceptarReserva,
+    fetchPerfiles, fetchReservas, aceptarReserva, completarReserva,
   } = useReservas();
 
   const [activeTab, setActiveTab] = useState("activas");
@@ -72,6 +73,7 @@ export default function PedidosComercio({ route }) {
   const [evidenciaVisible, setEvidenciaVisible] = useState(false);
   const [evidenciaUrl, setEvidenciaUrl] = useState(null);
   const [chatItem, setChatItem] = useState(null);
+  const [chatReserva, setChatReserva] = useState(null);
 
   const showAlert = (message, type = "info", onPrimary = null, primaryLabel = null) => {
     setAlertData({ message, type, onPrimary, primaryLabel });
@@ -102,6 +104,11 @@ export default function PedidosComercio({ route }) {
   useEffect(() => {
     if (!notification) return;
     fetchPedidos(activeTab);
+    if (activeTab === "reservas" && perfilSeleccionado) {
+      fetchReservas(perfilSeleccionado);
+    } else if (notification?.request?.content?.data?.tipo === "chat_reserva" && perfilSeleccionado) {
+      fetchReservas(perfilSeleccionado);
+    }
   }, [notification]);
 
   useFocusEffect(
@@ -114,7 +121,14 @@ export default function PedidosComercio({ route }) {
   );
 
   const navigateToDetails = useCallback((item) => {
-    navigation.navigate("PedidoDetalleComercio", { pedidoId: item.id, pedidoData: item });
+    if (!item?.id) return;
+    setSelectedItem(null);
+    const params = { pedidoId: item.id, pedidoData: item };
+    setTimeout(() => {
+      const parent = navigation.getParent?.();
+      if (parent) parent.navigate("PedidoDetalleComercio", params);
+      else navigation.navigate("PedidoDetalleComercio", params);
+    }, 50);
   }, [navigation]);
 
   const handleAceptar = async (item) => {
@@ -134,10 +148,10 @@ export default function PedidosComercio({ route }) {
       async () => {
         try {
           await crearCarrera(item);
-          showAlert("Carrera creada exitosamente", "success");
+          showAlert("Arrendamiento creado exitosamente", "success");
           fetchPedidos(activeTab);
         } catch (e) {
-          showAlert("Error al crear la carrera", "error");
+          showAlert("Error al crear el arrendamiento", "error");
         }
       },
       "Sí, solicitar"
@@ -149,11 +163,18 @@ export default function PedidosComercio({ route }) {
       showAlert("No hay conductor asignado aún", "info");
       return;
     }
+    const conductor = item.carrera.conductor;
+    const fotoRaw = conductor.foto_documento_file || conductor.foto || conductor.imagen || conductor.foto_perfil || null;
     setChatItem({
       pedidoId: item.id,
       carreraId: item.carrera?.id,
-      conductorId: item.carrera.conductor.id,
-      conductorNombre: item.carrera.conductor.nombre_completo || "Conductor",
+      conductorId: conductor.id,
+      conductorNombre: conductor.nombre_completo || "Conductor",
+      conductorFoto: fotoRaw
+        ? (fotoRaw.startsWith("http")
+          ? fotoRaw
+          : `${BASE_URL.toString().replace(/\/api\/?$/, "").replace(/\/$/, "")}/storage/${fotoRaw}`)
+        : null,
       comercioId: item.comercio?.id || item.comercio_id,
       tipo: "comercio-rider",
     });
@@ -168,13 +189,41 @@ export default function PedidosComercio({ route }) {
     setEvidenciaVisible(true);
   };
 
+  const handleChatReserva = (item) => {
+    if (!item?.user_perfil_id) {
+      showAlert("No se encontró el perfil de esta reserva", "error");
+      return;
+    }
+    const clienteFoto = item.user?.foto_documento_file && item.user.foto_documento_file.startsWith("http")
+      ? item.user.foto_documento_file
+      : item.user?.foto_documento_file
+        ? `${BASE_URL.toString().replace(/\/api\/?$/, "").replace(/\/$/, "")}/storage/${item.user.foto_documento_file}`
+        : null;
+    setChatReserva({
+      reservaId: item.id,
+      userPerfilId: item.user_perfil_id,
+      chatTitle: item.user?.nombre_completo || item.cliente_nombre || "Cliente",
+      chatAvatar: clienteFoto,
+    });
+  };
+
   const handleAceptarReserva = async (item) => {
     try {
       await aceptarReserva(item.id);
-      showAlert("Reserva confirmada exitosamente", "success");
+      showAlert("Reserva aceptada exitosamente", "success");
       if (perfilSeleccionado) fetchReservas(perfilSeleccionado);
     } catch (e) {
-      showAlert("Error al confirmar la reserva", "error");
+      showAlert("Error al aceptar la reserva", "error");
+    }
+  };
+
+  const handleCompletarReserva = async (item) => {
+    try {
+      await completarReserva(item.id);
+      showAlert("Reserva completada exitosamente", "success");
+      if (perfilSeleccionado) fetchReservas(perfilSeleccionado);
+    } catch (e) {
+      showAlert("Error al completar la reserva", "error");
     }
   };
 
@@ -182,8 +231,15 @@ export default function PedidosComercio({ route }) {
   const renderReservaItem = ({ item }) => {
     const fechaFormateada = item.fecha_formateada || formatDate(item.fecha);
     const canAccept = item.estado === "pendiente";
+    const canComplete = item.estado === "aceptado";
     const isDomicilio = item.tipo_reserva === "domicilio";
     const canShip = item.estado === "completado" && isDomicilio;
+    const clienteFotoUrl = item.user?.foto_documento_file
+      ? (item.user.foto_documento_file.startsWith("http")
+        ? item.user.foto_documento_file
+        : `${BASE_URL.toString().replace(/\/api\/?$/, "").replace(/\/$/, "")}/storage/${item.user.foto_documento_file}`)
+      : null;
+    const canChat = item.estado === "aceptado";
 
     let direccion = "";
     try {
@@ -204,7 +260,7 @@ export default function PedidosComercio({ route }) {
             <Text style={cs.sub}>Reserva #{item.id} · {fechaFormateada}</Text>
           </View>
           <View style={cs.statusWrap}>
-            <StatusBadge status={item.estado === "confirmado" ? "confirmado" : item.estado} />
+            <StatusBadge status={item.estado} />
           </View>
         </View>
         <View style={cs.reservaBody}>
@@ -214,17 +270,45 @@ export default function PedidosComercio({ route }) {
           {!!direccion && <View style={cs.infoRow}><Text style={cs.infoLabel}>Dirección:</Text><Text style={cs.infoValue} numberOfLines={2}>{direccion}</Text></View>}
           <View style={cs.infoRow}><Text style={cs.infoLabel}>Precio:</Text><Text style={cs.infoValue}>{formatCOP(item.costo_total)}</Text></View>
         </View>
+        <View style={cs.clienteSection}>
+          <View style={cs.clienteRow}>
+            {clienteFotoUrl ? (
+              <Image source={{ uri: clienteFotoUrl }} style={cs.clienteAvatar} />
+            ) : (
+              <View style={cs.clienteAvatarFallback}>
+                <Ionicons name="person" size={16} color={COLORS.muted} />
+              </View>
+            )}
+            <View style={cs.clienteInfo}>
+              <Text style={cs.clienteLabel}>Cliente</Text>
+              <Text style={cs.clienteNombre} numberOfLines={1}>{item.user?.nombre_completo || item.cliente_nombre || "Cliente"}</Text>
+            </View>
+            {canChat && (
+              <TouchableOpacity style={cs.chatIconBtn} onPress={() => handleChatReserva(item)} activeOpacity={0.7}>
+                <Ionicons name="chatbubble-ellipses" size={18} color="#FFFFFF" />
+              </TouchableOpacity>
+            )}
+          </View>
+        </View>
         {canAccept && (
           <View style={cs.actions}>
             <TouchableOpacity style={cs.acceptBtn} onPress={() => handleAceptarReserva(item)}>
               <Ionicons name="checkmark-circle" size={18} color={COLORS.surface} />
-              <Text style={cs.acceptText}>Confirmar reserva</Text>
+              <Text style={cs.acceptText}>Aceptar reserva</Text>
+            </TouchableOpacity>
+          </View>
+        )}
+        {canComplete && (
+          <View style={cs.actions}>
+            <TouchableOpacity style={cs.acceptBtn} onPress={() => handleCompletarReserva(item)}>
+              <Ionicons name="checkmark-done-circle" size={18} color={COLORS.surface} />
+              <Text style={cs.acceptText}>Completar reserva</Text>
             </TouchableOpacity>
           </View>
         )}
         {canShip && (
           <View style={cs.actions}>
-            <TouchableOpacity style={cs.shipBtn} onPress={() => showAlert("Crear carrera para esta reserva próximamente", "info")}>
+            <TouchableOpacity style={cs.shipBtn} onPress={() => showAlert("Crear arrendamiento para esta reserva próximamente", "info")}>
               <Ionicons name="car" size={18} color={COLORS.surface} />
               <Text style={cs.shipText}>Solicitar conductor</Text>
             </TouchableOpacity>
@@ -445,6 +529,10 @@ export default function PedidosComercio({ route }) {
                 data: reservas.filter((r) => r.estado === "pendiente"),
               },
               {
+                title: "Aceptadas",
+                data: reservas.filter((r) => r.estado === "aceptado"),
+              },
+              {
                 title: "Completadas / Canceladas",
                 data: reservas.filter((r) => ["completado", "confirmado", "cancelado"].includes(r.estado)),
               },
@@ -498,6 +586,57 @@ export default function PedidosComercio({ route }) {
       />
 
       <Modal
+        visible={!!chatReserva}
+        animationType="slide"
+        transparent={true}
+        onRequestClose={() => setChatReserva(null)}
+      >
+        {chatReserva && (
+          <View style={cs.chatOverlay}>
+            <TouchableOpacity
+              style={cs.chatBackdrop}
+              activeOpacity={1}
+              onPress={() => setChatReserva(null)}
+            />
+            <View style={cs.chatPanel}>
+              <View style={cs.chatHeader}>
+                {chatReserva.chatAvatar ? (
+                  <Image source={{ uri: chatReserva.chatAvatar }} style={cs.chatAvatarImg} />
+                ) : (
+                  <View style={cs.chatAvatar}>
+                    <Ionicons name="person" size={20} color="#FFFFFF" />
+                  </View>
+                )}
+                <View style={cs.chatHeaderText}>
+                  <Text style={cs.chatTitle} numberOfLines={1}>
+                    {chatReserva.chatTitle || "Cliente"}
+                  </Text>
+                  <Text style={cs.chatSub}>Reserva #{chatReserva.reservaId}</Text>
+                </View>
+                <TouchableOpacity
+                  style={cs.closeChatBtn}
+                  onPress={() => setChatReserva(null)}
+                  activeOpacity={0.7}
+                >
+                  <Ionicons name="close" size={20} color="#FFFFFF" />
+                </TouchableOpacity>
+              </View>
+              <View style={cs.chatBody}>
+                <ChatReserva
+                  reservaId={chatReserva.reservaId}
+                  userPerfilId={chatReserva.userPerfilId}
+                  chatTitle={chatReserva.chatTitle}
+                  chatAvatar={chatReserva.chatAvatar}
+                  onClose={() => setChatReserva(null)}
+                  modalMode={true}
+                />
+              </View>
+            </View>
+          </View>
+        )}
+      </Modal>
+
+      <Modal
         visible={!!chatItem}
         animationType="slide"
         transparent={true}
@@ -512,13 +651,18 @@ export default function PedidosComercio({ route }) {
             />
             <View style={cs.chatPanel}>
               <View style={cs.chatHeader}>
-                <View style={cs.chatAvatar}>
-                  <Ionicons name="person" size={20} color="#FFFFFF" />
-                </View>
+                {chatItem.conductorFoto ? (
+                  <Image source={{ uri: chatItem.conductorFoto }} style={cs.chatAvatarImg} />
+                ) : (
+                  <View style={cs.chatAvatar}>
+                    <Ionicons name="person" size={20} color="#FFFFFF" />
+                  </View>
+                )}
                 <View style={cs.chatHeaderText}>
                   <Text style={cs.chatTitle} numberOfLines={1}>
                     {chatItem.conductorNombre || "Conductor"}
                   </Text>
+                  <Text style={cs.chatSub}>Pedido #{chatItem.pedidoId}</Text>
                 </View>
                 <TouchableOpacity
                   style={cs.closeChatBtn}
@@ -680,14 +824,23 @@ const cs = StyleSheet.create({
   infoRow: { flexDirection: "row", justifyContent: "space-between", marginBottom: 8 },
   infoLabel: { fontSize: 12, fontFamily: "Montserrat_600SemiBold", color: COLORS.muted },
   infoValue: { fontSize: 12, fontFamily: "Montserrat_700Bold", color: COLORS.ink },
+  clienteSection: { marginHorizontal: 16, marginTop: 12, backgroundColor: COLORS.zinc50, borderRadius: 16, padding: 12 },
+  clienteRow: { flexDirection: "row", alignItems: "center", gap: 10 },
+  clienteAvatar: { width: 40, height: 40, borderRadius: 20, backgroundColor: COLORS.zinc100 },
+  clienteAvatarFallback: { width: 40, height: 40, borderRadius: 20, backgroundColor: COLORS.surface, borderWidth: 1, borderColor: COLORS.zinc200, justifyContent: "center", alignItems: "center" },
+  clienteInfo: { flex: 1, minWidth: 0 },
+  clienteLabel: { fontSize: 9, fontFamily: "Montserrat_800ExtraBold", textTransform: "uppercase", letterSpacing: 0.8, color: COLORS.muted },
+  clienteNombre: { fontSize: 13, fontFamily: "Montserrat_700Bold", color: COLORS.ink, marginTop: 1 },
 
   chatOverlay: { flex: 1, justifyContent: "flex-end", backgroundColor: "rgba(15,23,42,0.35)" },
   chatBackdrop: { ...StyleSheet.absoluteFillObject },
-  chatPanel: { height: "85%", backgroundColor: "#FFFFFF", borderTopLeftRadius: 28, borderTopRightRadius: 28, overflow: "hidden" },
+  chatPanel: { height: "70%", backgroundColor: "#FFFFFF", borderTopLeftRadius: 28, borderTopRightRadius: 28, overflow: "hidden" },
   chatHeader: { flexDirection: "row", alignItems: "center", gap: 12, backgroundColor: "#FF5500", paddingHorizontal: 16, paddingVertical: 14 },
   chatAvatar: { width: 44, height: 44, borderRadius: 22, backgroundColor: "rgba(255,255,255,0.25)", justifyContent: "center", alignItems: "center" },
+  chatAvatarImg: { width: 44, height: 44, borderRadius: 22, backgroundColor: "rgba(255,255,255,0.25)" },
   chatHeaderText: { flex: 1 },
   chatTitle: { fontSize: 16, fontFamily: "Montserrat_700Bold", color: "#FFFFFF" },
+  chatSub: { fontSize: 11, fontFamily: "Montserrat_600SemiBold", color: "rgba(255,255,255,0.85)", marginTop: 2 },
   closeChatBtn: { width: 36, height: 36, borderRadius: 18, backgroundColor: "rgba(255,255,255,0.25)", justifyContent: "center", alignItems: "center" },
   chatBody: { flex: 1 },
 });

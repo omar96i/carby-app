@@ -55,7 +55,6 @@ export default function useReservas() {
         ...r,
         costo_total: r.costo_total || 0,
         cliente_nombre: r.user_perfil?.user?.nombre_completo || "Cliente",
-        cliente_telefono: r.user_perfil?.user?.numero_telefono || "",
         servicio_nombre: r.user_perfil?.nombre || perfilSeleccionado || "Perfil",
         servicio_descripcion: r.user_perfil?.descripcion || "",
         fecha_formateada: new Date(r.fecha).toLocaleDateString("es-ES", {
@@ -78,6 +77,24 @@ export default function useReservas() {
     const token = await AsyncStorage.getItem("userToken");
     if (!token) throw new Error("No se encontró token");
     const url = `${BASE_URL}reservas/${id}`;
+    logger.request("POST", url, { estado: "aceptado" });
+    const res = await fetch(url, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+        Accept: "application/json",
+      },
+      body: JSON.stringify({ estado: "aceptado" }),
+    });
+    if (!res.ok) throw new Error("Error al confirmar reserva");
+    return res.json();
+  }
+
+  async function completarReserva(id) {
+    const token = await AsyncStorage.getItem("userToken");
+    if (!token) throw new Error("No se encontró token");
+    const url = `${BASE_URL}reservas/${id}`;
     logger.request("POST", url, { estado: "completado" });
     const res = await fetch(url, {
       method: "POST",
@@ -88,7 +105,7 @@ export default function useReservas() {
       },
       body: JSON.stringify({ estado: "completado" }),
     });
-    if (!res.ok) throw new Error("Error al confirmar reserva");
+    if (!res.ok) throw new Error("Error al completar reserva");
     return res.json();
   }
 
@@ -101,5 +118,6 @@ export default function useReservas() {
     fetchPerfiles,
     fetchReservas,
     aceptarReserva,
+    completarReserva,
   };
 }

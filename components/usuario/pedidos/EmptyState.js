@@ -4,9 +4,9 @@ import { Ionicons } from "@expo/vector-icons";
 import { COLORS } from "./helpers";
 
 const TAB_COPY = {
-  activas: { icon: "navigate", title: "Sin servicios activos", sub: "Tus viajes y pedidos en curso aparecerán aquí." },
+  activas: { icon: "navigate", title: "Sin servicios activos", sub: "Tus arrendamientos y pedidos en curso aparecerán aquí." },
   historial: { icon: "archive", title: "Historial vacío", sub: "Aún no has completado ningún servicio." },
-  reservas: { icon: "calendar", title: "Sin reservas", sub: "Programa un viaje con anticipación." },
+  reservas: { icon: "calendar", title: "Sin reservas", sub: "Programa un arrendamiento con anticipación." },
 };
 
 export default function EmptyState({ tab = "activas" }) {

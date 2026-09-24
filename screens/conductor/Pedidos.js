@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from "react";
 import {
   SafeAreaView, View, FlatList, TouchableOpacity, Text,
-  ActivityIndicator, RefreshControl, StyleSheet, Linking, Image, ScrollView,
+  ActivityIndicator, RefreshControl, StyleSheet, Image, ScrollView,
   Modal,
 } from "react-native";
 import { useNavigation, useFocusEffect } from "@react-navigation/native";
@@ -74,12 +74,6 @@ export default function PedidosConductor({ route }) {
   const navigateToDetails = useCallback((item) => {
     navigation.navigate("StepTrece", { carreraId: item.id, esConductor: true });
   }, [navigation]);
-
-  const handleLlamarCliente = (item) => {
-    const tel = item.usuario?.telefono;
-    if (tel) Linking.openURL(`tel:${tel}`);
-    else showAlert("No hay teléfono disponible", "info");
-  };
 
   const handleChatComercio = (item) => {
     if (!item.pedido?.comercio) {
@@ -182,10 +176,6 @@ export default function PedidosConductor({ route }) {
         {/* Actions */}
         {esActivo && (
           <View style={ds.actions}>
-            <TouchableOpacity style={ds.callBtnFull} onPress={() => handleLlamarCliente(item)}>
-              <Ionicons name="call" size={16} color={COLORS.surface} />
-              <Text style={ds.callBtnText}>Llamar cliente</Text>
-            </TouchableOpacity>
             {tienePedido && (
               <TouchableOpacity style={ds.chatBtn} onPress={() => handleChatComercio(item)}>
                 <Ionicons name="chatbubble" size={16} color={COLORS.brand} />
@@ -320,8 +310,6 @@ const ds = StyleSheet.create({
   detailBtn: { width: 36, height: 36, borderRadius: 18, backgroundColor: COLORS.ink, justifyContent: "center", alignItems: "center", flexShrink: 0 },
   moreBtn: { width: 36, height: 36, borderRadius: 18, borderWidth: 1, borderColor: COLORS.zinc200, justifyContent: "center", alignItems: "center", flexShrink: 0 },
   actions: { paddingHorizontal: 16, paddingBottom: 14, gap: 8 },
-  callBtnFull: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, backgroundColor: COLORS.brand, paddingVertical: 12, borderRadius: 14 },
-  callBtnText: { fontSize: 14, fontFamily: "Montserrat_800ExtraBold", color: COLORS.surface },
   chatBtn: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 6, paddingVertical: 8 },
   chatBtnText: { fontSize: 13, fontFamily: "Montserrat_700Bold", color: COLORS.brand },
 

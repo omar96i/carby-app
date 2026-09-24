@@ -322,7 +322,7 @@ export default function Pedidos({ route }) {
 
     // Validar que existe pedido_id en la carrera
     if (!item.es_carrera || !item.pedido_id) {
-      showAlert("Error", "No se encontró información del pedido asociado a esta carrera");
+      showAlert("Error", "No se encontró información del pedido asociado a este arrendamiento");
       return;
     }
 
@@ -1106,7 +1106,6 @@ export default function Pedidos({ route }) {
         // Campos adicionales para compatibilidad con el renderizado
         costo_total: reserva.costo_total || 0,
         cliente_nombre: reserva.user_perfil?.user?.nombre_completo || "Cliente",
-        cliente_telefono: reserva.user_perfil?.user?.numero_telefono || "",
         servicio_nombre: reserva.user_perfil?.nombre || "Servicio",
         servicio_descripcion: reserva.user_perfil?.descripcion || "",
         servicio_imagen: reserva.user_perfil?.file || null,
@@ -1297,7 +1296,6 @@ export default function Pedidos({ route }) {
           costo_total: reserva.costo_total || 0,
           cliente_nombre:
             reserva.user_perfil?.user?.nombre_completo || "Cliente",
-          cliente_telefono: reserva.user_perfil?.user?.numero_telefono || "",
           // CORREGIDO: Usar el nombre del perfil mapeado correctamente
           servicio_nombre: nombrePerfil,
           servicio_descripcion: reserva.user_perfil?.descripcion || "",
@@ -1993,15 +1991,15 @@ export default function Pedidos({ route }) {
 
       if (!response.ok) {
         console.error('Error al cancelar carrera:', data);
-        showAlert('Error', 'No se pudo cancelar la carrera. Intenta de nuevo.');
+        showAlert('Error', 'No se pudo cancelar el arrendamiento. Intenta de nuevo.');
         return;
       }
 
-      showAlert('Cancelado', 'La carrera ha sido cancelada exitosamente.', 'success');
+      showAlert('Cancelado', 'El arrendamiento ha sido cancelado exitosamente.', 'success');
       // Aquí puedes hacer un refresh de la lista o navegación si aplica
     } catch (error) {
       console.error('Error inesperado:', error);
-      showAlert('Error', 'Hubo un problema al cancelar la carrera.');
+      showAlert('Error', 'Hubo un problema al cancelar el arrendamiento.');
     }
   };
 
@@ -2179,8 +2177,8 @@ export default function Pedidos({ route }) {
           );
 
           alert(item.carrera && item.carrera.id
-            ? "¡Nueva carrera creada exitosamente reemplazando la anterior!"
-            : "¡Carrera creada y pedido completado con éxito!");
+            ? "¡Nuevo arrendamiento creado exitosamente reemplazando el anterior!"
+            : "¡Arrendamiento creado y pedido completado con éxito!");
         } else {
           // La carrera se creó pero hubo un error al actualizar el pedido
           setPedidosConCarrera((prev) => [...prev, item.id]);
@@ -2202,7 +2200,7 @@ export default function Pedidos({ route }) {
           );
 
           alert(
-            "Carrera creada, pero hubo un problema al actualizar el estado del pedido."
+            "Arrendamiento creado, pero hubo un problema al actualizar el estado del pedido."
           );
         }
       } else {
@@ -2216,7 +2214,7 @@ export default function Pedidos({ route }) {
         );
 
         alert(
-          "Error al crear la carrera: " + (data.message || "Intente nuevamente")
+          "Error al crear el arrendamiento: " + (data.message || "Intente nuevamente")
         );
       }
     } catch (error) {
@@ -2229,7 +2227,7 @@ export default function Pedidos({ route }) {
         )
       );
 
-      alert("Error al crear la carrera. Intente nuevamente.");
+      alert("Error al crear el arrendamiento. Intente nuevamente.");
     }
   };
 
@@ -2505,8 +2503,8 @@ export default function Pedidos({ route }) {
     let textoTipoItem = "Pedido";
     if (item.es_carrera) {
       textoTipoItem = item.es_conductor
-        ? "Carrera conductor"
-        : "Carrera usuario";
+        ? "Arrendamiento conductor"
+        : "Arrendamiento usuario";
     }
 
     const renderPagoDriver = (pedidoItem) => {
@@ -2912,7 +2910,7 @@ export default function Pedidos({ route }) {
                   {!(["cancelado", "completado", "entregado"].includes(item.estado)) && (
                     <TouchableOpacity
                       onPress={() =>
-                        showAlert("Confirmar cancelación", "¿Estás seguro de que quieres cancelar esta carrera?", "confirm", () => cancelarCarrera(item.id), "Sí, cancelar")
+                        showAlert("Confirmar cancelación", "¿Estás seguro de que quieres cancelar este arrendamiento?", "confirm", () => cancelarCarrera(item.id), "Sí, cancelar")
                       }
                     >
                       <Text style={styles.cancelarTexto}>Cancelar</Text>
@@ -2926,7 +2924,7 @@ export default function Pedidos({ route }) {
 
                 {item.estado === 'pendiente' && (
                   <Text style={styles.mensajePendiente}>
-                    Si no se encuentra un conductor en 3 minutos, la carrera se cancelará automáticamente.
+                    Si no se encuentra un conductor en 3 minutos, el arrendamiento se cancelará automáticamente.
                   </Text>
                 )}
 
@@ -2953,7 +2951,7 @@ export default function Pedidos({ route }) {
 
                     {!item.puntuacion_driver && (
                       <Text style={styles.noRatingText}>
-                        Aún no te han calificado en esta carrera
+                        Aún no te han calificado en este arrendamiento
                       </Text>
                     )}
                   </View>
@@ -2978,7 +2976,7 @@ export default function Pedidos({ route }) {
 
                     {!item.puntuacion_pasajero && (
                       <Text style={styles.noRatingText}>
-                        Aún no has sido calificado en esta carrera
+                        Aún no has sido calificado en este arrendamiento
                       </Text>
                     )}
                   </View>
@@ -3494,8 +3492,8 @@ export default function Pedidos({ route }) {
                   <ActivityIndicator size="small" color="#000" />
                   <Text style={styles.loadingButtonText}>
                     {item.carrera?.estado === "cancelado"
-                      ? "Creando nueva carrera..."
-                      : "Creando carrera..."}
+                      ? "Creando nuevo arrendamiento..."
+                      : "Creando arrendamiento..."}
                   </Text>
                 </View>
               ) : (
@@ -3515,8 +3513,8 @@ export default function Pedidos({ route }) {
                     >
                       <Text style={styles.acceptButtonText}>
                         {item.carrera?.estado === "cancelado"
-                          ? "Crear nueva carrera"
-                          : "Completar y solicitar carrera"}
+                          ? "Crear nuevo arrendamiento"
+                          : "Completar y solicitar arrendamiento"}
                       </Text>
                     </TouchableOpacity>
                   )}
@@ -3527,7 +3525,7 @@ export default function Pedidos({ route }) {
               <Text style={styles.infoLabel}>
                 {item.estado_pago === "pendiente"
                   ? "Si el pedido no se acepta en el transcurso de 3 minutos, se cancelará automáticamente."
-                  : "Si en tres minutos no se te ha asignado un Rider, puedes relanzar la carrera."}
+                  : "Si en tres minutos no se te ha asignado un Rider, puedes relanzar el arrendamiento."}
               </Text>
             </View>
           )}
@@ -3607,7 +3605,6 @@ export default function Pedidos({ route }) {
     const horaInicioFormateada = item.hora_inicio?.slice(0, 5) || "";
     const horaFinFormateada = item.hora_fin?.slice(0, 5) || ""; // Información del cliente
     const clienteNombre = item.user_perfil?.user?.nombre_completo || "Cliente";
-    const clienteTelefono = item.user_perfil?.user?.numero_telefono || "";
 
     // Información del perfil - CORREGIDO: usar el mapping correcto
     // Buscar el perfil usando user_perfil_id en los perfiles completos
@@ -3723,17 +3720,6 @@ export default function Pedidos({ route }) {
                 </Text>
                 <Text style={styles.reservaLocationText} numberOfLines={2}>
                   {direccionReserva}
-                </Text>
-              </View>
-            </View>
-          )}
-          {clienteTelefono && (
-            <View style={styles.reservaLocationRow}>
-              <FontAwesome name="phone" size={16} color="#555" />
-              <View style={styles.reservaLocationDetails}>
-                <Text style={styles.reservaLocationLabel}>Teléfono:</Text>
-                <Text style={styles.reservaLocationText}>
-                  {clienteTelefono}
                 </Text>
               </View>
             </View>
@@ -4062,7 +4048,7 @@ export default function Pedidos({ route }) {
     <SafeAreaView style={styles.safeContainer}>
       <Text style={styles.headerTitle}>
         {isUserRider
-          ? "Mis Carreras"
+          ? "Mis Arrendamientos"
           : mostrarCarrerasUsuario
             ? "Mis Pedidos y Viajes"
             : "Mis Pedidos y viajes"}
@@ -4650,7 +4636,7 @@ export default function Pedidos({ route }) {
             {activeTab === "reservas"
               ? "Cargando reservas..."
               : isUserRider
-                ? "Cargando carreras..."
+                ? "Cargando arrendamientos..."
                 : "Cargando historial..."}
           </Text>
         </View>

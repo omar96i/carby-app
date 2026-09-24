@@ -44,7 +44,6 @@ function normalizeCarrera(c) {
     usuario: c.usuario
       ? {
           nombre_completo: c.usuario.nombre_completo || "Cliente",
-          telefono: c.usuario.numero_telefono || "",
           ubicacion: c.usuario.ubicacion || null,
         }
       : null,

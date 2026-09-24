@@ -29,7 +29,7 @@ async function setupNotificationChannels() {
         vibrationPattern: [0, 250, 250, 250],
       });
       await Notifications.setNotificationChannelAsync(CARRERA_CHANNEL_ID, {
-        name: "Nuevas Carreras",
+        name: "Nuevos Arrendamientos",
         importance: Notifications.AndroidImportance.HIGH,
         vibrationPattern: [0, 500],
       });

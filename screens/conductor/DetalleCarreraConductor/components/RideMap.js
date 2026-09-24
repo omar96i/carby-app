@@ -32,11 +32,11 @@ export const RideMap = ({
     if (!map.current) return;
     const markers = [];
     if (driverLocation) markers.push(driverLocation);
-    if ((state === "to_pickup" || state === "arrived") && passengerLocation) {
+    if ((state === "to_pickup" || state === "arrived" || state === "accepted" || state === "at_store") && passengerLocation) {
       markers.push(passengerLocation);
     }
     if (pickup) markers.push(pickup);
-    if (state === "to_destination" && destination) markers.push(destination);
+    if ((state === "to_destination" || state === "to_customer") && destination) markers.push(destination);
     if (markers.length < 2) return;
 
     map.current.fitToCoordinates(markers, {
@@ -71,7 +71,7 @@ export const RideMap = ({
         </Marker>
       )}
 
-      {destination && state === "to_destination" && (
+      {destination && (state === "to_destination" || state === "to_customer") && (
         <Marker coordinate={destination} anchor={{ x: 0.5, y: 1 }}>
           <View style={styles.destMarkerBox}>
             <Svg width={30} height={30} viewBox="0 0 30 30">
@@ -90,7 +90,7 @@ export const RideMap = ({
         </Marker>
       )}
 
-      {passengerLocation && (state === "to_pickup" || state === "arrived") && (
+      {passengerLocation && (state === "to_pickup" || state === "arrived" || state === "accepted" || state === "at_store") && (
         <Marker coordinate={passengerLocation} anchor={{ x: 0.5, y: 0.5 }} zIndex={10}>
           <Animated.View
             style={[

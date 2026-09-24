@@ -254,9 +254,19 @@ const Cart = () => {
               ))}
             </View>
 
-            {/* Resumen de Costos */}
+            {/* Resumen tipo tiquete */}
             <View style={styles.summaryContainer}>
-                <Text style={styles.summaryTitle}>Resumen</Text>
+                <View style={styles.ticketHeader}>
+                    <Ionicons name="receipt-outline" size={22} color="#fa6205" />
+                    <Text style={styles.summaryTitle}>Resumen</Text>
+                </View>
+                {restaurantName ? (
+                  <Text style={styles.ticketSub} numberOfLines={1}>{restaurantName}</Text>
+                ) : null}
+                <Text style={styles.ticketDate}>
+                  {new Date().toLocaleDateString("es-CO", { day: "2-digit", month: "short", year: "numeric" })} · {totalQuantity} {totalQuantity === 1 ? "artículo" : "artículos"}
+                </Text>
+                <View style={styles.dashedDivider} />
                 <View style={styles.summaryRow}>
                     <Text style={styles.summaryLabel}>Subtotal</Text>
                     <Text style={styles.summaryValue}>
@@ -267,7 +277,7 @@ const Cart = () => {
                     <Text style={styles.summaryLabel}>Envío</Text>
                     <Text style={styles.summaryValue}>Por calcular</Text>
                 </View>
-                <View style={styles.divider} />
+                <View style={styles.dashedDivider} />
                 <View style={styles.summaryRow}>
                     <Text style={styles.totalLabel}>Total</Text>
                     <Text style={styles.totalValue}>
@@ -275,12 +285,7 @@ const Cart = () => {
                     </Text>
                 </View>
             </View>
-            
-            <View style={{height: 100}} /> 
-          </ScrollView>
 
-          {/* Footer Flotante */}
-          <View style={styles.footerContainer}>
             <TouchableOpacity
               style={styles.payButton}
               activeOpacity={0.8}
@@ -326,7 +331,9 @@ const Cart = () => {
                 {"$"}{totalPrice.toLocaleString()}
               </Text>
             </TouchableOpacity>
-          </View>
+
+            <View style={{height: 20}} />
+          </ScrollView>
         </>
       ) : (
         /* Empty State */
@@ -427,7 +434,13 @@ const styles = StyleSheet.create({
     padding: 12,
     marginBottom: 15,
     borderWidth: 1,
-    borderColor: "#ECECEC",
+    borderColor: "#D1D1D6",
+    borderStyle: "dashed",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 6,
+    elevation: 2,
   },
   itemImage: {
     width: 80,
@@ -514,33 +527,68 @@ const styles = StyleSheet.create({
     fontFamily: "MontserratBold",
   },
 
-  // --- SUMMARY SECTION ---
+  // --- SUMMARY SECTION (tiqueete) ---
   summaryContainer: {
-    backgroundColor: "#FFFFFF",
+    backgroundColor: "#ECECEC",
     borderRadius: 16,
-    padding: 20,
+    padding: 22,
     marginBottom: 20,
+    borderWidth: 1,
+    borderColor: "#D1D1D6",
+    borderStyle: "dashed",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 6,
+    elevation: 2,
+  },
+  ticketHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    justifyContent: "center",
   },
   summaryTitle: {
     color: "#1C1C1E",
-    fontSize: 16,
+    fontSize: 19,
     fontFamily: "MontserratBold",
-    marginBottom: 15,
+    letterSpacing: 1,
+    textTransform: "uppercase",
+  },
+  ticketSub: {
+    color: "#666",
+    fontSize: 13,
+    fontFamily: "MontserratSemiBold",
+    textAlign: "center",
+    marginTop: 6,
+  },
+  ticketDate: {
+    color: "#999",
+    fontSize: 12,
+    fontFamily: "MontserratRegular",
+    textAlign: "center",
+    marginTop: 4,
+  },
+  dashedDivider: {
+    borderTopWidth: 1,
+    borderTopColor: "#D1D1D6",
+    borderStyle: "dashed",
+    marginVertical: 14,
   },
   summaryRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 10,
+    marginBottom: 12,
   },
   summaryLabel: {
-    color: "#aaa",
+    color: "#666",
     fontFamily: "MontserratRegular",
-    fontSize: 14,
+    fontSize: 15,
   },
   summaryValue: {
     color: "#1C1C1E",
-    fontFamily: "MontserratRegular",
-    fontSize: 14,
+    fontFamily: "MontserratSemiBold",
+    fontSize: 15,
   },
   divider: {
     height: 1,
@@ -550,15 +598,17 @@ const styles = StyleSheet.create({
   totalLabel: {
     color: "#1C1C1E",
     fontFamily: "MontserratBold",
-    fontSize: 18,
+    fontSize: 20,
+    letterSpacing: 1,
+    textTransform: "uppercase",
   },
   totalValue: {
     color: "#fa6205",
     fontFamily: "MontserratBold",
-    fontSize: 18,
+    fontSize: 22,
   },
 
-  // --- FOOTER FLOTANTE ---
+  // --- FOOTER FLOTANTE (sin uso, se deja por compatibilidad) ---
   footerContainer: {
     position: 'absolute',
     bottom: 0,
@@ -581,6 +631,7 @@ const styles = StyleSheet.create({
     borderRadius: 30,
     paddingVertical: 16,
     paddingHorizontal: 25,
+    marginBottom: 4,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',

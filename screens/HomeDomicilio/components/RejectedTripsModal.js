@@ -15,7 +15,7 @@ export default function RejectedTripsModal({ visible, onClose, trips, onRestore 
             </TouchableOpacity>
           </View>
           {trips.length === 0 ? (
-            <Text style={styles.emptyListText}>No hay carreras descartadas disponibles.</Text>
+            <Text style={styles.emptyListText}>No hay arrendamientos descartados disponibles.</Text>
           ) : (
             <FlatList
               data={trips}

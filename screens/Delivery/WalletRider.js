@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import {
   View,
   Text,
@@ -22,10 +22,11 @@ import {
   Montserrat_600SemiBold,
 } from "@expo-google-fonts/montserrat";
 import { useFonts } from "expo-font";
-import { useNavigation } from "@react-navigation/native";
+import { useNavigation, useFocusEffect } from "@react-navigation/native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { BASE_URL } from "../../constants/url";
 import AlertaModal from "../../components/ErrorModal";
+import AvailabilitySummary from "../HomeDomicilio/components/AvailabilitySummary";
 
 const { width } = Dimensions.get("window");
 
@@ -57,6 +58,8 @@ const WalletRider = () => {
   const [riderType, setRiderType] = useState("");
   const [freePackageAvailable, setFreePackageAvailable] = useState(null);
   const [loadingFreePackageCheck, setLoadingFreePackageCheck] = useState(false);
+  const [availability, setAvailability] = useState(null);
+  const [loadingAvailability, setLoadingAvailability] = useState(false);
 
   // Sistema de alertas
   const [alertVisible, setAlertVisible] = useState(false);
@@ -86,6 +89,36 @@ const WalletRider = () => {
     console.log("Desde el useEffect")
     getAvailableDeliveries()
   }, []);
+
+  const fetchAvailability = useCallback(async () => {
+    try {
+      setLoadingAvailability(true);
+      const token = await AsyncStorage.getItem("userToken");
+      if (!token) return null;
+      const response = await fetch(`${BASE_URL}conductor/disponibilidad`, {
+        method: "GET",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+      });
+      if (!response.ok) return null;
+      const json = await response.json();
+      if (json.status && json.data) {
+        setAvailability(json.data);
+        return json.data;
+      }
+      return null;
+    } catch (error) {
+      console.log("[WalletRider] AVAILABILITY ERROR ->", error.message);
+      return null;
+    } finally {
+      setLoadingAvailability(false);
+    }
+  }, []);
+
+  useFocusEffect(
+    useCallback(() => {
+      fetchAvailability();
+    }, [fetchAvailability])
+  );
 
   const getAvailableDeliveries = async () => {
     console.log("entro aqui muchas veces")
@@ -534,34 +567,7 @@ const WalletRider = () => {
         style={styles.container}
         contentContainerStyle={styles.contentContainer}
       >
-        <View style={styles.balanceCard}>
-          <Text style={styles.balanceTitle}>Estado de Entregas</Text>
-          <Text style={styles.balanceAmount}>
-            {availableDeliveries} Disponibles
-          </Text>
-
-          {/* Stats Container */}
-          <View style={styles.statsContainer}>
-            <View style={styles.statRow}>
-              <View style={styles.statItem}>
-                <Text style={styles.statLabel}>Total Permitido</Text>
-                <Text style={styles.statValue}>{totalPermittedDeliveries}</Text>
-              </View>
-              <View style={styles.statItem}>
-                <Text style={styles.statLabel}>Total Completado</Text>
-                <Text style={styles.statValue}>{completedDeliveries}</Text>
-              </View>
-            </View>
-          </View>
-
-          {/* Details Container */}
-          <View style={styles.detailsContainer}>
-            <View style={styles.detailRow}>
-              <Text style={styles.detailLabel}>Entregas Completadas:</Text>
-              <Text style={styles.detailValue}>{completedDeliveries}</Text>
-            </View>
-          </View>
-        </View>
+        <AvailabilitySummary availability={availability} loading={loadingAvailability} onRefresh={fetchAvailability} />
         {/* Sección para mostrar suscripciones activas */}
         {activeSubscriptions.length > 0 && (
           <View>

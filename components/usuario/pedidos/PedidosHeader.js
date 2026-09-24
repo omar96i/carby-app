@@ -5,7 +5,7 @@ import { COLORS } from "./helpers";
 export default function PedidosHeader() {
   return (
     <View style={s.container}>
-      <Text style={s.title}>Mis viajes y pedidos</Text>
+      <Text style={s.title}>Mis arrendamientos y pedidos</Text>
     </View>
   );
 }

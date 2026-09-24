@@ -20,6 +20,7 @@ import { Feather } from "@expo/vector-icons";
 import { useRideData } from "./hooks/useRideData";
 import { useDriverLocation } from "./hooks/useDriverLocation";
 import { useChatPolling } from "./hooks/useChatPolling";
+import { useNotification } from "../../../context/NotificationContext";
 import { useRoute as useRouteCoords } from "./hooks/useRoute";
 import { useShareLocation } from "./hooks/useShareLocation";
 import { parseCoords, reverseGeocode, getRideState, getImageUrl } from "./utils";
@@ -52,6 +53,13 @@ export default function DetalleCarrera() {
   const arrivedSoundTimes = useRef(0);
 
   const { tripData, isLoading, error, refetch } = useRideData(tripId, isTyping);
+  const { notification } = useNotification();
+
+  // Refetch ante push (estado o chat)
+  useEffect(() => {
+    if (!notification) return;
+    refetch();
+  }, [notification, refetch]);
   const driverLocation = useDriverLocation(tripData?.conductor?.id);
   const { messageCount } = useChatPolling(tripId);
   const arrivedPlayer = useAudioPlayer(require("../../../assets/sounds/sonido_close_carro.mp3"));
