@@ -53,6 +53,7 @@ const EditarProducto = () => {
   const [originalImageUrl, setOriginalImageUrl] = useState(null);
   const [descuento, setDescuento] = useState("");
   const [activoDescuento, setActivoDescuento] = useState(false);
+  const [rangoPrecios, setRangoPrecios] = useState({ min: null, max: null });
 
   useFocusEffect(useCallback(() => {
     navigation.getParent()?.setOptions({ tabBarStyle: { display: "none" } });
@@ -91,6 +92,14 @@ const EditarProducto = () => {
       // Cargar datos del producto
       await fetchProductData();
       await fetchAdicionales();
+      try {
+        const token2 = await AsyncStorage.getItem("userToken");
+        const r = await fetch(`${BASE_URL}comercio/setup-status`, {
+          headers: { Accept: "application/json", Authorization: `Bearer ${token2}` },
+        });
+        const d = await r.json().catch(() => null);
+        if (d?.data?.rango_precios) setRangoPrecios(d.data.rango_precios);
+      } catch {}
     })();
   }, []);
 
@@ -377,8 +386,8 @@ const EditarProducto = () => {
 
   // Form submission for updating the product
   const handleSubmit = async () => {
-    if (!nombre || !precio || !descripcion) {
-      showAlert("Error", "Nombre, precio y descripción son obligatorios");
+    if (!nombre || !precio) {
+      showAlert("Error", "Nombre y precio son obligatorios (la descripción es opcional)");
       return;
     }
 
@@ -396,7 +405,7 @@ const EditarProducto = () => {
       const formData = new FormData();
       formData.append("nombre", nombre);
       formData.append("precio", precio);
-      formData.append("descripcion", descripcion);
+      if (descripcion?.trim()) formData.append("descripcion", descripcion.trim());
       formData.append("categoria_id", categoria_id);
       if (descuento) formData.append("descuento", descuento);
       formData.append("activo_descuento", activoDescuento ? "1" : "0");
@@ -494,9 +503,14 @@ const EditarProducto = () => {
 
           <Text style={styles.inputLabel}>Precio</Text>
           <TextInput style={styles.input} placeholder="Ingresa el precio" placeholderTextColor="#999" keyboardType="numeric" value={precio} onChangeText={setPrecio} />
+          {rangoPrecios?.min != null && rangoPrecios?.max != null ? (
+            <Text style={styles.rangeText}>
+              Rango permitido: $ {Number(rangoPrecios.min).toLocaleString("es-CO")} – $ {Number(rangoPrecios.max).toLocaleString("es-CO")}
+            </Text>
+          ) : null}
 
-          <Text style={styles.inputLabel}>Descripción</Text>
-          <TextInput style={[styles.input, styles.textArea]} placeholder="Ingresa la descripción" placeholderTextColor="#999" multiline numberOfLines={4} value={descripcion} onChangeText={setDescripcion} />
+          <Text style={styles.inputLabel}>Descripción (opcional)</Text>
+          <TextInput style={[styles.input, styles.textArea]} placeholder="Ingresa la descripción (opcional)" placeholderTextColor="#999" multiline numberOfLines={4} value={descripcion} onChangeText={setDescripcion} />
 
           <View style={{ flexDirection: "row", gap: 10, marginTop: 14 }}>
             <View style={{ flex: 1 }}>
@@ -686,6 +700,7 @@ const styles = StyleSheet.create({
   imagePlaceholderText: { fontSize: 13, fontFamily: "Montserrat_600SemiBold", color: "#BBB" },
   formContainer: { padding: 16 },
   inputLabel: { fontSize: 13, fontFamily: "Montserrat_700Bold", color: "#1C1C1E", marginBottom: 6, marginTop: 14 },
+  rangeText: { fontSize: 11, fontFamily: "Montserrat_600SemiBold", color: "#fa6205", marginTop: 4 },
   input: { backgroundColor: "#FFF", borderRadius: 14, borderWidth: 1, borderColor: "#E8E8ED", padding: 14, fontSize: 14, fontFamily: "Montserrat_400Regular", color: "#1C1C1E" },
   textArea: { minHeight: 100, textAlignVertical: "top" },
   myButton: {

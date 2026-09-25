@@ -8,10 +8,18 @@ export default function VehicleCarousel({ services, selectedId, onSelect, distan
   const scrollRef = useRef(null);
   const [scrollX, setScrollX] = useState(0);
 
+  const getEffectivePricing = (service) => {
+    const tarifa = service.tarifa_vigente || null;
+    return {
+      base: parseFloat(service.precio_base_efectivo ?? tarifa?.precio_base ?? service.precio_base) || 0,
+      perKm: parseFloat(service.precio_km_efectivo ?? tarifa?.precio_km ?? service.precio_km) || 0,
+      additional: parseFloat(service.precio_adicional_efectivo ?? tarifa?.precio_adicional ?? service.precio_adicional) || 0,
+      schedule: tarifa,
+    };
+  };
+
   const getServicePrice = (service) => {
-    const base = parseFloat(service.precio_base) || 0;
-    const perKm = parseFloat(service.precio_km) || 0;
-    const additional = parseFloat(service.precio_adicional) || 0;
+    const { base, perKm, additional } = getEffectivePricing(service);
     const dist = distanceKm || 0;
     return Math.round(base + perKm * Math.max(0, dist) + additional);
   };

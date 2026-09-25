@@ -5,6 +5,7 @@ import { BASE_URL } from "../../../constants/url";
 import { COLORS, formatCOP, formatDateShort, metodoPagoLabel, RADIUS, SHADOWS } from "./helpers";
 import StatusBadge from "./StatusBadge";
 import PaymentBadge from "./PaymentBadge";
+import ReservaQrEvidencia from "./ReservaQrEvidencia";
 
 const getPerfilImageUrl = (path) => {
   if (!path) return null;
@@ -13,7 +14,7 @@ const getPerfilImageUrl = (path) => {
   return `${base}/storage/${path}`;
 };
 
-export default function ReservaCard({ item, onCancel, onChat }) {
+export default function ReservaCard({ item, onCancel, onChat, onEvidencia }) {
   const clienteNombre = item.user_perfil?.user?.nombre_completo || item.cliente_nombre || "Cliente";
   const servicioNombre = item.servicio_nombre || item.user_perfil?.nombre || "Perfil";
   const servicioDescripcion = item.servicio_descripcion || item.user_perfil?.descripcion || "";
@@ -121,6 +122,8 @@ export default function ReservaCard({ item, onCancel, onChat }) {
           <Text style={s.footerDate}>{fechaFormateada}</Text>
         </View>
       </View>
+
+      <ReservaQrEvidencia reserva={item} variant="user" onUploaded={onEvidencia} />
 
       {!["completado", "cancelado"].includes(item.estado) && (
         <TouchableOpacity style={s.cancelBtn} onPress={() => onCancel?.(item)} activeOpacity={0.7}>

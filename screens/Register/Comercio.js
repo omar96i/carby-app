@@ -89,12 +89,12 @@ export default function RegisterStoreScreen() {
   const imageFields = [
     { 
         id: "tipo_ruc", 
-        label: pais === 'CO' ? "Foto del RUT" : "Tipo de RUC 10/15/20", 
+        label: pais === 'CO' ? "RUT o Cámara de Comercio" : "Tipo de RUC 10/15/20", 
         required: false 
     },
     { 
         id: "dni", 
-        label: pais === 'CO' ? "Cámara de Comercio" : "Adjuntar DNI / Carnet Ext.", 
+        label: pais === 'CO' ? "Foto de cédula" : "Adjuntar DNI / Carnet Ext.", 
         required: false 
     },
   ];
@@ -340,7 +340,7 @@ export default function RegisterStoreScreen() {
     const tieneRUT = images["tipo_ruc"];
     const tieneCamara = images["dni"];
     if (!tieneRUT && !tieneCamara) {
-      showAlert({ title: "Documentación", message: "Debes subir al menos el RUT o la Cámara de Comercio.", type: "error" });
+      showAlert({ title: "Documentación", message: "Debes subir al menos el RUT o Cámara de Comercio, o la foto de cédula.", type: "error" });
       return;
     }
     setModalVisible(true);
@@ -455,7 +455,7 @@ export default function RegisterStoreScreen() {
 
       <Text style={styles.warningSub}>Para activar tu tienda necesitamos:</Text>
       <View style={styles.bulletPoints}>
-        {["Foto del RUT o Cámara de Comercio", "Datos del Negocio", "Fotos de tus productos o carta", "Precios actualizados", "Foto o QR de Pago (Nequi / Bancolombia)"].map((item, index) => (
+        {["RUT o Cámara de Comercio", "Foto de cédula", "Datos del Negocio", "Fotos de tus productos o carta", "Precios actualizados", "Foto o QR de Pago (Nequi / Bancolombia)"].map((item, index) => (
           <View key={index} style={styles.bulletItem}>
             <MaterialCommunityIcons name="check-circle-outline" size={20} color="#fa6205" />
             <Text style={styles.bulletText}>{item}</Text>

@@ -33,6 +33,7 @@ import StatusBadge from "../../components/usuario/pedidos/StatusBadge";
 import RouteStops from "../../components/usuario/pedidos/RouteStops";
 import DriverRow from "../../components/usuario/pedidos/DriverRow";
 import PaymentBadge from "../../components/usuario/pedidos/PaymentBadge";
+import ReservaQrEvidencia from "../../components/usuario/pedidos/ReservaQrEvidencia";
 
 import usePedidos from "../../hooks/comercio/usePedidos";
 import useReservas from "../../hooks/comercio/useReservas";
@@ -269,6 +270,10 @@ export default function PedidosComercio({ route }) {
           {item.hora_inicio ? <View style={cs.infoRow}><Text style={cs.infoLabel}>Horario:</Text><Text style={cs.infoValue}>{item.hora_inicio_formateada} - {item.hora_fin_formateada}</Text></View> : null}
           {!!direccion && <View style={cs.infoRow}><Text style={cs.infoLabel}>Dirección:</Text><Text style={cs.infoValue} numberOfLines={2}>{direccion}</Text></View>}
           <View style={cs.infoRow}><Text style={cs.infoLabel}>Precio:</Text><Text style={cs.infoValue}>{formatCOP(item.costo_total)}</Text></View>
+          <View style={cs.infoRow}>
+            <Text style={cs.infoLabel}>Pago:</Text>
+            <Text style={cs.infoValue}>{String(item.metodo_pago || "efectivo").toLowerCase() === "qr" ? "QR" : "Efectivo"}{item.archivo_evidencia ? " · comprobante ✓" : (String(item.metodo_pago || "").toLowerCase() === "qr" ? " · sin comprobante" : "")}</Text>
+          </View>
         </View>
         <View style={cs.clienteSection}>
           <View style={cs.clienteRow}>
@@ -298,6 +303,9 @@ export default function PedidosComercio({ route }) {
             </TouchableOpacity>
           </View>
         )}
+        <View style={cs.qrWrap}>
+          <ReservaQrEvidencia reserva={item} variant="comercio" />
+        </View>
         {canComplete && (
           <View style={cs.actions}>
             <TouchableOpacity style={cs.acceptBtn} onPress={() => handleCompletarReserva(item)}>
@@ -737,6 +745,7 @@ const cs = StyleSheet.create({
   moreBtn: { width: 36, height: 36, borderRadius: 18, borderWidth: 1, borderColor: COLORS.zinc200, justifyContent: "center", alignItems: "center", flexShrink: 0 },
 
   actions: { paddingHorizontal: 16, paddingBottom: 14, gap: 8 },
+  qrWrap: { paddingBottom: 4 },
   acceptBtn: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, backgroundColor: COLORS.brand, paddingVertical: 12, borderRadius: 14 },
   acceptText: { fontSize: 14, fontFamily: "Montserrat_800ExtraBold", color: COLORS.surface },
   shipBtn: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, backgroundColor: COLORS.ink, paddingVertical: 12, borderRadius: 14 },

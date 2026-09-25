@@ -32,7 +32,7 @@ export default function useProductos() {
     const fd = new FormData();
     fd.append("nombre", form.nombre);
     fd.append("precio", String(form.precio));
-    fd.append("descripcion", form.extra || "");
+    if (form.descripcion) fd.append("descripcion", form.descripcion);
     fd.append("categoria_id", String(form.categoria_id));
     if (form.descuento) fd.append("descuento", String(form.descuento));
     if (form.activo_descuento) fd.append("activo_descuento", "1");
@@ -47,7 +47,19 @@ export default function useProductos() {
     });
     const text = await res.text();
     logger.response("PRODUCTO_CREATE", res.status, text.slice(0, 300));
-    if (!res.ok) throw new Error(`Error ${res.status}`);
+    if (!res.ok) {
+      let msg = `Error ${res.status}`;
+      try {
+        const j = JSON.parse(text);
+        msg = j.message || j.msg || msg;
+        if (j.rango_permitido) {
+          const r = j.rango_permitido;
+          msg += ` (rango: $${Number(r.min).toLocaleString("es-CO")} – $${Number(r.max).toLocaleString("es-CO")})`;
+        }
+        if (j.errors) msg += ": " + Object.values(j.errors).flat().join(" ");
+      } catch {}
+      throw new Error(msg);
+    }
     await fetchProductos();
   }, [fetchProductos]);
 
@@ -69,10 +81,20 @@ export default function useProductos() {
   const deleteProducto = useCallback(async (id) => {
     const token = await AsyncStorage.getItem("userToken");
     logger.request("DELETE", `${BASE_URL}productos/${id}`);
-    await fetch(`${BASE_URL}productos/${id}`, {
+    const res = await fetch(`${BASE_URL}productos/${id}`, {
       method: "DELETE",
       headers: { Authorization: `Bearer ${token}`, Accept: "application/json" },
     });
+    if (!res.ok) {
+      const text = await res.text().catch(() => "");
+      let msg = `Error ${res.status}`;
+      try {
+        const j = JSON.parse(text);
+        msg = j.message || msg;
+        if (j.counts) msg += ` (${j.counts.productos || 0} productos, ${j.counts.servicios || 0} servicios)`;
+      } catch {}
+      throw new Error(msg);
+    }
     await fetchProductos();
   }, [fetchProductos]);
 

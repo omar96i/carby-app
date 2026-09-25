@@ -1,20 +1,25 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Image, ActivityIndicator, Switch } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import * as ImagePicker from "expo-image-picker";
 
 const C = { brand: "#fa6205", ink: "#1C1C1E", surface: "#FFF", muted: "#71717A", bg: "#F4F4F5" };
 
-export default function ItemCreator({ categorias, onCreate, showServicios = true }) {
+export default function ItemCreator({ categorias, onCreate, showServicios = true, rangoPrecios = {} }) {
   const [mode, setMode] = useState("producto");
   const [nombre, setNombre] = useState("");
   const [precio, setPrecio] = useState("");
-  const [extra, setExtra] = useState("");
+  const [descripcion, setDescripcion] = useState("");
+  const [tiempo, setTiempo] = useState("");
   const [foto, setFoto] = useState(null);
   const [categoriaId, setCategoriaId] = useState(categorias[0]?.id || null);
   const [loading, setLoading] = useState(false);
   const [descuento, setDescuento] = useState("");
   const [activoDescuento, setActivoDescuento] = useState(false);
+
+  useEffect(() => {
+    if (!categoriaId && categorias?.length) setCategoriaId(categorias[0].id);
+  }, [categorias]);
 
   const pickImage = async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -31,13 +36,16 @@ export default function ItemCreator({ categorias, onCreate, showServicios = true
   };
 
   const handleSubmit = async () => {
-    if (!nombre || !precio || !categoriaId) return;
+    if (!nombre.trim() || !precio || !categoriaId) return;
+    if (mode === "servicio" && !tiempo.trim()) return;
+    if (!categorias?.length) return;
     setLoading(true);
     try {
       await onCreate({
         nombre: nombre.trim(),
         precio: parseInt(precio.replace(/\D/g, "")) || 0,
-        extra: extra.trim(),
+        descripcion: descripcion.trim() || undefined,
+        tiempo: mode === "servicio" ? tiempo.trim() : undefined,
         categoria_id: categoriaId,
         tipo: mode,
         foto: foto,
@@ -46,7 +54,8 @@ export default function ItemCreator({ categorias, onCreate, showServicios = true
       });
       setNombre("");
       setPrecio("");
-      setExtra("");
+      setDescripcion("");
+      setTiempo("");
       setFoto(null);
       setDescuento("");
       setActivoDescuento(false);
@@ -90,8 +99,21 @@ export default function ItemCreator({ categorias, onCreate, showServicios = true
       </TouchableOpacity>
 
       <TextInput style={s.input} placeholder={mode === "producto" ? "Ej. Hamburguesa Doble" : "Ej. Corte Fade"} placeholderTextColor="#999" value={nombre} onChangeText={setNombre} />
-      <TextInput style={s.input} placeholder="Precio ($)" placeholderTextColor="#999" keyboardType="numeric" value={precio} onChangeText={setPrecio} />
-      <TextInput style={s.input} placeholder={mode === "producto" ? "Ej. Con papas, 300gr..." : "Ej. 45 min"} placeholderTextColor="#999" value={extra} onChangeText={setExtra} />
+      <View>
+        <TextInput style={[s.input, { marginBottom: 4 }]} placeholder="Precio ($)" placeholderTextColor="#999" keyboardType="numeric" value={precio} onChangeText={setPrecio} />
+        {rangoPrecios?.min != null && rangoPrecios?.max != null ? (
+          <View style={s.rangeRow}>
+            <Ionicons name="pricetag-outline" size={12} color={C.brand} />
+            <Text style={s.rangeText}>
+              Rango permitido: ${Number(rangoPrecios.min).toLocaleString("es-CO")} – ${Number(rangoPrecios.max).toLocaleString("es-CO")}
+            </Text>
+          </View>
+        ) : null}
+      </View>
+      <TextInput style={s.input} placeholder="Descripción (opcional)" placeholderTextColor="#999" value={descripcion} onChangeText={setDescripcion} multiline />
+      {mode === "servicio" && (
+        <TextInput style={s.input} placeholder="Tiempo estimado (ej. 45 min) *" placeholderTextColor="#999" value={tiempo} onChangeText={setTiempo} />
+      )}
 
       <View style={s.discountRow}>
         <TextInput style={[s.input, { flex: 1, marginBottom: 0 }]} placeholder="Descuento ($)" placeholderTextColor="#999" keyboardType="numeric" value={descuento} onChangeText={setDescuento} />
@@ -112,7 +134,7 @@ export default function ItemCreator({ categorias, onCreate, showServicios = true
         </View>
       </View>
 
-      <TouchableOpacity style={[s.submit, (!nombre || !precio || loading) && s.submitDisabled]} onPress={handleSubmit} disabled={!nombre || !precio || loading}>
+      <TouchableOpacity style={[s.submit, (!nombre.trim() || !precio || !categoriaId || (mode === "servicio" && !tiempo.trim()) || loading) && s.submitDisabled]} onPress={handleSubmit} disabled={!nombre.trim() || !precio || !categoriaId || (mode === "servicio" && !tiempo.trim()) || loading}>
         {loading ? (
           <ActivityIndicator size="small" color={C.brand} />
         ) : (
@@ -147,6 +169,8 @@ const s = StyleSheet.create({
   selectChipActive: { backgroundColor: C.brand },
   selectChipText: { fontSize: 11, fontFamily: "Montserrat_600SemiBold", color: C.muted },
   selectChipTextActive: { color: "#FFF", fontFamily: "Montserrat_700Bold" },
+  rangeRow: { flexDirection: "row", alignItems: "center", gap: 4, marginBottom: 10, marginLeft: 2 },
+  rangeText: { fontSize: 11, fontFamily: "Montserrat_600SemiBold", color: C.brand },
   submit: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 6, backgroundColor: "#FDEEE2", paddingVertical: 12, borderRadius: 12, marginTop: 6 },
   submitDisabled: { opacity: 0.4 },
   submitText: { fontSize: 14, fontFamily: "Montserrat_800ExtraBold", color: C.brand },

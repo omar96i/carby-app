@@ -56,7 +56,15 @@ export default function useCategorias() {
       method: "DELETE",
       headers: { Authorization: `Bearer ${token}`, Accept: "application/json" },
     });
-    if (!res.ok) throw new Error("Error al eliminar categoría");
+    if (!res.ok) {
+      const text = await res.text().catch(() => "");
+      let msg = "Error al eliminar sección";
+      try {
+        const j = JSON.parse(text);
+        msg = j.message || msg;
+      } catch {}
+      throw new Error(msg);
+    }
     setCategorias(prev => prev.filter(c => c.id !== id));
   }, []);
 

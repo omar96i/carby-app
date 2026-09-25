@@ -50,6 +50,15 @@ function formatTime(d) {
   return `${h}:${m}`;
 }
 
+function toMinutes(t) {
+  const [h, m] = (t || "00:00").split(":").map(Number);
+  return h * 60 + m;
+}
+
+function isOvernight(apertura, cierre) {
+  return toMinutes(cierre) < toMinutes(apertura);
+}
+
 export default function HorariosScreen() {
   const [fontsLoaded] = useFonts({
     Montserrat_400Regular,
@@ -126,7 +135,7 @@ export default function HorariosScreen() {
               <Ionicons name="information-circle-outline" size={28} color={C.brand} />
             </View>
             <Text style={hs.infoText}>
-              Activa los días que atiendes y ajusta el rango de horas. Los clientes solo podrán pedir cuando estés abierto.
+              Activa los días que atiendes y ajusta el rango de horas. Si el cierre es menor que la apertura (ej. 22:00 a 04:00) se toma como trasnocho hasta el día siguiente. Los clientes solo podrán pedir cuando estés abierto.
             </Text>
           </View>
 
@@ -174,6 +183,14 @@ export default function HorariosScreen() {
                       <Text style={hs.timeLabel}>Cierre</Text>
                       <Text style={hs.timeValue}>{h.hora_cierre}</Text>
                     </TouchableOpacity>
+                  </View>
+                )}
+                {activo && isOvernight(h.hora_apertura, h.hora_cierre) && (
+                  <View style={hs.overnightBox}>
+                    <Ionicons name="moon-outline" size={14} color="#7C3AED" />
+                    <Text style={hs.overnightText}>
+                      Trasnocho: abre {h.hora_apertura} y cierra {h.hora_cierre} del día siguiente
+                    </Text>
                   </View>
                 )}
               </View>
@@ -342,6 +359,17 @@ const hs = StyleSheet.create({
   },
   timeLabel: { fontSize: 10, fontFamily: "Montserrat_600SemiBold", color: C.muted, textTransform: "uppercase", marginBottom: 2 },
   timeValue: { fontSize: 15, fontFamily: "Montserrat_800ExtraBold", color: C.ink },
+  overnightBox: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    marginTop: 10,
+    backgroundColor: "#F5F3FF",
+    borderRadius: 12,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+  },
+  overnightText: { flex: 1, fontSize: 12, fontFamily: "Montserrat_600SemiBold", color: "#7C3AED" },
   footer: {
     padding: 16,
     paddingBottom: 24,

@@ -34,6 +34,7 @@ const EditarServicio = () => {
   const [perfilRelacionado, setPerfilRelacionado] = useState('');
   const [descuento, setDescuento] = useState('');
   const [activoDescuento, setActivoDescuento] = useState(false);
+  const [rangoPrecios, setRangoPrecios] = useState({ min: null, max: null });
 
   // Adicionales
   const [adicionales, setAdicionales] = useState([]);
@@ -89,13 +90,22 @@ const EditarServicio = () => {
         if (userData) {
           const { id: userId } = JSON.parse(userData);
           const token = await AsyncStorage.getItem('userToken');
-          const res = await fetch(`${BASE_URL}user-perfil/by-user/${userId}`, {
-            headers: { 'Authorization': `Bearer ${token}` }
-          });
-          const data = await res.json();
+          const [perfRes, statusRes] = await Promise.all([
+            fetch(`${BASE_URL}user-perfil/by-user/${userId}`, {
+              headers: { 'Authorization': `Bearer ${token}` }
+            }),
+            fetch(`${BASE_URL}comercio/setup-status`, {
+              headers: { 'Authorization': `Bearer ${token}` }
+            }).catch(() => null),
+          ]);
+          const data = await perfRes.json();
           if (data && Array.isArray(data.data)) setPerfiles(data.data);
           else if (Array.isArray(data)) setPerfiles(data);
           else if (data && data.perfiles) setPerfiles(data.perfiles);
+          try {
+            const sd = await statusRes?.json();
+            if (sd?.data?.rango_precios) setRangoPrecios(sd.data.rango_precios);
+          } catch {}
         }
       } catch (e) { }
     })();
@@ -199,8 +209,8 @@ const EditarServicio = () => {
   };
 
   const handleSubmit = async () => {
-    if (!nombre || !precio || !tiempo || !descripcion) {
-      showAlert('Todos los campos son obligatorios', 'error');
+    if (!nombre || !precio || !tiempo) {
+      showAlert('Nombre, precio y tiempo son obligatorios (la descripción es opcional)', 'error');
       return;
     }
     try {
@@ -221,7 +231,7 @@ const EditarServicio = () => {
       formData.append('nombre', nombre);
       formData.append('precio', precio);
       formData.append('tiempo', tiempo);
-      formData.append('descripcion', descripcion);
+      if (descripcion?.trim()) formData.append('descripcion', descripcion.trim());
       formData.append('user_perfil_id', perfilId);
       formData.append('categoria_id', categoriaId);
       formData.append('user_id', user_id);
@@ -368,10 +378,15 @@ const EditarServicio = () => {
             <TextInput style={styles.input} placeholder="Ingresa el nombre" placeholderTextColor="#999" value={nombre} onChangeText={setNombre} />
             <Text style={styles.inputLabel}>Precio</Text>
             <TextInput style={styles.input} placeholder="Ingresa el precio" placeholderTextColor="#999" keyboardType="numeric" value={precio} onChangeText={setPrecio} />
+            {rangoPrecios?.min != null && rangoPrecios?.max != null ? (
+              <Text style={styles.rangeText}>
+                Rango permitido: $ {Number(rangoPrecios.min).toLocaleString("es-CO")} – $ {Number(rangoPrecios.max).toLocaleString("es-CO")}
+              </Text>
+            ) : null}
             <Text style={styles.inputLabel}>Tiempo estimado</Text>
             <TextInput style={styles.input} placeholder="Ej: 30 min" placeholderTextColor="#999" value={tiempo} onChangeText={setTiempo} />
-            <Text style={styles.inputLabel}>Descripción</Text>
-            <TextInput style={[styles.input, { minHeight: 80, textAlignVertical: 'top' }]} placeholder="Ingresa la descripción" placeholderTextColor="#999" multiline numberOfLines={4} value={descripcion} onChangeText={setDescripcion} />
+            <Text style={styles.inputLabel}>Descripción (opcional)</Text>
+            <TextInput style={[styles.input, { minHeight: 80, textAlignVertical: 'top' }]} placeholder="Ingresa la descripción (opcional)" placeholderTextColor="#999" multiline numberOfLines={4} value={descripcion} onChangeText={setDescripcion} />
 
             <View style={{ flexDirection: "row", gap: 10, marginTop: 14 }}>
               <View style={{ flex: 1 }}>
@@ -493,6 +508,7 @@ const styles = StyleSheet.create({
   imagePlaceholderText: { fontSize: 13, fontFamily: 'Montserrat_600SemiBold', color: '#BBB' },
   formContainer: { padding: 16 },
   inputLabel: { fontSize: 13, fontFamily: 'Montserrat_700Bold', color: '#1C1C1E', marginBottom: 6, marginTop: 14 },
+  rangeText: { fontSize: 11, fontFamily: 'Montserrat_600SemiBold', color: '#fa6205', marginTop: 4 },
   input: { backgroundColor: '#FFF', borderRadius: 14, borderWidth: 1, borderColor: '#E8E8ED', padding: 14, fontSize: 14, fontFamily: 'Montserrat_400Regular', color: '#1C1C1E' },
   myButton: {
     backgroundColor: '#fa6205', marginHorizontal: 16, paddingVertical: 16, borderRadius: 20, alignItems: 'center',

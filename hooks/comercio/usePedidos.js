@@ -169,8 +169,10 @@ export default function usePedidos() {
 
     logger.summary("CREAR_CARRERA", `pedido: ${pedido.id}, user: ${userId}, coords: ${rc.originLat},${rc.originLng} -> ${rc.destLat},${rc.destLng}`);
 
-    // Obtener service_id del comercio
+    // Obtener service_id del comercio (con tarifa vigente ya resuelta por el backend)
     let serviceId = null;
+    let scheduleId = null;
+    let tarifaVigente = null;
     try {
       const serviceUrl = `${BASE_URL}services/comercio`;
       logger.request("GET", serviceUrl);
@@ -184,11 +186,20 @@ export default function usePedidos() {
       if (serviceRes.ok) {
         const serviceData = await serviceRes.json();
         serviceId = serviceData?.service?.id || serviceData?.data?.id || null;
-        logger.response("SERVICE_ID", serviceRes.status, `service_id: ${serviceId}`);
+        scheduleId = serviceData?.service?.schedule_id_vigente ?? serviceData?.service?.tarifa_vigente?.id ?? null;
+        tarifaVigente = serviceData?.service?.tarifa_vigente ?? null;
+        logger.response("SERVICE_ID", serviceRes.status, `service_id: ${serviceId} schedule: ${scheduleId}`);
       }
     } catch (e) {
       logger.error("SERVICE_ID", "Error obteniendo service_id", e);
     }
+
+    let pedidoSchedule = null;
+    try {
+      const datos = typeof pedido.datos_generales === "string" ? JSON.parse(pedido.datos_generales) : pedido.datos_generales;
+      pedidoSchedule = datos?.schedule_id ?? datos?.tarifa_vigente?.id ?? null;
+      if (!tarifaVigente && datos?.tarifa_vigente) tarifaVigente = datos.tarifa_vigente;
+    } catch (e) {}
 
     const payload = {
       usuario_id: userId,
@@ -203,6 +214,8 @@ export default function usePedidos() {
       informacion_adicional: JSON.stringify({
         origen: startLugar,
         destino: endLugar,
+        schedule_id: pedidoSchedule ?? scheduleId,
+        tarifa_vigente: tarifaVigente,
       }),
     };
 

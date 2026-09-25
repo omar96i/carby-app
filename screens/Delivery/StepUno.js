@@ -804,9 +804,10 @@ export default function StepUno() {
   const computeSuggestedPrice = (distKm) => {
     const selectedService = availableServices.find((s) => s.id.toString() === selectedServiceId);
     if (!selectedService) return 0;
-    const base = parseFloat(selectedService.precio_base) || 0;
-    const perKm = parseFloat(selectedService.precio_km) || 0;
-    const additional = parseFloat(selectedService.precio_adicional) || 0;
+    const tarifa = selectedService.tarifa_vigente || null;
+    const base = parseFloat(selectedService.precio_base_efectivo ?? tarifa?.precio_base ?? selectedService.precio_base) || 0;
+    const perKm = parseFloat(selectedService.precio_km_efectivo ?? tarifa?.precio_km ?? selectedService.precio_km) || 0;
+    const additional = parseFloat(selectedService.precio_adicional_efectivo ?? tarifa?.precio_adicional ?? selectedService.precio_adicional) || 0;
     const dist = distKm && distKm > 0 ? distKm : 0;
     let calculated = base + dist * perKm + additional;
     calculated = Math.max(calculated, 5.0);
@@ -1000,6 +1001,8 @@ export default function StepUno() {
           origen: pickupAddress || "",
           destino: deliveryAddress || "",
           metododepago: getPaymentMethodLabel(paymentMethod),
+          schedule_id: serviceDetails.schedule_id_vigente ?? serviceDetails.tarifa_vigente?.id ?? null,
+          tarifa_vigente: serviceDetails.tarifa_vigente ?? null,
         }),
         punto_recogida: JSON.stringify(puntoRecogidaCoords),
         destino: JSON.stringify(destinoCoords),
@@ -1101,11 +1104,14 @@ export default function StepUno() {
       console.log("El servicio no tiene icono");
     }
     setSelectedServiceId(service.id.toString());
+    const tarifa = service.tarifa_vigente || null;
     setServiceDetails({
       nombre_servicio: service.nombre || "",
-      precio_kilometro: service.precio_km || 0,
-      precio_base: service.precio_base || 0,
-      precio_adicional: service.precio_adicional || 0,
+      precio_kilometro: service.precio_km_efectivo ?? tarifa?.precio_km ?? service.precio_km ?? 0,
+      precio_base: service.precio_base_efectivo ?? tarifa?.precio_base ?? service.precio_base ?? 0,
+      precio_adicional: service.precio_adicional_efectivo ?? tarifa?.precio_adicional ?? service.precio_adicional ?? 0,
+      schedule_id_vigente: service.schedule_id_vigente ?? tarifa?.id ?? null,
+      tarifa_vigente: tarifa,
     });
     setBidOffset(0);
     AsyncStorage.setItem("selectedServiceId", service.id.toString());

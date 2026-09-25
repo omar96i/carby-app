@@ -54,7 +54,7 @@ export default function Pedidos({ route }) {
   });
 
   const { pedidos, filteredPedidos, isLoading, error, refreshing, fetchPedidos, onRefresh, setFilteredPedidos, countActivas, countHistorial } = usePedidos();
-  const { reservas, filteredReservas, isLoadingReservas, fetchReservas, setFilteredReservas, filtrarReservas, cancelReserva } = useReservas();
+  const { reservas, filteredReservas, isLoadingReservas, fetchReservas, setFilteredReservas, setReservas, filtrarReservas, cancelReserva } = useReservas();
   const calif = useCalificacion();
 
   const [activeTab, setActiveTab] = useState("activas");
@@ -212,7 +212,15 @@ export default function Pedidos({ route }) {
   }
 
   const renderReservaItem = ({ item }) => (
-    <ReservaCard item={item} onCancel={handleCancelReserva} onChat={handleChatReserva} />
+    <ReservaCard
+      item={item}
+      onCancel={handleCancelReserva}
+      onChat={handleChatReserva}
+      onEvidencia={(updated) => {
+        if (!updated) return;
+        setReservas((prev) => prev.map((r) => (r.id === updated.id ? { ...r, ...updated } : r)));
+      }}
+    />
   );
 
   const renderItem = ({ item }) => {

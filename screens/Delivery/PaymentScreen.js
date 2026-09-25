@@ -844,16 +844,27 @@ const PaymentScreen = () => {
     return leg.distance.value / 1000; // retorno en KM
   };
 
-  // Función para calcular valor de envío según el servicio de comercio
+  // Función para calcular valor de envío según el servicio de comercio (con tarifa por horario)
+  const getEffectiveDeliveryPricing = () => {
+    if (!deliveryService) return null;
+    const tarifa = deliveryService.tarifa_vigente || null;
+    return {
+      base: parseFloat(deliveryService.precio_base_efectivo ?? tarifa?.precio_base ?? deliveryService.precio_base) || 0,
+      perKm: parseFloat(deliveryService.precio_km_efectivo ?? tarifa?.precio_km ?? deliveryService.precio_km) || 0,
+      additional: parseFloat(deliveryService.precio_adicional_efectivo ?? tarifa?.precio_adicional ?? deliveryService.precio_adicional) || 0,
+      schedule: tarifa,
+      scheduleId: deliveryService.schedule_id_vigente ?? tarifa?.id ?? null,
+    };
+  };
+
   const calculateDeliveryFee = (distance) => {
-    if (!deliveryService) {
+    const pricing = getEffectiveDeliveryPricing();
+    if (!pricing) {
       console.log("[PaymentScreen] No hay servicio de comercio, usando tarifa por defecto");
       return 0; // Sin servicio no hay envío calculado aún
     }
 
-    const baseFee = parseFloat(deliveryService.precio_base || 0);
-    const pricePerKm = parseFloat(deliveryService.precio_km || 0);
-    const additionalFee = parseFloat(deliveryService.precio_adicional || 0);
+    const { base: baseFee, perKm: pricePerKm, additional: additionalFee } = pricing;
 
     // Calcular precio: base + (distancia × precio_km) + adicional
     let fee = baseFee + (distance * pricePerKm) + additionalFee;
@@ -1020,13 +1031,18 @@ const PaymentScreen = () => {
       }));
 
       // Datos del pedido
+      const pricing = getEffectiveDeliveryPricing();
       const orderData = {
         user_id: userId,
         comercio_id: establishmentId,
         estado: "pendiente",
         metodo_pago: paymentMethod,
         estado_pago: "pendiente",
-        datos_generales: JSON.stringify(locationData),
+        datos_generales: JSON.stringify({
+          ...locationData,
+          schedule_id: pricing?.scheduleId ?? null,
+          tarifa_vigente: pricing?.schedule ?? null,
+        }),
         costo_total: totalAmount,
         costo_envio: deliveryFee,
         tipo_viaje: "rider.moto",

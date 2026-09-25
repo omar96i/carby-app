@@ -20,6 +20,8 @@ export default function useShopInfo() {
   const [paymentType, setPaymentType] = useState(null);
   const [tipoCategoria, setTipoCategoria] = useState(null);
   const [currentLocation, setCurrentLocation] = useState(null);
+  const [shopLocation, setShopLocation] = useState(null);
+  const [shopAddress, setShopAddress] = useState("");
   const [loading, setLoading] = useState(false);
 
   const fetchShopInfo = useCallback(async () => {
@@ -33,17 +35,32 @@ export default function useShopInfo() {
       setUserData(ud);
 
       const headers = { Authorization: `Bearer ${token}`, Accept: "application/json" };
-      const [userRes, catRes] = await Promise.all([
+      const [userRes, catRes, locRes] = await Promise.all([
         fetch(`${BASE_URL}usuario/${userId}`, { headers }),
         fetch(`${BASE_URL}global-categorias/get/obtener`, {
           method: "POST",
           headers: { ...headers, "Content-Type": "application/json" },
           body: JSON.stringify({ latitud: 4.60971, longitud: -74.08175 }),
         }).catch(() => ({ ok: false })),
+        fetch(`${BASE_URL}localizacion/${userId}`, { headers })
+          .then(async (r) => (r.ok ? r.json() : null))
+          .catch(() => null),
       ]);
+
+      if (locRes && locRes.status && locRes.data) {
+        const loc = locRes.data;
+        setShopLocation({ latitude: parseFloat(loc.latitud), longitude: parseFloat(loc.longitud) });
+        if (loc.direccion) setShopAddress(loc.direccion);
+      }
 
       if (userRes.ok) {
         const d = (await userRes.json()).data || {};
+        setUserData((prev) => ({ ...(prev || {}), ...d }));
+        const loc = d.user_location || d.userLocation || null;
+        if (loc && loc.latitud && loc.longitud) {
+          setShopLocation({ latitude: parseFloat(loc.latitud), longitude: parseFloat(loc.longitud) });
+          if (loc.direccion) setShopAddress(loc.direccion);
+        }
         setEstablishmentName(d.establecimiento_nombre || ud.establecimiento_nombre || ud.nombre_completo || "Mi Tienda");
         setShopActive(d.tienda_estado === "activo" || d.tienda_estado === 1 || d.tienda_estado === true);
         setAverageRating(parseFloat(d.promedio_puntuacion_restaurante) || 0);
@@ -89,17 +106,37 @@ export default function useShopInfo() {
     return loc.coords;
   }, []);
 
-  const saveShopLocation = useCallback(async () => {
+  const saveShopLocation = useCallback(async (payload) => {
     try {
       const uid = userData?.id;
-      const coords = await getCurrentLocation();
+      if (!uid) throw new Error("Sin usuario");
+      const coords = payload?.latitude != null
+        ? payload
+        : await getCurrentLocation();
+      if (coords.latitude == null || coords.longitude == null) throw new Error("Sin coordenadas");
       const token = await AsyncStorage.getItem("userToken");
-      await fetch(`${BASE_URL}localizacion`, {
+      const body = {
+        user_id: uid,
+        latitud: coords.latitude,
+        longitud: coords.longitude,
+        estado: "activo",
+      };
+      if (payload?.direccion) body.direccion = payload.direccion;
+      if (payload?.referencia) body.referencia = payload.referencia;
+      const res = await fetch(`${BASE_URL}localizacion`, {
         method: "POST",
         headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json", Accept: "application/json" },
-        body: JSON.stringify({ user_id: uid, latitud: coords.latitude, longitud: coords.longitude, estado: "activo" }),
+        body: JSON.stringify(body),
       });
-      return true;
+      const data = await res.json().catch(() => null);
+      if (!res.ok || (data && data.status === false)) {
+        throw new Error(data?.message || `Error ${res.status}`);
+      }
+      const saved = data?.data || {};
+      setShopLocation({ latitude: parseFloat(saved.latitud ?? coords.latitude), longitude: parseFloat(saved.longitud ?? coords.longitude) });
+      if (saved.direccion || payload?.direccion) setShopAddress(saved.direccion || payload.direccion);
+      setCurrentLocation({ latitude: coords.latitude, longitude: coords.longitude });
+      return data?.data || true;
     } catch (e) {
       logger.error("LOCATION", "save", e);
       throw e;
@@ -108,7 +145,7 @@ export default function useShopInfo() {
 
   return {
     userData, establishmentName, profileImageUrl, shopActive, averageRating, ratings,
-    paymentType, tipoCategoria, currentLocation, loading,
+    paymentType, tipoCategoria, currentLocation, shopLocation, shopAddress, loading,
     fetchShopInfo, toggleTienda, getCurrentLocation, saveShopLocation,
     setShopActive, setCurrentLocation,
   };

@@ -35,8 +35,8 @@ export default function useServicios() {
     const fd = new FormData();
     fd.append("nombre", form.nombre);
     fd.append("precio", String(form.precio));
-    fd.append("tiempo", form.extra || "30");
-    fd.append("descripcion", form.extra || "");
+    fd.append("tiempo", form.tiempo || "30");
+    if (form.descripcion) fd.append("descripcion", form.descripcion);
     fd.append("categoria_id", String(form.categoria_id));
     fd.append("user_id", String(ud.id));
     if (form.foto) {
@@ -53,17 +53,37 @@ export default function useServicios() {
     });
     const text = await res.text();
     logger.response("SERVICIO_CREATE", res.status, text.slice(0, 300));
-    if (!res.ok) throw new Error(`Error ${res.status}`);
+    if (!res.ok) {
+      let msg = `Error ${res.status}`;
+      try {
+        const j = JSON.parse(text);
+        msg = j.message || msg;
+        if (j.rango_permitido) {
+          const r = j.rango_permitido;
+          msg += ` (rango: $${Number(r.min).toLocaleString("es-CO")} – $${Number(r.max).toLocaleString("es-CO")})`;
+        }
+        if (j.errors) msg += ": " + Object.values(j.errors).flat().join(" ");
+      } catch {}
+      throw new Error(msg);
+    }
     await fetchServicios();
   }, [fetchServicios]);
 
   const deleteServicio = useCallback(async (id) => {
     const token = await AsyncStorage.getItem("userToken");
     logger.request("DELETE", `${BASE_URL}user-servicio/${id}`);
-    await fetch(`${BASE_URL}user-servicio/${id}`, {
+    const res = await fetch(`${BASE_URL}user-servicio/${id}`, {
       method: "DELETE",
       headers: { Authorization: `Bearer ${token}`, Accept: "application/json" },
     });
+    if (!res.ok) {
+      let msg = `Error ${res.status}`;
+      try {
+        const j = await res.text().then((t) => JSON.parse(t));
+        msg = j.message || msg;
+      } catch {}
+      throw new Error(msg);
+    }
     await fetchServicios();
   }, [fetchServicios]);
 

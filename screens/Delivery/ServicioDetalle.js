@@ -13,13 +13,13 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import { BASE_URL } from "../../constants/url";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import * as ImagePicker from "expo-image-picker";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import MapView, { Marker } from "react-native-maps";
 import Modal from "react-native-modal";
 import * as Location from "expo-location";
 import { GOOGLE_MAPS_API_KEY } from "../../constants/Keys";
 import AlertaModal from "../../components/ErrorModal";
+import QrPaymentCard, { qrFileForUpload } from "../../components/Delivery/QrPaymentCard";
 
 const GOOGLE_PLACES_API_KEY = GOOGLE_MAPS_API_KEY;
 const DEFAULT_DELTA = { latitudeDelta: 0.01, longitudeDelta: 0.01 };
@@ -322,7 +322,13 @@ const ServicioDetalle = ({ route, navigation }) => {
           const methods = ["efectivo"]; // Siempre disponible efectivo
 
           // Si QR está habilitado, agregarlo a los métodos disponibles
-          if (data.data.qr_estado === 1) {
+          // (el backend puede devolver 1, "1", true o "true" según driver/cast)
+          const qrOn =
+            data.data.qr_estado === 1 ||
+            data.data.qr_estado === "1" ||
+            data.data.qr_estado === true ||
+            data.data.qr_estado === "true";
+          if (qrOn) {
             methods.push("qr");
 
             // Si tiene archivo QR, establecer la URL de la imagen
@@ -406,17 +412,7 @@ const ServicioDetalle = ({ route, navigation }) => {
   const increaseQuantity = () => setQuantity((q) => q + 1);
   const decreaseQuantity = () => setQuantity((q) => (q > 1 ? q - 1 : 1));
 
-  // Función para seleccionar archivo de evidencia
-  const pickEvidencia = async () => {
-    let result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsEditing: true,
-      quality: 0.8,
-    });
-    if (!result.canceled && result.assets && result.assets.length > 0) {
-      setArchivoEvidencia(result.assets[0]);
-    }
-  };  // Función para enviar reserva
+  // Función para enviar reserva
   const handleReserva = async () => {
     if (!selectedProfile) {
       showAlert("Error", "Selecciona un perfil");
@@ -458,15 +454,12 @@ const ServicioDetalle = ({ route, navigation }) => {
       formData.append("datos_generales", JSON.stringify({}));
 
       if (
-        archivoEvidencia &&
         metodoPago === "qr" &&
         availablePaymentMethods.includes("qr")
       ) {
-        formData.append("archivo_evidencia", {
-          uri: archivoEvidencia.uri,
-          name: `evidencia_${Date.now()}.jpg`,
-          type: "image/jpeg",
-        });      }
+        const file = qrFileForUpload(archivoEvidencia);
+        if (file) formData.append("archivo_evidencia", file);
+      }
       
       // Calcular hora de fin basada en hora de inicio + duración del servicio - 1 minuto
       const duracionMinutos = parseInt(servicio.tiempo) || 30;
@@ -1089,9 +1082,10 @@ const ServicioDetalle = ({ route, navigation }) => {
 
             if (!fechaCoincide) return false;
 
-            // Verificar si hay conflicto de horario (considerando solo pendientes y aceptadas)
-            const estadosOcupados = ["pendiente", "aceptado", "en_progreso"];
-            if (!estadosOcupados.includes(reserva.estado)) return false;
+            // Verificar si hay conflicto de horario (las canceladas/completadas
+            // liberan el hueco; solo bloquean las activas)
+            const ESTADOS_LIBRES = ["cancelado", "completado"];
+            if (!reserva.estado || ESTADOS_LIBRES.includes(reserva.estado)) return false;
 
             // Obtener hora de inicio y fin de la reserva existente
             const reservaHoraInicio = reserva.hora_inicio?.slice(0, 5) || reserva.hora_inicio;
@@ -1509,7 +1503,7 @@ const ServicioDetalle = ({ route, navigation }) => {
           <ActivityIndicator color="#fa6205" style={{ marginVertical: 10 }} />
         ) : (
           <View>
-            <View style={{ flexDirection: "row", gap: 8, marginBottom: 12 }}>
+            <View style={{ flexDirection: "row", gap: 8, marginBottom: 4 }}>
               <TouchableOpacity
                 onPress={() => setMetodoPago("efectivo")}
                 style={[
@@ -1545,28 +1539,6 @@ const ServicioDetalle = ({ route, navigation }) => {
                 </TouchableOpacity>
               )}
             </View>
-            {metodoPago === "qr" &&
-              availablePaymentMethods.includes("qr") &&
-              qrImageUrl && (
-                <View style={styles.paymentInfo}>
-                  <Text style={styles.paymentInfoText}>
-                    Código QR del establecimiento
-                  </Text>
-                  <Image
-                    source={{ uri: qrImageUrl }}
-                    style={{
-                      width: 150,
-                      height: 150,
-                      borderRadius: 8,
-                      backgroundColor: "#fff",
-                    }}
-                    resizeMode="contain"
-                  />
-                  <Text style={styles.paymentNote}>
-                    Escanea este código QR para realizar el pago
-                  </Text>
-                </View>
-              )}
             {!availablePaymentMethods.includes("qr") && (
               <View
                 style={{
@@ -1586,15 +1558,15 @@ const ServicioDetalle = ({ route, navigation }) => {
           </View>
         )}
 
-        {/* Evidencia de pago QR */}
         {metodoPago === "qr" && availablePaymentMethods.includes("qr") && (
-          <TouchableOpacity onPress={pickEvidencia} style={styles.uploadButton}>
-            <Text style={{ color: "#1C1C1E" }}>
-              {archivoEvidencia
-                ? "Evidencia de pago seleccionada"
-                : "Seleccionar comprobante de pago QR"}
-            </Text>
-          </TouchableOpacity>
+          <QrPaymentCard
+            qrEnabled
+            qrImageUrl={qrImageUrl}
+            total={totalPrice}
+            comprobante={archivoEvidencia}
+            onComprobante={setArchivoEvidencia}
+            onRemoveComprobante={() => setArchivoEvidencia(null)}
+          />
         )}
 
         <View style={styles.divider} />
@@ -2073,33 +2045,6 @@ const styles = StyleSheet.create({
   },
   paymentPillSelected: {
     backgroundColor: "#fa6205",
-  },
-  paymentInfo: {
-    backgroundColor: "#F2F2F7",
-    borderRadius: 8,
-    padding: 12,
-    marginBottom: 12,
-    alignItems: "center",
-  },
-  paymentInfoText: {
-    color: "#fa6205",
-    fontWeight: "bold",
-    marginBottom: 8,
-    fontFamily: "Montserrat_700Bold",
-  },
-  paymentNote: {
-    color: "#aaa",
-    fontSize: 12,
-    marginTop: 8,
-    textAlign: "center",
-    fontFamily: "Montserrat_400Regular",
-  },
-  uploadButton: {
-    backgroundColor: "#fff",
-    borderRadius: 8,
-    padding: 8,
-    marginBottom: 8,
-    alignItems: "center",
   },
   emptyState: {
     backgroundColor: "#F2F2F7",

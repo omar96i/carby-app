@@ -115,6 +115,7 @@ export default function useReservas() {
     filteredReservas,
     isLoadingReservas,
     fetchReservas,
+    setReservas,
     setFilteredReservas,
     filtrarReservas,
     cancelReserva,

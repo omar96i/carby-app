@@ -24,6 +24,7 @@ import EditarProducto from "../screens/Delivery/EditarProducto";
 import Wallet from "../screens/Delivery/Wallet";
 import MetodosPago from "../screens/MetodosDePago";
 import CrearPerfil from "../screens/Delivery/CrearPerfil";
+import HorariosScreen from "../screens/comercio/HorariosScreen";
 import ServiciosProducto from "../screens/Delivery/ServiciosProducto";
 import EditarServicio from "../screens/Delivery/EditarServicio";
 import PedidoDetalleComercio from "../screens/PedidoDetalleComercio";
@@ -60,6 +61,7 @@ export default function TerceroStackNavigator() {
       <Stack.Screen name="ProductoDos" component={ProductoDos} />
       <Stack.Screen name="EditarProducto" component={EditarProducto} />
       <Stack.Screen name="CrearPerfil" component={CrearPerfil} />
+      <Stack.Screen name="Horarios" component={HorariosScreen} />
       <Stack.Screen name="Wallet" component={Wallet} />
       <Stack.Screen name="MetodosPago" component={MetodosPago} />
       <Stack.Screen name="ServiciosProducto" component={ServiciosProducto} />
