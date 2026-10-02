@@ -6,7 +6,6 @@ import {
   TouchableOpacity,
   Modal,
   ActivityIndicator,
-  SafeAreaView,
   ScrollView,
   Platform,
   Dimensions,
@@ -16,6 +15,7 @@ import {
   Linking,
   StatusBar,
 } from "react-native";
+import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons, MaterialIcons, FontAwesome5 } from "@expo/vector-icons";
 import {
   Montserrat_400Regular,
@@ -28,6 +28,7 @@ import { useNavigation } from "@react-navigation/native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { BASE_URL } from "../../constants/url";
 import AlertaModal from "../../components/ErrorModal";
+import ScreenHeader from "../../components/ScreenHeader";
 import * as ImagePicker from "expo-image-picker";
 
 const { width } = Dimensions.get("window");
@@ -75,6 +76,7 @@ const Wallet = () => {
 
   const totaldia = totalPermittedSales - totalConsumed;
   const navigation = useNavigation();
+  const insets = useSafeAreaInsets();
 
   const [fontsLoaded] = useFonts({
     Montserrat_400Regular,
@@ -753,12 +755,9 @@ const Wallet = () => {
   }
 
   return (
-    <SafeAreaView style={styles.safeContainer}>
+    <SafeAreaView style={styles.safeContainer} edges={['top', 'left', 'right']}>
       <StatusBar barStyle="light-content" backgroundColor="#1C1C1E" />
-      {/* Header */}
-      <View style={styles.headerBar}>
-        <Text style={styles.headerTitle}>Mi Billetera</Text>
-      </View>
+      <ScreenHeader title="Mi Billetera" />
 
       {/* Loading indicator para verificación de paquete gratuito */}
       {loadingFreePackageCheck && (
@@ -805,7 +804,7 @@ const Wallet = () => {
       {/* Main Content */}
       <ScrollView
         style={styles.container}
-        contentContainerStyle={styles.contentContainer}
+        contentContainerStyle={[styles.contentContainer, { paddingBottom: 104 + insets.bottom }]}
       >
         <View style={styles.balanceCard}>
           <Text style={styles.balanceTitle}>Ventas Disponibles</Text>
@@ -1167,22 +1166,6 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     backgroundColor: "#FFFFFF",
-  },
-  headerBar: {
-    flexDirection: "row",
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: "#1C1C1E",
-    padding: 15,
-    paddingTop: Platform.OS === "android" ? 45 : 15,
-    paddingBottom: 22,
-    borderBottomLeftRadius: 40,
-    borderBottomRightRadius: 40,
-  },
-  headerTitle: {
-    fontSize: 20,
-    fontFamily: "Montserrat_700Bold",
-    color: "#FFF",
   },
   container: {
     flex: 1,

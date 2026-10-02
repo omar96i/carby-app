@@ -7,7 +7,6 @@ import {
   Image,
   StyleSheet,
   TouchableOpacity,
-  SafeAreaView,
   ScrollView,
   ActivityIndicator,
   Animated,
@@ -18,6 +17,7 @@ import {
   PanResponder,
   StatusBar,
 } from "react-native";
+import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import MaterialCommunityIcons from "react-native-vector-icons/MaterialCommunityIcons";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
@@ -42,8 +42,8 @@ import PeekSummary from "../Transport/components/PeekSummary";
 
 const screenH = Dimensions.get("window").height;
 const screenW = Dimensions.get("window").width;
-const COLLAPSED_SHEET_H = 94;
-const EXPANDED_SHEET_H = Math.round(screenH * 0.58);
+const COLLAPSED_BASE_H = 94;
+const EXPANDED_RATIO = 0.58;
 
 const decodePolyline = (encoded) => {
   const points = [];
@@ -98,6 +98,10 @@ const calculateHaversineDistance = (lat1, lon1, lat2, lon2) => {
 export default function StepUno() {
   const mapRef = useRef(null);
   const navigation = useNavigation();
+  const insets = useSafeAreaInsets();
+  const bottomPad = Math.max(insets.bottom, 12);
+  const collapsedSheetH = COLLAPSED_BASE_H + bottomPad;
+  const expandedSheetH = Math.round(screenH * EXPANDED_RATIO) + bottomPad;
   const { expoPushToken, notification } = useNotification();
 
   const [selectedServiceId, setSelectedServiceId] = useState(null);
@@ -148,7 +152,11 @@ export default function StepUno() {
 
   const [keyboardVisible, setKeyboardVisible] = useState(false);
   const [sheetExpanded, setSheetExpanded] = useState(false);
-  const sheetAnim = useRef(new Animated.Value(COLLAPSED_SHEET_H)).current;
+  const sheetAnim = useRef(new Animated.Value(collapsedSheetH)).current;
+
+  useEffect(() => {
+    sheetAnim.setValue(sheetExpanded ? expandedSheetH : collapsedSheetH);
+  }, [bottomPad]);
 
   // Animación de creando carrera
   const creatingPulse = useRef(new Animated.Value(1)).current;
@@ -1223,12 +1231,12 @@ export default function StepUno() {
   // Bottom sheet animation
   useEffect(() => {
     Animated.spring(sheetAnim, {
-      toValue: sheetExpanded ? EXPANDED_SHEET_H : COLLAPSED_SHEET_H,
+      toValue: sheetExpanded ? expandedSheetH : collapsedSheetH,
       friction: 8,
       tension: 60,
       useNativeDriver: false,
     }).start();
-  }, [sheetExpanded]);
+  }, [sheetExpanded, collapsedSheetH, expandedSheetH]);
 
   // Reverse geocodificar direccion central en modo pin
   useEffect(() => {
@@ -1309,7 +1317,7 @@ export default function StepUno() {
   };
 
   return (
-    <SafeAreaView style={styles.safe}>
+    <SafeAreaView style={styles.safe} edges={['top', 'left', 'right']}>
       <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === "ios" ? "padding" : undefined}>
         {/* MAPA */}
         <View style={styles.mapContainer}>
@@ -1447,7 +1455,7 @@ export default function StepUno() {
                 <View style={styles.pinShadow} />
               </View>
 
-              <View style={styles.pinBottomBar}>
+              <View style={[styles.pinBottomBar, { bottom: 12 + bottomPad }]}>
                 <TouchableOpacity style={styles.pinCancelBtn} onPress={cancelPinMode} activeOpacity={0.8}>
                   <Text style={styles.pinCancelText}>Cancelar</Text>
                 </TouchableOpacity>
@@ -1463,7 +1471,7 @@ export default function StepUno() {
         {/* BOTTOM SHEET */}
         {!pinMode && !isCreatingRide && (
         <Animated.View
-          style={[styles.sheet, { height: sheetAnim }]}
+          style={[styles.sheet, { height: sheetAnim, paddingBottom: bottomPad }]}
           {...panResponder.panHandlers}
         >
           <View style={styles.dragHandleZone}>
@@ -1492,7 +1500,7 @@ export default function StepUno() {
             <>
               <ScrollView
                 style={styles.sheetScroll}
-                contentContainerStyle={styles.sheetContent}
+                contentContainerStyle={[styles.sheetContent, { paddingBottom: 16 + bottomPad }]}
                 showsVerticalScrollIndicator={false}
                 keyboardShouldPersistTaps="handled"
               >

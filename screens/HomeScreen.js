@@ -4,7 +4,6 @@ import {
   Text,
   StyleSheet,
   Image,
-  SafeAreaView,
   Platform,
   TouchableOpacity,
   ActivityIndicator,
@@ -12,6 +11,7 @@ import {
   ScrollView,
   Dimensions,
 } from "react-native";
+import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import Ionicons from "react-native-vector-icons/Ionicons";
 import {
@@ -135,6 +135,7 @@ export default function HomeScreen() {
   };
 
   const navigation = useNavigation();
+  const insets = useSafeAreaInsets();
   const locationUpdateTimerRef = useRef(null);
   const mapRef = useRef(null);
   const isMountedRef = useRef(true);
@@ -810,14 +811,14 @@ export default function HomeScreen() {
 
   // Renderizado principal
   return (
-    <SafeAreaView style={styles.safeContainer}>
+    <SafeAreaView style={styles.safeContainer} edges={['top', 'left', 'right']}>
 
       {!fontsLoaded || loading ? (
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color="#FF5A00" />
         </View>
       ) : (
-        <ScrollView showsVerticalScrollIndicator={false}>
+        <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 130 + insets.bottom }}>
           {/* Header */}
           <View style={styles.headerBar}>
             <View style={styles.headerBarTop}>
@@ -1008,7 +1009,6 @@ const styles = StyleSheet.create({
   safeContainer: {
     flex: 1,
     backgroundColor: "#FFFFFF",
-    paddingTop: Platform.OS === "android" ? 20 : 0,
   },
   errorContainer: {
     flex: 1,

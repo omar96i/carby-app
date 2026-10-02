@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, KeyboardAvoidingView, Platform, Image, StyleSheet, TouchableOpacity, ScrollView, TextInput, ActivityIndicator, Modal, Alert } from 'react-native';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
+import ScreenHeader from "../../components/ScreenHeader";
 import { useFonts, Montserrat_400Regular, Montserrat_500Medium, Montserrat_600SemiBold, Montserrat_700Bold, Montserrat_300Light, Montserrat_800ExtraBold } from '@expo-google-fonts/montserrat';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import * as ImagePicker from 'expo-image-picker';
@@ -10,6 +12,7 @@ import AlertaModal from "../../components/ErrorModal";
 
 const EditarServicio = () => {
   const navigation = useNavigation();
+  const insets = useSafeAreaInsets();
   const route = useRoute();
   const { serviceId } = route.params || {};
   const [fontsLoaded] = useFonts({
@@ -349,20 +352,14 @@ const EditarServicio = () => {
   };
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
       <KeyboardAvoidingView
         style={{ flex: 1 }}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         keyboardVerticalOffset={Platform.OS === 'ios' ? 80 : 0}
       >
-        <ScrollView contentContainerStyle={{ flexGrow: 1 }} keyboardShouldPersistTaps="handled">
-          <View style={styles.header}>
-            <TouchableOpacity style={styles.headerBackBtn} onPress={() => navigation.goBack()}>
-              <Ionicons name="arrow-back" size={20} color="#FFF" />
-            </TouchableOpacity>
-            <Text style={styles.headerText}>Editar Servicio</Text>
-            <View style={{ width: 36 }} />
-          </View>
+        <ScrollView contentContainerStyle={{ flexGrow: 1, paddingBottom: Math.max(insets.bottom, 12) }} keyboardShouldPersistTaps="handled">
+          <ScreenHeader title="Editar Servicio" showBackButton />
           <TouchableOpacity onPress={pickImage} style={styles.imagePicker}>
             {foto ? (
               <Image source={{ uri: foto.uri }} style={styles.imagePreview} />
@@ -487,7 +484,7 @@ const EditarServicio = () => {
         onPrimary={alertData.onPrimary}
         primaryLabel={alertData.primaryLabel}
       />
-    </View>
+    </SafeAreaView>
   );
 };
 
@@ -495,13 +492,6 @@ import { Picker } from '@react-native-picker/picker';
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#F4F4F5' },
-  header: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-    backgroundColor: '#1C1C1E', paddingHorizontal: 16, paddingTop: 50, paddingBottom: 20,
-    borderBottomLeftRadius: 24, borderBottomRightRadius: 24,
-  },
-  headerBackBtn: { width: 36, height: 36, borderRadius: 18, backgroundColor: 'rgba(255,255,255,0.1)', justifyContent: 'center', alignItems: 'center' },
-  headerText: { fontSize: 18, fontFamily: 'Montserrat_800ExtraBold', color: '#FFF' },
   imagePicker: { marginHorizontal: 16, marginTop: 20, height: 180, borderRadius: 16, overflow: 'hidden', backgroundColor: '#E8E8ED' },
   imagePreview: { width: '100%', height: '100%', resizeMode: 'cover' },
   imagePlaceholder: { flex: 1, justifyContent: 'center', alignItems: 'center', borderWidth: 2, borderColor: '#DDD', borderStyle: 'dashed', borderRadius: 16, gap: 6 },

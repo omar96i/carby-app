@@ -4,7 +4,6 @@ import {
   Text,
   StyleSheet,
   Image,
-  SafeAreaView,
   Platform,
   TouchableOpacity,
   ActivityIndicator,
@@ -12,6 +11,7 @@ import {
   ScrollView,
   Animated,
 } from "react-native";
+import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import Ionicons from "react-native-vector-icons/Ionicons";
 import {
@@ -40,6 +40,7 @@ export default function CategoriaVertical() {
   const [loading, setLoading] = useState(true);
   const [location, setLocation] = useState(null);
   const navigation = useNavigation();
+  const insets = useSafeAreaInsets();
 
   useFocusEffect(
     useCallback(() => {
@@ -266,10 +267,10 @@ export default function CategoriaVertical() {
   }
 
   return (
-    <SafeAreaView style={styles.safeContainer}>
+    <SafeAreaView style={styles.safeContainer} edges={['top', 'left', 'right']}>
       <ScreenHeader title={esServicios ? "Servicios" : "Restaurantes"} showBackButton />
 
-      <ScrollView showsVerticalScrollIndicator={false}>
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: Math.max(insets.bottom, 12) }}>
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}

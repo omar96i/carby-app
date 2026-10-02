@@ -1,15 +1,17 @@
 import React from "react";
 import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Feather } from "@expo/vector-icons";
 import { HEADER_TEXT } from "../utils";
 
 export const TopBar = ({ state, isDelivery, onBack }) => {
+  const insets = useSafeAreaInsets();
   const config = HEADER_TEXT[state] || HEADER_TEXT.to_pickup;
   const title = isDelivery && state !== "finished" ? "Entrega en curso" : config.title;
   const sub = isDelivery && state !== "finished" ? "Dirígete al comercio y luego al cliente" : config.sub;
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { top: insets.top + 8 }]}>
       <View style={styles.row}>
         {onBack && (
           <TouchableOpacity onPress={onBack} style={styles.backBtn} activeOpacity={0.8}>
@@ -34,7 +36,6 @@ export const TopBar = ({ state, isDelivery, onBack }) => {
 const styles = StyleSheet.create({
   container: {
     position: "absolute",
-    top: 50,
     left: 16,
     right: 16,
     zIndex: 100,

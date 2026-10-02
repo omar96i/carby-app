@@ -13,9 +13,11 @@ import * as ImagePicker from "expo-image-picker";
 import { manipulateAsync, SaveFormat } from "expo-image-manipulator";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Platform } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { BASE_URL } from "../../../../constants/url";
 
 export const EvidenceModal = ({ visible, pedidoId, qrUrl, onClose, onUploaded }) => {
+  const insets = useSafeAreaInsets();
   const [image, setImage] = useState(null);
   const [uploading, setUploading] = useState(false);
 
@@ -76,7 +78,7 @@ export const EvidenceModal = ({ visible, pedidoId, qrUrl, onClose, onUploaded })
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
       <View style={styles.backdrop}>
-        <View style={styles.sheet}>
+        <View style={[styles.sheet, { paddingBottom: Math.max(insets.bottom, 12) + 16 }]}>
           <View style={styles.handleRow}>
             <View style={styles.spacer} />
             <View style={styles.handle} />
@@ -142,7 +144,6 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: 32,
     borderTopRightRadius: 32,
     paddingHorizontal: 20,
-    paddingBottom: 34,
     paddingTop: 16,
     overflow: "hidden",
   },

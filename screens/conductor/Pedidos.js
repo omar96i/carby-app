@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useCallback } from "react";
 import {
-  SafeAreaView, View, FlatList, TouchableOpacity, Text,
+  View, FlatList, TouchableOpacity, Text,
   ActivityIndicator, RefreshControl, StyleSheet, Image, ScrollView,
   Modal,
 } from "react-native";
+import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { useNavigation, useFocusEffect } from "@react-navigation/native";
 import { useFonts, Montserrat_400Regular, Montserrat_700Bold, Montserrat_300Light, Montserrat_600SemiBold, Montserrat_800ExtraBold } from "@expo-google-fonts/montserrat";
 import { Ionicons } from "@expo/vector-icons";
@@ -33,6 +34,7 @@ const getCommerceImageUrl = (path) => {
 
 export default function PedidosConductor({ route }) {
   const navigation = useNavigation();
+  const insets = useSafeAreaInsets();
   const { notification } = useNotification();
 
   const [fontsLoaded] = useFonts({
@@ -193,7 +195,7 @@ export default function PedidosConductor({ route }) {
   }
 
   return (
-    <SafeAreaView style={ds.safe}>
+    <SafeAreaView style={ds.safe} edges={['top', 'left', 'right']}>
       <View style={ds.root}>
         <PedidosHeader />
         <PedidosTabs
@@ -212,7 +214,8 @@ export default function PedidosConductor({ route }) {
             data={filteredCarreras}
             renderItem={renderItem}
             keyExtractor={(item) => `carrera-${item.id}`}
-            contentContainerStyle={ds.list}
+            style={{ flex: 1 }}
+            contentContainerStyle={[ds.list, { paddingBottom: 104 + insets.bottom }]}
             refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => onRefresh(activeTab)} colors={[COLORS.brand]} />}
             ListEmptyComponent={<EmptyState tab={activeTab} />}
             showsVerticalScrollIndicator={false}
@@ -285,7 +288,7 @@ const ds = StyleSheet.create({
   safe: { flex: 1, backgroundColor: COLORS.bg },
   root: { flex: 1, backgroundColor: COLORS.bg },
   center: { flex: 1, justifyContent: "center", alignItems: "center" },
-  list: { paddingHorizontal: 16, paddingTop: 8, paddingBottom: 32, gap: 14 },
+  list: { paddingHorizontal: 16, paddingTop: 8, paddingBottom: 16, gap: 14 },
   card: { backgroundColor: COLORS.surface, borderRadius: 26, borderWidth: 1, borderColor: COLORS.zinc100 },
   header: { flexDirection: "row", alignItems: "center", gap: 12, paddingHorizontal: 16, paddingTop: 16 },
   iconBox: { width: 48, height: 48, borderRadius: 16, backgroundColor: COLORS.zinc50, justifyContent: "center", alignItems: "center", borderWidth: 1, borderColor: COLORS.zinc200 },

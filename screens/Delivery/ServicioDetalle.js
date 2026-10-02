@@ -10,6 +10,7 @@ import {
   Alert,
   TextInput,
 } from "react-native";
+import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { BASE_URL } from "../../constants/url";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -21,11 +22,17 @@ import { GOOGLE_MAPS_API_KEY } from "../../constants/Keys";
 import AlertaModal from "../../components/ErrorModal";
 import QrPaymentCard, { qrFileForUpload } from "../../components/Delivery/QrPaymentCard";
 
-const GOOGLE_PLACES_API_KEY = GOOGLE_MAPS_API_KEY;
-const DEFAULT_DELTA = { latitudeDelta: 0.01, longitudeDelta: 0.01 };
+const toLocalDateStr = (d) => {
+  if (!d) return "";
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+};
 
 const ServicioDetalle = ({ route, navigation }) => {
   const { servicio, establishmentId, establishmentName } = route.params || {};
+  const insets = useSafeAreaInsets();
   console.log("DEBUG servicio:", servicio);
   const [selectedAdicionales, setSelectedAdicionales] = useState([]); // [{...adicional, quantity: 1}]
   const [adicionales, setAdicionales] = useState([]);
@@ -461,14 +468,20 @@ const ServicioDetalle = ({ route, navigation }) => {
         if (file) formData.append("archivo_evidencia", file);
       }
       
-      // Calcular hora de fin basada en hora de inicio + duración del servicio - 1 minuto
-      const duracionMinutos = parseInt(servicio.tiempo) || 30;
+      // Calcular hora de fin basada en hora de inicio + duración total
+      // (servicio x cantidad + adicionales con tiempo) - 1 minuto
+      const duracionBase = parseInt(servicio.tiempo) || 30;
+      const duracionAdicionales = (selectedAdicionales || []).reduce(
+        (sum, a) => sum + ((parseInt(a.tiempo) || 0) * (a.quantity || 1)),
+        0
+      );
+      const duracionMinutos = duracionBase * (quantity || 1) + duracionAdicionales;
       const horaFinCalculada = new Date(horaInicio);
       horaFinCalculada.setMinutes(horaFinCalculada.getMinutes() + duracionMinutos - 1);
       
       formData.append("hora_inicio", horaInicio.toTimeString().slice(0, 5));
       formData.append("hora_fin", horaFinCalculada.toTimeString().slice(0, 5));
-      formData.append("fecha", fecha.toISOString().slice(0, 10));
+      formData.append("fecha", toLocalDateStr(fecha));
       formData.append("tipo_reserva", tipoReserva);      // Log de datos de la reserva principal
       console.log("🚀 CREATING RESERVATION - Form data summary:");
       console.log("  - user_perfil_id:", selectedProfile.id);
@@ -482,7 +495,7 @@ const ServicioDetalle = ({ route, navigation }) => {
       console.log("  - costo_total:", totalPrice);
       console.log("  - hora_inicio:", horaInicio.toTimeString().slice(0, 5));
       console.log("  - hora_fin:", horaFin.toTimeString().slice(0, 5));
-      console.log("  - fecha:", fecha.toISOString().slice(0, 10));
+      console.log("  - fecha:", toLocalDateStr(fecha));
       console.log("  - tipo_reserva:", tipoReserva);
 
       // POST reserva
@@ -932,7 +945,7 @@ const ServicioDetalle = ({ route, navigation }) => {
   // Efecto adicional para refrescar agenda cuando cambia la fecha seleccionada
   useEffect(() => {
     if (selectedProfile && fecha) {
-      console.log("🔄 REFRESHING AGENDA due to date change:", fecha.toISOString().slice(0, 10));
+      console.log("🔄 REFRESHING AGENDA due to date change:", toLocalDateStr(fecha));
       fetchAgendaPerfil(selectedProfile.id);
     }
   }, [selectedProfile, fecha]);
@@ -994,14 +1007,16 @@ const ServicioDetalle = ({ route, navigation }) => {
     generateAvailableDates(); // Generar fechas de los próximos 7 días
   };
 
-  // Cambia el useEffect para que calcule horarios solo si fecha no es null
+  // Efecto para recalcular horarios si cambia fecha/disponibilidad/agenda
+  // o la duración total (cantidad del servicio + adicionales con tiempo)
   useEffect(() => {
     if (fecha && disponibilidadPerfil && agendaPerfil) {
       calcularHorariosDisponibles(fecha);
     } else {
       setHorariosDisponibles([]);
     }
-  }, [fecha, disponibilidadPerfil, agendaPerfil]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [fecha, disponibilidadPerfil, agendaPerfil, quantity, selectedAdicionales]);
 
   // Calcular horarios disponibles según disponibilidad del perfil y agenda
   const calcularHorariosDisponibles = (fechaSeleccionada) => {
@@ -1029,8 +1044,23 @@ const ServicioDetalle = ({ route, navigation }) => {
     }
 
     const intervalos = [];
-    const intervaloServicio = parseInt(servicio.tiempo) || 30;
-    const fechaStr = fechaSeleccionada.toISOString().split("T")[0];
+    const duracionBase = parseInt(servicio.tiempo) || 30;
+    const duracionAdicionales = (selectedAdicionales || []).reduce(
+      (sum, a) => sum + ((parseInt(a.tiempo) || 0) * (a.quantity || 1)),
+      0
+    );
+    const duracionTotal = duracionBase * (quantity || 1) + duracionAdicionales;
+    const intervaloServicio = duracionTotal > 0 ? duracionTotal : 30;
+    const fechaStr = toLocalDateStr(fechaSeleccionada);
+
+    // Si la fecha elegida es hoy, ocultar los horarios ya pasados:
+    // solo mostrar desde la hora actual + margen de anticipación
+    const MARGEN_MINUTOS = 15;
+    const ahora = new Date();
+    const esHoy = ahora.toDateString() === fechaSeleccionada.toDateString();
+    const corteHoyMinutos = esHoy
+      ? ahora.getHours() * 60 + ahora.getMinutes() + MARGEN_MINUTOS
+      : -Infinity;
 
     // Procesar cada franja de disponibilidad para este día
     disponibilidadesDia.forEach((disponibilidad) => {
@@ -1047,9 +1077,10 @@ const ServicioDetalle = ({ route, navigation }) => {
         const inicioMinutos = horaInicioHour * 60 + horaInicioMin;
         const finMinutos = horaFinHour * 60 + horaFinMin;
 
-        // Generar intervalos para esta franja
+        // Generar intervalos para esta franja (si es hoy, desde la hora actual)
+        const desdeMinutos = Math.max(inicioMinutos, corteHoyMinutos);
         for (
-          let minutos = inicioMinutos;
+          let minutos = desdeMinutos;
           minutos <= finMinutos - intervaloServicio;
           minutos += intervaloServicio
         ) {
@@ -1073,9 +1104,7 @@ const ServicioDetalle = ({ route, navigation }) => {
                 reservaFecha.includes("T") ||
                 reservaFecha.includes(" ")
               ) {
-                const fechaReserva = new Date(reservaFecha)
-                  .toISOString()
-                  .split("T")[0];
+                const fechaReserva = toLocalDateStr(new Date(reservaFecha));
                 fechaCoincide = fechaReserva === fechaStr;
               }
             }
@@ -1130,7 +1159,8 @@ const ServicioDetalle = ({ route, navigation }) => {
 
   // --- REEMPLAZO DEL MODAL DE MAPA EN EL RENDER ---
   return (
-    <ScrollView style={styles.container}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: "#F2F2F7" }} edges={['top', 'left', 'right']}>
+    <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: Math.max(insets.bottom, 12) }}>
       <TouchableOpacity
         style={styles.backButton}
         onPress={() => navigation.goBack()}
@@ -1427,7 +1457,15 @@ const ServicioDetalle = ({ route, navigation }) => {
             {fecha ? (
               <>
                 <Text style={{ color: "#1C1C1E", fontSize: 13, marginBottom: 6 }}>
-                  Horarios disponibles:
+                  {(() => {
+                    const durBase = parseInt(servicio.tiempo) || 30;
+                    const durAdic = (selectedAdicionales || []).reduce(
+                      (s, a) => s + ((parseInt(a.tiempo) || 0) * (a.quantity || 1)),
+                      0
+                    );
+                    const durTotal = durBase * (quantity || 1) + durAdic;
+                    return `Horarios disponibles (${durTotal} min por cita):`;
+                  })()}
                 </Text>
                 {loadingAgenda ? (
                   <ActivityIndicator
@@ -1453,7 +1491,12 @@ const ServicioDetalle = ({ route, navigation }) => {
                             ]}
                             onPress={() => {
                               setHoraInicio(horario);
-                              const duracionMinutos = parseInt(servicio.tiempo) || 30;
+                              const durBase = parseInt(servicio.tiempo) || 30;
+                              const durAdic = (selectedAdicionales || []).reduce(
+                                (sum, a) => sum + ((parseInt(a.tiempo) || 0) * (a.quantity || 1)),
+                                0
+                              );
+                              const duracionMinutos = durBase * (quantity || 1) + durAdic;
                               const nuevaHoraFin = new Date(horario);
                               nuevaHoraFin.setMinutes(
                                 nuevaHoraFin.getMinutes() + duracionMinutos - 1
@@ -1479,7 +1522,12 @@ const ServicioDetalle = ({ route, navigation }) => {
                   <Text
                     style={{ color: "#ff6b6b", fontSize: 14, marginBottom: 12 }}
                   >
-                    No hay horarios disponibles para la fecha seleccionada
+                    {(() => {
+                      const hoy = new Date().toDateString() === fecha.toDateString();
+                      return hoy
+                        ? "Ya no hay horarios disponibles por hoy. Elige otra fecha."
+                        : "No hay horarios disponibles para la fecha seleccionada";
+                    })()}
                   </Text>
                 )}
               </>
@@ -1753,6 +1801,7 @@ const ServicioDetalle = ({ route, navigation }) => {
         primaryLabel={alertData.primaryLabel || "Entendido"}
       />
     </ScrollView>
+    </SafeAreaView>
   );
 };
 
@@ -1770,7 +1819,7 @@ const styles = StyleSheet.create({
   },
   backButton: {
     marginBottom: 10,
-    marginTop: 30,
+    marginTop: 8,
     alignSelf: "flex-start",
   },
   card: {

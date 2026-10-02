@@ -90,7 +90,8 @@
       "Shell(npx expo install expo-media-library)",
       "Shell(node --check components/Delivery/QrPaymentCard.js)",
       "Shell(node --check components/usuario/pedidos/ReservaQrEvidencia.js)",
-      "Shell(php -l app/Http/Controllers/ReservaController.php)"
+      "Shell(php -l app/Http/Controllers/ReservaController.php)",
+      "powershell"
     ],
     "deny": [],
     "defaultMode": "default"

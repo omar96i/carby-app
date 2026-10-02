@@ -4,7 +4,6 @@ import {
   Text,
   TouchableOpacity,
   StyleSheet,
-  SafeAreaView,
   StatusBar,
   Modal,
   ScrollView,
@@ -21,6 +20,7 @@ import {
   Animated,
   PanResponder,
 } from "react-native";
+import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { useNavigation, useRoute, useFocusEffect } from "@react-navigation/native";
 import AlertaModal from "../../components/ErrorModal";
@@ -93,6 +93,8 @@ const PaymentScreen = () => {
   const [lastMapPress, setLastMapPress] = useState(0);
   const [isLocating, setIsLocating] = useState(true);
   const navigation = useNavigation();
+  const insets = useSafeAreaInsets();
+  const bottomPad = Math.max(insets.bottom, 12);
 
   // Estados para bottom sheet y modo pin
   const [sheetExpanded, setSheetExpanded] = useState(true);
@@ -1589,7 +1591,7 @@ const PaymentScreen = () => {
   }, [mapRegion, pinMode]);
 
   return (
-    <SafeAreaView style={styles.safeContainer}>
+    <SafeAreaView style={styles.safeContainer} edges={['top', 'left', 'right']}>
       <StatusBar barStyle="dark-content" />
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : "height"}
@@ -1937,11 +1939,11 @@ const PaymentScreen = () => {
                     )}
                   </View>
 
-                  <View style={{ height: 90 }} />
+                  <View style={{ height: 90 + bottomPad }} />
                 </ScrollView>
 
                 {/* Barra de pago inferior */}
-                <View style={styles.payBar}>
+                <View style={[styles.payBar, { paddingBottom: bottomPad }]}>
                   <View>
                     <Text style={styles.payBarLabel}>Total a pagar</Text>
                     <Text style={styles.payBarTotal}>${finalTotal.toLocaleString()}</Text>
@@ -2651,7 +2653,6 @@ const styles = StyleSheet.create({
     borderTopColor: "#E2E8F0",
     paddingHorizontal: 16,
     paddingVertical: 12,
-    paddingBottom: Platform.OS === "ios" ? 24 : 12,
   },
   payBarLabel: {
     fontSize: 12,

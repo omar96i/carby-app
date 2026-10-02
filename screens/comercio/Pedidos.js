@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useCallback } from "react";
 import {
-  SafeAreaView,
   View,
   FlatList,
   SectionList,
@@ -14,6 +13,7 @@ import {
   Modal,
   ScrollView,
 } from "react-native";
+import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { useNavigation, useFocusEffect } from "@react-navigation/native";
 import { useFonts, Montserrat_400Regular, Montserrat_700Bold, Montserrat_300Light, Montserrat_600SemiBold, Montserrat_800ExtraBold } from "@expo-google-fonts/montserrat";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -42,6 +42,7 @@ import { BASE_URL } from "../../constants/url";
 
 export default function PedidosComercio({ route }) {
   const navigation = useNavigation();
+  const insets = useSafeAreaInsets();
   const { notification } = useNotification();
 
   const [fontsLoaded] = useFonts({
@@ -484,7 +485,7 @@ export default function PedidosComercio({ route }) {
   const listData = activeTab === "reservas" ? reservas : filteredPedidos;
 
   return (
-    <SafeAreaView style={cs.safe}>
+    <SafeAreaView style={cs.safe} edges={['top', 'left', 'right']}>
       <View style={cs.root}>
         <PedidosHeader />
         <PedidosTabs
@@ -550,7 +551,8 @@ export default function PedidosComercio({ route }) {
               <Text style={cs.sectionHeader}>{title}</Text>
             )}
             keyExtractor={(item) => `reserva-${item.id}`}
-            contentContainerStyle={cs.list}
+            style={{ flex: 1 }}
+            contentContainerStyle={[cs.list, { paddingBottom: 104 + insets.bottom }]}
             refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => perfilSeleccionado && fetchReservas(perfilSeleccionado)} colors={[COLORS.brand]} />}
             ListEmptyComponent={<EmptyState tab="reservas" />}
             showsVerticalScrollIndicator={false}
@@ -561,7 +563,8 @@ export default function PedidosComercio({ route }) {
             data={listData}
             renderItem={renderItem}
             keyExtractor={(item) => `${item.id}`}
-            contentContainerStyle={cs.list}
+            style={{ flex: 1 }}
+            contentContainerStyle={[cs.list, { paddingBottom: 104 + insets.bottom }]}
             refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => onRefresh(activeTab)} colors={[COLORS.brand]} />}
             ListEmptyComponent={<EmptyState tab={activeTab} />}
             showsVerticalScrollIndicator={false}
@@ -704,7 +707,7 @@ const cs = StyleSheet.create({
   safe: { flex: 1, backgroundColor: COLORS.bg },
   root: { flex: 1, backgroundColor: COLORS.bg },
   center: { flex: 1, justifyContent: "center", alignItems: "center" },
-  list: { paddingHorizontal: 16, paddingTop: 8, paddingBottom: 32, gap: 14 },
+  list: { paddingHorizontal: 16, paddingTop: 8, paddingBottom: 16, gap: 14 },
 
   card: { backgroundColor: COLORS.surface, borderRadius: 26, borderWidth: 1, borderColor: COLORS.zinc100 },
   header: { flexDirection: "row", alignItems: "center", gap: 12, paddingHorizontal: 16, paddingTop: 16 },

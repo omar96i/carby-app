@@ -13,6 +13,7 @@ import {
   Platform,
   StatusBar,
 } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import {
   Montserrat_400Regular,
   Montserrat_700Bold,
@@ -39,6 +40,7 @@ const TABS = [
 const Shop = () => {
   const route = useRoute();
   const navigation = useNavigation();
+  const insets = useSafeAreaInsets();
 
   useFocusEffect(
     useCallback(() => {
@@ -402,7 +404,7 @@ const Shop = () => {
     <View style={styles.container}>
       <StatusBar barStyle="light-content" backgroundColor="#111" />
 
-      <ScrollView showsVerticalScrollIndicator={false} stickyHeaderIndices={[2]}>
+      <ScrollView showsVerticalScrollIndicator={false} stickyHeaderIndices={[2]} contentContainerStyle={{ paddingBottom: Math.max(insets.bottom, 12) }}>
         {/* Hero */}
         <View style={styles.heroWrap}>
           <Image
@@ -410,7 +412,7 @@ const Shop = () => {
             style={styles.heroImage}
           />
           <View style={styles.heroOverlay} />
-          <View style={styles.heroNav}>
+          <View style={[styles.heroNav, { top: insets.top + 8 }]}>
             <TouchableOpacity style={styles.iconBtn} onPress={() => navigation.goBack()}>
               <Ionicons name="close" size={22} color="#1C1C1E" />
             </TouchableOpacity>
@@ -498,7 +500,7 @@ const Shop = () => {
               {filteredSections.map(renderSection)}
             </>
           )}
-          <View style={{ height: 40 }} />
+          <View style={{ height: Math.max(insets.bottom, 12) + 28 }} />
         </View>
       </ScrollView>
 
@@ -616,7 +618,6 @@ const styles = StyleSheet.create({
   },
   heroNav: {
     position: "absolute",
-    top: Platform.OS === "android" ? 44 : 50,
     left: 0,
     right: 0,
     flexDirection: "row",

@@ -7,14 +7,16 @@ import {
   StyleSheet,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import AvailabilitySummary from "./AvailabilitySummary";
 
 export default function OfflinePanel({ availability, checkingSubscription, onConnect, onSubscribe }) {
   const { disponibles = 0 } = availability || {};
   const isEmpty = disponibles <= 0;
+  const insets = useSafeAreaInsets();
 
   return (
-    <View style={styles.panel}>
+    <View style={[styles.panel, { bottom: 104 + insets.bottom }]}>
       {/* Header */}
       <View style={styles.panelHeader}>
         <View style={styles.statusDot} />
@@ -54,15 +56,13 @@ export default function OfflinePanel({ availability, checkingSubscription, onCon
 const styles = StyleSheet.create({
   panel: {
     position: "absolute",
-    bottom: 0,
-    left: 0,
-    right: 0,
+    left: 16,
+    right: 16,
     backgroundColor: "#FFFFFF",
-    borderTopLeftRadius: 32,
-    borderTopRightRadius: 32,
+    borderRadius: 32,
     paddingHorizontal: 20,
     paddingTop: 20,
-    paddingBottom: 34,
+    paddingBottom: 20,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: -10 },
     shadowOpacity: 0.12,

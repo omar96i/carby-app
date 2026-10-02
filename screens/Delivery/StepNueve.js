@@ -1,6 +1,5 @@
 import { useNavigation, useFocusEffect } from "@react-navigation/native";
 import {
-  SafeAreaView,
   View,
   Text,
   StyleSheet,
@@ -13,7 +12,9 @@ import {
   StatusBar,
   Dimensions
 } from "react-native";
+import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { FontAwesome, Feather, MaterialCommunityIcons } from "@expo/vector-icons";
+import ScreenHeader from "../../components/ScreenHeader";
 import {
   Montserrat_400Regular,
   Montserrat_700Bold,
@@ -81,6 +82,7 @@ export default function StepNueve({ route }) {
   };
 
   const navigation = useNavigation();
+  const insets = useSafeAreaInsets();
 
   useFocusEffect(React.useCallback(() => {
     navigation.getParent()?.setOptions({ tabBarStyle: { display: "none" } });
@@ -263,18 +265,13 @@ export default function StepNueve({ route }) {
   };
 
   return (
-    <SafeAreaView style={styles.safeContainer}>
+    <SafeAreaView style={styles.safeContainer} edges={['top', 'left', 'right']}>
       <StatusBar barStyle="light-content" backgroundColor="#1C1C1E" />
 
-      {/* Header Flotante */}
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-          <Feather name="arrow-left" size={24} color="#FFF" />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>
-          {type === "pedido" ? "Tu Pedido" : "En Camino"}
-        </Text>
-      </View>
+      <ScreenHeader
+        title={type === "pedido" ? "Tu Pedido" : "En Camino"}
+        showBackButton
+      />
 
       {isLoading ? (
         <View style={styles.centerContainer}>
@@ -291,7 +288,7 @@ export default function StepNueve({ route }) {
         </View>
       ) : (
         <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
-          <ScrollView style={styles.contentContainer} showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 40 }}>
+          <ScrollView style={styles.contentContainer} showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: Math.max(insets.bottom, 12) + 16 }}>
 
             {/* --- MAPA EN VIVO --- */}
             <View style={styles.mapContainer}>
@@ -518,9 +515,6 @@ export default function StepNueve({ route }) {
 
 const styles = StyleSheet.create({
   safeContainer: { flex: 1, backgroundColor: "#FFF" },
-  header: { flexDirection: "row", alignItems: "center", paddingHorizontal: 20, paddingVertical: 15, paddingTop: 30, paddingBottom: 22, backgroundColor: "#1C1C1E", borderBottomLeftRadius: 40, borderBottomRightRadius: 40 },
-  backButton: { padding: 8, marginRight: 10 },
-  headerTitle: { fontSize: 18, fontFamily: "Montserrat_700Bold", color: "#FFF" },
   centerContainer: { flex: 1, justifyContent: "center", alignItems: "center", padding: 20 },
   loadingText: { marginTop: 15, color: "#fa6205", fontFamily: "Montserrat_500Medium" },
   errorText: { color: "#1C1C1E", textAlign: "center", marginBottom: 20, fontFamily: "Montserrat_400Regular" },

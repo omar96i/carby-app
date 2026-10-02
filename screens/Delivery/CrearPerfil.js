@@ -8,11 +8,11 @@ import {
   Image,
   ActivityIndicator,
   ScrollView,
-  SafeAreaView,
   Modal,
   Platform,
   RefreshControl,
 } from "react-native";
+import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import * as ImagePicker from "expo-image-picker";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -27,6 +27,7 @@ import { useNavigation, useFocusEffect } from "@react-navigation/native";
 import { BASE_URL } from "../../constants/url";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import AlertaModal from "../../components/ErrorModal";
+import ScreenHeader from "../../components/ScreenHeader";
 
 const PERFIL_INFO_TITULO = "¿Qué es un perfil?";
 const PERFIL_INFO_TEXTO =
@@ -80,6 +81,7 @@ function resumenHorarios(horarios) {
 
 export default function CrearPerfil() {
   const navigation = useNavigation();
+  const insets = useSafeAreaInsets();
   const [fontsLoaded] = useFonts({
     Montserrat_400Regular,
     Montserrat_700Bold,
@@ -437,20 +439,20 @@ export default function CrearPerfil() {
   }
 
   return (
-    <SafeAreaView style={s.container}>
-      <View style={s.header}>
-        <TouchableOpacity style={s.back} onPress={() => navigation.goBack()}>
-          <Ionicons name="arrow-back" size={20} color="#FFF" />
-        </TouchableOpacity>
-        <Text style={s.headerTitle}>Mis perfiles</Text>
-        <TouchableOpacity style={s.back} onPress={() => setInfoVisible(true)}>
-          <Ionicons name="help-circle-outline" size={20} color="#FFF" />
-        </TouchableOpacity>
-      </View>
+    <SafeAreaView style={s.container} edges={['top', 'left', 'right']}>
+      <ScreenHeader
+        title="Mis perfiles"
+        showBackButton
+        right={
+          <TouchableOpacity style={s.headerIconBtn} onPress={() => setInfoVisible(true)} activeOpacity={0.7}>
+            <Ionicons name="help-circle-outline" size={20} color="#FFF" />
+          </TouchableOpacity>
+        }
+      />
 
       <ScrollView
         style={{ flex: 1 }}
-        contentContainerStyle={{ padding: 16, paddingBottom: 40 }}
+        contentContainerStyle={{ padding: 16, paddingBottom: Math.max(insets.bottom, 12) + 16 }}
         showsVerticalScrollIndicator={false}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); fetchProfiles(); }} colors={["#fa6205"]} />}
       >
@@ -831,9 +833,7 @@ const s = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#F4F4F5" },
   loading: { flex: 1, backgroundColor: "#F4F4F5", justifyContent: "center", alignItems: "center", gap: 8 },
   loadingText: { fontFamily: "Montserrat_400Regular", color: "#71717A", fontSize: 13 },
-  header: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", backgroundColor: "#1C1C1E", paddingHorizontal: 16, paddingTop: 50, paddingBottom: 20, borderBottomLeftRadius: 24, borderBottomRightRadius: 24 },
-  back: { width: 36, height: 36, borderRadius: 18, backgroundColor: "rgba(255,255,255,0.1)", justifyContent: "center", alignItems: "center" },
-  headerTitle: { fontSize: 18, fontFamily: "Montserrat_800ExtraBold", color: "#FFF" },
+  headerIconBtn: { width: 36, height: 36, borderRadius: 18, backgroundColor: "rgba(255,255,255,0.1)", justifyContent: "center", alignItems: "center" },
   infoCard: { flexDirection: "row", alignItems: "center", gap: 10, backgroundColor: "#FFF7ED", borderWidth: 1, borderColor: "#FDBA74", borderRadius: 16, padding: 12, marginBottom: 14 },
   infoIcon: { width: 40, height: 40, borderRadius: 12, backgroundColor: "#FFF0E5", justifyContent: "center", alignItems: "center" },
   infoTitle: { fontSize: 13, fontFamily: "Montserrat_800ExtraBold", color: "#1C1C1E" },

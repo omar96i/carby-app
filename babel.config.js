@@ -14,7 +14,7 @@ module.exports = function (api) {
     // ¡LA SECCIÓN DE PLUGINS ES NECESARIA!
     // ------------------------------------
     plugins: [
-      'react-native-reanimated/plugin', // ¡Este debe ser el último!
+      'react-native-worklets/plugin',
     ],
   };
 };

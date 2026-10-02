@@ -1,6 +1,5 @@
 import React, { useEffect, useState, useCallback } from "react";
 import {
-  SafeAreaView,
   View,
   Text,
   StyleSheet,
@@ -14,6 +13,7 @@ import {
   Dimensions,
   StatusBar,
 } from "react-native";
+import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { useNavigation, useFocusEffect } from "@react-navigation/native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { BASE_URL } from "../../constants/url"; // Ajusta la ruta si es necesario
@@ -44,6 +44,7 @@ const { width } = Dimensions.get("window");
 
 export default function PerfilUsuario() {
   const navigation = useNavigation();
+  const insets = useSafeAreaInsets();
 
   let [fontsLoaded] = useFonts({
     Inter_400Regular,
@@ -351,10 +352,10 @@ export default function PerfilUsuario() {
 
   // --- RENDERIZADO CON NUEVO DISEÑO (DARK MODE MODERNO) ---
   return (
-    <SafeAreaView style={styles.safeContainer}>
+    <SafeAreaView style={styles.safeContainer} edges={['top', 'left', 'right']}>
       <StatusBar barStyle="light-content" backgroundColor="#1C1C1E" />
       <ScreenHeader title="Perfil" />
-      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+      <ScrollView contentContainerStyle={[styles.scrollContent, { paddingBottom: 104 + insets.bottom }]} showsVerticalScrollIndicator={false}>
         
         {/* 2. Compact Profile Row */}
         <View style={styles.profileRow}>

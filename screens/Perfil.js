@@ -1,6 +1,5 @@
 import React, { useEffect, useState, useCallback, useRef } from "react";
 import {
-  SafeAreaView,
   View,
   Text,
   StyleSheet,
@@ -13,11 +12,13 @@ import {
   Share,
   Linking,
 } from "react-native";
+import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { useNavigation, useFocusEffect } from "@react-navigation/native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { BASE_URL } from "../constants/url";
 import RoleSwitcher from "../components/RoleSwitcher";
 import AlertaModal from "../components/ErrorModal";
+import ScreenHeader from "../components/ScreenHeader";
 import {
   Montserrat_400Regular,
   Montserrat_700Bold,
@@ -33,6 +34,7 @@ import * as ImagePicker from "expo-image-picker";
 
 export default function Perfil() {
   const navigation = useNavigation();
+  const insets = useSafeAreaInsets();
 
   // Cargar fuentes
   const [fontsLoaded] = useFonts({
@@ -469,11 +471,9 @@ export default function Perfil() {
   }
 
   return (
-    <SafeAreaView style={styles.safeContainer}>
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>Perfil</Text>
-      </View>
-      <ScrollView>
+    <SafeAreaView style={styles.safeContainer} edges={['top', 'left', 'right']}>
+      <ScreenHeader title="Perfil" />
+      <ScrollView contentContainerStyle={{ paddingBottom: 104 + insets.bottom }}>
         <View style={styles.container}>
           {/* Modal de desactivación de cuenta */}
           <Modal
@@ -769,8 +769,6 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "#F4F4F5"
   },
-  header: { justifyContent: "center", alignItems: "center", backgroundColor: "#1C1C1E", paddingTop: 50, paddingBottom: 20, borderBottomLeftRadius: 24, borderBottomRightRadius: 24 },
-  headerTitle: { fontSize: 18, fontFamily: "Montserrat_800ExtraBold", color: "#FFF" },
   container: { paddingVertical: 16, paddingHorizontal: 0 },
   // --- PROFILE ROW (compacta) ---
   profileRow: { flexDirection: "row", alignItems: "center", paddingHorizontal: 16, paddingVertical: 14, gap: 14, backgroundColor: "#FFF", marginHorizontal: 16, marginTop: 16, borderRadius: 16 },

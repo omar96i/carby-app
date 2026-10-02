@@ -11,6 +11,7 @@ import {
   StatusBar,
   Platform
 } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import {
   Montserrat_400Regular,
@@ -30,6 +31,7 @@ const IMG_HEIGHT = height * 0.4;
 
 const Producto = () => {
   const navigation = useNavigation();
+  const insets = useSafeAreaInsets();
   const route = useRoute();
   const { product } = route.params || {};
 
@@ -170,7 +172,7 @@ const Producto = () => {
     <View style={styles.container}>
       <StatusBar barStyle="dark-content" translucent backgroundColor="transparent" />
       
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{paddingBottom: 100}}>
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{paddingBottom: 100 + insets.bottom}}>
         
         {/* Imagen Header Inmersiva */}
         <View style={styles.imageContainer}>
@@ -183,7 +185,7 @@ const Producto = () => {
             defaultSource={require("../../assets/images/imagen.jpg")}
           />
           {/* Overlay gradiente para el botón de atrás */}
-          <View style={styles.headerOverlay}>
+          <View style={[styles.headerOverlay, { top: insets.top + 8 }]}>
              <TouchableOpacity style={styles.backButtonCircle} onPress={() => navigation.goBack()}>
                 <Ionicons name="arrow-back" size={24} color="#FFF" />
              </TouchableOpacity>
@@ -289,7 +291,7 @@ const Producto = () => {
       </ScrollView>
 
       {/* Footer Flotante */}
-      <View style={styles.footerContainer}>
+      <View style={[styles.footerContainer, { paddingBottom: Math.max(insets.bottom, 12) + 8 }]}>
          <View style={styles.footerContent}>
             <View>
                 <Text style={styles.footerLabel}>Total a pagar</Text>
@@ -357,7 +359,6 @@ const styles = StyleSheet.create({
   },
   headerOverlay: {
     position: 'absolute',
-    top: Platform.OS === 'android' ? 40 : 50,
     left: 20,
     zIndex: 10,
   },
@@ -567,7 +568,6 @@ const styles = StyleSheet.create({
     backgroundColor: '#F0F0F0',
     paddingHorizontal: 20,
     paddingTop: 15,
-    paddingBottom: Platform.OS === 'ios' ? 30 : 20,
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
     shadowColor: "#000",

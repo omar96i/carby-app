@@ -9,9 +9,9 @@ import {
   Platform,
   ActivityIndicator,
   Switch,
-  SafeAreaView,
   StyleSheet
 } from 'react-native';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { FontAwesome } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -24,6 +24,7 @@ import ScreenHeader from "../components/ScreenHeader";
 
 const MetodosPago = () => {
   const navigation = useNavigation();
+  const insets = useSafeAreaInsets();
   
   // Cargar fuentes
   const [fontsLoaded] = useFonts({
@@ -385,9 +386,9 @@ const MetodosPago = () => {
   }
 
   return (
-    <SafeAreaView style={styles.safeContainer}>
+    <SafeAreaView style={styles.safeContainer} edges={['top', 'left', 'right']}>
       <ScreenHeader title="Métodos de Pago" showBackButton />
-      <ScrollView style={styles.container}>
+      <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: Math.max(insets.bottom, 12) + 16 }}>
         <Text style={styles.subtitle}>Configura tus métodos para recibir pagos</Text>
 
         {/* Sección de QR */}

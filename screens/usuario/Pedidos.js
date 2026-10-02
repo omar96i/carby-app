@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import {
-  SafeAreaView,
   View,
   FlatList,
   SectionList,
@@ -12,6 +11,7 @@ import {
   Text,
   Image,
 } from "react-native";
+import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { useNavigation, useFocusEffect } from "@react-navigation/native";
 import { useFonts, Montserrat_400Regular, Montserrat_700Bold, Montserrat_300Light, Montserrat_600SemiBold, Montserrat_800ExtraBold } from "@expo-google-fonts/montserrat";
@@ -43,6 +43,7 @@ const getReservaImageUrl = (path) => {
 
 export default function Pedidos({ route }) {
   const navigation = useNavigation();
+  const insets = useSafeAreaInsets();
   const { notification } = useNotification();
 
   const [fontsLoaded] = useFonts({
@@ -241,7 +242,7 @@ export default function Pedidos({ route }) {
   };
 
   return (
-    <SafeAreaView style={s.safe}>
+    <SafeAreaView style={s.safe} edges={['top', 'left', 'right']}>
       <View style={s.root}>
         <PedidosHeader />
         <PedidosTabs activeTab={activeTab} onTabChange={setActiveTab} counts={counts} />
@@ -262,7 +263,8 @@ export default function Pedidos({ route }) {
               <Text style={s.sectionHeader}>{title}</Text>
             )}
             keyExtractor={(item) => `reserva-${item.id}`}
-            contentContainerStyle={s.listContent}
+            style={{ flex: 1 }}
+            contentContainerStyle={[s.listContent, { flexGrow: 1, paddingBottom: 104 + insets.bottom }]}
             refreshControl={
               <RefreshControl
                 refreshing={refreshing}
@@ -286,7 +288,8 @@ export default function Pedidos({ route }) {
               const isReserva = item.user_perfil && item.fecha && item.hora_inicio;
               return isReserva ? `reserva-${item.id}` : `${item.id}-${item.es_carrera ? "carrera" : "pedido"}`;
             }}
-            contentContainerStyle={s.listContent}
+            style={{ flex: 1 }}
+            contentContainerStyle={[s.listContent, { flexGrow: 1, paddingBottom: 104 + insets.bottom }]}
             refreshControl={
               <RefreshControl
                 refreshing={refreshing}

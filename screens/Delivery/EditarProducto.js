@@ -13,7 +13,9 @@ import {
   Modal,
   FlatList,
 } from "react-native";
+import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
+import ScreenHeader from "../../components/ScreenHeader";
 import {
   Montserrat_400Regular,
   Montserrat_700Bold,
@@ -30,6 +32,7 @@ import { BASE_URL } from "../../constants/url";
 
 const EditarProducto = () => {
   const navigation = useNavigation();
+  const insets = useSafeAreaInsets();
   const route = useRoute();
   const { productId } = route.params || {};
 
@@ -471,16 +474,9 @@ const EditarProducto = () => {
 
   return (
     <>
-    <View style={styles.container}>
-      <ScrollView>
-        {/* Header */}
-        <View style={styles.header}>
-          <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
-            <Ionicons name="arrow-back" size={20} color="#FFF" />
-          </TouchableOpacity>
-          <Text style={styles.headerText}>Editar Producto</Text>
-          <View style={{ width: 36 }} />
-        </View>
+    <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
+      <ScrollView contentContainerStyle={{ paddingBottom: Math.max(insets.bottom, 12) }}>
+        <ScreenHeader title="Editar Producto" showBackButton />
 
         {/* Product Image */}
         <TouchableOpacity onPress={pickImage} style={styles.imagePicker}>
@@ -668,7 +664,7 @@ const EditarProducto = () => {
           </View>
         </View>
       </Modal>
-    </View>
+    </SafeAreaView>
 
       <AlertaModal
         visible={alertVisible}
@@ -687,13 +683,6 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#F4F4F5" },
   loadingContainer: { flex: 1, backgroundColor: "#F4F4F5", justifyContent: "center", alignItems: "center" },
   loadingText: { color: "#1C1C1E", marginTop: 10, fontSize: 16, fontFamily: "Montserrat_400Regular" },
-  header: {
-    flexDirection: "row", alignItems: "center", justifyContent: "space-between",
-    backgroundColor: "#1C1C1E", paddingHorizontal: 16, paddingTop: 50, paddingBottom: 20,
-    borderBottomLeftRadius: 24, borderBottomRightRadius: 24,
-  },
-  backBtn: { width: 36, height: 36, borderRadius: 18, backgroundColor: "rgba(255,255,255,0.1)", justifyContent: "center", alignItems: "center" },
-  headerText: { fontSize: 18, fontFamily: "Montserrat_800ExtraBold", color: "#FFF" },
   imagePicker: { marginHorizontal: 16, marginTop: 20, height: 180, borderRadius: 16, overflow: "hidden", backgroundColor: "#E8E8ED" },
   imagePreview: { width: "100%", height: "100%", resizeMode: "cover" },
   imagePlaceholder: { flex: 1, justifyContent: "center", alignItems: "center", borderWidth: 2, borderColor: "#DDD", borderStyle: "dashed", borderRadius: 16, gap: 6 },

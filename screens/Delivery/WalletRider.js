@@ -7,7 +7,6 @@ import {
   Modal,
   Image,
   ActivityIndicator,
-  SafeAreaView,
   ScrollView,
   Platform,
   Dimensions,
@@ -15,6 +14,7 @@ import {
   Linking,
   StatusBar,
 } from "react-native";
+import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons, FontAwesome5 } from "@expo/vector-icons";
 import {
   Montserrat_400Regular,
@@ -26,6 +26,7 @@ import { useNavigation, useFocusEffect } from "@react-navigation/native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { BASE_URL } from "../../constants/url";
 import AlertaModal from "../../components/ErrorModal";
+import ScreenHeader from "../../components/ScreenHeader";
 import AvailabilitySummary from "../HomeDomicilio/components/AvailabilitySummary";
 
 const { width } = Dimensions.get("window");
@@ -70,6 +71,7 @@ const WalletRider = () => {
   };
 
   const navigation = useNavigation();
+  const insets = useSafeAreaInsets();
   const [paymentProcessing, setPaymentProcessing] = useState(false);
   const [fontsLoaded] = useFonts({
     Montserrat_400Regular,
@@ -555,17 +557,14 @@ const WalletRider = () => {
   };
 
   return (
-    <SafeAreaView style={styles.safeContainer}>
+    <SafeAreaView style={styles.safeContainer} edges={['top', 'left', 'right']}>
       <StatusBar barStyle="light-content" backgroundColor="#1C1C1E" />
-      {/* Header */}
-      <View style={styles.headerBar}>
-        <Text style={styles.headerTitle}>Billetera de Rider</Text>
-      </View>
+      <ScreenHeader title="Billetera de Rider" />
 
       {/* Main Content */}
       <ScrollView
         style={styles.container}
-        contentContainerStyle={styles.contentContainer}
+        contentContainerStyle={[styles.contentContainer, { paddingBottom: 104 + insets.bottom }]}
       >
         <AvailabilitySummary availability={availability} loading={loadingAvailability} onRefresh={fetchAvailability} />
         {/* Sección para mostrar suscripciones activas */}
@@ -887,28 +886,6 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     backgroundColor: "#FFFFFF",
-  },
-  headerBar: {
-    flexDirection: "row",
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: "#1C1C1E",
-    padding: 15,
-    paddingTop: 45,
-    paddingBottom: 22,
-    borderBottomLeftRadius: 40,
-    borderBottomRightRadius: 40,
-  },
-  backButton: {
-    padding: 5,
-  },
-  headerTitle: {
-    fontSize: 22,
-    fontFamily: "Montserrat_700Bold",
-    color: "#FFFFFF",
-  },
-  placeholder: {
-    width: 35,
   },
   container: {
     flex: 1,

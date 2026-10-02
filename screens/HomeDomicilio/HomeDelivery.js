@@ -4,7 +4,6 @@ import {
   Text,
   StyleSheet,
   ActivityIndicator,
-  SafeAreaView,
   Platform,
   TouchableOpacity,
   Dimensions,
@@ -15,6 +14,7 @@ import {
   Modal,
   ScrollView,
 } from "react-native";
+import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { useNavigation, useFocusEffect } from "@react-navigation/native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as Location from "expo-location";
@@ -43,6 +43,8 @@ const AUTO_REJECT_TIME = 20000;
 
 export default function HomeDelivery() {
   const navigation = useNavigation();
+  const insets = useSafeAreaInsets();
+  const bottomPad = Math.max(insets.bottom, 12);
 
   const [userData, setUserData] = useState(null);
   const [isEnabled, setIsEnabled] = useState(false);
@@ -670,7 +672,7 @@ export default function HomeDelivery() {
         )}
       </MapView>
 
-      <SafeAreaView style={styles.topContainer}>
+      <SafeAreaView style={styles.topContainer} edges={['top', 'left', 'right']}>
         <View style={styles.headerPill}>
           {(() => {
             const driverPhoto = getUserPhotoUrl(userData);
@@ -713,7 +715,7 @@ export default function HomeDelivery() {
       )}
 
       {isEnabled && (
-        <View style={styles.bottomSheetContainer}>
+        <View style={[styles.bottomSheetContainer, { bottom: 104 + insets.bottom }]}>
           <TouchableOpacity style={styles.powerBtn} onPress={toggleConnection}>
             <Ionicons name="power" size={20} color="#FFF" />
           </TouchableOpacity>
@@ -745,7 +747,7 @@ export default function HomeDelivery() {
       <Modal visible={showRatingsModal} transparent animationType="slide" onRequestClose={() => setShowRatingsModal(false)}>
         <View style={styles.ratingsOverlay}>
           <TouchableOpacity style={styles.ratingsBackdrop} activeOpacity={1} onPress={() => setShowRatingsModal(false)} />
-          <View style={styles.ratingsSheet}>
+          <View style={[styles.ratingsSheet, { paddingBottom: Math.max(insets.bottom, 12) + 16 }]}>
             <View style={styles.ratingsHandleRow}>
               <View style={styles.ratingsSpacer} />
               <View style={styles.ratingsHandle} />
@@ -815,7 +817,7 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#F2F2F7" },
   dotMarker: { width: 24, height: 24, borderRadius: 12, borderWidth: 3, borderColor: "#FFF", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.5, shadowRadius: 4, elevation: 5 },
 
-  topContainer: { position: "absolute", top: Platform.OS === "ios" ? 50 : 40, left: 20, right: 20, zIndex: 10, flexDirection: "row", justifyContent: "space-between" },
+  topContainer: { position: "absolute", left: 20, right: 20, zIndex: 10, flexDirection: "row", justifyContent: "space-between" },
   headerPill: { flexDirection: "row", backgroundColor: "rgba(255, 255, 255, 0.95)", padding: 8, paddingRight: 20, borderRadius: 40, alignSelf: "flex-start", alignItems: "center", borderWidth: 1, borderColor: "#DDD", elevation: 5 },
   avatarContainer: { width: 36, height: 36, borderRadius: 18, backgroundColor: "#FFFFFF", justifyContent: "center", alignItems: "center", marginRight: 10, borderWidth: 1, borderColor: "#fa6205" },
   avatarImage: { width: 36, height: 36, borderRadius: 18, marginRight: 10, borderWidth: 1, borderColor: "#fa6205", backgroundColor: "#F0F0F0" },
@@ -829,7 +831,7 @@ const styles = StyleSheet.create({
   rejectedBadgeText: { color: "#FFF", fontSize: 10, fontFamily: "Montserrat_700Bold" },
   rejectedListText: { color: "#1C1C1E", marginLeft: 8, fontFamily: "Montserrat_600SemiBold", fontSize: 12 },
 
-  bottomSheetContainer: { position: "absolute", bottom: 30, left: 20, right: 20, zIndex: 20 },
+  bottomSheetContainer: { position: "absolute", left: 20, right: 20, zIndex: 20 },
   powerBtn: { position: "absolute", top: -50, right: 0, width: 40, height: 40, borderRadius: 20, backgroundColor: "#DC2626", justifyContent: "center", alignItems: "center", elevation: 5, shadowColor: "#000", shadowOpacity: 0.3 },
 
   ratingsOverlay: { flex: 1, backgroundColor: "rgba(15,23,42,0.4)", justifyContent: "flex-end" },

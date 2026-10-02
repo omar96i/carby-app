@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from "react";
 import {
-  SafeAreaView,
   View,
   ScrollView,
   Text,
@@ -11,6 +10,7 @@ import {
   StyleSheet,
   Platform,
 } from "react-native";
+import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import {
   useFonts,
@@ -60,6 +60,7 @@ function isOvernight(apertura, cierre) {
 }
 
 export default function HorariosScreen() {
+  const insets = useSafeAreaInsets();
   const [fontsLoaded] = useFonts({
     Montserrat_400Regular,
     Montserrat_700Bold,
@@ -120,7 +121,7 @@ export default function HorariosScreen() {
   const diasActivos = horarios.filter((h) => h.activo).length;
 
   return (
-    <SafeAreaView style={hs.safe}>
+    <SafeAreaView style={hs.safe} edges={['top', 'left', 'right']}>
       <ScreenHeader title="Horarios de atención" showBackButton />
 
       {loading ? (
@@ -199,7 +200,7 @@ export default function HorariosScreen() {
 
           </ScrollView>
 
-          <View style={hs.footer}>
+          <View style={[hs.footer, { paddingBottom: Math.max(insets.bottom, 12) + 8 }]}>
             <TouchableOpacity style={hs.saveBtn} onPress={handleSave} disabled={saving} activeOpacity={0.85}>
               {saving ? (
                 <ActivityIndicator size="small" color="#FFF" />
@@ -372,7 +373,6 @@ const hs = StyleSheet.create({
   overnightText: { flex: 1, fontSize: 12, fontFamily: "Montserrat_600SemiBold", color: "#7C3AED" },
   footer: {
     padding: 16,
-    paddingBottom: 24,
     backgroundColor: C.surface,
     borderTopWidth: 1,
     borderTopColor: "#F0F0F0",

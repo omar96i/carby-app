@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
-import { SafeAreaView, View, ScrollView, StyleSheet, ActivityIndicator, RefreshControl, Text, TouchableOpacity, Modal, Image, FlatList, TextInput } from "react-native";
+import { View, ScrollView, StyleSheet, ActivityIndicator, RefreshControl, Text, TouchableOpacity, Modal, Image, FlatList, TextInput } from "react-native";
+import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { useNavigation, useFocusEffect } from "@react-navigation/native";
 import { useFonts, Montserrat_400Regular, Montserrat_700Bold, Montserrat_600SemiBold, Montserrat_800ExtraBold } from "@expo-google-fonts/montserrat";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -66,6 +67,7 @@ function renderStars(rating) {
 
 export default function Dashboard() {
   const nav = useNavigation();
+  const insets = useSafeAreaInsets();
   const [fontsLoaded] = useFonts({ Montserrat_400Regular, Montserrat_700Bold, Montserrat_600SemiBold, Montserrat_800ExtraBold });
 
   const { categorias, fetchCategorias, createCategoria, updateCategoria, deleteCategoria } = useCategorias();
@@ -74,7 +76,7 @@ export default function Dashboard() {
   const { establishmentName, profileImageUrl, shopActive, averageRating, ratings, tipoCategoria, loading: shopLoading, fetchShopInfo, getCurrentLocation, saveShopLocation, userData, currentLocation, shopLocation, shopAddress } = useShopInfo();
   const { banners, loading: bannersLoading, fetchBanners, uploadBanner, toggleBanner, deleteBanner } = useBanners();
   const { horarios, fetchHorarios } = useHorarios();
-  const { status: setupStatus, fetchStatus } = useOnboardingStatus();
+  const { status: setupStatus, loading: setupLoading, fetchStatus } = useOnboardingStatus();
   const horariosCount = horarios.filter((h) => h.activo).length;
 
   const [refreshing, setRefreshing] = useState(false);
@@ -98,7 +100,7 @@ export default function Dashboard() {
   const [deleteItemModal, setDeleteItemModal] = useState(false);
   const [selectedItem, setSelectedItem] = useState(null);
 
-  // Onboarding / paso a paso (se muestra en cada inicio; el ? la reabre)
+  // Onboarding / paso a paso (solo visible mientras falten pasos)
   const GUIDE_KEY = "comercio_guia_v1";
   const GUIDE_MIN_KEY = "comercio_guia_min";
   const [guideVisible, setGuideVisible] = useState(false);
@@ -130,16 +132,19 @@ export default function Dashboard() {
   };
 
   const isServicios = tipoCategoria === "servicios" || setupStatus?.is_servicios;
+  const setupReady = setupStatus != null;
   const apiSteps = setupStatus?.steps || {};
   const allItemsCount = productos.length + servicios.length;
-  const hasLocation = apiSteps.ubicacion ?? !!(shopLocation || shopAddress || userData?.latitud || userData?.longitud || currentLocation);
-  const hasHorarios = apiSteps.horarios ?? horariosCount > 0;
-  const hasSecciones = apiSteps.secciones ?? categorias.length > 0;
-  const hasCatalogo = apiSteps.catalogo ?? allItemsCount > 0;
-  const hasPerfil = setupStatus?.is_servicios
-    ? (setupStatus?.steps?.perfil ?? (setupStatus?.counts?.perfiles || 0) > 0)
+  const hasLocation = setupReady ? !!apiSteps.ubicacion : !!(shopLocation || shopAddress || userData?.latitud || userData?.longitud || currentLocation);
+  const hasHorarios = setupReady ? !!apiSteps.horarios : horariosCount > 0;
+  const hasSecciones = setupReady ? !!apiSteps.secciones : categorias.length > 0;
+  const hasCatalogo = setupReady ? !!apiSteps.catalogo : allItemsCount > 0;
+  const hasPerfil = setupReady
+    ? (setupStatus?.is_servicios
+        ? !!(setupStatus?.steps?.perfil ?? ((setupStatus?.counts?.perfiles || 0) > 0))
+        : true)
     : true;
-  const setupComplete = hasLocation && hasHorarios && hasSecciones && hasCatalogo && hasPerfil;
+  const setupComplete = setupReady && hasLocation && hasHorarios && hasSecciones && hasCatalogo && hasPerfil;
   const guideCollapsed = guideExpanded === false || (guideExpanded == null && setupComplete);
 
   const openNow = computeOpenNow(horarios, nowTick);
@@ -169,20 +174,6 @@ export default function Dashboard() {
   const firstMissing = ["ubicacion", "horarios", ...(isServicios ? ["perfil"] : []), "seccion", "producto"]
     .find((k) => !doneMap[k]) || null;
   const [guideStartAt, setGuideStartAt] = useState(null);
-  const [celebrateVisible, setCelebrateVisible] = useState(false);
-  const prevCompleteRef = useRef(null);
-
-  useEffect(() => {
-    if (setupStatus?.progress == null) return;
-    if (prevCompleteRef.current == null) {
-      prevCompleteRef.current = setupComplete;
-      return;
-    }
-    if (prevCompleteRef.current === false && setupComplete === true) {
-      setCelebrateVisible(true);
-    }
-    prevCompleteRef.current = setupComplete;
-  }, [setupComplete, setupStatus?.progress?.done]);
 
   const openGuideAt = (stepKey = null) => {
     setGuideStartAt(stepKey);
@@ -309,30 +300,35 @@ export default function Dashboard() {
   const allItems = [...productos.map(p => ({ ...p, tipo: "producto" })), ...servicios.map(s => ({ ...s, tipo: "servicio", categoria_id: s.categoria_id || categorias[0]?.id }))];
 
   return (
-    <SafeAreaView style={ds.safe}>
+    <SafeAreaView style={ds.safe} edges={['top', 'left', 'right']}>
       <View style={ds.root}>
         <ShopHeader business={{ nombre: establishmentName, ubicacion: locationText }} image={profileImageUrl} />
-        <ScrollView ref={scrollRef} style={ds.scroll} contentContainerStyle={ds.scrollContent} showsVerticalScrollIndicator={false}
+        <ScrollView ref={scrollRef} style={ds.scroll} contentContainerStyle={[ds.scrollContent, { paddingBottom: 104 + insets.bottom }]} showsVerticalScrollIndicator={false}
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={[C.brand]} />}>
 
           {/* Paso a paso / checklist */}
+          {!setupReady ? (
+            <View style={ds.guideCard}>
+              <View style={ds.guideHeader}>
+                <ActivityIndicator size="small" color={C.brand} />
+                <View style={{ flex: 1 }}>
+                  <Text style={ds.guideTitle}>Revisando tu configuración…</Text>
+                  <Text style={ds.guideSub}>Estamos verificando qué te falta por configurar</Text>
+                </View>
+              </View>
+            </View>
+          ) : !setupComplete ? (
           <View style={ds.guideCard}>
             <TouchableOpacity
               style={ds.guideHeader}
               onPress={() => setGuideMinimized(!guideCollapsed)}
               activeOpacity={0.8}
             >
-              <View style={[ds.guideIcon, setupComplete && ds.guideIconDone]}>
-                <Ionicons
-                  name={setupComplete ? "checkmark-circle" : "rocket-outline"}
-                  size={20}
-                  color={setupComplete ? "#FFF" : C.brand}
-                />
+              <View style={ds.guideIcon}>
+                <Ionicons name="rocket-outline" size={20} color={C.brand} />
               </View>
               <View style={{ flex: 1 }}>
-                <Text style={ds.guideTitle}>
-                  {setupComplete ? "Tu negocio está listo" : "Configura tu negocio paso a paso"}
-                </Text>
+                <Text style={ds.guideTitle}>Configura tu negocio paso a paso</Text>
                 <Text style={ds.guideSub}>
                   {guideCollapsed
                     ? "Toca para expandir"
@@ -380,12 +376,13 @@ export default function Dashboard() {
                 </View>
                 <TouchableOpacity style={ds.guideBtn} onPress={() => openGuideAt(firstMissing)} activeOpacity={0.85}>
                   <Ionicons name="play-circle-outline" size={18} color="#FFF" />
-                  <Text style={ds.guideBtnText}>{firstMissing ? "Continuar donde me quedé" : "Ver guía de inicio"}</Text>
+                  <Text style={ds.guideBtnText}>Continuar donde me quedé</Text>
                 </TouchableOpacity>
                 <Text style={ds.guideHint}>Son {isServicios ? "5" : "4"} pasos: ubicación, horarios{isServicios ? ", perfil" : ""}, secciones y catálogo.</Text>
               </>
             )}
           </View>
+          ) : null}
 
           {/* Ratings + Horarios */}
           <View style={ds.row}>
@@ -475,7 +472,6 @@ export default function Dashboard() {
             <ItemCreator categorias={categorias} onCreate={handleCreateItem} showServicios={isServicios} rangoPrecios={setupStatus?.rango_precios} />
           </View>
           <Inventario categorias={categorias} productos={allItems} onDelete={confirmDeleteItem} onToggle={handleToggleItem} onEdit={handleEditItem} />
-          <View style={{ height: 60 }} />
         </ScrollView>
       </View>
 
@@ -578,29 +574,6 @@ export default function Dashboard() {
         </View></View>
       </Modal>
 
-      {/* Celebración: perfil completo */}
-      <Modal visible={celebrateVisible} transparent animationType="fade" onRequestClose={() => setCelebrateVisible(false)}>
-        <View style={ds.modalBg}><View style={ds.modalCard}>
-          <View style={ds.celebrateIcon}>
-            <Ionicons name="checkmark-circle" size={48} color={C.green} />
-          </View>
-          <Text style={ds.modalTitle}>¡Tu negocio está completo!</Text>
-          <Text style={ds.modalMsg}>
-            {esPublico
-              ? (isServicios
-                  ? "Ya estás público: tus clientes pueden reservar tus servicios."
-                  : "Ya estás público: tus clientes pueden comprar tus productos.")
-              : "Tu perfil está completo. Serás visible para tus clientes en tu horario de atención."}
-          </Text>
-          <TouchableOpacity style={ds.modalPrimary} onPress={() => setCelebrateVisible(false)}>
-            <Text style={ds.modalPrimaryText}>¡Genial, entendido!</Text>
-          </TouchableOpacity>
-          <TouchableOpacity onPress={() => { setCelebrateVisible(false); nav.navigate("Horarios"); }} style={{ marginTop: 8 }}>
-            <Text style={ds.modalLater}>Ver mis horarios</Text>
-          </TouchableOpacity>
-        </View></View>
-      </Modal>
-
       <AlertaModal
         visible={alertVisible}
         mensaje={alertData.message}
@@ -631,7 +604,6 @@ const ds = StyleSheet.create({
   actionBtn: { flex: 1, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 6, backgroundColor: C.surface, borderRadius: 14, paddingVertical: 12, borderWidth: 1, borderColor: "#F0F0F0" },
   actionText: { fontSize: 12, fontFamily: "Montserrat_600SemiBold", color: C.ink },
   modalBg: { flex: 1, backgroundColor: "rgba(0,0,0,0.5)", justifyContent: "center", alignItems: "center", padding: 20 },
-  celebrateIcon: { width: 84, height: 84, borderRadius: 42, backgroundColor: "#ECFDF5", justifyContent: "center", alignItems: "center", marginBottom: 14 },
   modalCard: { backgroundColor: C.surface, borderRadius: 24, padding: 24, width: "90%", alignItems: "center" },
   modalTitle: { fontSize: 18, fontFamily: "Montserrat_800ExtraBold", color: C.ink, marginBottom: 10, textAlign: "center" },
   modalMsg: { fontSize: 14, fontFamily: "Montserrat_400Regular", color: C.muted, textAlign: "center", marginBottom: 20, lineHeight: 20 },

@@ -5,7 +5,6 @@ import {
   StyleSheet,
   TouchableOpacity,
   ScrollView,
-  SafeAreaView,
   StatusBar,
   Image,
   ActivityIndicator,
@@ -13,6 +12,7 @@ import {
   Dimensions,
   Platform
 } from "react-native";
+import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { AntDesign, Feather, Ionicons } from "@expo/vector-icons";
 import {
   Montserrat_400Regular,
@@ -30,6 +30,7 @@ const { width } = Dimensions.get("window");
 
 const Cart = () => {
   const navigation = useNavigation();
+  const insets = useSafeAreaInsets();
   const [cartItems, setCartItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [restaurantName, setRestaurantName] = useState("");
@@ -226,7 +227,7 @@ const Cart = () => {
 
   // --- RENDERIZADO UI PRINCIPAL ---
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
       <StatusBar barStyle="light-content" backgroundColor="#1C1C1E" />
 
       {/* Header */}
@@ -240,7 +241,7 @@ const Cart = () => {
       {/* Contenido */}
       {cartItems.length > 0 ? (
         <>
-          <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+          <ScrollView contentContainerStyle={[styles.scrollContent, { paddingBottom: 104 + insets.bottom }]} showsVerticalScrollIndicator={false}>
             {/* Lista de Items */}
             <View style={styles.itemsList}>
               {cartItems.map((item) => (
@@ -337,7 +338,7 @@ const Cart = () => {
         </>
       ) : (
         /* Empty State */
-        <View style={styles.emptyCartContainer}>
+        <View style={[styles.emptyCartContainer, { paddingBottom: 104 + insets.bottom }]}>
           <View style={styles.emptyIconCircle}>
             <Feather name="shopping-cart" size={50} color="#666" />
           </View>
@@ -378,7 +379,7 @@ const Cart = () => {
         onPrimary={alertData.onPrimary}
         primaryLabel={alertData.primaryLabel}
       />
-    </View>
+    </SafeAreaView>
   );
 };
 

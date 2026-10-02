@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useMemo, useCallback } from 'react';
 import { View, Text, StyleSheet, FlatList, Image, TouchableOpacity, ActivityIndicator, Platform } from 'react-native';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Montserrat_400Regular, Montserrat_700Bold, Montserrat_300Light, Montserrat_600SemiBold } from '@expo-google-fonts/montserrat';
 import { useFonts } from 'expo-font';
 import { useNavigation, useRoute, useFocusEffect } from "@react-navigation/native";
@@ -8,6 +9,7 @@ import { FontAwesome, Ionicons } from '@expo/vector-icons';
 
 const Categorias = () => {
   const navigation = useNavigation();
+  const insets = useSafeAreaInsets();
   const route = useRoute();
   const { categoryId, categoryName = "Categoría", subcategories = [], establishments = [], establishmentsSedes = [] } = route.params || {};
   const [loading, setLoading] = useState(false);
@@ -186,7 +188,7 @@ const Categorias = () => {
   };
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
       <View style={styles.headerContainer}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
           <Ionicons name="arrow-back" size={24} color="#FFF" />
@@ -202,7 +204,7 @@ const Categorias = () => {
           data={combinedData} // Usamos la data combinada
           renderItem={renderEstablishment}
           keyExtractor={(item) => item.dataType + '-' + item.id.toString()} // Key única compuesta
-          contentContainerStyle={styles.listContent}
+          contentContainerStyle={[styles.listContent, { paddingBottom: Math.max(insets.bottom, 12) + 16 }]}
           showsVerticalScrollIndicator={false}
         />
       ) : (
@@ -211,7 +213,7 @@ const Categorias = () => {
           <Text style={styles.emptyText}>No hay establecimientos disponibles en esta categoría</Text>
         </View>
       )}
-    </View>
+    </SafeAreaView>
   );
 };
 
@@ -233,7 +235,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingVertical: 14,
     backgroundColor: '#fa6205',
-    paddingTop: Platform.OS === 'android' ? 50 : 14,
   },
   title: {
     fontSize: 20,

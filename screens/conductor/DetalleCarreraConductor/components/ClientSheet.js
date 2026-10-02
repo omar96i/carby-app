@@ -12,14 +12,15 @@ import {
   ScrollView,
   ActivityIndicator,
 } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Feather, Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { formatCurrency, getImageUrl, formatPaymentMethod } from "../utils";
 import SafetyProtection from "../../../../components/SafetyProtection";
 import OrderDetailsCard from "./OrderDetailsCard";
 
 const { height: SCREEN_H } = Dimensions.get("window");
-const COLLAPSED_H = 100;
-const EXPANDED_H = SCREEN_H * 0.5;
+const COLLAPSED_BASE_H = 100;
+const EXPANDED_RATIO = 0.5;
 
 export const ClientSheet = ({
   state,
@@ -45,7 +46,11 @@ export const ClientSheet = ({
   isDelivery,
 }) => {
   const [expanded, setExpanded] = useState(false);
-  const heightAnim = useRef(new Animated.Value(COLLAPSED_H)).current;
+  const insets = useSafeAreaInsets();
+  const bottomPad = Math.max(insets.bottom, 12);
+  const collapsedH = COLLAPSED_BASE_H + bottomPad;
+  const expandedH = SCREEN_H * EXPANDED_RATIO + bottomPad;
+  const heightAnim = useRef(new Animated.Value(collapsedH)).current;
   const compactOpacity = useRef(new Animated.Value(1)).current;
   const expandedOpacity = useRef(new Animated.Value(0)).current;
 
@@ -69,9 +74,13 @@ export const ClientSheet = ({
   const metodoPago = formatPaymentMethod(tripData?.metodo_pago || tripData?.informacion_adicional?.metodo_pago || tripData?.informacion_adicional?.metododepago);
 
   useEffect(() => {
+    heightAnim.setValue(expanded ? expandedH : collapsedH);
+  }, [bottomPad]);
+
+  useEffect(() => {
     Animated.parallel([
       Animated.spring(heightAnim, {
-        toValue: expanded ? EXPANDED_H : COLLAPSED_H,
+        toValue: expanded ? expandedH : collapsedH,
         useNativeDriver: false,
         friction: 9,
         tension: 60,
@@ -100,8 +109,8 @@ export const ClientSheet = ({
   ).current;
 
   return (
-    <Animated.View style={[styles.sheet, { height: heightAnim }]}>
-      <View style={[styles.header, { height: expanded ? 36 : COLLAPSED_H }]} {...panResponder.panHandlers}>
+    <Animated.View style={[styles.sheet, { height: heightAnim, paddingBottom: bottomPad }]}>
+      <View style={[styles.header, { height: expanded ? 36 : collapsedH }]} {...panResponder.panHandlers}>
         <View style={styles.handle} />
         <View style={styles.collapsedRowWrapper}>
           <Animated.View style={[styles.collapsedRow, { opacity: compactOpacity }]}>
@@ -115,8 +124,8 @@ export const ClientSheet = ({
         </View>
       </View>
 
-      <Animated.View style={[styles.expandedContent, { top: expanded ? 36 : COLLAPSED_H, opacity: expandedOpacity }]} pointerEvents={expanded ? "auto" : "none"}>
-        <ScrollView style={styles.scroll} contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+      <Animated.View style={[styles.expandedContent, { top: expanded ? 36 : collapsedH, bottom: bottomPad, opacity: expandedOpacity }]} pointerEvents={expanded ? "auto" : "none"}>
+        <ScrollView style={styles.scroll} contentContainerStyle={[styles.scrollContent, { paddingBottom: 8 }]} showsVerticalScrollIndicator={false}>
           {/* Client card */}
           <View style={styles.clientCard}>
             <View style={styles.avatarWrap}>

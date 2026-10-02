@@ -15,8 +15,8 @@ const FALLBACK = {
 };
 
 export default function useOnboardingStatus() {
-  const [status, setStatus] = useState(FALLBACK);
-  const [loading, setLoading] = useState(false);
+  const [status, setStatus] = useState(null);
+  const [loading, setLoading] = useState(true);
 
   const fetchStatus = useCallback(async (local = {}) => {
     setLoading(true);

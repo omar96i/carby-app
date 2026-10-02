@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import {
-  SafeAreaView,
   View,
   Text,
   StyleSheet,
@@ -11,6 +10,7 @@ import {
   KeyboardAvoidingView,
   Platform,
 } from "react-native";
+import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { useNavigation, useRoute, useFocusEffect } from "@react-navigation/native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Feather, MaterialCommunityIcons } from "@expo/vector-icons";
@@ -35,6 +35,8 @@ import AlertaModal from "../../../components/ErrorModal";
 
 export default function PedidoDetalle() {
   const navigation = useNavigation();
+  const insets = useSafeAreaInsets();
+  const bottomPad = Math.max(insets.bottom, 12);
   const route = useRoute();
   const { pedidoId, pedidoData } = route.params || {};
 
@@ -181,7 +183,7 @@ export default function PedidoDetalle() {
   }
 
   return (
-    <SafeAreaView style={styles.safe}>
+    <SafeAreaView style={styles.safe} edges={['top', 'left', 'right']}>
       <StatusBar barStyle="dark-content" backgroundColor="#F1F5F9" />
       <View style={styles.container}>
         <OrderMap
@@ -193,10 +195,10 @@ export default function PedidoDetalle() {
           route={routeCoords}
         />
 
-        <TopBar state={currentKey} onBack={() => navigation.goBack()} />
+        <TopBar state={currentKey} top={insets.top} onBack={() => navigation.goBack()} />
 
         {permissionDenied && (
-          <View style={styles.locationBanner}>
+          <View style={[styles.locationBanner, { top: insets.top + 96 }]}>
             <Feather name="map-pin" size={14} color="#B45309" />
             <Text style={styles.locationBannerText}>Activa ubicación para un mejor seguimiento</Text>
           </View>
@@ -205,6 +207,7 @@ export default function PedidoDetalle() {
         <OrderSheet
           pedido={pedido}
           currentKey={currentKey}
+          bottomPad={bottomPad}
           onOpenChat={() => setShowChat(true)}
           onOpenDriverChat={() => setShowDriverChat(true)}
           hasNewDriverMessages={driverMessageCount > 0}
@@ -238,7 +241,7 @@ export default function PedidoDetalle() {
               activeOpacity={1}
               onPress={() => setShowDriverChat(false)}
             />
-            <View style={styles.driverChatPanel}>
+            <View style={[styles.driverChatPanel, { paddingBottom: bottomPad }]}>
               <View style={styles.driverChatHeader}>
                 {getImageUrl(pedido?.carrera?.conductor?.foto_documento_file) ? (
                   <Image
@@ -327,7 +330,6 @@ const styles = StyleSheet.create({
   },
   locationBanner: {
     position: "absolute",
-    top: 105,
     left: 16,
     right: 16,
     zIndex: 90,

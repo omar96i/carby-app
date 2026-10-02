@@ -11,6 +11,7 @@ import {
   Keyboard,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import MapView, { Marker } from "react-native-maps";
 import * as Location from "expo-location";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -35,6 +36,7 @@ async function reverseGeocode(latitude, longitude) {
 }
 
 export default function LocationPickerModal({ visible, initialRegion, initialAddress = "", onClose, onSave, saving }) {
+  const insets = useSafeAreaInsets();
   const mapRef = useRef(null);
   const searchTimeout = useRef(null);
   const pinGeoTimeout = useRef(null);
@@ -222,7 +224,7 @@ export default function LocationPickerModal({ visible, initialRegion, initialAdd
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
       <View style={s.bg}>
-        <View style={s.card}>
+        <View style={[s.card, { paddingBottom: Math.max(insets.bottom, 12) + 10 }]}>
           {pinMode ? (
             <>
               <View style={s.pinBanner}>
@@ -354,10 +356,7 @@ export default function LocationPickerModal({ visible, initialRegion, initialAdd
                     />
                   )}
                 </MapView>
-                <View style={s.mapHint}>
-                  <Ionicons name="hand-left-outline" size={13} color={C.brand} />
-                  <Text style={s.mapHintText}>Toca el mapa o arrastra el pin</Text>
-                </View>
+              
               </View>
 
               <TextInput
@@ -391,7 +390,7 @@ export default function LocationPickerModal({ visible, initialRegion, initialAdd
 
 const s = StyleSheet.create({
   bg: { flex: 1, backgroundColor: "rgba(0,0,0,0.5)", justifyContent: "flex-end" },
-  card: { backgroundColor: C.surface, borderTopLeftRadius: 28, borderTopRightRadius: 28, padding: 18, paddingBottom: 22, maxHeight: "94%" },
+  card: { backgroundColor: C.surface, borderTopLeftRadius: 28, borderTopRightRadius: 28, padding: 18, maxHeight: "94%" },
   grabber: { width: 40, height: 5, borderRadius: 3, backgroundColor: "#E0E0E0", alignSelf: "center", marginBottom: 12 },
   header: { flexDirection: "row", alignItems: "center", gap: 10, marginBottom: 12 },
   headerIcon: { width: 42, height: 42, borderRadius: 14, backgroundColor: "#FFF0E5", justifyContent: "center", alignItems: "center" },

@@ -31,7 +31,7 @@ export default function ShopHeader({ business, image }) {
 const s = StyleSheet.create({
   container: {
     backgroundColor: COLORS.ink,
-    paddingTop: 56,
+    paddingTop: 16,
     paddingBottom: 24,
     paddingHorizontal: 20,
     borderBottomLeftRadius: 32,

@@ -5,7 +5,6 @@ import {
   ScrollView,
   TouchableOpacity,
   StyleSheet,
-  SafeAreaView,
   StatusBar,
   Image,
   ActivityIndicator,
@@ -16,6 +15,7 @@ import {
   Dimensions,
   Linking,
 } from "react-native";
+import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons, FontAwesome, MaterialIcons, Feather, MaterialCommunityIcons } from "@expo/vector-icons";
 import { useAudioPlayer } from "expo-audio";
 import OrderStatusStepper from "../components/OrderStatusStepper";
@@ -51,6 +51,7 @@ const pasosPedidoComercio = [
 
 const PedidoDetalleComercio = () => {
   const navigation = useNavigation();
+  const insets = useSafeAreaInsets();
   const route = useRoute();
   const { pedidoId, pedidoData } = route.params || {};
 
@@ -451,7 +452,7 @@ const PedidoDetalleComercio = () => {
   const pagoConductor = calculateDriverPay();
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right']}>
       <StatusBar barStyle="light-content" backgroundColor="#fa6205" />
 
       {/* HEADER + ESTADO: bloque naranja redondeado unido */}
@@ -481,7 +482,7 @@ const PedidoDetalleComercio = () => {
         </View>
       </View>
 
-      <ScrollView style={styles.scroll} contentContainerStyle={{paddingBottom: 40}}>
+      <ScrollView style={styles.scroll} contentContainerStyle={{paddingBottom: Math.max(insets.bottom, 12) + 16}}>
 
         {/* --- PAGO AL CONDUCTOR --- */}
         <View style={styles.driverPayCard}>

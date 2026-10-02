@@ -11,13 +11,14 @@ import {
   ScrollView,
   Linking,
 } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Feather, Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { formatCurrency, formatDate, metodoPagoLabel, parseJSON, getOrderCoords, getImageUrl, calculateProductsTotal, calculateDeliveryCost, calculateDiscount } from "../utils";
 import OrderStatusStepper from "../../../../components/OrderStatusStepper";
 
 const { height: SCREEN_H } = Dimensions.get("window");
-const COLLAPSED_H = 90;
-const EXPANDED_H = SCREEN_H * 0.5;
+const COLLAPSED_BASE_H = 90;
+const EXPANDED_RATIO = 0.5;
 
 const RESTO_STATUS = {
   pendiente: { label: "Pendiente", tone: "amber" },
@@ -31,10 +32,10 @@ const RESTO_STATUS = {
 };
 
 const COURIER_STATUS = {
-  pendiente: { label: "Buscando repartidor", tone: "muted" },
-  aceptado: { label: "Repartidor asignado", tone: "emerald" },
-  confirmado: { label: "Repartidor asignado", tone: "emerald" },
-  preparado: { label: "Repartidor asignado", tone: "emerald" },
+  pendiente: { label: "Buscando delivery", tone: "muted" },
+  aceptado: { label: "Delivery asignado", tone: "emerald" },
+  confirmado: { label: "Delivery asignado", tone: "emerald" },
+  preparado: { label: "Delivery asignado", tone: "emerald" },
   completado: { label: "En el comercio", tone: "primary" },
   en_comercio: { label: "En el comercio", tone: "primary" },
   recogido: { label: "En camino a ti", tone: "primary" },
@@ -46,6 +47,7 @@ const COURIER_STATUS = {
 export const OrderSheet = ({
   pedido,
   currentKey,
+  bottomPad = 12,
   onOpenChat,
   onOpenDriverChat,
   hasNewDriverMessages,
@@ -53,7 +55,11 @@ export const OrderSheet = ({
   onCancel,
 }) => {
   const [expanded, setExpanded] = useState(false);
-  const heightAnim = useRef(new Animated.Value(COLLAPSED_H)).current;
+  const insets = useSafeAreaInsets();
+  const safeBottom = Math.max(bottomPad, insets.bottom, 12);
+  const collapsedH = COLLAPSED_BASE_H + safeBottom;
+  const expandedH = SCREEN_H * EXPANDED_RATIO + safeBottom;
+  const heightAnim = useRef(new Animated.Value(collapsedH)).current;
   const compactOpacity = useRef(new Animated.Value(1)).current;
   const expandedOpacity = useRef(new Animated.Value(0)).current;
 
@@ -95,9 +101,13 @@ export const OrderSheet = ({
   const courierSub = COURIER_STATUS[currentKey] || COURIER_STATUS.pendiente;
 
   useEffect(() => {
+    heightAnim.setValue(expanded ? expandedH : collapsedH);
+  }, [safeBottom]);
+
+  useEffect(() => {
     Animated.parallel([
       Animated.spring(heightAnim, {
-        toValue: expanded ? EXPANDED_H : COLLAPSED_H,
+        toValue: expanded ? expandedH : collapsedH,
         useNativeDriver: false,
         friction: 9,
         tension: 60,
@@ -112,8 +122,8 @@ export const OrderSheet = ({
       onStartShouldSetPanResponder: () => true,
       onMoveShouldSetPanResponder: (_, g) => Math.abs(g.dy) > 5,
       onPanResponderMove: (_, g) => {
-        const base = expanded ? EXPANDED_H : COLLAPSED_H;
-        heightAnim.setValue(Math.max(COLLAPSED_H, base - g.dy));
+        const base = expanded ? expandedH : collapsedH;
+        heightAnim.setValue(Math.max(collapsedH, base - g.dy));
       },
       onPanResponderRelease: (_, g) => {
         const tap = Math.abs(g.dy) < 10 && Math.abs(g.dx) < 10;
@@ -155,8 +165,8 @@ export const OrderSheet = ({
   };
 
   return (
-    <Animated.View style={[styles.sheet, { height: heightAnim }]}>
-      <View style={[styles.header, { height: expanded ? 36 : COLLAPSED_H }]} {...panResponder.panHandlers}>
+    <Animated.View style={[styles.sheet, { height: heightAnim, paddingBottom: safeBottom }]}>
+      <View style={[styles.header, { height: expanded ? 36 : collapsedH }]} {...panResponder.panHandlers}>
         <View style={styles.handle} />
         <View style={styles.collapsedRowWrapper}>
           <Animated.View style={[styles.collapsedRow, { opacity: compactOpacity }]}>
@@ -176,8 +186,8 @@ export const OrderSheet = ({
         </View>
       </View>
 
-      <Animated.View style={[styles.expandedContent, { top: expanded ? 36 : COLLAPSED_H, opacity: expandedOpacity }]} pointerEvents={expanded ? "auto" : "none"}>
-        <ScrollView style={styles.scroll} contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+      <Animated.View style={[styles.expandedContent, { top: expanded ? 36 : collapsedH, bottom: safeBottom, opacity: expandedOpacity }]} pointerEvents={expanded ? "auto" : "none"}>
+        <ScrollView style={styles.scroll} contentContainerStyle={[styles.scrollContent, { paddingBottom: 8 }]} showsVerticalScrollIndicator={false}>
           {/* Store header */}
           <View style={styles.storeHeader}>
             {comercioImage ? (
@@ -201,13 +211,8 @@ export const OrderSheet = ({
             </View>
           </View>
 
-          {/* Dual status */}
-          <View style={styles.dualStatusRow}>
-            {renderToneBox(restoSub.tone, restoSub.label, "Restaurante")}
-            {renderToneBox(courierSub.tone, courierSub.label, "Repartidor")}
-          </View>
-
           {/* Courier or searching */}
+          <Text style={styles.sectionLabel}>Información del conductor o delivery</Text>
           {courierAssigned ? (
             <View style={styles.courierCard}>
               {driverImage ? (
@@ -218,9 +223,10 @@ export const OrderSheet = ({
                 </View>
               )}
               <View style={styles.courierInfo}>
-                <Text style={styles.courierName}>{driver.nombre_completo || driver.name || driver.nombre || "Repartidor"}</Text>
+                <Text style={styles.courierName}>{driver.nombre_completo || driver.name || driver.nombre || "Delivery"}</Text>
                 <Text style={styles.courierVehicle}>{driver.tipo_vehiculo || driver.vehiculo || driver.tipo_usuario || "Moto"}</Text>
                 <Text style={styles.courierPlate}>{driver.placa || driver.plate || ""}</Text>
+                <Text style={styles.courierStatus}>{courierSub.label}</Text>
               </View>
               <View style={styles.contactBtns}>
                 <TouchableOpacity style={styles.chatIconBtnGreen} onPress={onOpenDriverChat} activeOpacity={0.8}>
@@ -243,7 +249,7 @@ export const OrderSheet = ({
                 </View>
               </View>
               <View style={styles.searchingTextBox}>
-                <Text style={styles.searchingTitle}>Buscando repartidor cercano</Text>
+                <Text style={styles.searchingTitle}>Buscando delivery cercano</Text>
                 <Text style={styles.searchingSub}>Te asignaremos uno apenas el restaurante confirme.</Text>
               </View>
             </View>
@@ -559,6 +565,23 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     color: "#0F172A",
     marginTop: 2,
+  },
+  courierStatus: {
+    fontSize: 12,
+    fontFamily: "MontserratBold",
+    fontWeight: "bold",
+    color: "#FF5500",
+    marginTop: 4,
+  },
+  sectionLabel: {
+    fontSize: 11,
+    fontFamily: "MontserratBold",
+    fontWeight: "bold",
+    color: "#94A3B8",
+    textTransform: "uppercase",
+    letterSpacing: 0.8,
+    marginTop: 14,
+    marginBottom: -8,
   },
   callBtn: {
     width: 48,

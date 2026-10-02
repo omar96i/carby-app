@@ -3,11 +3,11 @@ import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
 import { Feather } from "@expo/vector-icons";
 import { HEADER_TEXT } from "../utils";
 
-export const TopBar = ({ state, onBack }) => {
+export const TopBar = ({ state, top = 0, onBack }) => {
   const config = HEADER_TEXT[state] || HEADER_TEXT.pendiente;
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { top: top + 8 }]}>
       <TouchableOpacity style={styles.backBtn} onPress={onBack} activeOpacity={0.8}>
         <Feather name="arrow-left" size={22} color="#0F172A" />
       </TouchableOpacity>
@@ -25,7 +25,6 @@ export const TopBar = ({ state, onBack }) => {
 const styles = StyleSheet.create({
   container: {
     position: "absolute",
-    top: 50,
     left: 16,
     right: 16,
     zIndex: 100,

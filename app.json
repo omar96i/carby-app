@@ -71,8 +71,7 @@
           "apiKey": "AIzaSyA5Q7U5qVt_NbzZ5z5vBJv7ECTsGZ9-chM"
         }
       },
-      "googleServicesFile": "./credenciales-google.json",
-      "launchMode": "singleTask"
+      "googleServicesFile": "./google-services.json"
     },
     "runtimeVersion": "1.0.0",
     "web": {

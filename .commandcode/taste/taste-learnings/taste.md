@@ -63,3 +63,21 @@
 - Prefers entity management screens to support full create/edit/hide lifecycle inline on the same list screen rather than fragmented navigation. Confidence: 0.8
 - Prefers modal primary action buttons to stretch full width of the modal rather than compact centered buttons that shrink to content. Confidence: 0.75
 - Prefers solutions that avoid installing new packages/dependencies, reusing already-installed libraries to avoid native rebuilds and extra setup. Confidence: 0.85
+- Prefers to hide setup/onboarding checklist sections entirely once fully complete rather than keeping a collapsed ready banner occupying space. Confidence: 0.9
+- Prefers no success/celebration modal on setup completion — wants completed checklist to disappear silently without interruption. Confidence: 0.85
+- Prefers loading placeholder or hidden state for status-dependent setup UI until backend completeness check resolves, to avoid flicker between unknown/incomplete/complete. Confidence: 0.85
+- Dislikes floating help FAB overlays on headers as ugly/cluttering; prefers guide entry embedded inside the relevant card/section. Confidence: 0.85
+- When requesting a redesign, points to an existing screen as UX reference for the pattern (e.g., address input with autocomplete recommendations plus map) while explicitly allowing a polished reinterpretation rather than an exact copy, with live autocomplete over plain input. Confidence: 0.85
+- Prefers collapsible section headers to have a single tap action (expand/collapse only) rather than overloaded behavior that also opens a modal. Confidence: 0.8
+- Prefers live business-state indicators (Abierto/Cerrado, Público/No público with reason and deep-link to missing step) over static decorative check icons. Confidence: 0.85
+- Prefers QR/payment sections as numbered steps with large tappable previews opening fullscreen viewer, with explicit scan/download affordance and "reserve now, upload proof later" messaging. Confidence: 0.85
+- Prefers non-blocking payment proof: allow reserving without proof and upload proof later from orders list, with proof viewable to both customer and merchant sides. Confidence: 0.85
+- When a save appears broken, expects end-to-end verification including backend storage, API responses and validation — not just UI fix — plus dedicated APIs to power "what's missing" UI. Confidence: 0.8
+- Prefers service booking slots to be generated from total estimated duration (base service time × quantity + adicionales time) rather than base time alone or fixed intervals. Confidence: 0.8
+- Prefers consistent navigation/tab-bar design across role variants (Usuario/Delivery/Aliado) — once a style is approved for one navigator, wants the same floating-bar pattern applied to the others with role-appropriate tabs. Confidence: 0.85
+- Prefers bottom tab bar visible only on primary tab destinations and hidden on secondary/detail screens (e.g., only the main items, hidden elsewhere). Confidence: 0.75
+- Expects bottom safe-area padding on all user screens so content is never obscured by Android system navigation buttons, with extra bottom clearance on primary tab screens to clear the floating tab bar. Confidence: 0.8
+- When fixing cross-cutting UI issues across roles/flows, prefers to audit/fix end-user (usuario) flow first — e.g., categorias verticales, reservar — before merchant/driver flows. Confidence: 0.8
+- Prefers centralized reusable header design consolidated in a single shared component (e.g., components/ScreenHeader.js) over per-screen duplicated header styles, to keep design compact and maintainable. Confidence: 0.9
+- Prefers bottom panels/sheets to be visually complementary with the floating nav design (matching radius, shadows, floating treatment with gap) rather than full-bleed sheets hidden behind the nav. Confidence: 0.75
+- Prefers minimal-scope fixes that preserve existing design: when requesting a small layout adjustment (e.g., safe-area padding), wants only that change with no extra redesign/refactor, and if prior edits over-modified expects full revert to original plus the single requested patch. Confidence: 0.85
