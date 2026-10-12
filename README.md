@@ -1,37 +1,99 @@
+# Carby App
 
+App móvil multi-rol (Usuario, Aliado/Comercio, Delivery/Conductor) construida con **Expo SDK 54**, **React 19.1** y **React Native 0.81.5**.
 
-<p>
-  <!-- iOS -->
-  <a href="https://itunes.apple.com/app/apple-store/id982107779">
-    <img alt="Supports Expo iOS" longdesc="Supports Expo iOS" src="https://img.shields.io/badge/iOS-4630EB.svg?style=flat-square&logo=APPLE&labelColor=999999&logoColor=fff" />
-  </a>
-  <!-- Android -->
-  <a href="https://play.google.com/store/apps/details?id=host.exp.exponent&referrer=blankexample">
-    <img alt="Supports Expo Android" longdesc="Supports Expo Android" src="https://img.shields.io/badge/Android-4630EB.svg?style=flat-square&logo=ANDROID&labelColor=A4C639&logoColor=fff" />
-  </a>
-  <!-- Web -->
-  <a href="https://docs.expo.dev/workflow/web/">
-    <img alt="Supports Expo Web" longdesc="Supports Expo Web" src="https://img.shields.io/badge/web-4630EB.svg?style=flat-square&logo=GOOGLE-CHROME&labelColor=4285F4&logoColor=fff" />
-  </a>
-</p>
+Entrada: `App.js` → `navigation/index.js` → navegadores por rol (`BottomTabNavigatorUsuario`, `BottomTabNavigatorDelivery`, `BottomTabNavigatorAliado`).
 
-## 🚀 How to use
+## Requisitos
 
-- Install packages with `yarn` or `npm install`.
-- Run `yarn start` or `npm run start` to start the bundler.
-- Open the project in a React runtime to try it:
-  - iOS: [Client iOS](https://itunes.apple.com/app/apple-store/id982107779)
-  - Android: [Client Android](https://play.google.com/store/apps/details?id=host.exp.exponent&referrer=blankexample)
-  - Web: Any web browser
-- When it's time to customize your runtime, refer to the ["Adding custom native code"](https://docs.expo.dev/workflow/customizing/) guide!
+- Node.js LTS + npm
+- Android Studio (SDK + emulador o dispositivo) para Android
+- Xcode solo para iOS (macOS)
+- Cuenta de Expo / EAS para builds (`eas.json`, `projectId: 6d1c249f-72db-48aa-8440-3b942a4ae021`)
 
-## Publishing
+## Instalación
 
-- Deploy the native app to the App store and Play store using this guide: [Deployment](https://docs.expo.dev/distribution/app-stores/).
-- Deploy the website using this guide: [Web deployment](https://docs.expo.dev/distribution/publishing-websites/).
+```bash
+npm ci
+```
 
-## 📝 Notes
+> `package-lock.json` está commiteado. Usa `npm ci`, no `npm install` sin lock, para no romper el árbol de dependencias.
 
-- Learn more about [Universal React](https://docs.expo.dev/).
-- See what API and components are [available in the React runtimes](https://docs.expo.dev/versions/latest/).
-- Find out more about developing apps and websites: [Official guides](https://docs.expo.dev/guides/).
+## Cómo correr (importante)
+
+Este proyecto **es Expo, pero NO funciona con Expo Go ni con el `npx expo start` típico**.
+
+Usa código nativo custom (`android/` está commiteado), config plugins (`expo-location`, `expo-notifications`, `expo-audio`, `expo-background-task`), `google-services.json`, permisos de ubicación/audio/notificaciones y mapas. Por eso necesitas compilar el cliente nativo:
+
+```bash
+# Android (emulador o dispositivo conectado) — forma recomendada
+npx expo run:android
+
+# iOS (solo macOS)
+npx expo run:ios
+
+# npm scripts equivalentes
+npm run android
+npm run ios
+```
+
+```bash
+# NO usar para desarrollo diario (no levanta el nativo, falla por módulos custom):
+npx expo start
+npm run start
+
+# Web solo como referencia, no es el target principal:
+npm run web
+```
+
+Flujo típico diario:
+
+1. `npm ci` (solo primera vez o si cambia `package.json`)
+2. Conecta dispositivo o abre el emulador
+3. `npx expo run:android`
+4. Si solo cambiaste JS, luego puedes iterar con el dev server que abre ese comando
+
+## Builds / Deploy (EAS)
+
+Perfiles en `eas.json`:
+
+| Perfil | Uso |
+|---|---|
+| `development` | Dev client interno (`developmentClient: true`, channel `development`) |
+| `preview` | Build interna de prueba (channel `preview`) |
+| `production` | Producción (`autoIncrement: true`, channel `production`) |
+
+```bash
+eas build --profile development --platform android
+eas build --profile preview --platform android
+eas build --profile production --platform all
+eas update --channel production
+```
+
+Notas de release:
+
+- `app.json`: `version 1.0.1`, `runtimeVersion 1.0.0`, Android `versionCode 1`, iOS `buildNumber 1`.
+- Producción usa `appVersionSource: remote` + `autoIncrement`. No subas versión/build numbers a mano salvo que se pida.
+- `App.js` revisa OTA (`expo-updates`) al arrancar y muestra alerta bloqueante si hay update.
+- `google-services.json` / `expo-notifications` están commiteados para push. No toques credenciales.
+
+## Configuración
+
+- Backend: `constants/url.js` → `BASE_URL = "https://back.carbycol.com/api/"`.
+- Navegación por rol en `navigation/`: revisa el navegador activo antes de agregar pantallas.
+- Pantallas grandes en un solo archivo (`screens/Pedidos.js`, `screens/HomeScreen.js`, etc.): preferir editar en sitio.
+- `babel.config.js`: `react-native-worklets/plugin` debe ir último. No agregues plugins después sin verificar.
+
+## Estructura
+
+```
+App.js                  # entry, providers, chequeo OTA
+navigation/             # Stack + Tabs por rol
+screens/                # Usuario, Delivery, comercio, conductor, Transport
+components/             # UI compartida + usuario/pedidos
+hooks/                  # useFavoritos, useReservas, etc.
+constants/url.js        # BASE_URL backend
+android/                # código nativo (NO borrar)
+assets/                 # imágenes, sonidos
+eas.json / app.json     # config Expo/EAS
+```
