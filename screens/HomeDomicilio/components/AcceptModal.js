@@ -77,6 +77,7 @@ const styles = StyleSheet.create({
     fontFamily: "Montserrat_700Bold",
     marginTop: 15,
     marginBottom: 10,
+    textAlign: "center",
   },
   modalText: {
     color: "#333",

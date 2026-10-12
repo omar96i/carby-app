@@ -30,7 +30,7 @@ export const useDriverLocation = (conductorId) => {
     };
 
     fetchDriverLocation();
-    intervalId = setInterval(fetchDriverLocation, 5000);
+    intervalId = setInterval(fetchDriverLocation, 20000);
 
     return () => clearInterval(intervalId);
   }, [conductorId]);

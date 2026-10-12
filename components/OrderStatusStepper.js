@@ -20,17 +20,6 @@ export default function OrderStatusStepper({ steps, currentStatus, label = "" })
   const fillWidth = useSharedValue(0);
   const previousIndex = useSharedValue(-1);
 
-  const circleScales = [
-    useSharedValue(1),
-    useSharedValue(1),
-    useSharedValue(1),
-    useSharedValue(1),
-    useSharedValue(1),
-    useSharedValue(1),
-    useSharedValue(1),
-    useSharedValue(1),
-  ];
-
   useEffect(() => {
     const targetFill = safeIndex * STEP_WIDTH;
 
@@ -39,17 +28,6 @@ export default function OrderStatusStepper({ steps, currentStatus, label = "" })
       firstPaintRef.current = false;
     } else if (previousIndex.value !== safeIndex) {
       fillWidth.value = withTiming(targetFill, { duration: 500 });
-    }
-
-    if (previousIndex.value !== safeIndex) {
-      const next = circleScales[safeIndex];
-      const prev = circleScales[previousIndex.value];
-      if (prev) prev.value = withTiming(1, { duration: 250 });
-      if (next) {
-        next.value = withSpring(1.18, { damping: 8, stiffness: 160 }, () => {
-          next.value = withSpring(1, { damping: 10, stiffness: 120 });
-        });
-      }
     }
 
     previousIndex.value = safeIndex;
@@ -83,7 +61,6 @@ export default function OrderStatusStepper({ steps, currentStatus, label = "" })
               isActive={index === safeIndex}
               isCompleted={index < safeIndex}
               isPending={index > safeIndex}
-              scaleSV={circleScales[index]}
             />
           ))}
         </View>
@@ -92,9 +69,21 @@ export default function OrderStatusStepper({ steps, currentStatus, label = "" })
   );
 }
 
-function StepItem({ step, slotW, isActive, isCompleted, isPending, scaleSV }) {
+function StepItem({ step, slotW, isActive, isCompleted, isPending }) {
+  const scale = useSharedValue(1);
+
+  useEffect(() => {
+    if (isActive) {
+      scale.value = withSpring(1.18, { damping: 8, stiffness: 160 }, () => {
+        scale.value = withSpring(1, { damping: 10, stiffness: 120 });
+      });
+    } else {
+      scale.value = withTiming(1, { duration: 250 });
+    }
+  }, [isActive]);
+
   const circleStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: scaleSV.value }],
+    transform: [{ scale: scale.value }],
     backgroundColor: isPending ? "#f4f4f5" : "#fa6205",
     borderColor: isPending ? "#e4e4e7" : "#fa6205",
   }));

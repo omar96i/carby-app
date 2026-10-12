@@ -31,6 +31,7 @@ export const usePassengerLocation = (userId, enabled) => {
           setLocation({
             latitude: parseFloat(data.data.latitud),
             longitude: parseFloat(data.data.longitud),
+            updatedAt: data.data.updated_at || null,
           });
         }
       } catch (e) {

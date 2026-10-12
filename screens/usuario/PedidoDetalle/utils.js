@@ -27,6 +27,7 @@ export const ORDER_STEPS = [
   { key: "confirmado", label: "Confirmado", desc: "Pedido confirmado" },
   { key: "preparado", label: "Preparado", desc: "El comercio prepara tu pedido" },
   { key: "completado", label: "Listo", desc: "Pedido listo · buscando repartidor" },
+  { key: "asignado", label: "Asignado", desc: "Repartidor asignado · en camino al comercio" },
   { key: "en_comercio", label: "En comercio", desc: "El repartidor llegó al comercio" },
   { key: "recogido", label: "En camino", desc: "Tu pedido va en camino" },
   { key: "entregado", label: "Entregado", desc: "Pedido entregado" },
@@ -41,7 +42,11 @@ export const getCurrentStepKey = (pedido) => {
   if (estado === "entregado" || carreraEstado === "completado") return "entregado";
   if (carreraEstado === "recogido") return "recogido";
   if (carreraEstado === "en_comercio") return "en_comercio";
-  if (carreraEstado === "aceptado" || carreraEstado === "en_camino" || carreraEstado === "activo") return "completado";
+  if (["aceptado", "en_camino", "activo"].includes(carreraEstado)) {
+    // Repartidor asignado: solo es "buscando repartidor" si el pedido sigue sin carrera.
+    // Si el pedido ya está listo, mostrar asignado; si no, manda el estado del pedido.
+    if (estado === "completado") return "asignado";
+  }
   if (estado === "completado") return "completado";
   if (estado === "preparado") return "preparado";
   if (estado === "confirmado") return "confirmado";
@@ -65,6 +70,7 @@ export const HEADER_TEXT = {
   confirmado: { title: "Pedido confirmado", sub: "El comercio lo está preparando", tone: "#FF5500" },
   preparado: { title: "Pedido en preparación", sub: "La cocina está trabajando", tone: "#FF5500" },
   completado: { title: "Listo para reparto", sub: "Buscando repartidor cercano", tone: "#3B82F6" },
+  asignado: { title: "Repartidor asignado", sub: "Va en camino al comercio", tone: "#3B82F6" },
   en_comercio: { title: "Repartidor en el comercio", sub: "Están recogiendo tu pedido", tone: "#3B82F6" },
   recogido: { title: "Pedido en camino", sub: "Tu repartidor va hacia ti", tone: "#10B981" },
   entregado: { title: "Entregado", sub: "Pedido entregado correctamente", tone: "#10B981" },

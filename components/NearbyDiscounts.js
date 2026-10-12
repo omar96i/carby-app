@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, Image, ActivityIndicator, TouchableOpacity, Dim
 import Ionicons from "react-native-vector-icons/Ionicons";
 import { useNavigation } from "@react-navigation/native";
 import { BASE_URL } from "../constants/url";
+import FavoriteHeart from "./FavoriteHeart";
 
 const { width } = Dimensions.get('window');
 
@@ -77,6 +78,9 @@ const NearbyDiscounts = ({ location }) => {
               <Text style={styles.placeholderText}>Sin foto</Text>
             </View>
           )}
+          <View style={styles.heartPos}>
+            <FavoriteHeart productId={item.id} />
+          </View>
         </View>
 
         <View style={styles.infoWrap}>
@@ -160,6 +164,12 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     backgroundColor: '#F2F2F2',
     marginBottom: 10,
+  },
+  heartPos: {
+    position: 'absolute',
+    top: 8,
+    right: 8,
+    zIndex: 2,
   },
   productImg: {
     width: '100%',

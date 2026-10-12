@@ -1,14 +1,16 @@
 import React from "react";
 import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Feather } from "@expo/vector-icons";
 import { HEADER_TEXT, STATES } from "../utils";
 
 export const TopBar = ({ state, showBack, onBack, onStateChange }) => {
+  const insets = useSafeAreaInsets();
   const header = HEADER_TEXT[state] || HEADER_TEXT.searching;
   const isSearching = state === "searching";
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { top: insets.top + 8 }]}>
       <View style={styles.row}>
         {showBack && (
           <TouchableOpacity onPress={onBack} style={styles.backBtn} activeOpacity={0.8}>
@@ -51,12 +53,10 @@ export const TopBar = ({ state, showBack, onBack, onStateChange }) => {
 const styles = StyleSheet.create({
   container: {
     position: "absolute",
-    top: 0,
     left: 0,
     right: 0,
     zIndex: 1100,
     padding: 12,
-    paddingTop: 50,
     gap: 10,
   },
   row: {

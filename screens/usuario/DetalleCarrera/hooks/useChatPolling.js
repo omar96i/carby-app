@@ -31,8 +31,6 @@ export const useChatPolling = (tripId) => {
 
   useEffect(() => {
     fetchMessages();
-    const interval = setInterval(fetchMessages, 5000);
-    return () => clearInterval(interval);
   }, [fetchMessages]);
 
   return { messageCount, lastMessage, refetch: fetchMessages };

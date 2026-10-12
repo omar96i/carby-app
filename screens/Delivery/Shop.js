@@ -26,6 +26,8 @@ import Ionicons from "react-native-vector-icons/Ionicons";
 import { FontAwesome } from "@expo/vector-icons";
 import { useNavigation, useRoute, useFocusEffect } from "@react-navigation/native";
 import AlertaModal from "../../components/ErrorModal";
+import { getCartBusiness, clearCart } from "../../utils/cartBusiness";
+import FavoriteHeart from "../../components/FavoriteHeart";
 import { BASE_URL } from "../../constants/url";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
@@ -49,9 +51,9 @@ const Shop = () => {
   );
 
   const [alertVisible, setAlertVisible] = useState(false);
-  const [alertData, setAlertData] = useState({ title: "", message: "", type: "info", onConfirm: null });
-  const showAlert = (title, message, type, onConfirm) => {
-    setAlertData({ title, message, type: type || (title === "Éxito" ? "success" : "error"), onConfirm });
+  const [alertData, setAlertData] = useState({ title: "", message: "", type: "info", onConfirm: null, primaryLabel: "" });
+  const showAlert = (title, message, type, onConfirm, primaryLabel) => {
+    setAlertData({ title, message, type: type || (title === "Éxito" ? "success" : "error"), onConfirm, primaryLabel: primaryLabel || "Aceptar" });
     setAlertVisible(true);
   };
 
@@ -251,8 +253,21 @@ const Shop = () => {
     return `$${Number(price).toLocaleString("es-CO")}`;
   };
 
-  const addToCart = async (product) => {
+  const addToCart = async (product, confirmed = false) => {
     try {
+      if (!confirmed) {
+        const { establishmentId: biz, establishmentName: name } = await getCartBusiness();
+        if (biz && String(biz) !== String(establishmentId)) {
+          showAlert(
+            "Carrito de otro negocio",
+            `Tu carrito es de ${name || "otro negocio"}. ¿Vaciarlo y agregar este producto?`,
+            "confirm",
+            async () => { await clearCart(); addToCart(product, true); },
+            "Sí, vaciar"
+          );
+          return;
+        }
+      }
       const quantity = 1;
       const precioOriginal = Number(product.precio) || 0;
       const descuento = product.activo_descuento ? Number(product.descuento) || 0 : 0;
@@ -328,6 +343,9 @@ const Shop = () => {
               <Text style={styles.discountBadgeText}>-{pctDescuento}%</Text>
             </View>
           )}
+          <View style={styles.heartPos}>
+            <FavoriteHeart productId={product.id} size={16} />
+          </View>
         </View>
         <View style={styles.productBody}>
           <Text style={styles.productPrice}>{formatPrice(precioFinal)}</Text>
@@ -365,6 +383,9 @@ const Shop = () => {
               <Text style={styles.discountBadgeText}>-{pctDescuento}%</Text>
             </View>
           )}
+          <View style={styles.heartPos}>
+            <FavoriteHeart kind="servicio" productId={servicio.id} size={16} />
+          </View>
         </View>
         <View style={styles.productBody}>
           <Text style={styles.productPrice}>{formatPrice(precioFinal)}</Text>
@@ -582,10 +603,9 @@ const Shop = () => {
         visible={alertVisible}
         tipo={alertData.type}
         mensaje={alertData.message}
-        onCerrar={() => {
-          setAlertVisible(false);
-          if (alertData.onConfirm) alertData.onConfirm();
-        }}
+        onCerrar={() => setAlertVisible(false)}
+        onPrimary={alertData.onConfirm}
+        primaryLabel={alertData.primaryLabel}
       />
     </View>
   );
@@ -828,6 +848,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
     paddingVertical: 3,
     borderRadius: 8,
+  },
+  heartPos: {
+    position: "absolute",
+    top: 8,
+    right: 8,
+    zIndex: 2,
   },
   discountBadgeText: {
     fontSize: 11,

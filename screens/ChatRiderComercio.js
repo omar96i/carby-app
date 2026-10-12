@@ -1,20 +1,22 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import {
   View,
   Text,
-  TextInput,
   TouchableOpacity,
   FlatList,
   StyleSheet,
   SafeAreaView,
   KeyboardAvoidingView,
   Keyboard,
+  Dimensions,
+  useWindowDimensions,
   Platform,
   ActivityIndicator,
   Image
 } from 'react-native';
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useFonts, Montserrat_400Regular, Montserrat_700Bold, Montserrat_600SemiBold } from '@expo-google-fonts/montserrat';
-import { FontAwesome } from '@expo/vector-icons';
+import { FontAwesome, Feather } from '@expo/vector-icons';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Constants from 'expo-constants';
@@ -23,7 +25,18 @@ import { BASE_URL } from "../constants/url";
 import { useNotification } from "../context/NotificationContext";
 import AlertaModal from "../components/ErrorModal";
 import FullscreenImageViewer from "../components/usuario/pedidos/FullscreenImageViewer";
-import { chatLog } from "../utils/chatDebug";
+import ChatInput from "../components/ChatInput";
+
+const dayLabel = (iso) => {
+  if (!iso) return "";
+  const d = new Date(iso);
+  const now = new Date();
+  if (d.toDateString() === now.toDateString()) return "Hoy";
+  const yesterday = new Date(now);
+  yesterday.setDate(now.getDate() - 1);
+  if (d.toDateString() === yesterday.toDateString()) return "Ayer";
+  return d.toLocaleDateString("es-CO", { day: "2-digit", month: "short" });
+};
 
 export default function ChatRiderComercio({
   route,
@@ -33,6 +46,9 @@ export default function ChatRiderComercio({
   comercioNombre: propComercioNombre,
   riderId: propRiderId,
   tipo: propTipo,
+  peerName: propPeerName,
+  peerAvatar: propPeerAvatar,
+  showHeader = false,
   onClose,
   modalMode = false,
 }) {
@@ -45,6 +61,13 @@ export default function ChatRiderComercio({
   const comercioNombre = propComercioNombre ?? routeParams.comercioNombre;
   const riderId = propRiderId ?? routeParams.riderId;
   const tipo = propTipo ?? routeParams.tipo;
+  const peerName = propPeerName ?? comercioNombre;
+  const peerAvatar = propPeerAvatar ?? null;
+
+  const peerInitials = useMemo(() => {
+    const parts = String(peerName || "?").trim().split(/\s+/);
+    return ((parts[0]?.[0] || "?") + (parts[1]?.[0] || "")).toUpperCase();
+  }, [peerName]);
 
   console.log("🚀 ChatRiderComercio iniciado con params:", { routeParams, propPedidoId, propCarreraId, propComercioId, propComercioNombre, propRiderId, propTipo });
   console.log("📋 Parámetros extraídos:", { pedidoId, carreraId, comercioId, comercioNombre, riderId, tipo });
@@ -79,12 +102,26 @@ export default function ChatRiderComercio({
   const [fullscreenImage, setFullscreenImage] = useState(null);
   const [alertVisible, setAlertVisible] = useState(false);
   const [alertData, setAlertData] = useState({ message: "", type: "info", onPrimary: null, primaryLabel: "" });
+  const [chatImage, setChatImage] = useState(null);
 
   const showAlert = (message, type = "info", onPrimary = null, primaryLabel = null) => {
     setAlertData({ message, type, onPrimary, primaryLabel });
     setAlertVisible(true);
   };
   const flatListRef = useRef(null);
+  const insets = useSafeAreaInsets();
+  const windowHeight = useWindowDimensions().height;
+  const [keyboardHeight, setKeyboardHeight] = useState(0);
+
+  useEffect(() => {
+    const show = Keyboard.addListener("keyboardDidShow", (e) => setKeyboardHeight(e.endCoordinates?.height || 0));
+    const hide = Keyboard.addListener("keyboardDidHide", () => setKeyboardHeight(0));
+    return () => { show.remove(); hide.remove(); };
+  }, []);
+
+  // Offset manual solo en Android sin resize (Expo Go). En iOS lo maneja el KAV interno.
+  const windowShrunk = Dimensions.get("screen").height - windowHeight > 50;
+  const manualOffset = Platform.OS === "android" && !windowShrunk ? keyboardHeight : 0;
 
   const { notification } = useNotification();
 
@@ -103,17 +140,6 @@ export default function ChatRiderComercio({
   });
 
   // Efecto para cargar la información inicial y configurar el intervalo de actualización
-  const inputRef = useRef(null);
-  useEffect(() => {
-    chatLog("ChatRiderComercio", "mount", { pedidoId, carreraId });
-  }, []);
-  useEffect(() => {
-    const sub = Keyboard.addListener("keyboardDidHide", () => {
-      chatLog("ChatRiderComercio", "keyboardHide-blur");
-      inputRef.current?.blur();
-    });
-    return () => sub.remove();
-  }, []);
   useFocusEffect(
     useCallback(() => {
       // Obtener el ID del usuario actual
@@ -232,9 +258,10 @@ export default function ChatRiderComercio({
     }
   }, [pedidoId]);
 
-  // Función para enviar un mensaje
-  const enviarMensaje = async () => {
-    if (!mensaje.trim()) return;
+  // Función para enviar un mensaje (acepta texto directo para quick replies)
+  const enviarMensaje = async (textOverride) => {
+    const texto = textOverride || mensaje;
+    if (!texto.trim()) return;
 
     // El backend solo exige pedido_id, carrera_id y (conductor_id o negocio_id).
     // Cuando el conductor escribe al comercio no hace falta comercioId.
@@ -273,7 +300,7 @@ export default function ChatRiderComercio({
       // Crear el mensaje como objeto y luego convertirlo a string JSON
       const messageObject = {
         type: "text",
-        content: mensaje.trim(),
+        content: texto.trim(),
       };
 
       // Usar el mismo formato que funciona en PedidoDetalle.js
@@ -307,7 +334,7 @@ export default function ChatRiderComercio({
         id: Date.now(),
         remitente_id: userInfo?.id,
         destinatario_id: comercioId, // El comercio es el destinatario
-        mensaje: mensaje.trim(),
+        mensaje: texto.trim(),
         remitente: userInfo,
         estado: 'enviando',
         timestamp: new Date().toISOString(),
@@ -401,7 +428,11 @@ export default function ChatRiderComercio({
   };
 
   // Respuestas rápidas para el rider hablando con el comercio
-  const quickReplies = ['Ya llegué al comercio', '¿Pedido listo?', 'Voy en camino'];
+  const quickReplies = [
+    { text: 'Ya llegué al comercio', icon: 'check' },
+    { text: '¿Pedido listo?', icon: 'question-circle' },
+    { text: 'Voy en camino', icon: 'location-arrow' },
+  ];
 
   const handlePickImageAndSend = async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -414,9 +445,19 @@ export default function ChatRiderComercio({
       allowsEditing: true,
       quality: 0.7,
     });
-    if (!result.canceled && !result.cancelled) {
-      const image = result.assets ? result.assets[0] : result;
-      enviarImagen(image);
+    if (result.canceled || result.cancelled) return;
+    const image = result.assets?.[0];
+    if (!image?.uri) return;
+    setChatImage(image.uri);
+  };
+
+  const handleSend = () => {
+    if (chatImage) {
+      const uri = chatImage;
+      setChatImage(null);
+      enviarImagen({ uri });
+    } else {
+      enviarMensaje();
     }
   };
 
@@ -501,7 +542,7 @@ export default function ChatRiderComercio({
     }
   };
 
-  const extraerContenido = (item) => {
+  const extraerContenido = useCallback((item) => {
     let contenido = item.mensaje;
     if (item.message && typeof item.message === 'string') {
       try {
@@ -518,9 +559,9 @@ export default function ChatRiderComercio({
       }
     }
     return contenido;
-  };
+  }, []);
 
-  const extraerImagen = (item) => {
+  const extraerImagen = useCallback((item) => {
     if (item.image) return item.image;
     if (item.message && typeof item.message === 'string') {
       try {
@@ -539,53 +580,112 @@ export default function ChatRiderComercio({
       }
     }
     return null;
-  };
+  }, []);
 
-  // Renderizar un mensaje individual
-  const renderMensaje = ({ item }) => {
+  // Renderizar un mensaje individual (memoizado: no se recrea al escribir)
+  const renderMensaje = useCallback(({ item }) => {
+    if (item.type === "divider") {
+      return (
+        <View style={styles.dayRow}>
+          <Text style={styles.dayLabel}>{item.label}</Text>
+        </View>
+      );
+    }
     const esDelRider = item.remitente_id === currentUserId || item.conductor_id === currentUserId;
     const contenido = extraerContenido(item);
     const imageUri = extraerImagen(item);
 
-    console.log('🔍 Analizando mensaje:', {
-      messageId: item.id,
-      remitente_id: item.remitente_id,
-      conductor_id: item.conductor_id,
-      currentUserId: currentUserId,
-      esDelRider,
-      contenido,
-      imageUri,
-    });
-
-    return (
-      <View style={[styles.messageWrapper, esDelRider ? styles.myMessageWrapper : styles.otherMessageWrapper]}>
-        <View style={[styles.bubble, esDelRider ? styles.myBubble : styles.otherBubble]}>
-          {imageUri ? (
-            <TouchableOpacity onPress={() => setFullscreenImage(imageUri)} activeOpacity={0.85}>
-              <Image source={{ uri: imageUri }} style={styles.messageImage} />
-            </TouchableOpacity>
-          ) : (
-            <Text style={[styles.messageText, esDelRider ? styles.myMessageText : styles.otherMessageText]}>
-              {typeof contenido === 'string' ? contenido : ''}
-            </Text>
-          )}
-          <View style={styles.metaRow}>
-            <Text style={[styles.time, esDelRider ? styles.myTime : styles.otherTime]}>
-              {new Date(item.timestamp || item.created_at || Date.now()).toLocaleTimeString('es-ES', {
-                hour: '2-digit',
-                minute: '2-digit',
-              })}
-            </Text>
-            {item.estado === 'enviando' && <Text style={styles.statusSending}>enviando</Text>}
-            {item.estado === 'error' && <Text style={styles.statusError}>error</Text>}
-            {esDelRider && item.estado !== 'enviando' && item.estado !== 'error' && (
-              <FontAwesome name="check" size={10} color="rgba(255,255,255,0.7)" />
+    if (esDelRider) {
+      return (
+        <View style={[styles.messageWrapper, styles.myMessageWrapper]}>
+          <View style={[styles.bubble, styles.myBubble]}>
+            {imageUri ? (
+              <TouchableOpacity onPress={() => setFullscreenImage(imageUri)} activeOpacity={0.85}>
+                <Image source={{ uri: imageUri }} style={styles.messageImage} />
+              </TouchableOpacity>
+            ) : (
+              <Text style={[styles.messageText, styles.myMessageText]}>
+                {typeof contenido === 'string' ? contenido : ''}
+              </Text>
             )}
+            <View style={[styles.metaRow, styles.myMeta]}>
+              <Text style={[styles.time, styles.myTime]}>
+                {new Date(item.timestamp || item.created_at || Date.now()).toLocaleTimeString('es-ES', {
+                  hour: '2-digit',
+                  minute: '2-digit',
+                })}
+              </Text>
+              {item.estado === 'enviando' && <Text style={styles.statusSending}>enviando</Text>}
+              {item.estado === 'error' && <Text style={styles.statusError}>error</Text>}
+              {item.estado !== 'enviando' && item.estado !== 'error' && (
+                <FontAwesome name="check" size={10} color="rgba(255,255,255,0.7)" />
+              )}
+            </View>
+          </View>
+        </View>
+      );
+    }
+    return (
+      <View style={[styles.messageWrapper, styles.otherMessageWrapper]}>
+        {!!peerName && (
+          <View style={styles.otherAvatar}>
+            <Text style={styles.otherAvatarText}>{peerInitials}</Text>
+          </View>
+        )}
+        <View style={styles.otherCol}>
+          {!!peerName && (
+            <Text style={styles.otherName} numberOfLines={1}>{peerName}</Text>
+          )}
+          <View style={[styles.bubble, styles.otherBubble]}>
+            {imageUri ? (
+              <TouchableOpacity onPress={() => setFullscreenImage(imageUri)} activeOpacity={0.85}>
+                <Image source={{ uri: imageUri }} style={styles.messageImage} />
+              </TouchableOpacity>
+            ) : (
+              <Text style={[styles.messageText, styles.otherMessageText]}>
+                {typeof contenido === 'string' ? contenido : ''}
+              </Text>
+            )}
+            <View style={[styles.metaRow, styles.otherMeta]}>
+              <Text style={[styles.time, styles.otherTime]}>
+                {new Date(item.timestamp || item.created_at || Date.now()).toLocaleTimeString('es-ES', {
+                  hour: '2-digit',
+                  minute: '2-digit',
+                })}
+              </Text>
+              {item.estado === 'enviando' && <Text style={styles.statusSending}>enviando</Text>}
+              {item.estado === 'error' && <Text style={styles.statusError}>error</Text>}
+            </View>
           </View>
         </View>
       </View>
     );
-  };
+  }, [currentUserId, extraerContenido, extraerImagen, peerName, peerInitials]);
+
+  const feed = useMemo(() => {
+    const out = [];
+    let lastDay = "";
+    mensajes.forEach((m) => {
+      const iso = m.timestamp || m.created_at;
+      const dk = iso ? new Date(iso).toDateString() : "";
+      if (dk && dk !== lastDay) {
+        lastDay = dk;
+        out.push({ type: "divider", id: `div-${dk}`, label: dayLabel(iso) });
+      }
+      out.push(m);
+    });
+    return out;
+  }, [mensajes]);
+
+  const invertedFeed = useMemo(() => [...feed].reverse(), [feed]);
+
+  // Auto-scroll al último mensaje (lista invertida: offset 0 = abajo)
+  useEffect(() => {
+    if (invertedFeed.length && flatListRef.current) {
+      const t = setTimeout(() => flatListRef.current?.scrollToOffset({ offset: 0, animated: false }), 100);
+      return () => clearTimeout(t);
+    }
+  }, [invertedFeed.length]);
 
   // Si las fuentes no están cargadas, mostrar un loader
   if (!fontsLoaded) {
@@ -618,13 +718,47 @@ export default function ChatRiderComercio({
         </View>
       )}
 
+      {showHeader && (
+        <View style={[styles.chatHeader, { paddingTop: Math.max(insets.top, 8) }]}>
+          <View style={styles.avatarWrap}>
+            {peerAvatar ? (
+              <Image source={{ uri: peerAvatar }} style={styles.avatarImage} />
+            ) : (
+              <View style={styles.avatarBox}>
+                <Text style={styles.avatarInitial}>{peerInitials}</Text>
+              </View>
+            )}
+            <View style={styles.onlineDot} />
+          </View>
+          <View style={styles.headerText}>
+            <View style={styles.nameRow}>
+              <Text style={styles.headerTitleLight} numberOfLines={1}>{peerName || "Comercio"}</Text>
+              {!!peerName && <FontAwesome name="check-circle" size={12} color="#FF5500" />}
+            </View>
+            <View style={styles.subRow}>
+              <Text style={styles.headerSubLight} numberOfLines={1}>Chat del pedido</Text>
+              {!!pedidoId && (
+                <View style={styles.orderBadge}>
+                  <Text style={styles.orderBadgeText}>#{pedidoId}</Text>
+                </View>
+              )}
+            </View>
+          </View>
+          {!!onClose && (
+            <TouchableOpacity style={styles.closeBtn} onPress={onClose} activeOpacity={0.8}>
+              <Feather name="x" size={20} color="#0F172A" />
+            </TouchableOpacity>
+          )}
+        </View>
+      )}
+
       {/* Contenido del chat */}
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         style={styles.chatContainer}
         keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
       >
-        <View style={{ flex: 1 }}>
+        <View style={[styles.contentFlex, showHeader && { paddingBottom: insets.bottom + manualOffset }]}>
           {cargando && mensajes.length === 0 ? (
             <View style={styles.loaderContainer}>
               <ActivityIndicator size="large" color="#FF5500" />
@@ -645,11 +779,15 @@ export default function ChatRiderComercio({
               <FlatList
                 ref={flatListRef}
                 inverted
-                data={[...mensajes].reverse()}
+                data={invertedFeed}
                 renderItem={renderMensaje}
                 keyExtractor={(item) => item.id?.toString() || Math.random().toString()}
                 contentContainerStyle={styles.mensajesList}
                 keyboardShouldPersistTaps="handled"
+                initialNumToRender={20}
+                maxToRenderPerBatch={20}
+                windowSize={11}
+                maintainVisibleContentPosition={{ minIndexForVisible: 0 }}
                 ListEmptyComponent={
                   <View style={styles.emptyContainer}>
                     <FontAwesome name="comments-o" size={50} color="#ccc" />
@@ -663,50 +801,31 @@ export default function ChatRiderComercio({
 
           <View style={styles.quickReplies}>
             {quickReplies.map((q) => (
-              <TouchableOpacity key={q} style={styles.quickReply} onPress={() => setMensaje(q)} activeOpacity={0.8}>
-                <Text style={styles.quickReplyText}>{q}</Text>
+              <TouchableOpacity key={q.text} style={styles.quickReply} onPress={() => enviarMensaje(q.text)} activeOpacity={0.8}>
+                <FontAwesome name={q.icon} size={12} color="#FF5500" />
+                <Text style={styles.quickReplyText}>{q.text}</Text>
               </TouchableOpacity>
             ))}
           </View>
 
           {/* Input para escribir mensajes */}
-          <View style={styles.inputContainer}>
-            <TouchableOpacity style={styles.iconBtn} onPress={handlePickImageAndSend} activeOpacity={0.8}>
-              <FontAwesome name="camera" size={20} color="#64748B" />
-            </TouchableOpacity>
-            <TextInput
-              ref={inputRef}
-              style={styles.input}
-              placeholder="Escribe un mensaje..."
-              placeholderTextColor="#999"
-              value={mensaje}
-              onChangeText={(t) => {
-                chatLog("ChatRiderComercio", "change", { len: t.length });
-                setMensaje(t);
-              }}
-              onFocus={() => chatLog("ChatRiderComercio", "focus", { len: mensaje.length })}
-              onBlur={() => chatLog("ChatRiderComercio", "blur", { len: mensaje.length })}
-              onSelectionChange={(e) => chatLog("ChatRiderComercio", "selection", e.nativeEvent.selection)}
-              onPressIn={() => chatLog("ChatRiderComercio", "pressIn")}
-              onTouchStart={() => chatLog("ChatRiderComercio", "touchStart")}
-              multiline
-              maxLength={500}
-            />
-            <TouchableOpacity
-              style={[
-                styles.sendButton,
-                (!mensaje.trim() || enviando) && styles.sendButtonDisabled
-              ]}
-              onPress={enviarMensaje}
-              disabled={!mensaje.trim() || enviando}
-            >
-              {enviando ? (
-                <ActivityIndicator size="small" color="#FFF" />
-              ) : (
-                <FontAwesome name="send" size={20} color="#FFF" />
-              )}
-            </TouchableOpacity>
-          </View>
+          <ChatInput
+            tag="ChatRiderComercio"
+            value={mensaje}
+            onChangeText={setMensaje}
+            onSend={handleSend}
+            sending={enviando}
+            onPickImage={handlePickImageAndSend}
+            extraSendEnabled={!!chatImage}
+            preview={chatImage && (
+              <View style={styles.imagePreview}>
+                <Image source={{ uri: chatImage }} style={styles.imagePreviewThumb} />
+                <TouchableOpacity onPress={() => setChatImage(null)} style={styles.removeImageBtn}>
+                  <FontAwesome name="close" size={14} color="#64748B" />
+                </TouchableOpacity>
+              </View>
+            )}
+          />
         </View>
       </KeyboardAvoidingView>
       <AlertaModal
@@ -725,7 +844,21 @@ export default function ChatRiderComercio({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f8f8f8',
+    backgroundColor: '#F8FAFC',
+  },
+  dayRow: {
+    alignItems: "center",
+    marginVertical: 8,
+  },
+  dayLabel: {
+    fontSize: 11,
+    fontFamily: 'Montserrat_400Regular',
+    color: "#94A3B8",
+    backgroundColor: "#E2E8F0",
+    paddingHorizontal: 12,
+    paddingVertical: 3,
+    borderRadius: 10,
+    overflow: "hidden",
   },
   loaderContainer: {
     flex: 1,
@@ -769,6 +902,107 @@ const styles = StyleSheet.create({
   chatContainer: {
     flex: 1,
   },
+  contentFlex: {
+    flex: 1,
+  },
+  chatHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: "#F1F5F9",
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    backgroundColor: "#FFFFFF",
+    shadowColor: "#0F172A",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 3,
+    zIndex: 10,
+  },
+  avatarWrap: {
+    position: "relative",
+  },
+  avatarBox: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: "#FFF7ED",
+    borderWidth: 1,
+    borderColor: "#FDBA74",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  avatarInitial: {
+    fontSize: 15,
+    fontFamily: 'Montserrat_700Bold',
+    color: "#FF5500",
+  },
+  avatarImage: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: "#F1F5F9",
+  },
+  onlineDot: {
+    position: "absolute",
+    bottom: 0,
+    right: 0,
+    width: 14,
+    height: 14,
+    borderRadius: 7,
+    backgroundColor: "#10B981",
+    borderWidth: 2,
+    borderColor: "#FFFFFF",
+  },
+  headerText: {
+    flex: 1,
+  },
+  nameRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+  },
+  headerTitleLight: {
+    fontSize: 15,
+    fontFamily: 'Montserrat_700Bold',
+    color: "#0F172A",
+  },
+  subRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    marginTop: 2,
+  },
+  headerSubLight: {
+    fontSize: 12,
+    fontFamily: 'Montserrat_400Regular',
+    color: "#64748B",
+  },
+  orderBadge: {
+    backgroundColor: "#FFF7ED",
+    borderWidth: 1,
+    borderColor: "#FDBA74",
+    borderRadius: 8,
+    paddingHorizontal: 6,
+    paddingVertical: 1,
+  },
+  orderBadgeText: {
+    fontSize: 10,
+    fontFamily: 'Montserrat_700Bold',
+    color: "#FF5500",
+  },
+  closeBtn: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    backgroundColor: "#F1F5F9",
+    borderWidth: 1,
+    borderColor: "#E2E8F0",
+    justifyContent: "center",
+    alignItems: "center",
+  },
   chatListWrap: {
     flex: 1,
   },
@@ -791,6 +1025,34 @@ const styles = StyleSheet.create({
   },
   otherMessageWrapper: {
     alignSelf: 'flex-start',
+    flexDirection: "row",
+    alignItems: "flex-end",
+    gap: 8,
+    maxWidth: "88%",
+  },
+  otherAvatar: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: "#E2E8F0",
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: 2,
+  },
+  otherAvatarText: {
+    fontSize: 10,
+    fontFamily: 'Montserrat_700Bold',
+    color: "#64748B",
+  },
+  otherCol: {
+    flex: 1,
+  },
+  otherName: {
+    fontSize: 10,
+    fontFamily: 'Montserrat_400Regular',
+    color: "#94A3B8",
+    marginLeft: 4,
+    marginBottom: 2,
   },
   bubble: {
     borderRadius: 18,
@@ -799,11 +1061,23 @@ const styles = StyleSheet.create({
   },
   myBubble: {
     backgroundColor: '#FF5500',
-    borderBottomRightRadius: 6,
+    borderTopRightRadius: 6,
+    shadowColor: "#FF5500",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.35,
+    shadowRadius: 10,
+    elevation: 6,
   },
   otherBubble: {
-    backgroundColor: '#F1F5F9',
-    borderBottomLeftRadius: 6,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: "#E2E8F0",
+    borderTopLeftRadius: 6,
+    shadowColor: "#0F172A",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 6,
+    elevation: 2,
   },
   messageText: {
     fontSize: 14,
@@ -819,9 +1093,14 @@ const styles = StyleSheet.create({
   metaRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'flex-end',
     gap: 4,
     marginTop: 4,
+  },
+  myMeta: {
+    justifyContent: "flex-end",
+  },
+  otherMeta: {
+    justifyContent: "flex-start",
   },
   time: {
     fontSize: 10,
@@ -843,40 +1122,6 @@ const styles = StyleSheet.create({
     color: '#FF4757',
     fontFamily: 'Montserrat_400Regular',
   },
-  inputContainer: {
-    flexDirection: 'row',
-    alignItems: 'flex-end',
-    gap: 8,
-    borderTopWidth: 1,
-    borderTopColor: '#E2E8F0',
-    backgroundColor: '#FFFFFF',
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    paddingBottom: Platform.OS === 'ios' ? 24 : 16,
-  },
-  input: {
-    flex: 1,
-    minHeight: 42,
-    maxHeight: 110,
-    borderRadius: 22,
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
-    backgroundColor: '#F8FAFC',
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    fontSize: 14,
-    fontFamily: 'Montserrat_400Regular',
-    color: '#0F172A',
-  },
-  sendButton: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: '#FF5500',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: Platform.OS === 'ios' ? 0 : -2,
-  },
   iconBtn: {
     width: 44,
     height: 44,
@@ -886,31 +1131,50 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: Platform.OS === 'ios' ? 0 : -2,
   },
-  sendButtonDisabled: {
-    backgroundColor: '#ccc',
+  imagePreview: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  imagePreviewThumb: {
+    width: 44,
+    height: 44,
+    borderRadius: 8,
+  },
+  removeImageBtn: {
+    marginLeft: 8,
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    backgroundColor: '#F1F5F9',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   quickReplies: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 8,
     paddingHorizontal: 12,
-    paddingVertical: 8,
+    paddingVertical: 6,
     alignItems: 'center',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#F8FAFC',
   },
   quickReply: {
-    borderRadius: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    borderRadius: 999,
     borderWidth: 1,
     borderColor: '#E2E8F0',
-    backgroundColor: '#F8FAFC',
-    paddingHorizontal: 10,
-    paddingVertical: 4,
+    backgroundColor: '#FFFFFF',
+    paddingHorizontal: 14,
+    paddingVertical: 10,
     justifyContent: 'center',
   },
   quickReplyText: {
-    fontSize: 11,
+    fontSize: 12,
     fontFamily: 'Montserrat_400Regular',
-    color: '#0F172A',
+    color: '#334155',
   },
   emptyContainer: {
     flex: 1,

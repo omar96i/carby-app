@@ -15,8 +15,9 @@ import * as ImagePicker from "expo-image-picker";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { manipulateAsync, SaveFormat } from "expo-image-manipulator";
 import { BASE_URL } from "../../../constants/url";
-import { COLORS } from "./helpers";
+import { COLORS, formatCOP } from "./helpers";
 import FullscreenImageViewer from "./FullscreenImageViewer";
+import AlertaModal from "../../ErrorModal";
 
 async function pickAndCompress() {
   const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -49,12 +50,42 @@ export default function ReservaQrEvidencia({ reserva, onUploaded, variant = "use
   const [modal, setModal] = useState(false);
   const [file, setFile] = useState(null);
   const [uploading, setUploading] = useState(false);
+  const [requesting, setRequesting] = useState(false);
   const [viewerUri, setViewerUri] = useState(null);
+  const [alerta, setAlerta] = useState({ visible: false, mensaje: "", tipo: "info" });
+
+  const showAlerta = (mensaje, tipo = "info") => setAlerta({ visible: true, mensaje, tipo });
 
   const evidencia = evidenciaUrl(reserva?.archivo_evidencia);
   const isQr = String(reserva?.metodo_pago || "").toLowerCase() === "qr";
   if (!isQr) return null;
   if (["cancelado"].includes(reserva?.estado)) return null;
+
+  const solicitarPago = async () => {
+    const perfilId = reserva?.user_perfil_id;
+    if (!perfilId) {
+      showAlerta("No se encontró el perfil de esta reserva.", "error");
+      return;
+    }
+    setRequesting(true);
+    try {
+      const token = await AsyncStorage.getItem("userToken");
+      if (!token) throw new Error("No se encontró token de autenticación");
+      const messageObject = { type: "text", content: `Hola, te solicito el pago de ${formatCOP(reserva?.costo_total)} por QR. Puedes subir el comprobante desde tu reserva. ¡Gracias!` };
+      const formattedMessage = `"${JSON.stringify(messageObject).replace(/"/g, '\\"')}"`;
+      const res = await fetch(`${BASE_URL}reserva-chat/send`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ reserva_id: parseInt(reserva.id), user_perfil_id: parseInt(perfilId), message: formattedMessage }),
+      });
+      if (!res.ok) throw new Error(`Error ${res.status}`);
+      showAlerta("Solicitud de pago enviada al cliente por el chat.", "success");
+    } catch (e) {
+      showAlerta(e.message || "Revisa tu conexión e inténtalo de nuevo.", "error");
+    } finally {
+      setRequesting(false);
+    }
+  };
 
   const upload = async () => {
     if (!file) {
@@ -100,6 +131,13 @@ export default function ReservaQrEvidencia({ reserva, onUploaded, variant = "use
             </Text>
           </View>
           <Ionicons name="expand-outline" size={16} color={COLORS.muted} />
+        </TouchableOpacity>
+      ) : variant === "comercio" ? (
+        <TouchableOpacity style={s.btn} onPress={solicitarPago} disabled={requesting} activeOpacity={0.8}>
+          {requesting
+            ? <ActivityIndicator size="small" color={COLORS.brand} />
+            : <Ionicons name="chatbubble-ellipses-outline" size={16} color={COLORS.brand} />}
+          <Text style={s.btnText}>{requesting ? "Enviando..." : "Solicitar pago QR"}</Text>
         </TouchableOpacity>
       ) : (
         <TouchableOpacity style={s.btn} onPress={() => setModal(true)} activeOpacity={0.8}>
@@ -149,6 +187,12 @@ export default function ReservaQrEvidencia({ reserva, onUploaded, variant = "use
       </Modal>
 
       <FullscreenImageViewer uri={viewerUri} onClose={() => setViewerUri(null)} />
+      <AlertaModal
+        visible={alerta.visible}
+        mensaje={alerta.mensaje}
+        tipo={alerta.tipo}
+        onCerrar={() => setAlerta((a) => ({ ...a, visible: false }))}
+      />
     </>
   );
 }

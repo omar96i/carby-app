@@ -6,13 +6,10 @@ import {
   ActivityIndicator,
   RefreshControl,
   StyleSheet,
-  Modal,
   TouchableOpacity,
   Text,
-  Image,
 } from "react-native";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
-import { Ionicons } from "@expo/vector-icons";
 import { useNavigation, useFocusEffect } from "@react-navigation/native";
 import { useFonts, Montserrat_400Regular, Montserrat_700Bold, Montserrat_300Light, Montserrat_600SemiBold, Montserrat_800ExtraBold } from "@expo-google-fonts/montserrat";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -28,7 +25,6 @@ import ReservaCard from "../../components/usuario/pedidos/ReservaCard";
 import EmptyState from "../../components/usuario/pedidos/EmptyState";
 import DetailSheet from "../../components/usuario/pedidos/DetailSheet";
 import CalificationModal from "../../components/usuario/pedidos/CalificationModal";
-import ChatReserva from "./ChatReserva";
 import { COLORS } from "../../components/usuario/pedidos/helpers";
 
 import usePedidos from "../../hooks/usuario/usePedidos";
@@ -59,8 +55,8 @@ export default function Pedidos({ route }) {
   const calif = useCalificacion();
 
   const [activeTab, setActiveTab] = useState("activas");
+  const [historialTipo, setHistorialTipo] = useState("carreras");
   const [selectedItem, setSelectedItem] = useState(null);
-  const [chatReserva, setChatReserva] = useState(null);
   const [alertVisible, setAlertVisible] = useState(false);
   const [alertData, setAlertData] = useState({ message: "", type: "info", onPrimary: null, primaryLabel: "" });
   const hasFetchedReservasRef = useRef(false);
@@ -179,18 +175,29 @@ export default function Pedidos({ route }) {
     );
   }, [cancelReserva]);
 
-  // ── Chat reserva (modal 70%) ──
+  // ── Chat reserva (vista independiente) ──
   const handleChatReserva = useCallback((item) => {
     if (!item) return;
-    setChatReserva({
+    const foto = getReservaImageUrl(item.servicio_imagen || item.user_perfil?.file || item.user_perfil?.user?.foto_documento_file);
+    const title = item.servicio_nombre || item.user_perfil?.nombre || "Perfil";
+    navigation.navigate("ChatReservaView", {
       reservaId: item.id,
-      perfilNombre: item.servicio_nombre || item.user_perfil?.nombre || "Perfil",
-      perfilFoto: getReservaImageUrl(item.servicio_imagen || item.user_perfil?.file || item.user_perfil?.user?.foto_documento_file),
+      chatTitle: title,
+      chatAvatar: foto,
+      peerName: title,
+      peerAvatar: foto,
     });
-  }, []);
+  }, [navigation]);
 
   // ── Data dispatch ──
-  const listData = activeTab === "reservas" ? filteredReservas : filteredPedidos;
+  const listData = activeTab === "reservas"
+    ? filteredReservas
+    : activeTab === "historial"
+      ? filteredPedidos.filter((i) => historialTipo === "carreras" ? i.es_carrera : !i.es_carrera)
+      : filteredPedidos;
+
+  const countHistCarreras = activeTab === "historial" ? filteredPedidos.filter((i) => i.es_carrera).length : 0;
+  const countHistPedidos = activeTab === "historial" ? filteredPedidos.length - countHistCarreras : 0;
 
   const reservaSections = [
     { title: "Pendientes", data: reservas.filter((r) => r.estado === "pendiente") },
@@ -246,6 +253,31 @@ export default function Pedidos({ route }) {
       <View style={s.root}>
         <PedidosHeader />
         <PedidosTabs activeTab={activeTab} onTabChange={setActiveTab} counts={counts} />
+
+        {activeTab === "historial" && (
+          <View style={s.histSubWrap}>
+            <View style={s.histSubBar}>
+              {[
+                { key: "carreras", label: "Carreras", count: countHistCarreras },
+                { key: "pedidos", label: "Pedidos", count: countHistPedidos },
+              ].map((t) => {
+                const isActive = historialTipo === t.key;
+                return (
+                  <TouchableOpacity
+                    key={t.key}
+                    style={[s.histSubTab, isActive && s.histSubTabActive]}
+                    onPress={() => setHistorialTipo(t.key)}
+                    activeOpacity={0.7}
+                  >
+                    <Text style={[s.histSubLabel, isActive ? s.histSubLabelActive : s.histSubLabelInactive]}>
+                      {t.label} ({t.count})
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+          </View>
+        )}
 
         {(isLoading || isLoadingReservas) ? (
           <View style={s.loadingContainer}>
@@ -309,56 +341,6 @@ export default function Pedidos({ route }) {
 
       <DetailSheet item={selectedItem} onClose={() => setSelectedItem(null)} onNavigate={navigateToDetails} />
 
-      <Modal
-        visible={!!chatReserva}
-        animationType="slide"
-        transparent={true}
-        onRequestClose={() => setChatReserva(null)}
-      >
-        {chatReserva && (
-          <View style={s.chatOverlay}>
-            <TouchableOpacity
-              style={s.chatBackdrop}
-              activeOpacity={1}
-              onPress={() => setChatReserva(null)}
-            />
-            <View style={s.chatPanel}>
-              <View style={s.chatHeader}>
-                {chatReserva.perfilFoto ? (
-                  <Image source={{ uri: chatReserva.perfilFoto }} style={s.chatAvatarImg} />
-                ) : (
-                  <View style={s.chatAvatar}>
-                    <Ionicons name="person" size={20} color="#FFFFFF" />
-                  </View>
-                )}
-                <View style={s.chatHeaderText}>
-                  <Text style={s.chatTitle} numberOfLines={1}>
-                    {chatReserva.perfilNombre || "Perfil"}
-                  </Text>
-                  <Text style={s.chatSub}>Reserva #{chatReserva.reservaId}</Text>
-                </View>
-                <TouchableOpacity
-                  style={s.closeChatBtn}
-                  onPress={() => setChatReserva(null)}
-                  activeOpacity={0.7}
-                >
-                  <Ionicons name="close" size={20} color="#FFFFFF" />
-                </TouchableOpacity>
-              </View>
-              <View style={s.chatBody}>
-                <ChatReserva
-                  reservaId={chatReserva.reservaId}
-                  perfilNombre={chatReserva.perfilNombre}
-                  perfilFoto={chatReserva.perfilFoto}
-                  onClose={() => setChatReserva(null)}
-                  modalMode={true}
-                />
-              </View>
-            </View>
-          </View>
-        )}
-      </Modal>
-
       <CalificationModal
         visible={calif.modalVisible}
         item={calif.itemACalificar}
@@ -396,6 +378,42 @@ const s = StyleSheet.create({
     paddingBottom: 32,
     gap: 14,
   },
+  histSubWrap: {
+    paddingHorizontal: 16,
+    paddingBottom: 8,
+    backgroundColor: COLORS.bg,
+  },
+  histSubBar: {
+    flexDirection: "row",
+    backgroundColor: COLORS.zinc100,
+    borderRadius: 12,
+    padding: 3,
+  },
+  histSubTab: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: 8,
+    borderRadius: 9,
+  },
+  histSubTabActive: {
+    backgroundColor: COLORS.surface,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.06,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  histSubLabel: {
+    fontSize: 12,
+    fontFamily: "Montserrat_800ExtraBold",
+  },
+  histSubLabelActive: {
+    color: COLORS.ink,
+  },
+  histSubLabelInactive: {
+    color: COLORS.muted,
+  },
   sectionHeader: {
     fontSize: 13,
     fontFamily: "Montserrat_800ExtraBold",
@@ -410,15 +428,4 @@ const s = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
   },
-  chatOverlay: { flex: 1, justifyContent: "flex-end", backgroundColor: "rgba(15,23,42,0.35)" },
-  chatBackdrop: { ...StyleSheet.absoluteFillObject },
-  chatPanel: { height: "70%", backgroundColor: "#FFFFFF", borderTopLeftRadius: 28, borderTopRightRadius: 28, overflow: "hidden" },
-  chatHeader: { flexDirection: "row", alignItems: "center", gap: 12, backgroundColor: "#FF5500", paddingHorizontal: 16, paddingVertical: 14 },
-  chatAvatar: { width: 44, height: 44, borderRadius: 22, backgroundColor: "rgba(255,255,255,0.25)", justifyContent: "center", alignItems: "center" },
-  chatAvatarImg: { width: 44, height: 44, borderRadius: 22, backgroundColor: "rgba(255,255,255,0.25)" },
-  chatHeaderText: { flex: 1 },
-  chatTitle: { fontSize: 16, fontFamily: "Montserrat_700Bold", color: "#FFFFFF" },
-  chatSub: { fontSize: 11, fontFamily: "Montserrat_600SemiBold", color: "rgba(255,255,255,0.85)", marginTop: 2 },
-  closeChatBtn: { width: 36, height: 36, borderRadius: 18, backgroundColor: "rgba(255,255,255,0.25)", justifyContent: "center", alignItems: "center" },
-  chatBody: { flex: 1 },
 });

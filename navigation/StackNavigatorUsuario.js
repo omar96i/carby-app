@@ -1,5 +1,5 @@
 import React from 'react';
-import { createStackNavigator } from '@react-navigation/stack';
+import { createStackNavigator, CardStyleInterpolators } from '@react-navigation/stack';
 import HomeScreen from '../screens/HomeScreen';
 import HistoriasUser from '../screens/User/HistoriasUser';
 import StepOnce from '../screens/User/StepOnce';
@@ -10,7 +10,12 @@ import StepTres from '../screens/Delivery/StepTres';
 import StepCuatro from '../screens/Delivery/StepCuatro';
 import StepNueve from '../screens/Delivery/StepNueve';
 import DetalleCarrera from '../screens/usuario/DetalleCarrera';
+import ChatPedido from '../screens/usuario/ChatPedido';
+import ChatConductor from '../screens/usuario/ChatConductor';
+import ChatReservaView from '../screens/ChatReservaView';
 import DetalleCarreraConductor from '../screens/conductor/DetalleCarreraConductor';
+import ChatCliente from '../screens/conductor/ChatCliente';
+import ChatComercio from '../screens/conductor/ChatComercio';
 import StepDieciseis from '../screens/Billetera/StepDieciseis';
 import StepDiecisiete from '../screens/Billetera/StepDiecisiete';
 // In your navigation file (e.g., AppNavigator.js or similar)
@@ -28,6 +33,7 @@ import MetodosPago from '../screens/MetodosDePago';
 import ServiciosProducto from '../screens/Delivery/ServiciosProducto';
 import EditarServicio from '../screens/Delivery/EditarServicio';
 import ServicioDetalle from '../screens/Delivery/ServicioDetalle';
+import Favoritos from '../screens/Delivery/Favoritos';
 import PedidoDetalle from '../screens/usuario/PedidoDetalle';
 import BoleteriaScreen from '../screens/Boleteria/HomeScreen'
 import CajaMisterioScreen from '../screens/CajaMisterio/CajaMisterioScreen'
@@ -48,6 +54,22 @@ export default function StackNavigatorUsuario() {
       <Stack.Screen name="StepNueve" component={StepNueve} />
       <Stack.Screen name="DetalleCarrera" component={DetalleCarrera} />
       <Stack.Screen name="StepTrece" component={DetalleCarreraConductor} />
+      <Stack.Screen
+        name="ChatCliente"
+        component={ChatCliente}
+        options={{
+          cardStyleInterpolator: CardStyleInterpolators.forVerticalIOS,
+          gestureDirection: 'vertical',
+        }}
+      />
+      <Stack.Screen
+        name="ChatComercio"
+        component={ChatComercio}
+        options={{
+          cardStyleInterpolator: CardStyleInterpolators.forVerticalIOS,
+          gestureDirection: 'vertical',
+        }}
+      />
       <Stack.Screen name="StepDieciseis" component={StepDieciseis} />
       <Stack.Screen name="StepDiecisiete" component={StepDiecisiete} />
       <Stack.Screen name="Categorias" component={Categorias}/>
@@ -59,11 +81,36 @@ export default function StackNavigatorUsuario() {
       <Stack.Screen name="ShopDos" component={ShopDos} />
       <Stack.Screen name="ProductoDos" component={ProductoDos} />
       <Stack.Screen name="CategoriaVertical" component={CategoriaVertical} />
+      <Stack.Screen name="Favoritos" component={Favoritos} />
       <Stack.Screen name="MetodosPago" component={MetodosPago} />
       <Stack.Screen name="ServiciosProducto" component={ServiciosProducto} />
       <Stack.Screen name="EditarServicio" component={EditarServicio} />
       <Stack.Screen name="ServicioDetalle" component={ServicioDetalle} />
       <Stack.Screen name="PedidoDetalle" component={PedidoDetalle} />
+      <Stack.Screen
+        name="ChatPedido"
+        component={ChatPedido}
+        options={{
+          cardStyleInterpolator: CardStyleInterpolators.forVerticalIOS,
+          gestureDirection: 'vertical',
+        }}
+      />
+      <Stack.Screen
+        name="ChatConductor"
+        component={ChatConductor}
+        options={{
+          cardStyleInterpolator: CardStyleInterpolators.forVerticalIOS,
+          gestureDirection: 'vertical',
+        }}
+      />
+      <Stack.Screen
+        name="ChatReservaView"
+        component={ChatReservaView}
+        options={{
+          cardStyleInterpolator: CardStyleInterpolators.forVerticalIOS,
+          gestureDirection: 'vertical',
+        }}
+      />
       <Stack.Screen name="BoleteriaScreen" component={BoleteriaScreen} />
       <Stack.Screen name="CajaMisterioScreen" component={CajaMisterioScreen} />
     </Stack.Navigator>

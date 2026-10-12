@@ -1,5 +1,6 @@
 import React, { useState } from "react";
-import { View, Text, TouchableOpacity, TextInput, StyleSheet, ActivityIndicator } from "react-native";
+import { View, Text, TouchableOpacity, TextInput, StyleSheet, ActivityIndicator, ScrollView } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Feather, Ionicons } from "@expo/vector-icons";
 import { formatCurrency } from "../utils";
 
@@ -9,21 +10,27 @@ const Star = ({ filled, onPress }) => (
   </TouchableOpacity>
 );
 
-export const FinishedSheet = ({ tripData, driverName, onDone, loading, onTypingChange }) => {
+export const FinishedSheet = ({ tripData, driverName, onDone, loading }) => {
   const [rating, setRating] = useState(5);
   const [message, setMessage] = useState("");
+  const insets = useSafeAreaInsets();
+  const bottomPad = Math.max(insets.bottom, 12);
   const cost = tripData?.costo;
   const firstName = driverName ? driverName.split(" ")[0] : "conductor";
 
   const handleDone = () => {
-    onTypingChange?.(false);
     onDone({ rating, message });
   };
 
   return (
     <View style={styles.sheet}>
       <View style={styles.handle} />
-      <View style={styles.content}>
+      <ScrollView
+        style={styles.scroll}
+        contentContainerStyle={[styles.content, { paddingBottom: 30 + bottomPad }]}
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
+      >
         <View style={styles.iconCircle}>
           <Feather name="check" size={36} color="#10B981" />
         </View>
@@ -53,8 +60,6 @@ export const FinishedSheet = ({ tripData, driverName, onDone, loading, onTypingC
           multiline
           maxLength={1000}
           editable={!loading}
-          onFocus={() => onTypingChange?.(true)}
-          onBlur={() => onTypingChange?.(false)}
         />
 
         <TouchableOpacity
@@ -69,7 +74,7 @@ export const FinishedSheet = ({ tripData, driverName, onDone, loading, onTypingC
             <Text style={styles.doneText}>Listo</Text>
           )}
         </TouchableOpacity>
-      </View>
+      </ScrollView>
     </View>
   );
 };
@@ -80,6 +85,7 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
     right: 0,
+    maxHeight: "92%",
     backgroundColor: "rgba(255,255,255,0.98)",
     borderTopLeftRadius: 30,
     borderTopRightRadius: 30,
@@ -100,6 +106,9 @@ const styles = StyleSheet.create({
     alignSelf: "center",
     marginTop: 10,
     marginBottom: 6,
+  },
+  scroll: {
+    flexGrow: 1,
   },
   content: {
     paddingHorizontal: 20,

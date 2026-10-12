@@ -109,6 +109,24 @@ export default function useReservas() {
     return res.json();
   }
 
+  async function cancelarReserva(id) {
+    const token = await AsyncStorage.getItem("userToken");
+    if (!token) throw new Error("No se encontró token");
+    const url = `${BASE_URL}reservas/${id}`;
+    logger.request("POST", url, { estado: "cancelado" });
+    const res = await fetch(url, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+        Accept: "application/json",
+      },
+      body: JSON.stringify({ estado: "cancelado" }),
+    });
+    if (!res.ok) throw new Error("Error al cancelar reserva");
+    return res.json();
+  }
+
   return {
     reservas,
     isLoading,
@@ -119,5 +137,6 @@ export default function useReservas() {
     fetchReservas,
     aceptarReserva,
     completarReserva,
+    cancelarReserva,
   };
 }

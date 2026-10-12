@@ -73,6 +73,7 @@ export default function HomeDelivery() {
   const [isInteractionPaused, setIsInteractionPaused] = useState(false);
 
   const mapRef = useRef(null);
+  const userLocationRef = useRef(null);
   const fadeAnim = useRef(new Animated.Value(1)).current;
   const timerAnim = useRef(new Animated.Value(1)).current;
 
@@ -332,6 +333,7 @@ export default function HomeDelivery() {
       const location = await Location.getCurrentPositionAsync({});
       const coords = { latitude: location.coords.latitude, longitude: location.coords.longitude };
       setUserLocation(coords);
+      userLocationRef.current = coords;
       return coords;
     } catch (e) { return null; }
   };
@@ -673,6 +675,7 @@ export default function HomeDelivery() {
       </MapView>
 
       <SafeAreaView style={styles.topContainer} edges={['top', 'left', 'right']}>
+        <View style={styles.topRow}>
         <View style={styles.headerPill}>
           {(() => {
             const driverPhoto = getUserPhotoUrl(userData);
@@ -703,6 +706,7 @@ export default function HomeDelivery() {
             <Text style={styles.rejectedListText}>Descartadas</Text>
           </TouchableOpacity>
         )}
+        </View>
       </SafeAreaView>
 
       {!isEnabled && (
@@ -817,7 +821,8 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#F2F2F7" },
   dotMarker: { width: 24, height: 24, borderRadius: 12, borderWidth: 3, borderColor: "#FFF", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.5, shadowRadius: 4, elevation: 5 },
 
-  topContainer: { position: "absolute", left: 20, right: 20, zIndex: 10, flexDirection: "row", justifyContent: "space-between" },
+  topContainer: { position: "absolute", left: 20, right: 20, zIndex: 10, gap: 8 },
+  topRow: { flexDirection: "row", justifyContent: "space-between" },
   headerPill: { flexDirection: "row", backgroundColor: "rgba(255, 255, 255, 0.95)", padding: 8, paddingRight: 20, borderRadius: 40, alignSelf: "flex-start", alignItems: "center", borderWidth: 1, borderColor: "#DDD", elevation: 5 },
   avatarContainer: { width: 36, height: 36, borderRadius: 18, backgroundColor: "#FFFFFF", justifyContent: "center", alignItems: "center", marginRight: 10, borderWidth: 1, borderColor: "#fa6205" },
   avatarImage: { width: 36, height: 36, borderRadius: 18, marginRight: 10, borderWidth: 1, borderColor: "#fa6205", backgroundColor: "#F0F0F0" },

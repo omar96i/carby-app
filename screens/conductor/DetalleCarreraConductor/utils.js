@@ -58,6 +58,13 @@ export const getTripState = (estado) => {
   return "to_pickup";
 };
 
+export const isElectronicPayment = (metodo) => {
+  if (!metodo) return false;
+  const m = String(metodo).toLowerCase();
+  if (m.includes("efectivo")) return false;
+  return /nequi|bancolombia|transf|qr|mercado|tarjeta|pse|dav|llave|ahorro|corriente/.test(m);
+};
+
 export const formatPaymentMethod = (metodo) => {
   if (!metodo) return "Efectivo";
   const m = String(metodo).toLowerCase().trim();

@@ -13,6 +13,7 @@ import {
   Modal,
 } from "react-native";
 import { Feather } from "@expo/vector-icons";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { RouteSummary } from "./RouteSummary";
 import { formatCurrency, getImageUrl } from "../utils";
 import SafetyProtection from "../../../../components/SafetyProtection";
@@ -38,7 +39,13 @@ export const DriverSheet = ({
   const [expanded, setExpanded] = useState(false);
   const [photoModalVisible, setPhotoModalVisible] = useState(false);
 
-  const heightAnim = useRef(new Animated.Value(COLLAPSED_H)).current;
+  const insets = useSafeAreaInsets();
+  const bottomPad = Math.max(insets.bottom, 12);
+  const TOP_TRIM = 16; // handle (4) + márgenes (6+6), solo en colapsado
+  const collapsedH = COLLAPSED_H + bottomPad - (expanded ? 0 : TOP_TRIM);
+  const expandedH = EXPANDED_H + bottomPad;
+
+  const heightAnim = useRef(new Animated.Value(collapsedH)).current;
   const compactOpacity = useRef(new Animated.Value(1)).current;
   const expandedOpacity = useRef(new Animated.Value(0)).current;
 
@@ -51,9 +58,13 @@ export const DriverSheet = ({
   const paymentLabel = tripData?.metodo_pago === "efectivo" ? "Efectivo" : "Nequi/\nBancolombia";
 
   useEffect(() => {
+    heightAnim.setValue(expanded ? expandedH : collapsedH);
+  }, [bottomPad]);
+
+  useEffect(() => {
     Animated.parallel([
       Animated.spring(heightAnim, {
-        toValue: expanded ? EXPANDED_H : COLLAPSED_H,
+        toValue: expanded ? expandedH : collapsedH,
         useNativeDriver: false,
         friction: 9,
         tension: 60,
@@ -99,9 +110,10 @@ export const DriverSheet = ({
   };
 
   return (
-    <Animated.View style={[styles.sheet, { height: heightAnim }]}>
-      <View style={[styles.header, { height: expanded ? 36 : COLLAPSED_H }]} {...panResponder.panHandlers}>
-        <View style={styles.handle} />
+    <>
+    <Animated.View style={[styles.sheet, { height: heightAnim, paddingBottom: bottomPad }]}>
+      <View style={[styles.header, { height: expanded ? 36 : collapsedH, paddingTop: expanded ? 6 : 0 }]} {...panResponder.panHandlers}>
+        {expanded && <View style={styles.handle} />}
         <View style={styles.collapsedRowWrapper}>
           <Animated.View style={[styles.collapsedRow, { opacity: compactOpacity }]}>
           <Image
@@ -121,7 +133,7 @@ export const DriverSheet = ({
       </View>
 
       <Animated.View
-        style={[styles.expandedContent, { top: expanded ? 36 : COLLAPSED_H, opacity: expandedOpacity }]}
+        style={[styles.expandedContent, { top: expanded ? 36 : collapsedH, bottom: bottomPad, opacity: expandedOpacity }]}
         pointerEvents={expanded ? "auto" : "none"}
       >
         <ScrollView style={styles.scroll} contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
@@ -168,26 +180,7 @@ export const DriverSheet = ({
           </View>
 
           {/* Share live */}
-          <TouchableOpacity
-            style={[styles.shareBtn, shareLive && styles.shareBtnActive]}
-            onPress={onToggleShare}
-            activeOpacity={0.8}
-          >
-            <View style={[styles.shareIcon, shareLive && styles.shareIconActive]}>
-              <Feather name="radio" size={18} color={shareLive ? "#FFFFFF" : "#64748B"} />
-            </View>
-            <View style={styles.shareTextBox}>
-              <Text style={styles.shareTitle}>Compartir ubicación en vivo</Text>
-              <Text style={styles.shareSub}>
-                {shareLive
-                  ? "Tu conductor ve tu posición en tiempo real"
-                  : "Actívalo para mayor seguridad"}
-              </Text>
-            </View>
-            <View style={[styles.toggle, shareLive && styles.toggleActive]}>
-              <View style={[styles.toggleKnob, shareLive && styles.toggleKnobActive]} />
-            </View>
-          </TouchableOpacity>
+          {/* Control movido a la píldora flotante sobre el card */}
 
           {/* PIN + Payment */}
           <View style={styles.detailsRow}>
@@ -268,6 +261,15 @@ export const DriverSheet = ({
         </TouchableOpacity>
       </Modal>
     </Animated.View>
+    <Animated.View style={[styles.livePill, { bottom: Animated.add(heightAnim, 12) }]}>
+      <TouchableOpacity style={styles.livePillBtn} onPress={onToggleShare} activeOpacity={0.8}>
+        <Feather name="navigation" size={14} color={shareLive ? "#34D399" : "#94A3B8"} style={shareLive && styles.liveIconGlow} />
+        <Text style={[styles.liveText, !shareLive && styles.liveTextOff]}>
+          {shareLive ? "Ubicación en vivo" : "Ubicación pausada"}
+        </Text>
+      </TouchableOpacity>
+    </Animated.View>
+    </>
   );
 };
 
@@ -497,76 +499,39 @@ const styles = StyleSheet.create({
     borderWidth: 1.5,
     borderColor: "#FFFFFF",
   },
-  shareBtn: {
+  livePill: {
+    position: "absolute",
+    right: 16,
+    zIndex: 30,
+    elevation: 8,
+  },
+  livePillBtn: {
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "space-between",
-    marginTop: 12,
-    borderRadius: 18,
-    borderWidth: 1,
-    borderColor: "#E2E8F0",
-    backgroundColor: "#FFFFFF",
-    padding: 12,
-    shadowColor: "#0F172A",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.08,
-    shadowRadius: 12,
-    elevation: 4,
-  },
-  shareBtnActive: {
-    borderColor: "rgba(16,185,129,0.4)",
-    backgroundColor: "#ECFDF5",
-  },
-  shareIcon: {
-    width: 40,
-    height: 40,
+    gap: 8,
+    backgroundColor: "#0F172A",
     borderRadius: 20,
-    backgroundColor: "#FFFFFF",
-    justifyContent: "center",
-    alignItems: "center",
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
   },
-  shareIconActive: {
-    backgroundColor: "#10B981",
+  liveIconGlow: {
+    textShadowColor: "#10B981",
+    textShadowOffset: { width: 0, height: 0 },
+    textShadowRadius: 8,
   },
-  shareTextBox: {
-    flex: 1,
-    marginLeft: 12,
-  },
-  shareTitle: {
-    fontSize: 13,
+  liveText: {
+    fontSize: 12,
     fontFamily: "MontserratBold",
     fontWeight: "bold",
-    color: "#0F172A",
+    color: "#FFFFFF",
   },
-  shareSub: {
-    fontSize: 11,
-    fontFamily: "Montserrat",
-    color: "#64748B",
-    marginTop: 2,
-  },
-  toggle: {
-    width: 44,
-    height: 24,
-    borderRadius: 12,
-    backgroundColor: "#E2E8F0",
-    padding: 2,
-  },
-  toggleActive: {
-    backgroundColor: "#10B981",
-  },
-  toggleKnob: {
-    width: 20,
-    height: 20,
-    borderRadius: 10,
-    backgroundColor: "#FFFFFF",
-    shadowColor: "#0F172A",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-    elevation: 2,
-  },
-  toggleKnobActive: {
-    marginLeft: 20,
+  liveTextOff: {
+    color: "#94A3B8",
   },
   detailsRow: {
     flexDirection: "row",

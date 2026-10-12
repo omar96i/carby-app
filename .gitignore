@@ -33,8 +33,9 @@ yarn-error.*
 .env*.local
 
 # secrets / credentials
-/carby-app-production-firebase-adminsdk-fbsvc-6db8019877.json
-/google-services.json
+carby-app-production-firebase-adminsdk-fbsvc-6db8019877.json
+google-services.json
+
 # typescript
 *.tsbuildinfo
 

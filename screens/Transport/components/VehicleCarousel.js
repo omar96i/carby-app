@@ -4,7 +4,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { BASE_URL } from "../../../constants/url";
 import VehicleCard from "./VehicleCard";
 
-export default function VehicleCarousel({ services, selectedId, onSelect, distanceKm }) {
+export default function VehicleCarousel({ services, selectedId, onSelect, distanceKm, surgePct = 0 }) {
   const scrollRef = useRef(null);
   const [scrollX, setScrollX] = useState(0);
 
@@ -21,7 +21,9 @@ export default function VehicleCarousel({ services, selectedId, onSelect, distan
   const getServicePrice = (service) => {
     const { base, perKm, additional } = getEffectivePricing(service);
     const dist = distanceKm || 0;
-    return Math.round(base + perKm * Math.max(0, dist) + additional);
+    const raw = base + perKm * Math.max(0, dist) + additional;
+    const pct = Number(surgePct) || 0;
+    return Math.round(Math.max(pct > 0 ? raw * (1 + pct / 100) : raw, 5));
   };
 
   const getServiceIconUrl = (service) => {

@@ -1,18 +1,20 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import {
   View,
   Text,
-  TextInput,
   TouchableOpacity,
   FlatList,
   StyleSheet,
   SafeAreaView,
   KeyboardAvoidingView,
   Keyboard,
+  Dimensions,
+  useWindowDimensions,
   Platform,
-  Image,
   ActivityIndicator,
+  Image
 } from 'react-native';
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Feather } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -21,7 +23,18 @@ import { BASE_URL } from '../../constants/url';
 import { useNotification } from "../../context/NotificationContext";
 import AlertaModal from "../../components/ErrorModal";
 import FullscreenImageViewer from "../../components/usuario/pedidos/FullscreenImageViewer";
-import { chatLog } from "../../utils/chatDebug";
+import ChatInput from "../../components/ChatInput";
+
+const dayLabel = (iso) => {
+  if (!iso) return "";
+  const d = new Date(iso);
+  const now = new Date();
+  if (d.toDateString() === now.toDateString()) return "Hoy";
+  const yesterday = new Date(now);
+  yesterday.setDate(now.getDate() - 1);
+  if (d.toDateString() === yesterday.toDateString()) return "Ayer";
+  return d.toLocaleDateString("es-CO", { day: "2-digit", month: "short" });
+};
 
 const getImageUrl = (path) => {
   if (!path) return null;
@@ -29,7 +42,7 @@ const getImageUrl = (path) => {
   return `${BASE_URL.toString().replace("/api", "")}/storage/${path}`;
 };
 
-export default function ChatReserva({ reservaId: propReservaId, perfilNombre: propPerfilNombre, perfilFoto: propPerfilFoto, userPerfilId: propUserPerfilId, chatTitle: propChatTitle, chatAvatar: propChatAvatar, quickReplies: propQuickReplies, onClose, modalMode = false }) {
+export default function ChatReserva({ reservaId: propReservaId, perfilNombre: propPerfilNombre, perfilFoto: propPerfilFoto, userPerfilId: propUserPerfilId, chatTitle: propChatTitle, chatAvatar: propChatAvatar, peerName: propPeerName, peerAvatar: propPeerAvatar, showHeader = false, quickReplies: propQuickReplies, onClose, modalMode = false }) {
   const navigation = useNavigation();
   const route = useRoute();
   const routeParams = route?.params || {};
@@ -41,6 +54,13 @@ export default function ChatReserva({ reservaId: propReservaId, perfilNombre: pr
   const isPerfilMode = senderPerfilId != null;
   const chatTitle = propChatTitle ?? routeParams.chatTitle ?? perfilNombre;
   const chatAvatar = propChatAvatar ?? routeParams.chatAvatar ?? perfilFoto;
+  const peerName = propPeerName ?? chatTitle;
+  const peerAvatar = getImageUrl(propPeerAvatar ?? chatAvatar);
+
+  const peerInitials = useMemo(() => {
+    const parts = String(peerName || "?").trim().split(/\s+/);
+    return ((parts[0]?.[0] || "?") + (parts[1]?.[0] || "")).toUpperCase();
+  }, [peerName]);
 
   const [mensajes, setMensajes] = useState([]);
   const [nuevoMensaje, setNuevoMensaje] = useState('');
@@ -57,16 +77,21 @@ export default function ChatReserva({ reservaId: propReservaId, perfilNombre: pr
   };
 
   const flatListRef = useRef(null);
-  const inputRef = useRef(null);
-  const { notification } = useNotification();
+  const [chatImage, setChatImage] = useState(null);
+  const insets = useSafeAreaInsets();
+  const windowHeight = useWindowDimensions().height;
+  const [keyboardHeight, setKeyboardHeight] = useState(0);
 
   useEffect(() => {
-    const sub = Keyboard.addListener("keyboardDidHide", () => {
-      chatLog("ChatReserva", "keyboardHide-blur");
-      inputRef.current?.blur();
-    });
-    return () => sub.remove();
+    const show = Keyboard.addListener("keyboardDidShow", (e) => setKeyboardHeight(e.endCoordinates?.height || 0));
+    const hide = Keyboard.addListener("keyboardDidHide", () => setKeyboardHeight(0));
+    return () => { show.remove(); hide.remove(); };
   }, []);
+
+  // Offset manual solo en Android sin resize (Expo Go). En iOS lo maneja el KAV interno.
+  const windowShrunk = Dimensions.get("screen").height - windowHeight > 50;
+  const manualOffset = Platform.OS === "android" && !windowShrunk ? keyboardHeight : 0;
+  const { notification } = useNotification();
 
   const cargarMensajes = useCallback(async (mostrarCargando = true) => {
     if (!reservaId) return;
@@ -96,7 +121,6 @@ export default function ChatReserva({ reservaId: propReservaId, perfilNombre: pr
   }, [reservaId]);
 
   useEffect(() => {
-    chatLog("ChatReserva", "mount", { reservaId });
     if (notification?.request?.content?.data?.tipo === "chat_reserva") {
       cargarMensajes(false);
     }
@@ -149,8 +173,9 @@ export default function ChatReserva({ reservaId: propReservaId, perfilNombre: pr
     }
   };
 
-  const enviarMensaje = async () => {
-    if (!nuevoMensaje.trim()) return;
+  const enviarMensaje = async (textOverride) => {
+    const texto = textOverride || nuevoMensaje;
+    if (!texto.trim()) return;
 
     const senderId = await resolveSenderId();
     if (!senderId) {
@@ -166,7 +191,7 @@ export default function ChatReserva({ reservaId: propReservaId, perfilNombre: pr
         return;
       }
 
-      const messageObject = { type: "text", content: nuevoMensaje.trim() };
+      const messageObject = { type: "text", content: texto.trim() };
       const escapedJson = JSON.stringify(messageObject).replace(/"/g, '\\"');
       const formattedMessage = `"${escapedJson}"`;
 
@@ -240,7 +265,7 @@ export default function ChatReserva({ reservaId: propReservaId, perfilNombre: pr
     }
   };
 
-  const handlePickImageAndSend = async () => {
+  const handlePickImage = async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (status !== 'granted') {
       showAlert('Se necesita acceso a tu galería para enviar imágenes', "info");
@@ -251,9 +276,19 @@ export default function ChatReserva({ reservaId: propReservaId, perfilNombre: pr
       allowsEditing: true,
       quality: 0.7,
     });
-    if (!result.canceled && !result.cancelled) {
-      const image = result.assets ? result.assets[0] : result;
-      enviarImagen(image);
+    if (result.canceled || result.cancelled) return;
+    const asset = result.assets?.[0];
+    if (!asset?.uri) return;
+    setChatImage(asset.uri);
+  };
+
+  const handleSend = () => {
+    if (chatImage) {
+      const uri = chatImage;
+      setChatImage(null);
+      enviarImagen({ uri });
+    } else {
+      enviarMensaje();
     }
   };
 
@@ -372,7 +407,15 @@ export default function ChatReserva({ reservaId: propReservaId, perfilNombre: pr
     return null;
   };
 
-  const renderMensaje = ({ item }) => {
+  // Renderizar un mensaje individual (memoizado: no se recrea al escribir)
+  const renderMensaje = useCallback(({ item }) => {
+    if (item.type === "divider") {
+      return (
+        <View style={s.dayRow}>
+          <Text style={s.dayLabel}>{item.label}</Text>
+        </View>
+      );
+    }
     const esMio = isPerfilMode
       ? (item.user_perfil_id != null
         && String(item.user_perfil_id) === String(senderPerfilId))
@@ -382,39 +425,102 @@ export default function ChatReserva({ reservaId: propReservaId, perfilNombre: pr
     const contenido = extraerContenido(item);
     const imageUri = extraerImagen(item);
 
-    return (
-      <View style={[s.messageWrapper, esMio ? s.myMessageWrapper : s.otherMessageWrapper]}>
-        <View style={[s.bubble, esMio ? s.myBubble : s.otherBubble]}>
-          {imageUri ? (
-            <TouchableOpacity onPress={() => setFullscreenImage(imageUri)} activeOpacity={0.85}>
-              <Image source={{ uri: imageUri }} style={s.messageImage} />
-            </TouchableOpacity>
-          ) : (
-            <Text style={[s.messageText, esMio ? s.myMessageText : s.otherMessageText]}>
-              {typeof contenido === 'string' ? contenido : ''}
-            </Text>
-          )}
-          <View style={s.metaRow}>
-            <Text style={[s.time, esMio ? s.myTime : s.otherTime]}>
-              {new Date(item.created_at || Date.now()).toLocaleTimeString('es-ES', {
-                hour: '2-digit',
-                minute: '2-digit',
-              })}
-            </Text>
-            {item.estado === 'sending' && <Text style={s.statusSending}>enviando</Text>}
-            {item.estado === 'error' && <Text style={s.statusError}>error</Text>}
-            {esMio && item.estado !== 'sending' && item.estado !== 'error' && (
-              <Feather name="check" size={10} color="rgba(255,255,255,0.75)" />
+    if (esMio) {
+      return (
+        <View style={[s.messageWrapper, s.myMessageWrapper]}>
+          <View style={[s.bubble, s.myBubble]}>
+            {imageUri ? (
+              <TouchableOpacity onPress={() => setFullscreenImage(imageUri)} activeOpacity={0.85}>
+                <Image source={{ uri: imageUri }} style={s.messageImage} />
+              </TouchableOpacity>
+            ) : (
+              <Text style={[s.messageText, s.myMessageText]}>
+                {typeof contenido === 'string' ? contenido : ''}
+              </Text>
             )}
+            <View style={[s.metaRow, s.myMeta]}>
+              <Text style={[s.time, s.myTime]}>
+                {new Date(item.created_at || Date.now()).toLocaleTimeString('es-ES', {
+                  hour: '2-digit',
+                  minute: '2-digit',
+                })}
+              </Text>
+              {item.estado === 'sending' && <Text style={s.statusSending}>enviando</Text>}
+              {item.estado === 'error' && <Text style={s.statusError}>error</Text>}
+              {item.estado !== 'sending' && item.estado !== 'error' && (
+                <Feather name="check" size={10} color="rgba(255,255,255,0.75)" />
+              )}
+            </View>
+          </View>
+        </View>
+      );
+    }
+    return (
+      <View style={[s.messageWrapper, s.otherMessageWrapper]}>
+        {!!peerName && (
+          <View style={s.otherAvatar}>
+            <Text style={s.otherAvatarText}>{peerInitials}</Text>
+          </View>
+        )}
+        <View style={s.otherCol}>
+          {!!peerName && (
+            <Text style={s.otherName} numberOfLines={1}>{peerName}</Text>
+          )}
+          <View style={[s.bubble, s.otherBubble]}>
+            {imageUri ? (
+              <TouchableOpacity onPress={() => setFullscreenImage(imageUri)} activeOpacity={0.85}>
+                <Image source={{ uri: imageUri }} style={s.messageImage} />
+              </TouchableOpacity>
+            ) : (
+              <Text style={[s.messageText, s.otherMessageText]}>
+                {typeof contenido === 'string' ? contenido : ''}
+              </Text>
+            )}
+            <View style={[s.metaRow, s.otherMeta]}>
+              <Text style={[s.time, s.otherTime]}>
+                {new Date(item.created_at || Date.now()).toLocaleTimeString('es-ES', {
+                  hour: '2-digit',
+                  minute: '2-digit',
+                })}
+              </Text>
+              {item.estado === 'sending' && <Text style={s.statusSending}>enviando</Text>}
+              {item.estado === 'error' && <Text style={s.statusError}>error</Text>}
+            </View>
           </View>
         </View>
       </View>
     );
-  };
+  }, [isPerfilMode, senderPerfilId, currentUserId, peerName, peerInitials]);
 
-  const quickReplies = propQuickReplies ?? (isPerfilMode
+  const feed = useMemo(() => {
+    const out = [];
+    let lastDay = "";
+    mensajes.forEach((m) => {
+      const dk = m.created_at ? new Date(m.created_at).toDateString() : "";
+      if (dk && dk !== lastDay) {
+        lastDay = dk;
+        out.push({ type: "divider", id: `div-${dk}`, label: dayLabel(m.created_at) });
+      }
+      out.push(m);
+    });
+    return out;
+  }, [mensajes]);
+
+  const invertedFeed = useMemo(() => [...feed].reverse(), [feed]);
+
+  // Auto-scroll al último mensaje (lista invertida: offset 0 = abajo)
+  useEffect(() => {
+    if (invertedFeed.length && flatListRef.current) {
+      const t = setTimeout(() => flatListRef.current?.scrollToOffset({ offset: 0, animated: false }), 100);
+      return () => clearTimeout(t);
+    }
+  }, [invertedFeed.length]);
+
+  const quickTexts = propQuickReplies ?? (isPerfilMode
     ? ['Hola, tu reserva fue aceptada', 'Te esperamos a la hora acordada', 'Gracias por preferirnos']
     : ['Hola, ¿puedo ir antes al servicio?', '¿El servicio es a domicilio o en el local?', 'Gracias']);
+  const quickIcons = isPerfilMode ? ['check', 'clock', 'thumbs-up'] : ['clock', 'map-pin', 'thumbs-up'];
+  const quickReplies = quickTexts.map((text, i) => ({ text, icon: quickIcons[i % quickIcons.length] }));
 
   const avatarUri = getImageUrl(chatAvatar);
 
@@ -451,7 +557,41 @@ export default function ChatReserva({ reservaId: propReservaId, perfilNombre: pr
           </View>
         )}
 
-        <View style={{ flex: 1 }}>
+        {showHeader && (
+          <View style={[s.chatHeader, { paddingTop: Math.max(insets.top, 8) }]}>
+            <View style={s.avatarWrap}>
+              {peerAvatar ? (
+                <Image source={{ uri: peerAvatar }} style={s.avatarImage} />
+              ) : (
+                <View style={s.avatarBox}>
+                  <Text style={s.avatarInitial}>{peerInitials}</Text>
+                </View>
+              )}
+              <View style={s.onlineDot} />
+            </View>
+            <View style={s.headerText}>
+              <View style={s.nameRow}>
+                <Text style={s.headerTitleLight} numberOfLines={1}>{peerName || "Chat"}</Text>
+                {!!peerName && <Feather name="check-circle" size={12} color="#FF5500" />}
+              </View>
+              <View style={s.subRow}>
+                <Text style={s.headerSubLight} numberOfLines={1}>Chat de reserva</Text>
+                {!!reservaId && (
+                  <View style={s.orderBadge}>
+                    <Text style={s.orderBadgeText}>#{reservaId}</Text>
+                  </View>
+                )}
+              </View>
+            </View>
+            {!!onClose && (
+              <TouchableOpacity style={s.closeBtnLight} onPress={onClose} activeOpacity={0.8}>
+                <Feather name="x" size={20} color="#0F172A" />
+              </TouchableOpacity>
+            )}
+          </View>
+        )}
+
+        <View style={[s.contentFlex, showHeader && { paddingBottom: insets.bottom + manualOffset }]}>
           <View style={s.chatContainer}>
             {cargando ? (
               <View style={s.loadingContainer}>
@@ -459,17 +599,20 @@ export default function ChatReserva({ reservaId: propReservaId, perfilNombre: pr
                 <Text style={s.loadingText}>Cargando mensajes anteriores...</Text>
               </View>
             ) : (
+              <>
               <FlatList
                 ref={flatListRef}
                 style={s.messagesList}
                 inverted
-                data={[...mensajes].reverse()}
+                data={invertedFeed}
                 keyExtractor={(item) => item.id?.toString() || Math.random().toString()}
                 renderItem={renderMensaje}
-                onRefresh={() => cargarMensajes()}
-                refreshing={cargando}
                 keyboardShouldPersistTaps="handled"
                 contentContainerStyle={s.messagesContent}
+                initialNumToRender={20}
+                maxToRenderPerBatch={20}
+                windowSize={11}
+                maintainVisibleContentPosition={{ minIndexForVisible: 0 }}
                 ListEmptyComponent={
                   <View style={s.emptyContainer}>
                     <Feather name="message-circle" size={44} color="#CBD5E1" />
@@ -478,53 +621,36 @@ export default function ChatReserva({ reservaId: propReservaId, perfilNombre: pr
                   </View>
                 }
               />
+              </>
             )}
           </View>
 
           <View style={s.quickReplies}>
             {quickReplies.map((q) => (
-              <TouchableOpacity key={q} style={s.quickReply} onPress={() => setNuevoMensaje(q)} activeOpacity={0.8}>
-                <Text style={s.quickReplyText}>{q}</Text>
+              <TouchableOpacity key={q.text} style={s.quickReply} onPress={() => enviarMensaje(q.text)} activeOpacity={0.8}>
+                <Feather name={q.icon} size={12} color="#FF5500" />
+                <Text style={s.quickReplyText}>{q.text}</Text>
               </TouchableOpacity>
             ))}
           </View>
 
-          <View style={s.inputContainer}>
-            <TouchableOpacity style={s.iconButton} onPress={handlePickImageAndSend} activeOpacity={0.8}>
-              <Feather name="camera" size={22} color="#64748B" />
-            </TouchableOpacity>
-            <TextInput
-              ref={inputRef}
-              style={s.input}
-              placeholder="Escribe un mensaje..."
-              placeholderTextColor="#94A3B8"
-              value={nuevoMensaje}
-              onChangeText={(t) => {
-                chatLog("ChatReserva", "change", { len: t.length });
-                setNuevoMensaje(t);
-              }}
-              onFocus={() => chatLog("ChatReserva", "focus", { len: nuevoMensaje.length })}
-              onBlur={() => chatLog("ChatReserva", "blur", { len: nuevoMensaje.length })}
-              onSelectionChange={(e) => chatLog("ChatReserva", "selection", e.nativeEvent.selection)}
-              onPressIn={() => chatLog("ChatReserva", "pressIn")}
-              onTouchStart={() => chatLog("ChatReserva", "touchStart")}
-              editable={!enviando}
-              multiline
-              maxLength={500}
-            />
-            <TouchableOpacity
-              style={[s.sendButton, (!nuevoMensaje.trim() || enviando) && s.sendButtonDisabled]}
-              onPress={enviarMensaje}
-              disabled={enviando || !nuevoMensaje.trim()}
-              activeOpacity={0.8}
-            >
-              {enviando ? (
-                <ActivityIndicator size="small" color="#FFFFFF" />
-              ) : (
-                <Feather name="send" size={18} color="#FFFFFF" />
-              )}
-            </TouchableOpacity>
-          </View>
+          <ChatInput
+            tag="ChatReserva"
+            value={nuevoMensaje}
+            onChangeText={setNuevoMensaje}
+            onSend={handleSend}
+            sending={enviando}
+            onPickImage={handlePickImage}
+            extraSendEnabled={!!chatImage}
+            preview={chatImage && (
+              <View style={s.imagePreview}>
+                <Image source={{ uri: chatImage }} style={s.imagePreviewThumb} />
+                <TouchableOpacity onPress={() => setChatImage(null)} style={s.removeImageBtn}>
+                  <Feather name="x" size={14} color="#64748B" />
+                </TouchableOpacity>
+              </View>
+            )}
+          />
         </View>
 
         <AlertaModal
@@ -542,8 +668,127 @@ export default function ChatReserva({ reservaId: propReservaId, perfilNombre: pr
 }
 
 const s = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: '#FFFFFF' },
-  container: { flex: 1, backgroundColor: '#FFFFFF' },
+  safe: { flex: 1, backgroundColor: '#F8FAFC' },
+  container: { flex: 1, backgroundColor: '#F8FAFC' },
+  contentFlex: {
+    flex: 1,
+  },
+  chatHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: "#F1F5F9",
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    backgroundColor: "#FFFFFF",
+    shadowColor: "#0F172A",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 3,
+    zIndex: 10,
+  },
+  avatarWrap: {
+    position: "relative",
+  },
+  avatarBox: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: "#FFF7ED",
+    borderWidth: 1,
+    borderColor: "#FDBA74",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  avatarInitial: {
+    fontSize: 15,
+    fontFamily: 'Montserrat_700Bold',
+    color: "#FF5500",
+  },
+  avatarImage: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: "#F1F5F9",
+  },
+  onlineDot: {
+    position: "absolute",
+    bottom: 0,
+    right: 0,
+    width: 14,
+    height: 14,
+    borderRadius: 7,
+    backgroundColor: "#10B981",
+    borderWidth: 2,
+    borderColor: "#FFFFFF",
+  },
+  headerText: {
+    flex: 1,
+  },
+  nameRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+  },
+  headerTitleLight: {
+    fontSize: 15,
+    fontFamily: 'Montserrat_700Bold',
+    color: "#0F172A",
+  },
+  subRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    marginTop: 2,
+  },
+  headerSubLight: {
+    fontSize: 12,
+    color: "#64748B",
+  },
+  orderBadge: {
+    backgroundColor: "#FFF7ED",
+    borderWidth: 1,
+    borderColor: "#FDBA74",
+    borderRadius: 8,
+    paddingHorizontal: 6,
+    paddingVertical: 1,
+  },
+  orderBadgeText: {
+    fontSize: 10,
+    fontFamily: 'Montserrat_700Bold',
+    color: "#FF5500",
+  },
+  closeBtnLight: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    backgroundColor: "#F1F5F9",
+    borderWidth: 1,
+    borderColor: "#E2E8F0",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  imagePreview: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  imagePreviewThumb: {
+    width: 44,
+    height: 44,
+    borderRadius: 8,
+  },
+  removeImageBtn: {
+    marginLeft: 8,
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    backgroundColor: '#F1F5F9',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -652,7 +897,49 @@ const s = StyleSheet.create({
     marginVertical: 4,
   },
   myMessageWrapper: { alignSelf: 'flex-end' },
-  otherMessageWrapper: { alignSelf: 'flex-start' },
+  otherMessageWrapper: {
+    alignSelf: 'flex-start',
+    flexDirection: "row",
+    alignItems: "flex-end",
+    gap: 8,
+    maxWidth: "88%",
+  },
+  otherAvatar: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: "#E2E8F0",
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: 2,
+  },
+  otherAvatarText: {
+    fontSize: 10,
+    fontFamily: 'Montserrat_700Bold',
+    color: "#64748B",
+  },
+  otherCol: {
+    flex: 1,
+  },
+  otherName: {
+    fontSize: 10,
+    color: "#94A3B8",
+    marginLeft: 4,
+    marginBottom: 2,
+  },
+  dayRow: {
+    alignItems: "center",
+    marginVertical: 8,
+  },
+  dayLabel: {
+    fontSize: 11,
+    color: "#94A3B8",
+    backgroundColor: "#E2E8F0",
+    paddingHorizontal: 12,
+    paddingVertical: 3,
+    borderRadius: 10,
+    overflow: "hidden",
+  },
   bubble: {
     borderRadius: 18,
     paddingHorizontal: 12,
@@ -660,11 +947,23 @@ const s = StyleSheet.create({
   },
   myBubble: {
     backgroundColor: '#FF5500',
-    borderBottomRightRadius: 6,
+    borderTopRightRadius: 6,
+    shadowColor: "#FF5500",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.35,
+    shadowRadius: 10,
+    elevation: 6,
   },
   otherBubble: {
-    backgroundColor: '#F1F5F9',
-    borderBottomLeftRadius: 6,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: "#E2E8F0",
+    borderTopLeftRadius: 6,
+    shadowColor: "#0F172A",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 6,
+    elevation: 2,
   },
   messageText: {
     fontSize: 14,
@@ -675,9 +974,14 @@ const s = StyleSheet.create({
   metaRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'flex-end',
     gap: 4,
     marginTop: 4,
+  },
+  myMeta: {
+    justifyContent: "flex-end",
+  },
+  otherMeta: {
+    justifyContent: "flex-start",
   },
   time: {
     fontSize: 10,
@@ -697,21 +1001,25 @@ const s = StyleSheet.create({
     flexWrap: 'wrap',
     gap: 8,
     paddingHorizontal: 12,
-    paddingVertical: 8,
+    paddingVertical: 6,
     alignItems: 'center',
+    backgroundColor: '#F8FAFC',
   },
   quickReply: {
-    borderRadius: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    borderRadius: 999,
     borderWidth: 1,
     borderColor: '#E2E8F0',
-    backgroundColor: '#F8FAFC',
-    paddingHorizontal: 10,
-    paddingVertical: 4,
+    backgroundColor: '#FFFFFF',
+    paddingHorizontal: 14,
+    paddingVertical: 10,
     justifyContent: 'center',
   },
   quickReplyText: {
-    fontSize: 11,
-    color: '#0F172A',
+    fontSize: 12,
+    color: '#334155',
   },
   inputContainer: {
     flexDirection: 'row',

@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { BASE_URL } from "../../../../constants/url";
 
-export const useRideData = (tripId, pause = false) => {
+export const useRideData = (tripId) => {
   const [tripData, setTripData] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -39,15 +39,6 @@ export const useRideData = (tripId, pause = false) => {
   useEffect(() => {
     fetchTripData();
   }, [fetchTripData]);
-
-  useEffect(() => {
-    if (!tripId) return;
-    const interval = setInterval(() => {
-      if (pause) return;
-      fetchTripData();
-    }, 5000);
-    return () => clearInterval(interval);
-  }, [tripId, fetchTripData, pause]);
 
   return { tripData, isLoading, error, refetch: fetchTripData };
 };

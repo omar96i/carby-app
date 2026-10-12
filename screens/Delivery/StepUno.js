@@ -151,7 +151,7 @@ export default function StepUno() {
   const [showGoToRide, setShowGoToRide] = useState(false);
 
   const [keyboardVisible, setKeyboardVisible] = useState(false);
-  const [sheetExpanded, setSheetExpanded] = useState(false);
+  const [sheetExpanded, setSheetExpanded] = useState(true);
   const sheetAnim = useRef(new Animated.Value(collapsedSheetH)).current;
 
   useEffect(() => {
@@ -188,6 +188,26 @@ export default function StepUno() {
   const [alertData, setAlertData] = useState({ message: "", type: "error", onPrimary: null, primaryLabel: null });
 
   const [bidOffset, setBidOffset] = useState(0);
+  // Demanda: aumento % según zona caliente del punto de recogida
+  const [demandaInfo, setDemandaInfo] = useState({ nivel: "baja", aumento: 0, carreras: 0 });
+  const demandaPctRef = useRef(0);
+  const demandaEvalRef = useRef({ key: "", ts: 0 });
+  const demandaCacheRef = useRef(new Map());
+  const DEMANDA_TTL_MS = 5 * 60 * 1000;
+
+  const claveDemanda = (lat, lng) => `${Number(lat).toFixed(4)},${Number(lng).toFixed(4)}`;
+
+  const leerDemandaCache = (lat, lng) => {
+    const hit = demandaCacheRef.current.get(claveDemanda(lat, lng));
+    if (hit && Date.now() - hit.ts < DEMANDA_TTL_MS) return hit;
+    return null;
+  };
+
+  const guardarDemandaCache = (key, data) => {
+    const m = demandaCacheRef.current;
+    m.set(key, { ...data, ts: Date.now() });
+    if (m.size > 50) m.delete(m.keys().next().value);
+  };
   const [suggestedPrice, setSuggestedPrice] = useState("");
   const [displayPrice, setDisplayPrice] = useState("");
   const priceAnim = useRef(new Animated.Value(1)).current;
@@ -228,6 +248,9 @@ export default function StepUno() {
     setDisplayPrice("");
     setSuggestedPrice("");
     setBidOffset(0);
+    demandaPctRef.current = 0;
+    demandaEvalRef.current = { key: "", ts: 0 };
+    setDemandaInfo({ nivel: "baja", aumento: 0, carreras: 0 });
     setDistanceInKm(null);
     setDistance(null);
     setRouteDuration(null);
@@ -238,7 +261,7 @@ export default function StepUno() {
     setIsLoadingCurrentLocation(false);
     setLocationError(null);
     setIsCreatingRide(false);
-    setSheetExpanded(false);
+    setSheetExpanded(true);
     setPinMode(false);
     setIsLocationPickup(true);
     setPinAddress("");
@@ -498,6 +521,7 @@ export default function StepUno() {
         }
       }, 300);
     } else {
+      setIsSearchingMap(false);
       const recents = await getRecentLocations();
       const recentsWithFlag = recents.map((r) => ({ ...r, recent: true }));
       setRecentLocations(recentsWithFlag);
@@ -818,6 +842,11 @@ export default function StepUno() {
     const additional = parseFloat(selectedService.precio_adicional_efectivo ?? tarifa?.precio_adicional ?? selectedService.precio_adicional) || 0;
     const dist = distKm && distKm > 0 ? distKm : 0;
     let calculated = base + dist * perKm + additional;
+    const pct = demandaPctRef.current || 0;
+    if (pct > 0) {
+      calculated = calculated * (1 + pct / 100);
+      console.log("[StepUno] DEMANDA APLICA +", pct, "% ->", calculated);
+    }
     calculated = Math.max(calculated, 5.0);
     return parseFloat(calculated.toFixed(0));
   };
@@ -836,6 +865,19 @@ export default function StepUno() {
       setIsCalculatingPrice(true);
       setPriceError(null);
       try {
+        // Aumento instantáneo desde caché + refresco en fondo (no bloquea el precio)
+        if (pickupCoord) {
+          const hit = leerDemandaCache(pickupCoord.latitude, pickupCoord.longitude);
+          if (hit) {
+            demandaPctRef.current = hit.aumento;
+            setDemandaInfo((prev) =>
+              prev.aumento === hit.aumento && prev.nivel === hit.nivel && prev.carreras === hit.carreras
+                ? prev
+                : { nivel: hit.nivel, aumento: hit.aumento, carreras: hit.carreras }
+            );
+          }
+          evaluarDemanda(pickupCoord.latitude, pickupCoord.longitude);
+        }
         const routeInfo = await fetchRouteInfo(pickupAddress, deliveryAddress);
         const distance = routeInfo.distanceKm;
         if (distance !== null && distance > 0) {
@@ -844,6 +886,7 @@ export default function StepUno() {
           setRouteDuration(routeInfo.durationMin);
           setRouteDurationInTraffic(routeInfo.durationInTrafficMin);
           await AsyncStorage.setItem("distance", distance.toString());
+          console.log("[StepUno] PRECIO -> dist:", distance, "pct:", demandaPctRef.current);
           updatePriceDisplay(distance);
         } else {
           setPriceError("No se pudo calcular la distancia entre las ubicaciones.");
@@ -890,6 +933,7 @@ export default function StepUno() {
         setIsSearchingPickup(false);
       }
     } else {
+      setIsSearchingPickup(false);
       setPickupSuggestions([]);
       setShowPickupSuggestions(false);
     }
@@ -922,6 +966,7 @@ export default function StepUno() {
         setIsSearchingDelivery(false);
       }
     } else {
+      setIsSearchingDelivery(false);
       setDeliverySuggestions([]);
       setShowDeliverySuggestions(false);
     }
@@ -1011,6 +1056,9 @@ export default function StepUno() {
           metododepago: getPaymentMethodLabel(paymentMethod),
           schedule_id: serviceDetails.schedule_id_vigente ?? serviceDetails.tarifa_vigente?.id ?? null,
           tarifa_vigente: serviceDetails.tarifa_vigente ?? null,
+          demanda_nivel: demandaInfo.nivel,
+          demanda_aumento_pct: demandaInfo.aumento,
+          demanda_carreras_cercanas: demandaInfo.carreras,
         }),
         punto_recogida: JSON.stringify(puntoRecogidaCoords),
         destino: JSON.stringify(destinoCoords),
@@ -1157,6 +1205,50 @@ export default function StepUno() {
     loadInitialData();
   }, []);
 
+  // Consulta si el punto de recogida está en zona caliente (POST /demanda/evaluar)
+  const evaluarDemanda = async (lat, lng) => {
+    try {
+      if (lat == null || lng == null) return;
+      const key = claveDemanda(lat, lng);
+      const now = Date.now();
+      if (demandaEvalRef.current.key === key && now - (demandaEvalRef.current.ts || 0) < DEMANDA_TTL_MS) return;
+      const token = await AsyncStorage.getItem("userToken");
+      if (!token) return;
+      console.log("[StepUno] DEMANDA EVAL ->", lat, lng);
+      const response = await fetch(`${BASE_URL}demanda/evaluar`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ lat, lng }),
+      });
+      const json = await response.json().catch(() => null);
+      if (!response.ok || !json?.status || !json?.data) {
+        console.log("[StepUno] DEMANDA RESP MAL ->", response.status, JSON.stringify(json)?.substring(0, 200));
+        return;
+      }
+      const d = json.data;
+      const aumento = Number(d.aumento_porcentaje) || 0;
+      console.log("[StepUno] DEMANDA RESP -> nivel:", d.nivel, "aumento:", aumento, "carreras:", d.carreras_cercanas);
+      guardarDemandaCache(key, { aumento, nivel: d.nivel || "baja", carreras: Number(d.carreras_cercanas) || 0 });
+      demandaEvalRef.current = { key, ts: Date.now() }; // marca solo en éxito: si falla, se reintenta solo
+      demandaPctRef.current = aumento;
+      setDemandaInfo({
+        nivel: d.nivel || "baja",
+        aumento,
+        carreras: Number(d.carreras_cercanas) || 0,
+      });
+    } catch (e) {
+      console.log("[StepUno] DEMANDA ERROR ->", e?.message);
+    }
+  };
+
+  useEffect(() => {
+    if (!pickupCoord) return;
+    const t = setTimeout(() => {
+      evaluarDemanda(pickupCoord.latitude, pickupCoord.longitude);
+    }, 600);
+    return () => clearTimeout(t);
+  }, [pickupCoord]);
+
   // Calcular precio cuando cambian direcciones o servicio seleccionado
   useEffect(() => {
     if (pickupAddress && deliveryAddress && selectedServiceId) {
@@ -1166,10 +1258,13 @@ export default function StepUno() {
     }
   }, [pickupAddress, deliveryAddress, selectedServiceId, pickupCoord, deliveryCoord]);
 
-  // Actualizar display cuando cambia el bid offset
+  // Sincroniza la oferta con todas sus entradas: distancia, servicio,
+  // demanda y ajuste manual. Así tarjeta y oferta siempre concuerdan.
   useEffect(() => {
-    updatePriceDisplay(distanceInKm || 0);
-  }, [bidOffset]);
+    if (distanceInKm && selectedServiceId && availableServices.length > 0) {
+      updatePriceDisplay(distanceInKm);
+    }
+  }, [distanceInKm, selectedServiceId, demandaInfo, bidOffset, availableServices]);
 
   // Auto-seleccionar primer servicio al cargar
   useEffect(() => {
@@ -1304,13 +1399,18 @@ export default function StepUno() {
 
   const trafficLevel = getTrafficLevel();
 
-  const onBidIncrease = () => setBidOffset((prev) => prev + 500);
-  const onBidDecrease = () => setBidOffset((prev) => (displayPrice && parseInt(displayPrice.replace(/\./g, ""), 10) - 500 >= 2000 ? prev - 500 : prev));
+  const BID_STEP = 500;
+  const BID_MAX_DISCOUNT = 2000;
+  const getSuggestedRaw = () => (suggestedPrice ? parseInt(String(suggestedPrice).replace(/\./g, ""), 10) || 0 : 0);
+  const getBidMin = () => Math.max(getSuggestedRaw() - BID_MAX_DISCOUNT, 5);
+  const getDisplayRaw = () => (displayPrice ? parseInt(String(displayPrice).replace(/\./g, ""), 10) : 0);
+
+  const onBidIncrease = () => setBidOffset((prev) => prev + BID_STEP);
+  const onBidDecrease = () => setBidOffset((prev) => (getDisplayRaw() - BID_STEP >= getBidMin() ? prev - BID_STEP : prev));
   const onBidReset = () => setBidOffset(0);
   const onBidChipDelta = (delta) => {
     if (delta < 0) {
-      const current = displayPrice ? parseInt(displayPrice.replace(/\./g, ""), 10) : 0;
-      if (current - Math.abs(delta) >= 2000) setBidOffset((prev) => prev + delta);
+      if (getDisplayRaw() - Math.abs(delta) >= getBidMin()) setBidOffset((prev) => prev + delta);
     } else {
       setBidOffset((prev) => prev + delta);
     }
@@ -1495,6 +1595,8 @@ export default function StepUno() {
               price={displayPrice}
               onGo={handleContinue}
               onExpand={toggleSheet}
+              demandaText={demandaInfo.aumento > 0 ? "Zona muy concurrida" : null}
+              tachado={!deliveryAddress}
             />
           ) : (
             <>
@@ -1509,19 +1611,46 @@ export default function StepUno() {
                   selectedId={selectedServiceId}
                   onSelect={handleServiceSelect}
                   distanceKm={distanceInKm}
+                  surgePct={demandaInfo.aumento}
                 />
 
-                <BidPanel
-                  displayPrice={displayPrice}
-                  suggestedPrice={suggestedPrice}
-                  onIncrease={onBidIncrease}
-                  onDecrease={onBidDecrease}
-                  onReset={onBidReset}
-                  onChipDelta={onBidChipDelta}
-                  priceAnim={priceAnim}
-                  bidOffset={bidOffset}
-                  hasPrice={!!displayPrice}
-                />
+                {demandaInfo.aumento > 0 && (
+                  <View style={{ flexDirection: "row", alignItems: "center", gap: 10, backgroundColor: "#0F172A", borderRadius: 14, paddingVertical: 10, paddingHorizontal: 14, shadowColor: "#000", shadowOffset: { width: 0, height: 3 }, shadowOpacity: 0.25, shadowRadius: 8, elevation: 4 }}>
+                    <View style={{ width: 30, height: 30, borderRadius: 15, backgroundColor: "rgba(255,255,255,0.12)", justifyContent: "center", alignItems: "center" }}>
+                      <Ionicons name="flame" size={15} color="#FB923C" />
+                    </View>
+                    <View style={{ flex: 1 }}>
+                      <Text style={{ fontSize: 12, fontWeight: "700", color: "#FFFFFF" }}>Zona muy concurrida</Text>
+                      <Text style={{ fontSize: 11, color: "rgba(255,255,255,0.7)", marginTop: 1 }}>Puede aplicar aumento en la tarifa</Text>
+                    </View>
+                  </View>
+                )}
+
+                <View>
+                  <BidPanel
+                    displayPrice={displayPrice}
+                    suggestedPrice={suggestedPrice}
+                    onIncrease={onBidIncrease}
+                    onDecrease={onBidDecrease}
+                    onReset={onBidReset}
+                    onChipDelta={onBidChipDelta}
+                    priceAnim={priceAnim}
+                    bidOffset={bidOffset}
+                    hasPrice={!!displayPrice}
+                  />
+                  {!deliveryAddress && (
+                    <TouchableOpacity
+                      onPress={openSearchForDestination}
+                      activeOpacity={0.9}
+                      style={{ ...StyleSheet.absoluteFillObject, backgroundColor: "rgba(255,255,255,0.72)", borderRadius: 12, justifyContent: "center", alignItems: "center" }}
+                    >
+                      <View style={{ flexDirection: "row", alignItems: "center", gap: 6, backgroundColor: "rgba(255,255,255,0.92)", borderWidth: 1, borderColor: "#FDBA74", borderRadius: 999, paddingVertical: 8, paddingHorizontal: 14 }}>
+                        <Ionicons name="location-outline" size={14} color="#EA580C" />
+                        <Text style={{ fontSize: 12, fontWeight: "700", color: "#9A3412" }}>Selecciona a dónde vamos</Text>
+                      </View>
+                    </TouchableOpacity>
+                  )}
+                </View>
 
                 <NoteInput value={observations} onChangeText={setObservations} />
 

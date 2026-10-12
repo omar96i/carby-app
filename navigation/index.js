@@ -1,6 +1,6 @@
 import React from "react";
 import { NavigationContainer } from "@react-navigation/native";
-import { createStackNavigator } from "@react-navigation/stack";
+import { createStackNavigator, CardStyleInterpolators } from "@react-navigation/stack";
 import SplashScreen from "../screens/SplashScreen";
 import PantallaDos from "../screens/Onboarding/PantallaDos";
 import PantallaTres from "../screens/Onboarding/PantallaTres";
@@ -39,7 +39,13 @@ import PagoScreen from "../screens/CajaMisterio/PagoScreen";
 import PaymentWebView from "../screens/CajaMisterio/PaymentWebView";
 import ConfigurarPalabraSeguridad from "../screens/ConfigurarPalabraSeguridad";
 import DetalleCarrera from "../screens/usuario/DetalleCarrera";
+import ChatConductor from "../screens/usuario/ChatConductor";
+import ChatPedido from "../screens/usuario/ChatPedido";
 import DetalleCarreraConductor from "../screens/conductor/DetalleCarreraConductor";
+import ChatCliente from "../screens/conductor/ChatCliente";
+import ChatComercio from "../screens/conductor/ChatComercio";
+import ChatDriver from "../screens/comercio/ChatDriver";
+import ChatReservaView from "../screens/ChatReservaView";
 import HorariosScreen from "../screens/comercio/HorariosScreen";
 const Stack = createStackNavigator();
 
@@ -100,7 +106,55 @@ export default function Navigation() {
         />
         <Stack.Screen name="ConfigurarPalabraSeguridad" component={ConfigurarPalabraSeguridad} />
         <Stack.Screen name="DetalleCarrera" component={DetalleCarrera} />
+        <Stack.Screen
+          name="ChatConductor"
+          component={ChatConductor}
+          options={{
+            cardStyleInterpolator: CardStyleInterpolators.forVerticalIOS,
+            gestureDirection: 'vertical',
+          }}
+        />
+        <Stack.Screen
+          name="ChatPedido"
+          component={ChatPedido}
+          options={{
+            cardStyleInterpolator: CardStyleInterpolators.forVerticalIOS,
+            gestureDirection: 'vertical',
+          }}
+        />
         <Stack.Screen name="DetalleCarreraConductor" component={DetalleCarreraConductor} />
+        <Stack.Screen
+          name="ChatCliente"
+          component={ChatCliente}
+          options={{
+            cardStyleInterpolator: CardStyleInterpolators.forVerticalIOS,
+            gestureDirection: 'vertical',
+          }}
+        />
+        <Stack.Screen
+          name="ChatComercio"
+          component={ChatComercio}
+          options={{
+            cardStyleInterpolator: CardStyleInterpolators.forVerticalIOS,
+            gestureDirection: 'vertical',
+          }}
+        />
+        <Stack.Screen
+          name="ChatDriver"
+          component={ChatDriver}
+          options={{
+            cardStyleInterpolator: CardStyleInterpolators.forVerticalIOS,
+            gestureDirection: 'vertical',
+          }}
+        />
+        <Stack.Screen
+          name="ChatReservaView"
+          component={ChatReservaView}
+          options={{
+            cardStyleInterpolator: CardStyleInterpolators.forVerticalIOS,
+            gestureDirection: 'vertical',
+          }}
+        />
         <Stack.Screen name="Horarios" component={HorariosScreen} />
 
       </Stack.Navigator>

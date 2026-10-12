@@ -20,6 +20,7 @@ import Modal from "react-native-modal";
 import * as Location from "expo-location";
 import { GOOGLE_MAPS_API_KEY } from "../../constants/Keys";
 import AlertaModal from "../../components/ErrorModal";
+import FavoriteHeart from "../../components/FavoriteHeart";
 import QrPaymentCard, { qrFileForUpload } from "../../components/Delivery/QrPaymentCard";
 
 const toLocalDateStr = (d) => {
@@ -1181,6 +1182,11 @@ const ServicioDetalle = ({ route, navigation }) => {
           resizeMode="cover"
         />
         <Text style={styles.serviceTitle}>{servicio.nombre}</Text>
+        {servicio?.id && (
+          <View style={styles.favPos}>
+            <FavoriteHeart kind="servicio" productId={servicio.id} size={20} />
+          </View>
+        )}
         {descuento > 0 && (
           <Text style={styles.originalPrice}>
             $ {precioOriginal.toLocaleString()}
@@ -1831,6 +1837,12 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.15,
     shadowRadius: 8,
     elevation: 4,
+  },
+  favPos: {
+    position: "absolute",
+    top: 12,
+    right: 12,
+    zIndex: 2,
   },
   sectionTitle: {
     color: "#fa6205",

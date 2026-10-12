@@ -1,5 +1,6 @@
 import React, { useState } from "react";
-import { View, Text, TouchableOpacity, TextInput, StyleSheet, ActivityIndicator } from "react-native";
+import { View, Text, TouchableOpacity, TextInput, StyleSheet, ActivityIndicator, ScrollView } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Feather, Ionicons } from "@expo/vector-icons";
 import { formatCurrency } from "../utils";
 
@@ -12,6 +13,8 @@ const Star = ({ filled, onPress }) => (
 export const FinishedSheet = ({ tripData, clientName, onDone, loading, showRating = true }) => {
   const [rating, setRating] = useState(5);
   const [message, setMessage] = useState("");
+  const insets = useSafeAreaInsets();
+  const bottomPad = Math.max(insets.bottom, 12);
   const earning = tripData?.costo || 0;
 
   const handleDone = () => {
@@ -21,7 +24,12 @@ export const FinishedSheet = ({ tripData, clientName, onDone, loading, showRatin
   return (
     <View style={styles.sheet}>
       <View style={styles.handle} />
-      <View style={styles.content}>
+      <ScrollView
+        style={styles.scroll}
+        contentContainerStyle={[styles.content, { paddingBottom: 30 + bottomPad }]}
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
+      >
         <View style={styles.iconCircle}>
           <Feather name="check" size={36} color="#10B981" />
         </View>
@@ -58,7 +66,7 @@ export const FinishedSheet = ({ tripData, clientName, onDone, loading, showRatin
         <TouchableOpacity style={[styles.doneBtn, loading && styles.doneBtnDisabled]} onPress={handleDone} disabled={loading} activeOpacity={0.8}>
           {loading ? <ActivityIndicator size="small" color="#FFFFFF" /> : <Text style={styles.doneText}>Buscar nuevo arrendamiento</Text>}
         </TouchableOpacity>
-      </View>
+      </ScrollView>
     </View>
   );
 };
@@ -69,6 +77,7 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
     right: 0,
+    maxHeight: "92%",
     backgroundColor: "rgba(255,255,255,0.98)",
     borderTopLeftRadius: 30,
     borderTopRightRadius: 30,
@@ -89,6 +98,9 @@ const styles = StyleSheet.create({
     alignSelf: "center",
     marginTop: 10,
     marginBottom: 6,
+  },
+  scroll: {
+    flexGrow: 1,
   },
   content: {
     paddingHorizontal: 20,

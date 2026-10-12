@@ -2,7 +2,7 @@ import React from "react";
 import { TouchableOpacity, View, Text, Image, StyleSheet } from "react-native";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 
-export default function PeekSummary({ service, price, onGo, onExpand }) {
+export default function PeekSummary({ service, price, onGo, onExpand, demandaText, tachado }) {
   if (!service) return null;
 
   return (
@@ -17,11 +17,24 @@ export default function PeekSummary({ service, price, onGo, onExpand }) {
         </View>
         <View>
           <Text style={styles.carName}>{service.name}</Text>
+          {demandaText ? (
+            <View style={styles.demandaRow}>
+              <Ionicons name="information-circle" size={11} color="#64748B" />
+              <Text style={styles.demandaText}>{demandaText}</Text>
+            </View>
+          ) : null}
         </View>
       </View>
       <View style={styles.right}>
-        <Text style={styles.price}>{price ? `$${price}` : "--"}</Text>
-        <TouchableOpacity style={styles.goBtn} onPress={onGo} activeOpacity={0.7}>
+        {!tachado && (
+          <Text style={styles.price}>{price ? `$${price}` : "--"}</Text>
+        )}
+        <TouchableOpacity
+          style={[styles.goBtn, tachado && styles.goBtnNublado]}
+          onPress={onGo}
+          activeOpacity={0.7}
+          disabled={tachado}
+        >
           <Text style={styles.goText}>Pedir</Text>
           <Ionicons name="arrow-forward" size={14} color="#FFF" />
         </TouchableOpacity>
@@ -75,6 +88,9 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     color: "#FF5500",
   },
+  goBtnNublado: {
+    opacity: 0.45,
+  },
   goBtn: {
     flexDirection: "row",
     alignItems: "center",
@@ -94,5 +110,16 @@ const styles = StyleSheet.create({
     fontFamily: "MontserratBold",
     fontWeight: "bold",
     color: "#FFFFFF",
+  },
+  demandaRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    marginTop: 2,
+  },
+  demandaText: {
+    fontSize: 11,
+    fontWeight: "600",
+    color: "#475569",
   },
 });

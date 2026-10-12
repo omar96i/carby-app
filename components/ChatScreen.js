@@ -1,5 +1,6 @@
-import React, { useState, useEffect, useRef, useCallback } from "react";
-import { View, Text, TouchableOpacity, FlatList, StyleSheet, ActivityIndicator, Image, KeyboardAvoidingView, Keyboard, Platform } from "react-native";
+import React, { useState, useEffect, useRef, useCallback, useMemo } from "react";
+import { View, Text, TouchableOpacity, FlatList, StyleSheet, ActivityIndicator, Image, KeyboardAvoidingView, Keyboard, Platform, Dimensions, useWindowDimensions } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Feather } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as ImagePicker from 'expo-image-picker';
@@ -9,11 +10,23 @@ import AlertaModal from "../components/ErrorModal";
 import FullscreenImageViewer from "../components/usuario/pedidos/FullscreenImageViewer";
 import ChatInput from "./ChatInput";
 
-const ChatScreen = ({ tripId }) => {
+const dayLabel = (iso) => {
+  if (!iso) return "";
+  const d = new Date(iso);
+  const now = new Date();
+  if (d.toDateString() === now.toDateString()) return "Hoy";
+  const yesterday = new Date(now);
+  yesterday.setDate(now.getDate() - 1);
+  if (d.toDateString() === yesterday.toDateString()) return "Ayer";
+  return d.toLocaleDateString("es-CO", { day: "2-digit", month: "short" });
+};
+
+const ChatScreen = ({ tripId, peerName = "", peerRole = "", peerAvatar = null, headerId = null, showHeader = false, onClose = null }) => {
   const [messages, setMessages] = useState([]);
   const [inputText, setInputText] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [isLoadingHistory, setIsLoadingHistory] = useState(false);
+  const [chatImage, setChatImage] = useState(null);
   const [fullscreenImage, setFullscreenImage] = useState(null);
   const [alertVisible, setAlertVisible] = useState(false);
   const [alertData, setAlertData] = useState({ message: "", type: "info", onPrimary: null, primaryLabel: "" });
@@ -132,6 +145,7 @@ const ChatScreen = ({ tripId }) => {
               ? `${BASE_URL.toString().replace("/api", "")}storage/${messageContent.content}`
               : null,
             time: new Date(msg.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+            ts: msg.created_at || null,
             status: "sent",
             isMyMessage: isMyMessage
           };
@@ -146,9 +160,11 @@ const ChatScreen = ({ tripId }) => {
     }
   }, [tripId]);
 
-  // Función para enviar mensajes de texto
-  const sendMessage = useCallback(async () => {
-    if (!inputText.trim()) return;
+  // Enviar texto e imagen (igual que OrderChatModal): la imagen
+  // se previsualiza primero y se envía junto al mensaje.
+  const sendMessage = useCallback(async (textOverride) => {
+    const text = textOverride || inputText;
+    if (!text.trim() && !chatImage) return;
 
     setIsLoading(true);
 
@@ -165,23 +181,36 @@ const ChatScreen = ({ tripId }) => {
       formData.append("carrera_id", tripId.toString());
       formData.append("conductor_id", userId.toString());
 
-      const rawMessage = {
-        type: "text",
-        content: inputText
-      };
-      const escapedJson = JSON.stringify(rawMessage).replace(/"/g, '\\"');
-      formData.append("message", `"${escapedJson}"`);
+      if (chatImage) {
+        const imageMessage = { type: "file", content: "chat" };
+        formData.append("message", `"${JSON.stringify(imageMessage).replace(/"/g, '\\"')}"`);
+        formData.append("image", {
+          uri: chatImage,
+          name: chatImage.split("/").pop() || "photo.jpg",
+          type: "image/jpeg",
+        });
+      } else {
+        const rawMessage = {
+          type: "text",
+          content: text.trim()
+        };
+        const escapedJson = JSON.stringify(rawMessage).replace(/"/g, '\\"');
+        formData.append("message", `"${escapedJson}"`);
+      }
 
       const localMessage = {
         id: `temp-${Date.now()}`,
         user: "Tú",
-        text: inputText,
+        text: chatImage ? "[Imagen]" : text.trim(),
+        image: chatImage,
         time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+        ts: new Date().toISOString(),
         status: "sending",
         isMyMessage: true
       };
       setMessages(prev => [...prev, localMessage]);
       setInputText("");
+      setChatImage(null);
 
       const response = await fetch(`${BASE_URL}carrera-chat/send`, {
         method: "POST",
@@ -217,87 +246,10 @@ const ChatScreen = ({ tripId }) => {
     } finally {
       setIsLoading(false);
     }
-  }, [inputText, tripId]);
+  }, [inputText, tripId, chatImage]);
 
-  // Función para enviar imágenes
-  const sendImage = async (image) => {
-    setIsLoading(true);
-
-    try {
-      const token = await AsyncStorage.getItem("userToken");
-      const userId = await AsyncStorage.getItem("userId");
-
-      if (!token || !userId) {
-        showAlert("No se encontró la información de autenticación", "error");
-        return;
-      }
-
-      const formData = new FormData();
-      formData.append("carrera_id", tripId.toString());
-      formData.append("conductor_id", userId.toString());
-
-      const message = {
-        type: "image",
-        content: "Imagen enviada"
-      };
-      const escapedJson = JSON.stringify(message).replace(/"/g, '\\"');
-      formData.append("message", `"${escapedJson}"`);
-
-      formData.append("image", {
-        uri: image.uri,
-        name: "photo.jpg",
-        type: "image/jpeg"
-      });
-
-      const localMessage = {
-        id: `temp-${Date.now()}`,
-        user: "Tú",
-        text: "[Imagen]",
-        image: image.uri,
-        time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-        status: "sending",
-        isMyMessage: true
-      };
-      setMessages(prev => [...prev, localMessage]);
-
-      const response = await fetch(`${BASE_URL}carrera-chat/send`, {
-        method: "POST",
-        headers: {
-          "Authorization": `Bearer ${token}`,
-          "Accept": "application/json"
-        },
-        body: formData
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        console.error("Error sending image:", data);
-        showAlert("No se pudo enviar la imagen", "error");
-        setMessages(prev =>
-          prev.map(msg =>
-            msg.id === localMessage.id ? { ...msg, status: "error" } : msg
-          )
-        );
-        return;
-      }
-
-      setMessages(prev =>
-        prev.map(msg =>
-          msg.id === localMessage.id ? { ...msg, status: "sent", id: data.id || msg.id } : msg
-        )
-      );
-
-    } catch (error) {
-      console.error("Error in sendImage:", error);
-      showAlert("Ocurrió un error al enviar la imagen", "error");
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  // Función para seleccionar y enviar imágenes
-  const handlePickImageAndSend = async () => {
+  // Seleccionar imagen (solo previsualiza, el envío va con el mensaje)
+  const pickImage = async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (status !== 'granted') {
       showAlert('Se necesita acceso a tu galería para enviar imágenes', "info");
@@ -310,58 +262,174 @@ const ChatScreen = ({ tripId }) => {
       quality: 0.7,
     });
 
-    if (!result.cancelled) {
-      sendImage(result.assets ? result.assets[0] : result);
-    }
+    if (result.canceled || result.cancelled) return;
+    const asset = result.assets?.[0];
+    if (!asset?.uri) return;
+    setChatImage(asset.uri);
   };
 
-  // Renderizar mensajes
-  const renderMessage = ({ item }) => (
-    <View style={[
-      styles.messageWrapper,
-      item.isMyMessage ? styles.myMessageWrapper : styles.otherMessageWrapper
-    ]}>
-      <View style={[
-        styles.bubble,
-        item.isMyMessage ? styles.myBubble : styles.otherBubble
-      ]}>
-        {item.image ? (
-          <TouchableOpacity onPress={() => setFullscreenImage(item.image)} activeOpacity={0.85}>
-            <Image source={{ uri: item.image }} style={styles.messageImage} />
-          </TouchableOpacity>
-        ) : (
-          <Text style={[
-            styles.messageText,
-            item.isMyMessage ? styles.myMessageText : styles.otherMessageText
-          ]}>
-            {typeof item.text === 'string' ? item.text : ''}
-          </Text>
+  // Renderizar mensajes (memoizado: no se recrea al escribir)
+  const renderMessage = useCallback(({ item }) => {
+    if (item.type === "divider") {
+      return (
+        <View style={styles.dayRow}>
+          <Text style={styles.dayLabel}>{item.label}</Text>
+        </View>
+      );
+    }
+    if (item.isMyMessage) {
+      return (
+        <View style={[styles.messageWrapper, styles.myMessageWrapper]}>
+          <View style={[styles.bubble, styles.myBubble]}>
+            {item.image ? (
+              <TouchableOpacity onPress={() => setFullscreenImage(item.image)} activeOpacity={0.85}>
+                <Image source={{ uri: item.image }} style={styles.messageImage} />
+              </TouchableOpacity>
+            ) : (
+              <Text style={[styles.messageText, styles.myMessageText]}>
+                {typeof item.text === 'string' ? item.text : ''}
+              </Text>
+            )}
+            <View style={[styles.metaRow, styles.myMeta]}>
+              <Text style={[styles.time, styles.myTime]}>
+                {typeof item.time === 'string' ? item.time : ''}
+              </Text>
+              {item.status === "sending" && <Text style={styles.statusSending}>enviando</Text>}
+              {item.status === "error" && <Text style={styles.statusError}>error</Text>}
+              {item.status !== "sending" && item.status !== "error" && (
+                <Feather name="check" size={10} color="rgba(255,255,255,0.7)" />
+              )}
+            </View>
+          </View>
+        </View>
+      );
+    }
+    return (
+      <View style={[styles.messageWrapper, styles.otherMessageWrapper]}>
+        {!!peerName && (
+          <View style={styles.otherAvatar}>
+            <Text style={styles.otherAvatarText}>{peerInitials}</Text>
+          </View>
         )}
-        <View style={styles.metaRow}>
-          <Text style={[styles.time, item.isMyMessage ? styles.myTime : styles.otherTime]}>
-            {typeof item.time === 'string' ? item.time : ''}
-          </Text>
-          {item.status === "sending" && <Text style={styles.statusSending}>enviando</Text>}
-          {item.status === "error" && <Text style={styles.statusError}>error</Text>}
-          {item.isMyMessage && item.status !== "sending" && item.status !== "error" && (
-            <Feather name="check" size={10} color="rgba(255,255,255,0.7)" />
+        <View style={styles.otherCol}>
+          {!!peerName && (
+            <Text style={styles.otherName} numberOfLines={1}>{peerName}</Text>
           )}
+          <View style={[styles.bubble, styles.otherBubble]}>
+            {item.image ? (
+              <TouchableOpacity onPress={() => setFullscreenImage(item.image)} activeOpacity={0.85}>
+                <Image source={{ uri: item.image }} style={styles.messageImage} />
+              </TouchableOpacity>
+            ) : (
+              <Text style={[styles.messageText, styles.otherMessageText]}>
+                {typeof item.text === 'string' ? item.text : ''}
+              </Text>
+            )}
+            <View style={[styles.metaRow, styles.otherMeta]}>
+              <Text style={[styles.time, styles.otherTime]}>
+                {typeof item.time === 'string' ? item.time : ''}
+              </Text>
+              {item.status === "sending" && <Text style={styles.statusSending}>enviando</Text>}
+              {item.status === "error" && <Text style={styles.statusError}>error</Text>}
+            </View>
+          </View>
         </View>
       </View>
-    </View>
-  )
+    );
+  }, [peerName, peerInitials]);
+
+  const feed = useMemo(() => {
+    const out = [];
+    let lastDay = "";
+    messages.forEach((m) => {
+      const dk = m.ts ? new Date(m.ts).toDateString() : "";
+      if (dk && dk !== lastDay) {
+        lastDay = dk;
+        out.push({ type: "divider", id: `div-${dk}`, label: dayLabel(m.ts) });
+      }
+      out.push(m);
+    });
+    return out;
+  }, [messages]);
+
+  const invertedFeed = useMemo(() => [...feed].reverse(), [feed]);
 
   const flatListRef = useRef(null);
+  const insets = useSafeAreaInsets();
+  const windowHeight = useWindowDimensions().height;
+  const [keyboardHeight, setKeyboardHeight] = useState(0);
 
-  const quickReplies = ['Ya estoy en el lugar', 'Voy en camino', 'Llego en 2 min'];
+  useEffect(() => {
+    const show = Keyboard.addListener("keyboardDidShow", (e) => setKeyboardHeight(e.endCoordinates?.height || 0));
+    const hide = Keyboard.addListener("keyboardDidHide", () => setKeyboardHeight(0));
+    return () => { show.remove(); hide.remove(); };
+  }, []);
+
+  // Offset manual solo en Android sin resize (Expo Go). En iOS lo maneja el KAV interno.
+  const windowShrunk = Dimensions.get("screen").height - windowHeight > 50;
+  const manualOffset = Platform.OS === "android" && !windowShrunk ? keyboardHeight : 0;
+
+  // Auto-scroll al último mensaje (lista invertida: offset 0 = abajo)
+  useEffect(() => {
+    if (invertedFeed.length && flatListRef.current) {
+      const t = setTimeout(() => flatListRef.current?.scrollToOffset({ offset: 0, animated: false }), 100);
+      return () => clearTimeout(t);
+    }
+  }, [invertedFeed.length]);
+
+  const peerInitials = useMemo(() => {
+    const parts = String(peerName || "?").trim().split(/\s+/);
+    return ((parts[0]?.[0] || "?") + (parts[1]?.[0] || "")).toUpperCase();
+  }, [peerName]);
+
+  const quickReplies = [
+    { text: 'Ya estoy en el lugar', icon: 'map-pin' },
+    { text: 'Voy en camino', icon: 'navigation' },
+    { text: 'Llego en 2 min', icon: 'clock' },
+  ];
 
   return (
     <KeyboardAvoidingView
-      style={styles.container}
+      style={[styles.container, { paddingBottom: manualOffset }]}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
     >
-      <View style={{ flex: 1 }}>
+      <View style={[styles.contentFlex, showHeader && { paddingBottom: insets.bottom }]}>
+        {showHeader && (
+          <View style={[styles.chatHeader, { paddingTop: Math.max(insets.top, 8) }]}>
+            <View style={styles.avatarWrap}>
+              {peerAvatar ? (
+                <Image source={{ uri: peerAvatar }} style={styles.avatarImage} />
+              ) : (
+                <View style={styles.avatarBox}>
+                  <Text style={styles.avatarInitial}>{peerInitials}</Text>
+                </View>
+              )}
+              <View style={styles.onlineDot} />
+            </View>
+            <View style={styles.headerText}>
+              <View style={styles.nameRow}>
+                <Text style={styles.headerTitle} numberOfLines={1}>{peerName || "Chat"}</Text>
+                {!!peerName && <Feather name="check-circle" size={12} color="#FF5500" />}
+              </View>
+              {!!peerRole && (
+                <View style={styles.subRow}>
+                  <Text style={styles.headerSub} numberOfLines={1}>{peerRole}</Text>
+                  {!!headerId && (
+                    <View style={styles.orderBadge}>
+                      <Text style={styles.orderBadgeText}>#{headerId}</Text>
+                    </View>
+                  )}
+                </View>
+              )}
+            </View>
+            {!!onClose && (
+              <TouchableOpacity style={styles.closeBtn} onPress={onClose} activeOpacity={0.8}>
+                <Feather name="x" size={20} color="#0F172A" />
+              </TouchableOpacity>
+            )}
+          </View>
+        )}
         <View style={styles.chatContainer}>
           {isLoadingHistory ? (
             <View style={styles.loadingContainer}>
@@ -369,26 +437,31 @@ const ChatScreen = ({ tripId }) => {
               <Text style={styles.loadingText}>Cargando mensajes anteriores...</Text>
             </View>
           ) : (
+              <>
               <FlatList
                 ref={flatListRef}
                 style={styles.messagesList}
                 inverted
-                data={[...messages].reverse()}
+                data={invertedFeed}
                 keyExtractor={(item) => item.id.toString()}
                 renderItem={renderMessage}
-                onRefresh={fetchPreviousMessages}
-                refreshing={isLoadingHistory}
                 keyboardShouldPersistTaps="handled"
                 contentContainerStyle={styles.messagesContent}
+                initialNumToRender={20}
+                maxToRenderPerBatch={20}
+                windowSize={11}
+                maintainVisibleContentPosition={{ minIndexForVisible: 0 }}
               />
+              </>
           )}
         </View>
 
         {/* Quick replies */}
         <View style={styles.quickReplies}>
           {quickReplies.map((q) => (
-            <TouchableOpacity key={q} style={styles.quickReply} onPress={() => { setInputText(q); }} activeOpacity={0.8}>
-              <Text style={styles.quickReplyText}>{q}</Text>
+            <TouchableOpacity key={q.text} style={styles.quickReply} onPress={() => sendMessage(q.text)} activeOpacity={0.8}>
+              <Feather name={q.icon} size={12} color="#FF5500" />
+              <Text style={styles.quickReplyText}>{q.text}</Text>
             </TouchableOpacity>
           ))}
         </View>
@@ -399,7 +472,16 @@ const ChatScreen = ({ tripId }) => {
           onChangeText={setInputText}
           onSend={sendMessage}
           sending={isLoading}
-          onPickImage={handlePickImageAndSend}
+          onPickImage={pickImage}
+          extraSendEnabled={!!chatImage}
+          preview={chatImage && (
+            <View style={styles.imagePreview}>
+              <Image source={{ uri: chatImage }} style={styles.imagePreviewThumb} />
+              <TouchableOpacity onPress={() => setChatImage(null)} style={styles.removeImageBtn}>
+                <Feather name="x" size={14} color="#64748B" />
+              </TouchableOpacity>
+            </View>
+          )}
         />
       </View>
       <AlertaModal
@@ -418,7 +500,124 @@ const ChatScreen = ({ tripId }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#FFFFFF"
+    backgroundColor: "#F8FAFC"
+  },
+  contentFlex: {
+    flex: 1,
+  },
+  chatHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: "#F1F5F9",
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    backgroundColor: "#FFFFFF",
+    shadowColor: "#0F172A",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 3,
+    zIndex: 10,
+  },
+  avatarWrap: {
+    position: "relative",
+  },
+  avatarBox: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: "#FFF7ED",
+    borderWidth: 1,
+    borderColor: "#FDBA74",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  avatarInitial: {
+    fontSize: 15,
+    fontFamily: "Montserrat_700Bold",
+    color: "#FF5500",
+  },
+  avatarImage: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: "#F1F5F9",
+  },
+  onlineDot: {
+    position: "absolute",
+    bottom: 0,
+    right: 0,
+    width: 14,
+    height: 14,
+    borderRadius: 7,
+    backgroundColor: "#10B981",
+    borderWidth: 2,
+    borderColor: "#FFFFFF",
+  },
+  headerText: {
+    flex: 1,
+  },
+  nameRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+  },
+  headerTitle: {
+    fontSize: 15,
+    fontFamily: "MontserratBold",
+    fontWeight: "bold",
+    color: "#0F172A",
+  },
+  subRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    marginTop: 2,
+  },
+  headerSub: {
+    fontSize: 12,
+    fontFamily: "Montserrat",
+    color: "#64748B",
+  },
+  orderBadge: {
+    backgroundColor: "#FFF7ED",
+    borderWidth: 1,
+    borderColor: "#FDBA74",
+    borderRadius: 8,
+    paddingHorizontal: 6,
+    paddingVertical: 1,
+  },
+  orderBadgeText: {
+    fontSize: 10,
+    fontFamily: "MontserratBold",
+    fontWeight: "bold",
+    color: "#FF5500",
+  },
+  closeBtn: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    backgroundColor: "#F1F5F9",
+    borderWidth: 1,
+    borderColor: "#E2E8F0",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  dayRow: {
+    alignItems: "center",
+    marginVertical: 8,
+  },
+  dayLabel: {
+    fontSize: 11,
+    fontFamily: "Montserrat",
+    color: "#94A3B8",
+    backgroundColor: "#E2E8F0",
+    paddingHorizontal: 12,
+    paddingVertical: 3,
+    borderRadius: 10,
+    overflow: "hidden",
   },
   chatContainer: {
     flex: 1,
@@ -435,6 +634,25 @@ const styles = StyleSheet.create({
     height: 160,
     borderRadius: 12,
     resizeMode: 'cover',
+  },
+  imagePreview: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 8,
+  },
+  imagePreviewThumb: {
+    width: 44,
+    height: 44,
+    borderRadius: 8,
+  },
+  removeImageBtn: {
+    marginLeft: 8,
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    backgroundColor: "#F1F5F9",
+    justifyContent: "center",
+    alignItems: "center",
   },
   loadingContainer: {
     flex: 1,
@@ -466,6 +684,35 @@ const styles = StyleSheet.create({
   },
   otherMessageWrapper: {
     alignSelf: 'flex-start',
+    flexDirection: "row",
+    alignItems: "flex-end",
+    gap: 8,
+    maxWidth: "88%",
+  },
+  otherAvatar: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: "#E2E8F0",
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: 2,
+  },
+  otherAvatarText: {
+    fontSize: 10,
+    fontFamily: "Montserrat",
+    fontWeight: "bold",
+    color: "#64748B",
+  },
+  otherCol: {
+    flex: 1,
+  },
+  otherName: {
+    fontSize: 10,
+    fontFamily: "Montserrat",
+    color: "#94A3B8",
+    marginLeft: 4,
+    marginBottom: 2,
   },
   bubble: {
     borderRadius: 18,
@@ -474,11 +721,23 @@ const styles = StyleSheet.create({
   },
   myBubble: {
     backgroundColor: "#FF5500",
-    borderBottomRightRadius: 6,
+    borderTopRightRadius: 6,
+    shadowColor: "#FF5500",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.35,
+    shadowRadius: 10,
+    elevation: 6,
   },
   otherBubble: {
-    backgroundColor: "#F1F5F9",
-    borderBottomLeftRadius: 6,
+    backgroundColor: "#FFFFFF",
+    borderWidth: 1,
+    borderColor: "#E2E8F0",
+    borderTopLeftRadius: 6,
+    shadowColor: "#0F172A",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 6,
+    elevation: 2,
   },
   messageText: {
     fontSize: 14,
@@ -494,9 +753,14 @@ const styles = StyleSheet.create({
   metaRow: {
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "flex-end",
     gap: 4,
     marginTop: 4,
+  },
+  myMeta: {
+    justifyContent: "flex-end",
+  },
+  otherMeta: {
+    justifyContent: "flex-start",
   },
   time: {
     fontSize: 10,
@@ -520,72 +784,28 @@ const styles = StyleSheet.create({
   },
   quickReplies: {
     flexDirection: "row",
+    flexWrap: "wrap",
     gap: 8,
     paddingHorizontal: 12,
     paddingVertical: 6,
-    height: 40,
-    alignItems: "center",
+    backgroundColor: "#F8FAFC",
   },
   quickReply: {
-    borderRadius: 12,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    borderRadius: 999,
     borderWidth: 1,
     borderColor: "#E2E8F0",
-    backgroundColor: "#F8FAFC",
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    justifyContent: "center",
-  },
-  quickReplyText: {
-    fontSize: 11,
-    fontFamily: "Montserrat",
-    color: "#0F172A",
-  },
-  inputContainer: {
-    flexDirection: "row",
-    alignItems: "flex-end",
-    gap: 8,
-    borderTopWidth: 1,
-    borderTopColor: "#E2E8F0",
     backgroundColor: "#FFFFFF",
     paddingHorizontal: 14,
     paddingVertical: 10,
-    paddingBottom: Platform.OS === 'ios' ? 24 : 16,
   },
-  input: {
-    flex: 1,
-    minHeight: 42,
-    maxHeight: 110,
-    borderRadius: 22,
-    borderWidth: 1,
-    borderColor: "#E2E8F0",
-    backgroundColor: "#F8FAFC",
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    fontSize: 14,
+  quickReplyText: {
+    fontSize: 12,
     fontFamily: "Montserrat",
-    color: "#0F172A",
+    color: "#334155",
   },
-  sendButton: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: "#FF5500",
-    justifyContent: "center",
-    alignItems: "center",
-    marginBottom: Platform.OS === 'ios' ? 0 : -2,
-  },
-  sendButtonDisabled: {
-    backgroundColor: "#CBD5E1",
-  },
-  iconButton: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: "#F1F5F9",
-    marginBottom: Platform.OS === 'ios' ? 0 : -2,
-  }
 });
 
 export default ChatScreen;

@@ -10,9 +10,8 @@ import {
   StatusBar,
   BackHandler,
   Linking,
-  Image,
 } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import * as Location from "expo-location";
 import { useNavigation, useFocusEffect, useRoute } from "@react-navigation/native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -31,21 +30,19 @@ import { ClientSheet } from "./components/ClientSheet";
 import { FinishedSheet } from "./components/FinishedSheet";
 import { PinModal } from "./components/PinModal";
 import ChatScreen from "../../../components/ChatScreen";
-import ChatRiderComercio from "../../../screens/ChatRiderComercio";
-import { useNotification } from "../../../context/NotificationContext";
+import ChatRiderComercio from "../../../screens/ChatRiderComercio";import { useNotification } from "../../../context/NotificationContext";
 import AlertaModal from "../../../components/ErrorModal";
 
 export default function DetalleCarreraConductor() {
   const navigation = useNavigation();
   const route = useRoute();
+  const insets = useSafeAreaInsets();
   const { tripId = 0, carreraId = 0 } = route.params || {};
   const activeId = tripId || carreraId;
 
   const mapRef = useRef(null);
   const [parsedInfo, setParsedInfo] = useState({ origen: "", destino: "", observaciones: "" });
   const [clientLive, setClientLive] = useState(true);
-  const [showChat, setShowChat] = useState(false);
-  const [showCommerceChat, setShowCommerceChat] = useState(false);
   const [pinModalVisible, setPinModalVisible] = useState(false);
   const [enteredPin, setEnteredPin] = useState("");
   const [pinError, setPinError] = useState(false);
@@ -55,6 +52,7 @@ export default function DetalleCarreraConductor() {
   const [alertData, setAlertData] = useState({ message: "", type: "info", onPrimary: null, primaryLabel: "" });
   const [paymentApproved, setPaymentApproved] = useState(false);
   const [approvingPayment, setApprovingPayment] = useState(false);
+  const [requestingPayment, setRequestingPayment] = useState(false);
   const [driverLocation, setDriverLocation] = useState(null);
 
   const showAlert = (message, type = "info", onPrimary = null, primaryLabel = null, onClose = null) => {
@@ -62,7 +60,7 @@ export default function DetalleCarreraConductor() {
     setAlertVisible(true);
   };
 
-  const { tripData, isLoading, error, refetch } = useTripData(activeId, showChat || showCommerceChat);
+  const { tripData, isLoading, error, refetch } = useTripData(activeId);
   const { notification } = useNotification();
 
   // Refetch ante push (estado o chat)
@@ -107,6 +105,9 @@ export default function DetalleCarreraConductor() {
       ? comercioFotoRaw
       : `${BASE_URL.toString().replace(/\/api\/?$/, "").replace(/\/$/, "")}/storage/${comercioFotoRaw}`)
     : null;
+  const userName = tripData?.usuario?.nombre_completo || "Cliente";
+  const userPhotoUrl = getImageUrl(tripData?.usuario?.foto_documento_file);
+  const comercioName = comercio?.establecimiento_nombre || comercio?.nombre || "Comercio";
   const state = useMemo(
     () => (isDelivery ? getPedidoState(tripData?.estado) : getTripState(tripData?.estado)),
     [tripData?.estado, isDelivery]
@@ -238,6 +239,54 @@ export default function DetalleCarreraConductor() {
     }
   };
 
+  const openChat = useCallback(() => {
+    navigation.navigate("ChatCliente", {
+      tripId: activeId,
+      peerName: userName,
+      peerRole: "Pasajero",
+      peerAvatar: userPhotoUrl,
+    });
+  }, [navigation, activeId, userName, userPhotoUrl]);
+
+  const openCommerceChat = useCallback(() => {
+    if (!pedido?.id) return;
+    navigation.navigate("ChatComercio", {
+      pedidoId: pedido.id,
+      carreraId: activeId,
+      comercioId: comercio?.id || pedido.comercio_id,
+      comercioNombre: comercioName,
+      peerName: comercioName,
+      peerAvatar: comercioFoto,
+      tipo: "rider-comercio",
+    });
+  }, [navigation, pedido, activeId, comercio, comercioName, comercioFoto]);
+
+  const handleRequestPayment = async (metodoLabel) => {
+    setRequestingPayment(true);
+    try {
+      const token = await AsyncStorage.getItem("userToken");
+      const userId = await AsyncStorage.getItem("userId");
+      if (!token || !userId) throw new Error("No se encontró sesión");
+      const texto = `Hola, te solicito el pago de ${formatCurrency(tripData?.costo)} por ${metodoLabel}. ¿Me confirmas el comprobante por este chat?`;
+      const formData = new FormData();
+      formData.append("carrera_id", activeId.toString());
+      formData.append("conductor_id", userId.toString());
+      const escapedJson = JSON.stringify({ type: "text", content: texto }).replace(/"/g, '\\"');
+      formData.append("message", `"${escapedJson}"`);
+      const response = await fetch(`${BASE_URL}carrera-chat/send`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}`, Accept: "application/json" },
+        body: formData,
+      });
+      if (!response.ok) throw new Error("No se pudo enviar la solicitud");
+      openChat();
+    } catch (e) {
+      showAlert(`No se pudo solicitar el pago: ${e.message}`, "error");
+    } finally {
+      setRequestingPayment(false);
+    }
+  };
+
   const handleCancel = async () => {
     try {
       const token = await AsyncStorage.getItem("userToken");
@@ -344,7 +393,8 @@ export default function DetalleCarreraConductor() {
           <TopBar state={state} isDelivery={isDelivery} onBack={() => navigation.replace("BottomTabNavigatorDelivery")} />
 
           <TouchableOpacity style={styles.mapsBtnTop} onPress={openMaps} activeOpacity={0.8}>
-            <MaterialCommunityIcons name="google-maps" size={22} color="#0F172A" />
+            <MaterialCommunityIcons name="directions" size={20} color="#FFFFFF" />
+            <Text style={styles.mapsBtnText}>Cómo llegar</Text>
           </TouchableOpacity>
 
           {isFinished ? (
@@ -363,9 +413,12 @@ export default function DetalleCarreraConductor() {
               destinationAddress={parsedInfo.destino}
               clientLive={clientLive}
               onToggleClientLive={() => setClientLive((v) => !v)}
-              onShowChat={() => setShowChat(true)}
-              onShowCommerceChat={() => setShowCommerceChat(true)}
+              lastLocationUpdate={passengerLocation?.updatedAt}
+              onShowChat={openChat}
+              onShowCommerceChat={openCommerceChat}
               onApprovePayment={handleApprovePayment}
+              onRequestPayment={handleRequestPayment}
+              requestingPayment={requestingPayment}
               onArrive={handleArrive}
               onArriveAtStore={handleArriveAtStore}
               onPickupOrder={handlePickupOrder}
@@ -385,81 +438,6 @@ export default function DetalleCarreraConductor() {
               paymentApproved={paymentApproved}
               hasNewMessages={false}
             />
-          )}
-
-          {showChat && (
-            <View style={styles.chatOverlay}>
-              <TouchableOpacity
-                style={styles.chatBackdrop}
-                activeOpacity={1}
-                onPress={() => setShowChat(false)}
-              />
-              <View style={styles.chatPanel}>
-                <View style={styles.chatHeader}>
-                  <Image
-                    source={
-                      getImageUrl(tripData?.usuario?.foto_documento_file)
-                        ? { uri: getImageUrl(tripData.usuario.foto_documento_file) }
-                        : require("../../../assets/images/nuevo-icono.jpeg")
-                    }
-                    style={styles.chatAvatar}
-                  />
-                  <View style={styles.chatHeaderText}>
-                    <Text style={styles.chatTitle} numberOfLines={1}>
-                      {tripData?.usuario?.nombre_completo || "Cliente"}
-                    </Text>
-                    <Text style={styles.chatStatus}>Pasajero</Text>
-                  </View>
-                  <TouchableOpacity onPress={() => setShowChat(false)} style={styles.closeChatBtn}>
-                    <Feather name="x" size={20} color="#FFFFFF" />
-                  </TouchableOpacity>
-                </View>
-                <View style={styles.chatBody}>
-                  <ChatScreen tripId={activeId} />
-                </View>
-              </View>
-            </View>
-          )}
-
-          {showCommerceChat && pedido?.id && (
-            <View style={styles.chatOverlay}>
-              <TouchableOpacity
-                style={styles.chatBackdrop}
-                activeOpacity={1}
-                onPress={() => setShowCommerceChat(false)}
-              />
-              <View style={styles.chatPanel}>
-                <View style={styles.chatHeader}>
-                  {comercioFoto ? (
-                    <Image source={{ uri: comercioFoto }} style={styles.chatAvatar} />
-                  ) : (
-                    <View style={[styles.chatAvatar, styles.chatAvatarFallback]}>
-                      <Feather name="message-circle" size={20} color="#FFFFFF" />
-                    </View>
-                  )}
-                  <View style={styles.chatHeaderText}>
-                    <Text style={styles.chatTitle} numberOfLines={1}>
-                      {comercio?.establecimiento_nombre || comercio?.nombre || "Comercio"}
-                    </Text>
-                    <Text style={styles.chatStatus}>Chat del pedido</Text>
-                  </View>
-                  <TouchableOpacity onPress={() => setShowCommerceChat(false)} style={styles.closeChatBtn}>
-                    <Feather name="x" size={20} color="#FFFFFF" />
-                  </TouchableOpacity>
-                </View>
-                <View style={styles.chatBody}>
-                  <ChatRiderComercio
-                    pedidoId={pedido.id}
-                    carreraId={activeId}
-                    comercioId={comercio?.id || pedido.comercio_id}
-                    comercioNombre={comercio?.establecimiento_nombre || comercio?.nombre || "Comercio"}
-                    tipo="rider-comercio"
-                    onClose={() => setShowCommerceChat(false)}
-                    modalMode={true}
-                  />
-                </View>
-              </View>
-            </View>
           )}
 
           <PinModal
@@ -531,100 +509,28 @@ const styles = StyleSheet.create({
     fontFamily: "MontserratBold",
     fontWeight: "bold",
   },
-  chatOverlay: {
-    position: "absolute",
-    top: 0,
-    bottom: 0,
-    left: 0,
-    right: 0,
-    zIndex: 2000,
-  },
-  chatBackdrop: {
-    flex: 1,
-    backgroundColor: "rgba(15,23,42,0.35)",
-  },
-  chatPanel: {
-    position: "absolute",
-    bottom: 0,
-    left: 0,
-    right: 0,
-    height: "80%",
-    backgroundColor: "#FFFFFF",
-    borderTopLeftRadius: 28,
-    borderTopRightRadius: 28,
-    shadowColor: "#0F172A",
-    shadowOffset: { width: 0, height: -10 },
-    shadowOpacity: 0.15,
-    shadowRadius: 30,
-    elevation: 20,
-    overflow: "hidden",
-  },
-  chatHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: "#E2E8F0",
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    backgroundColor: "#FF5500",
-  },
-  chatAvatar: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: "#FFFFFF",
-    borderWidth: 2,
-    borderColor: "#FFFFFF",
-  },
-  chatAvatarFallback: {
-    backgroundColor: "rgba(255,255,255,0.25)",
-    borderWidth: 0,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  chatHeaderText: {
-    flex: 1,
-  },
-  chatTitle: {
-    fontSize: 15,
-    fontFamily: "MontserratBold",
-    fontWeight: "bold",
-    color: "#FFFFFF",
-  },
-  chatStatus: {
-    fontSize: 12,
-    fontFamily: "MontserratBold",
-    fontWeight: "bold",
-    color: "rgba(255,255,255,0.9)",
-    marginTop: 3,
-  },
-  closeChatBtn: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: "rgba(255,255,255,0.25)",
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  chatBody: {
-    flex: 1,
-  },
   mapsBtnTop: {
     position: "absolute",
-    top: 115,
+    top: 220,
     right: 16,
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: "#FFFFFF",
-    justifyContent: "center",
+    flexDirection: "row",
     alignItems: "center",
-    shadowColor: "#0F172A",
+    gap: 8,
+    backgroundColor: "#1A73E8",
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+    borderRadius: 22,
+    shadowColor: "#1A73E8",
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.12,
+    shadowOpacity: 0.3,
     shadowRadius: 12,
     elevation: 5,
     zIndex: 110,
+  },
+  mapsBtnText: {
+    color: "#FFFFFF",
+    fontSize: 13,
+    fontFamily: "MontserratBold",
+    fontWeight: "bold",
   },
 });

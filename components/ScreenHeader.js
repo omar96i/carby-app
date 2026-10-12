@@ -1,16 +1,18 @@
 import React from "react";
 import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useNavigation } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
 
 export default function ScreenHeader({ title, showBackButton = false }) {
   const navigation = useNavigation();
+  const insets = useSafeAreaInsets();
 
   return (
-    <View style={styles.header}>
+    <View style={[styles.header, { paddingTop: Math.max(insets.top + 8, 50) }]}>
       {showBackButton ? (
         <TouchableOpacity
-          style={styles.backButton}
+          style={[styles.backButton, { top: Math.max(insets.top + 2, 44) }]}
           onPress={() => navigation.goBack()}
           activeOpacity={0.7}
         >
@@ -27,7 +29,6 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     backgroundColor: "#1C1C1E",
-    paddingTop: 50,
     paddingBottom: 22,
     borderBottomLeftRadius: 40,
     borderBottomRightRadius: 40,
@@ -35,7 +36,6 @@ const styles = StyleSheet.create({
   backButton: {
     position: "absolute",
     left: 28,
-    top: 44,
     width: 36,
     height: 36,
     borderRadius: 18,

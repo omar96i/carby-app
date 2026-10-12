@@ -1,13 +1,18 @@
 import React from "react";
-import { createStackNavigator } from "@react-navigation/stack";
+import { createStackNavigator, CardStyleInterpolators } from "@react-navigation/stack";
 import StepUno from "../screens/Delivery/StepUno";
 import StepDos from "../screens/Delivery/StepDos";
 import StepTres from "../screens/Delivery/StepTres";
 import StepCuatro from "../screens/Delivery/StepCuatro";
 import StepNueve from "../screens/Delivery/StepNueve";
 import DetalleCarrera from "../screens/usuario/DetalleCarrera";
+import ChatConductor from "../screens/usuario/ChatConductor";
 import HomeDelivery from "../screens/HomeDomicilio/HomeDelivery";
 import DetalleCarreraConductor from "../screens/conductor/DetalleCarreraConductor";
+import ChatCliente from "../screens/conductor/ChatCliente";
+import ChatComercio from "../screens/conductor/ChatComercio";
+import ChatDriver from "../screens/comercio/ChatDriver";
+import ChatReservaView from "../screens/ChatReservaView";
 import Historial from "../screens/Pedidos";
 import StepDieciseis from "../screens/Billetera/StepDieciseis";
 import StepDiecisiete from "../screens/Billetera/StepDiecisiete";
@@ -48,7 +53,47 @@ export default function TerceroStackNavigator() {
       <Stack.Screen name="StepCuatro" component={StepCuatro} />
       <Stack.Screen name="StepNueve" component={StepNueve} />
       <Stack.Screen name="DetalleCarrera" component={DetalleCarrera} />
+      <Stack.Screen
+        name="ChatConductor"
+        component={ChatConductor}
+        options={{
+          cardStyleInterpolator: CardStyleInterpolators.forVerticalIOS,
+          gestureDirection: 'vertical',
+        }}
+      />
       <Stack.Screen name="StepTrece" component={DetalleCarreraConductor} />
+      <Stack.Screen
+        name="ChatCliente"
+        component={ChatCliente}
+        options={{
+          cardStyleInterpolator: CardStyleInterpolators.forVerticalIOS,
+          gestureDirection: 'vertical',
+        }}
+      />
+      <Stack.Screen
+        name="ChatComercio"
+        component={ChatComercio}
+        options={{
+          cardStyleInterpolator: CardStyleInterpolators.forVerticalIOS,
+          gestureDirection: 'vertical',
+        }}
+      />
+      <Stack.Screen
+        name="ChatDriver"
+        component={ChatDriver}
+        options={{
+          cardStyleInterpolator: CardStyleInterpolators.forVerticalIOS,
+          gestureDirection: 'vertical',
+        }}
+      />
+      <Stack.Screen
+        name="ChatReservaView"
+        component={ChatReservaView}
+        options={{
+          cardStyleInterpolator: CardStyleInterpolators.forVerticalIOS,
+          gestureDirection: 'vertical',
+        }}
+      />
       <Stack.Screen name="Historial" component={Historial} />
       <Stack.Screen name="StepDieciseis" component={StepDieciseis} />
       <Stack.Screen name="StepDiecisiete" component={StepDiecisiete} />

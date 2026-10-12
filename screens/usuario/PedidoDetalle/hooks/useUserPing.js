@@ -7,6 +7,7 @@ export const useUserPing = (enabled) => {
   const intervalRef = useRef(null);
   const [location, setLocation] = useState(null);
   const [permissionDenied, setPermissionDenied] = useState(false);
+  const [settled, setSettled] = useState(false);
 
   useEffect(() => {
     if (!enabled) {
@@ -26,9 +27,14 @@ export const useUserPing = (enabled) => {
         }
         setPermissionDenied(false);
 
-        const position = await Location.getCurrentPositionAsync({
-          accuracy: Location.Accuracy.Balanced,
-        });
+        const position = await Promise.race([
+          Location.getCurrentPositionAsync({
+            accuracy: Location.Accuracy.Balanced,
+          }),
+          new Promise((_, reject) =>
+            setTimeout(() => reject(new Error("timeout ubicación")), 8000)
+          ),
+        ]);
 
         const coords = {
           latitude: position.coords.latitude,
@@ -52,7 +58,13 @@ export const useUserPing = (enabled) => {
           }),
         });
       } catch (e) {
-        console.error("Error enviando ubicación del usuario:", e);
+        if (String(e?.message || "").includes("timeout")) {
+          console.log("[useUserPing] sin fix GPS, reintento en segundo plano");
+        } else {
+          console.error("Error enviando ubicación del usuario:", e);
+        }
+      } finally {
+        setSettled(true);
       }
     };
 
@@ -67,5 +79,5 @@ export const useUserPing = (enabled) => {
     };
   }, [enabled]);
 
-  return { location, permissionDenied };
+  return { location, permissionDenied, settled };
 };

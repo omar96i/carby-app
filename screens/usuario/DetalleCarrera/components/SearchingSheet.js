@@ -11,6 +11,7 @@ import {
   ScrollView,
 } from "react-native";
 import { Feather, MaterialCommunityIcons } from "@expo/vector-icons";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { RouteSummary } from "./RouteSummary";
 
 const { height: SCREEN_H } = Dimensions.get("window");
@@ -20,7 +21,12 @@ const EXPANDED_H = SCREEN_H * 0.6;
 export const SearchingSheet = ({ origin, destination, distance, duration, onCancel }) => {
   const [expanded, setExpanded] = useState(false);
 
-  const heightAnim = useRef(new Animated.Value(COLLAPSED_H)).current;
+  const insets = useSafeAreaInsets();
+  const bottomPad = Math.max(insets.bottom, 12);
+  const collapsedH = COLLAPSED_H + bottomPad;
+  const expandedH = EXPANDED_H + bottomPad;
+
+  const heightAnim = useRef(new Animated.Value(collapsedH)).current;
   const expandedOpacity = useRef(new Animated.Value(0)).current;
   const collapsedHeight = useRef(new Animated.Value(1)).current;
 
@@ -40,9 +46,13 @@ export const SearchingSheet = ({ origin, destination, distance, duration, onCanc
   }, []);
 
   useEffect(() => {
+    heightAnim.setValue(expanded ? expandedH : collapsedH);
+  }, [bottomPad]);
+
+  useEffect(() => {
     Animated.parallel([
       Animated.spring(heightAnim, {
-        toValue: expanded ? EXPANDED_H : COLLAPSED_H,
+        toValue: expanded ? expandedH : collapsedH,
         useNativeDriver: false,
         friction: 9,
         tension: 60,
@@ -87,7 +97,7 @@ export const SearchingSheet = ({ origin, destination, distance, duration, onCanc
   });
 
   return (
-    <Animated.View style={[styles.sheet, { height: heightAnim }]}>
+    <Animated.View style={[styles.sheet, { height: heightAnim, paddingBottom: bottomPad }]}>
       <View style={styles.header} {...panResponder.panHandlers}>
         <View style={styles.handle} />
         <Animated.View

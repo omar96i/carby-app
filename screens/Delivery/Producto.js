@@ -24,6 +24,8 @@ import { useFonts } from "expo-font";
 import { useNavigation, useRoute, useFocusEffect } from "@react-navigation/native";
 import { BASE_URL } from "../../constants/url";
 import AlertaModal from "../../components/ErrorModal";
+import { getCartBusiness, clearCart } from "../../utils/cartBusiness";
+import FavoriteHeart from "../../components/FavoriteHeart";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const { width, height } = Dimensions.get("window");
@@ -33,7 +35,7 @@ const Producto = () => {
   const navigation = useNavigation();
   const insets = useSafeAreaInsets();
   const route = useRoute();
-  const { product } = route.params || {};
+  const { product, establishmentName } = route.params || {};
 
   useFocusEffect(useCallback(() => {
     navigation.getParent()?.setOptions({ tabBarStyle: { display: "none" } });
@@ -132,13 +134,26 @@ const Producto = () => {
     if (product?.id) fetchAdicionales();
   }, [product?.id]);
 
-  const addToCart = async () => {
+  const addToCart = async (confirmed = false) => {
     try {
+      if (!confirmed) {
+        const { establishmentId: biz, establishmentName: name } = await getCartBusiness();
+        if (biz && product?.user_id && String(biz) !== String(product.user_id)) {
+          showAlert(
+            `Tu carrito es de ${name || establishmentName || "otro negocio"}. ¿Vaciarlo y agregar este producto?`,
+            "confirm",
+            async () => { await clearCart(); addToCart(true); },
+            "Sí, vaciar"
+          );
+          return;
+        }
+      }
       const cartItem = {
         product: {
           ...product,
           imageUrl: product?.foto ? getImageUrl(product.foto) : null,
           establishmentId: product.user_id,
+          establishmentName: establishmentName || product?.establishmentName,
         },
         quantity: quantity,
         adicionales: selectedAdicionales,
@@ -198,7 +213,10 @@ const Producto = () => {
             {/* Header del Producto */}
             <View style={styles.mainInfoContainer}>
                 <View style={{flex: 1}}>
-                    <Text style={styles.productName}>{product?.nombre || "Producto"}</Text>
+                    <View style={styles.nameRow}>
+                        <Text style={[styles.productName, { flex: 1 }]}>{product?.nombre || "Producto"}</Text>
+                        {product?.id && <FavoriteHeart productId={product.id} size={20} />}
+                    </View>
                     <Text style={styles.description}>
                         {product?.descripcion || "Sin descripción disponible"}
                     </Text>
@@ -394,6 +412,11 @@ const styles = StyleSheet.create({
     fontFamily: 'Montserrat_700Bold',
     marginBottom: 8,
     lineHeight: 28,
+  },
+  nameRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
   },
   description: {
     color: '#aaa',

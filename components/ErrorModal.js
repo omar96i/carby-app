@@ -24,15 +24,15 @@ const AlertaModal = ({ visible, mensaje, onCerrar, titulo = "Atención", tipo = 
                     >
                         {isSuccess ? (
                             <View style={styles.iconCircle}>
-                                <Ionicons name="checkmark-circle" size={48} color="#fa6205" />
+                                <Ionicons name="checkmark-circle" size={40} color="#fa6205" />
                             </View>
                         ) : isConfirm ? (
                             <View style={styles.iconCircle}>
-                                <Ionicons name="help-circle" size={48} color="#fa6205" />
+                                <Ionicons name="help-circle" size={40} color="#fa6205" />
                             </View>
                         ) : (
                             <View style={styles.iconCircle}>
-                                <Ionicons name="alert-circle" size={48} color="#fa6205" />
+                                <Ionicons name="alert-circle" size={40} color="#fa6205" />
                             </View>
                         )}
                         <Text style={styles.titulo}>{titulo}</Text>
@@ -75,9 +75,9 @@ const styles = StyleSheet.create({
         maxWidth: 340,
         maxHeight: SCREEN_H * 0.8,
         borderRadius: 28,
-        paddingTop: 28,
+        paddingTop: 24,
         paddingHorizontal: 24,
-        paddingBottom: 20,
+        paddingBottom: 18,
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 12 },
         shadowOpacity: 0.18,
@@ -85,45 +85,45 @@ const styles = StyleSheet.create({
         elevation: 16,
     },
     scroll: {
-        maxHeight: SCREEN_H * 0.55,
+        maxHeight: SCREEN_H * 0.45,
     },
     scrollContent: {
         alignItems: 'center',
         paddingBottom: 8,
     },
     iconCircle: {
-        width: 72,
-        height: 72,
-        borderRadius: 36,
+        width: 64,
+        height: 64,
+        borderRadius: 32,
         backgroundColor: '#FFF0E5',
         justifyContent: 'center',
         alignItems: 'center',
-        marginBottom: 18,
+        marginBottom: 16,
     },
     titulo: {
-        fontSize: 20,
+        fontSize: 18,
         fontFamily: 'MontserratBold',
         color: '#1C1C1E',
-        marginBottom: 12,
+        marginBottom: 10,
         textAlign: 'center',
     },
     mensaje: {
-        fontSize: 14,
+        fontSize: 13,
         fontFamily: 'MontserratRegular',
         color: '#555555',
         textAlign: 'center',
-        lineHeight: 22,
+        lineHeight: 20,
         paddingHorizontal: 4,
     },
     botones: {
         flexDirection: 'column',
         width: '100%',
         gap: 10,
-        marginTop: 20,
+        marginTop: 16,
     },
     botonPrimario: {
         backgroundColor: '#fa6205',
-        paddingVertical: 16,
+        paddingVertical: 14,
         borderRadius: 30,
         alignItems: 'center',
         justifyContent: 'center',
@@ -134,19 +134,19 @@ const styles = StyleSheet.create({
         elevation: 4,
     },
     botonPrimarioTexto: {
-        fontSize: 16,
+        fontSize: 15,
         fontFamily: 'MontserratBold',
         color: '#FFFFFF',
     },
     botonSecundario: {
         backgroundColor: '#FFF0E5',
-        paddingVertical: 16,
+        paddingVertical: 14,
         borderRadius: 30,
         alignItems: 'center',
         justifyContent: 'center',
     },
     botonSecundarioTexto: {
-        fontSize: 16,
+        fontSize: 15,
         fontFamily: 'MontserratBold',
         color: '#1C1C1E',
     },

@@ -11,16 +11,26 @@ import {
   Dimensions,
   ScrollView,
   ActivityIndicator,
+  Modal,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Feather, Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
-import { formatCurrency, getImageUrl, formatPaymentMethod } from "../utils";
+import { formatCurrency, getImageUrl, formatPaymentMethod, isElectronicPayment } from "../utils";
 import SafetyProtection from "../../../../components/SafetyProtection";
 import OrderDetailsCard from "./OrderDetailsCard";
 
 const { height: SCREEN_H } = Dimensions.get("window");
 const COLLAPSED_BASE_H = 100;
 const EXPANDED_RATIO = 0.5;
+
+const formatAgo = (iso) => {
+  if (!iso) return "";
+  const s = Math.max(0, Math.round((Date.now() - new Date(iso).getTime()) / 1000));
+  if (s < 60) return `hace ${s} s`;
+  const m = Math.floor(s / 60);
+  if (m < 60) return `hace ${m} min`;
+  return `hace ${Math.floor(m / 60)} h`;
+};
 
 export const ClientSheet = ({
   state,
@@ -29,10 +39,13 @@ export const ClientSheet = ({
   destinationAddress,
   clientLive,
   onToggleClientLive,
+  lastLocationUpdate,
   onShowChat,
   onShowCommerceChat,
   hasNewCommerceMessages,
   onApprovePayment,
+  onRequestPayment,
+  requestingPayment,
   onArrive,
   onArriveAtStore,
   onPickupOrder,
@@ -46,6 +59,7 @@ export const ClientSheet = ({
   isDelivery,
 }) => {
   const [expanded, setExpanded] = useState(false);
+  const [photoModalVisible, setPhotoModalVisible] = useState(false);
   const insets = useSafeAreaInsets();
   const bottomPad = Math.max(insets.bottom, 12);
   const collapsedH = COLLAPSED_BASE_H + bottomPad;
@@ -72,6 +86,20 @@ export const ClientSheet = ({
   const serviceName = service?.nombre || tripData?.tipo_servicio || "Servicio";
   const serviceIcon = getImageUrl(service?.icono);
   const metodoPago = formatPaymentMethod(tripData?.metodo_pago || tripData?.informacion_adicional?.metodo_pago || tripData?.informacion_adicional?.metododepago);
+  const showRequestPay = !paymentApproved && (isElectronicPayment(tripData?.metodo_pago) || isElectronicPayment(metodoPago));
+
+  const ageSec = lastLocationUpdate
+    ? Math.max(0, Math.round((Date.now() - new Date(lastLocationUpdate).getTime()) / 1000))
+    : Infinity;
+  const isStale = clientLive && ageSec > 600;
+  const liveOn = clientLive && lastLocationUpdate && !isStale;
+  const liveLabel = !clientLive
+    ? "Seguimiento apagado"
+    : !lastLocationUpdate
+      ? "Esperando señal…"
+      : isStale
+        ? `Última señal ${formatAgo(lastLocationUpdate)}`
+        : `En vivo · ${formatAgo(lastLocationUpdate)}`;
 
   useEffect(() => {
     heightAnim.setValue(expanded ? expandedH : collapsedH);
@@ -109,6 +137,7 @@ export const ClientSheet = ({
   ).current;
 
   return (
+    <>
     <Animated.View style={[styles.sheet, { height: heightAnim, paddingBottom: bottomPad }]}>
       <View style={[styles.header, { height: expanded ? 36 : collapsedH }]} {...panResponder.panHandlers}>
         <View style={styles.handle} />
@@ -128,10 +157,10 @@ export const ClientSheet = ({
         <ScrollView style={styles.scroll} contentContainerStyle={[styles.scrollContent, { paddingBottom: 8 }]} showsVerticalScrollIndicator={false}>
           {/* Client card */}
           <View style={styles.clientCard}>
-            <View style={styles.avatarWrap}>
+            <TouchableOpacity style={styles.avatarWrap} onPress={() => setPhotoModalVisible(true)} activeOpacity={0.85}>
               <Image source={imageUrl ? { uri: imageUrl } : require("../../../../assets/images/nuevo-icono.jpeg")} style={styles.avatar} />
               <View style={styles.ratingBadge}><Text style={styles.ratingText}>{rating}</Text></View>
-            </View>
+            </TouchableOpacity>
             <View style={styles.clientInfo}>
               <Text style={styles.clientName} numberOfLines={1}>{clientName}</Text>
               <Text style={styles.clientTrips}>{trips} viajes completados</Text>
@@ -226,21 +255,7 @@ export const ClientSheet = ({
         {/* Order details - independent card */}
         {pedido && <OrderDetailsCard pedido={pedido} />}
 
-        {/* Live location toggle */}
-          {!pedido && (
-            <TouchableOpacity style={[styles.liveBtn, clientLive && styles.liveBtnActive]} onPress={onToggleClientLive} activeOpacity={0.8}>
-              <View style={[styles.liveIcon, clientLive && styles.liveIconActive]}>
-                <Feather name="radio" size={18} color={clientLive ? "#FFFFFF" : "#64748B"} />
-              </View>
-              <View style={styles.liveTextBox}>
-                <Text style={styles.liveTitle}>Ubicación del cliente</Text>
-                <Text style={styles.liveSub}>{clientLive ? "En vivo · siguiendo en tiempo real" : "Punto seleccionado por el cliente"}</Text>
-              </View>
-              <View style={[styles.liveBadge, clientLive && styles.liveBadgeActive]}>
-                <Text style={[styles.liveBadgeText, clientLive && styles.liveBadgeTextActive]}>{clientLive ? "EN VIVO" : "FIJO"}</Text>
-              </View>
-            </TouchableOpacity>
-          )}
+        {/* Live location toggle -> píldora flotante sobre el card */}
 
           {/* Safety */}
           {state !== "finished" && tripData?.id && !pedido && (
@@ -261,6 +276,12 @@ export const ClientSheet = ({
                 <Feather name="check-circle" size={18} color="#10B981" />
                 <Text style={[styles.actionText, { color: "#10B981" }]}>Pagado</Text>
               </View>
+            )}
+            {showRequestPay && (
+              <TouchableOpacity style={[styles.actionBtn, styles.actionBtnOutline]} onPress={() => onRequestPayment(metodoPago)} disabled={requestingPayment} activeOpacity={0.8}>
+                {requestingPayment ? <ActivityIndicator size="small" color="#3B82F6" /> : <Feather name="message-circle" size={18} color="#3B82F6" />}
+                <Text style={[styles.actionText, { color: "#3B82F6" }]}>Solicitar por chat</Text>
+              </TouchableOpacity>
             )}
           </View>
 
@@ -312,7 +333,31 @@ export const ClientSheet = ({
           )}
         </ScrollView>
       </Animated.View>
+      <Modal visible={photoModalVisible} transparent animationType="fade" onRequestClose={() => setPhotoModalVisible(false)}>
+        <TouchableOpacity style={styles.photoModalBackdrop} activeOpacity={1} onPress={() => setPhotoModalVisible(false)}>
+          <View style={styles.photoModalHeader}>
+            <Text style={styles.photoModalName} numberOfLines={1}>{clientName}</Text>
+            <TouchableOpacity style={styles.photoModalClose} onPress={() => setPhotoModalVisible(false)} activeOpacity={0.8}>
+              <Feather name="x" size={22} color="#FFFFFF" />
+            </TouchableOpacity>
+          </View>
+          <Image
+            source={imageUrl ? { uri: imageUrl } : require("../../../../assets/images/nuevo-icono.jpeg")}
+            style={styles.photoModalImage}
+            resizeMode="contain"
+          />
+        </TouchableOpacity>
+      </Modal>
     </Animated.View>
+    {!pedido && (
+      <Animated.View style={[styles.livePill, { bottom: Animated.add(heightAnim, 12) }]}>
+        <TouchableOpacity style={styles.livePillBtn} onPress={onToggleClientLive} activeOpacity={0.8}>
+          <Feather name="navigation" size={14} color={liveOn ? "#34D399" : "#94A3B8"} style={liveOn && styles.liveIconGlow} />
+          <Text style={[styles.liveText, !liveOn && styles.liveTextOff]}>{liveLabel}</Text>
+        </TouchableOpacity>
+      </Animated.View>
+    )}
+    </>
   );
 };
 
@@ -496,6 +541,42 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     color: "#B45309",
   },
+  photoModalBackdrop: {
+    flex: 1,
+    backgroundColor: "rgba(15,23,42,0.95)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  photoModalHeader: {
+    position: "absolute",
+    top: 50,
+    left: 16,
+    right: 16,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    zIndex: 10,
+  },
+  photoModalName: {
+    flex: 1,
+    fontSize: 16,
+    fontFamily: "MontserratBold",
+    fontWeight: "bold",
+    color: "#FFFFFF",
+    marginRight: 12,
+  },
+  photoModalClose: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: "rgba(255,255,255,0.15)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  photoModalImage: {
+    width: "90%",
+    height: "70%",
+  },
   clientInfo: {
     flex: 1,
     minWidth: 0,
@@ -663,69 +744,39 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
   },
-  liveBtn: {
+  livePill: {
+    position: "absolute",
+    right: 16,
+    zIndex: 30,
+    elevation: 8,
+  },
+  livePillBtn: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 12,
-    marginTop: 12,
-    borderRadius: 18,
-    borderWidth: 1,
-    borderColor: "#E2E8F0",
-    backgroundColor: "#F8FAFC",
-    padding: 12,
-    shadowColor: "#0F172A",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.06,
-    shadowRadius: 12,
-    elevation: 3,
-  },
-  liveBtnActive: {
-    borderColor: "rgba(59,130,246,0.4)",
-    backgroundColor: "#EFF6FF",
-  },
-  liveIcon: {
-    width: 40,
-    height: 40,
+    gap: 8,
+    backgroundColor: "#0F172A",
     borderRadius: 20,
-    backgroundColor: "#FFFFFF",
-    justifyContent: "center",
-    alignItems: "center",
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
   },
-  liveIconActive: {
-    backgroundColor: "#3B82F6",
+  liveIconGlow: {
+    textShadowColor: "#10B981",
+    textShadowOffset: { width: 0, height: 0 },
+    textShadowRadius: 8,
   },
-  liveTextBox: {
-    flex: 1,
-  },
-  liveTitle: {
-    fontSize: 13,
+  liveText: {
+    fontSize: 12,
     fontFamily: "MontserratBold",
     fontWeight: "bold",
-    color: "#0F172A",
-  },
-  liveSub: {
-    fontSize: 11,
-    fontFamily: "Montserrat",
-    color: "#64748B",
-    marginTop: 2,
-  },
-  liveBadge: {
-    borderRadius: 12,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    backgroundColor: "#E2E8F0",
-  },
-  liveBadgeActive: {
-    backgroundColor: "#3B82F6",
-  },
-  liveBadgeText: {
-    fontSize: 9,
-    fontFamily: "MontserratBold",
-    fontWeight: "bold",
-    color: "#64748B",
-  },
-  liveBadgeTextActive: {
     color: "#FFFFFF",
+  },
+  liveTextOff: {
+    color: "#94A3B8",
   },
   safetyBox: {
     marginTop: 12,

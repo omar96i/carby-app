@@ -2,7 +2,6 @@ import React, { useEffect, useRef, useState, useCallback, forwardRef, useImperat
 import {
   View,
   Text,
-  TextInput,
   TouchableOpacity,
   FlatList,
   StyleSheet,
@@ -12,9 +11,11 @@ import {
   Keyboard,
   Platform,
   Dimensions,
+  useWindowDimensions,
 } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import ChatInput from "./ChatInput";
 import FullscreenImageViewer from "./usuario/pedidos/FullscreenImageViewer";
-import { chatLog } from "../utils/chatDebug";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as ImagePicker from "expo-image-picker";
 import { Feather, Ionicons } from "@expo/vector-icons";
@@ -30,7 +31,18 @@ const getChatImageUrl = (path) => {
   return `${BASE_URL.toString().replace(/\/api\/?$/, "").replace(/\/$/, "")}/storage/${path}`;
 };
 
-const OrderChatModal = forwardRef(function OrderChatModal({ visible, pedidoId, userInfo, onClose, peerName = "Comercio", peerRole = "Soporte del pedido", peerAvatar = null, senderRole = "usuario" }, ref) {
+const dayLabel = (iso) => {
+  if (!iso) return "";
+  const d = new Date(iso);
+  const now = new Date();
+  if (d.toDateString() === now.toDateString()) return "Hoy";
+  const yesterday = new Date(now);
+  yesterday.setDate(now.getDate() - 1);
+  if (d.toDateString() === yesterday.toDateString()) return "Ayer";
+  return d.toLocaleDateString("es-CO", { day: "2-digit", month: "short" });
+};
+
+const OrderChatModal = forwardRef(function OrderChatModal({ visible, pedidoId, userInfo, onClose, peerName = "Comercio", peerRole = "Soporte del pedido", peerAvatar = null, senderRole = "usuario", statusTitle = "", statusSub = "", statusTone = "#3B82F6" }, ref) {
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState("");
   const [chatImage, setChatImage] = useState(null);
@@ -43,6 +55,24 @@ const OrderChatModal = forwardRef(function OrderChatModal({ visible, pedidoId, u
   const currentUserId = userInfo?.id;
   const isComercio = senderRole === "comercio";
   const { notification } = useNotification();
+  const insets = useSafeAreaInsets();
+  const windowHeight = useWindowDimensions().height;
+  const [keyboardHeight, setKeyboardHeight] = useState(0);
+
+  useEffect(() => {
+    const show = Keyboard.addListener("keyboardDidShow", (e) => setKeyboardHeight(e.endCoordinates?.height || 0));
+    const hide = Keyboard.addListener("keyboardDidHide", () => setKeyboardHeight(0));
+    return () => { show.remove(); hide.remove(); };
+  }, []);
+
+  // Offset manual solo en Android sin resize (Expo Go). En iOS lo maneja el KAV interno.
+  const windowShrunk = Dimensions.get("screen").height - windowHeight > 50;
+  const manualOffset = Platform.OS === "android" && !windowShrunk ? keyboardHeight : 0;
+
+  const peerInitials = React.useMemo(() => {
+    const parts = String(peerName || "C").trim().split(/\s+/);
+    return ((parts[0]?.[0] || "C") + (parts[1]?.[0] || "")).toUpperCase();
+  }, [peerName]);
 
   const parseMessageContent = (raw) => {
     if (!raw) return { type: "text", content: "" };
@@ -82,6 +112,7 @@ const OrderChatModal = forwardRef(function OrderChatModal({ visible, pedidoId, u
             text: parsed.type === "text" ? parsed.content : "",
             image: imageUri,
             time: msg.created_at ? new Date(msg.created_at).toLocaleTimeString("es-CO", { hour: "2-digit", minute: "2-digit" }) : "",
+            ts: msg.created_at || null,
             isMine,
             status: "sent",
           };
@@ -133,6 +164,7 @@ const OrderChatModal = forwardRef(function OrderChatModal({ visible, pedidoId, u
         text: text.trim(),
         image: chatImage,
         time: new Date().toLocaleTimeString("es-CO", { hour: "2-digit", minute: "2-digit" }),
+        ts: new Date().toISOString(),
         isMine: true,
         status: "sending",
       };
@@ -179,68 +211,142 @@ const OrderChatModal = forwardRef(function OrderChatModal({ visible, pedidoId, u
 
   useImperativeHandle(ref, () => ({ reload: () => loadMessages() }), [loadMessages]);
 
-  useEffect(() => {
-    chatLog("OrderChatModal", "mount", { pedidoId, senderRole });
-  }, []);
-
-  const inputRef = useRef(null);
-  useEffect(() => {
-    const sub = Keyboard.addListener("keyboardDidHide", () => {
-      chatLog("OrderChatModal", "keyboardHide-blur");
-      inputRef.current?.blur();
-    });
-    return () => sub.remove();
-  }, []);
-
   const quickReplies = senderRole === "comercio"
-    ? ["Pedido confirmado", "Estamos preparando tu pedido", "Tu pedido ya está listo"]
-    : ["¿Cuánto tarda?", "Llego en 5 min", "Gracias"];
+    ? [
+        { text: "Pedido confirmado", icon: "check" },
+        { text: "Estamos preparando tu pedido", icon: "clock" },
+        { text: "Tu pedido ya está listo", icon: "shopping-bag" },
+      ]
+    : [
+        { text: "¿Cuánto tarda?", icon: "clock" },
+        { text: "Llego en 5 min", icon: "map-pin" },
+        { text: "Gracias", icon: "thumbs-up" },
+      ];
+
+  const feed = React.useMemo(() => {
+    const out = [];
+    let lastDay = "";
+    messages.forEach((m) => {
+      const dk = m.ts ? new Date(m.ts).toDateString() : "";
+      if (dk && dk !== lastDay) {
+        lastDay = dk;
+        out.push({ type: "divider", id: `div-${dk}`, label: dayLabel(m.ts) });
+      }
+      out.push(m);
+    });
+    return out;
+  }, [messages]);
+
+  const renderMessage = useCallback(({ item }) => {
+    if (item.type === "divider") {
+      return (
+        <View style={styles.dayRow}>
+          <Text style={styles.dayLabel}>{item.label}</Text>
+        </View>
+      );
+    }
+    if (item.isMine) {
+      return (
+        <View style={[styles.messageWrapper, styles.myMessageWrapper]}>
+          <View style={[styles.bubble, styles.myBubble]}>
+            {item.image ? (
+              <TouchableOpacity onPress={() => setFullscreenImage(item.image)} activeOpacity={0.85}>
+                <Image source={{ uri: item.image }} style={styles.messageImage} resizeMode="cover" />
+              </TouchableOpacity>
+            ) : (
+              <Text style={[styles.messageText, styles.myMessageText]}>{item.text}</Text>
+            )}
+            <View style={[styles.metaRow, styles.myMeta]}>
+              <Text style={[styles.time, styles.myTime]}>{item.time}</Text>
+              {item.status === "sending" && <Text style={styles.statusSending}>enviando</Text>}
+              {item.status === "error" && <Text style={styles.statusError}>error</Text>}
+              {item.status !== "sending" && item.status !== "error" && (
+                <Feather name="check" size={10} color="rgba(255,255,255,0.7)" />
+              )}
+            </View>
+          </View>
+        </View>
+      );
+    }
+    return (
+      <View style={[styles.messageWrapper, styles.otherMessageWrapper]}>
+        <View style={styles.otherAvatar}>
+          <Text style={styles.otherAvatarText}>{peerInitials}</Text>
+        </View>
+        <View style={styles.otherCol}>
+          <Text style={styles.otherName} numberOfLines={1}>{peerName}</Text>
+          <View style={[styles.bubble, styles.otherBubble]}>
+            {item.image ? (
+              <TouchableOpacity onPress={() => setFullscreenImage(item.image)} activeOpacity={0.85}>
+                <Image source={{ uri: item.image }} style={styles.messageImage} resizeMode="cover" />
+              </TouchableOpacity>
+            ) : (
+              <Text style={[styles.messageText, styles.otherMessageText]}>{item.text}</Text>
+            )}
+            <View style={[styles.metaRow, styles.otherMeta]}>
+              <Text style={[styles.time, styles.otherTime]}>{item.time}</Text>
+              {item.status === "sending" && <Text style={styles.statusSending}>enviando</Text>}
+              {item.status === "error" && <Text style={styles.statusError}>error</Text>}
+            </View>
+          </View>
+        </View>
+      </View>
+    );
+  }, [peerInitials, peerName]);
 
   if (!visible) return null;
 
-  const renderMessage = ({ item }) => (
-    <View style={[styles.messageWrapper, item.isMine ? styles.myMessageWrapper : styles.otherMessageWrapper]}>
-      <View style={[styles.bubble, item.isMine ? styles.myBubble : styles.otherBubble]}>
-        {item.image ? (
-          <TouchableOpacity onPress={() => setFullscreenImage(item.image)} activeOpacity={0.85}>
-            <Image source={{ uri: item.image }} style={styles.messageImage} resizeMode="cover" />
-          </TouchableOpacity>
-        ) : (
-          <Text style={[styles.messageText, item.isMine ? styles.myMessageText : styles.otherMessageText]}>{item.text}</Text>
-        )}
-        <View style={styles.metaRow}>
-          <Text style={[styles.time, item.isMine ? styles.myTime : styles.otherTime]}>{item.time}</Text>
-          {item.status === "sending" && <Text style={styles.statusSending}>enviando</Text>}
-          {item.status === "error" && <Text style={styles.statusError}>error</Text>}
-          {item.isMine && item.status !== "sending" && item.status !== "error" && (
-            <Feather name="check" size={10} color="rgba(255,255,255,0.7)" />
-          )}
-        </View>
-      </View>
-    </View>
-  );
-
   return (
-    <View style={styles.overlay}>
-      <TouchableOpacity style={styles.backdrop} activeOpacity={1} onPress={onClose} />
-      <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : undefined} style={styles.panel}>
+    <View style={[styles.full, { paddingBottom: manualOffset + insets.bottom }]}>
+      <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : undefined} style={styles.flex}>
         {/* Header */}
-        <View style={styles.header}>
-          {peerAvatar ? (
-            <Image source={{ uri: peerAvatar }} style={styles.avatarImage} />
-          ) : (
-            <View style={styles.avatarBox}>
-              <Ionicons name="storefront" size={22} color="#FF5500" />
-            </View>
-          )}
+        <View style={[styles.header, { paddingTop: Math.max(insets.top, 8) }]}>
+          <View style={styles.avatarWrap}>
+            {peerAvatar ? (
+              <Image source={{ uri: peerAvatar }} style={styles.avatarImage} />
+            ) : (
+              <View style={styles.avatarBox}>
+                <Ionicons name="storefront" size={22} color="#FF5500" />
+              </View>
+            )}
+            <View style={styles.onlineDot} />
+          </View>
           <View style={styles.headerText}>
-            <Text style={styles.headerTitle} numberOfLines={1}>{peerName}</Text>
-            <Text style={styles.headerSub}>{peerRole}</Text>
+            <View style={styles.nameRow}>
+              <Text style={styles.headerTitle} numberOfLines={1}>{peerName}</Text>
+              <Feather name="check-circle" size={12} color="#FF5500" />
+            </View>
+            <View style={styles.subRow}>
+              <Text style={styles.headerSub} numberOfLines={1}>{peerRole}</Text>
+              {!!pedidoId && (
+                <View style={styles.orderBadge}>
+                  <Text style={styles.orderBadgeText}>#{pedidoId}</Text>
+                </View>
+              )}
+            </View>
           </View>
           <TouchableOpacity style={styles.closeBtn} onPress={onClose} activeOpacity={0.8}>
-            <Feather name="x" size={20} color="#FFFFFF" />
+            <Feather name="x" size={20} color="#0F172A" />
           </TouchableOpacity>
         </View>
+
+        {/* Franja de estado del pedido (igual que el TopBar) */}
+        {!!statusTitle && (
+          <View style={styles.statusStrip}>
+            <View style={[styles.statusDot, { backgroundColor: statusTone }]} />
+            <View style={styles.statusStripTextBox}>
+              <Text style={[styles.statusStripTitle, { color: statusTone }]} numberOfLines={1}>
+                {statusTitle}
+              </Text>
+              {!!statusSub && (
+                <Text style={styles.statusStripText} numberOfLines={1}>{statusSub}</Text>
+              )}
+            </View>
+            <TouchableOpacity onPress={onClose} activeOpacity={0.7}>
+              <Text style={styles.statusStripAction}>Ver mapa</Text>
+            </TouchableOpacity>
+          </View>
+        )}
 
         {/* Messages */}
         {loading && messages.length === 0 ? (
@@ -252,28 +358,45 @@ const OrderChatModal = forwardRef(function OrderChatModal({ visible, pedidoId, u
             <Text style={styles.emptyText}>No hay mensajes todavía. Envía el primer mensaje.</Text>
           </View>
         ) : (
+          <View style={styles.flex}>
           <FlatList
             ref={flatListRef}
-            data={messages}
+            style={styles.flex}
+            data={feed}
             keyExtractor={(item) => item.id}
             renderItem={renderMessage}
             contentContainerStyle={styles.messagesContent}
             keyboardShouldPersistTaps="handled"
+            scrollEnabled
+            nestedScrollEnabled
+            removeClippedSubviews={false}
+            initialNumToRender={20}
+            maxToRenderPerBatch={20}
+            windowSize={11}
           />
+          </View>
         )}
 
         {/* Quick replies */}
         <View style={styles.quickReplies}>
           {quickReplies.map((q) => (
-            <TouchableOpacity key={q} style={styles.quickReply} onPress={() => sendMessage(q)} activeOpacity={0.8}>
-              <Text style={styles.quickReplyText}>{q}</Text>
+            <TouchableOpacity key={q.text} style={styles.quickReply} onPress={() => sendMessage(q.text)} activeOpacity={0.8}>
+              <Feather name={q.icon} size={12} color="#FF5500" />
+              <Text style={styles.quickReplyText}>{q.text}</Text>
             </TouchableOpacity>
           ))}
         </View>
 
         {/* Input */}
-        <View style={styles.inputContainer}>
-          {chatImage && (
+        <ChatInput
+          tag="OrderChatModal"
+          value={newMessage}
+          onChangeText={setNewMessage}
+          onSend={() => sendMessage()}
+          sending={sending}
+          onPickImage={pickImage}
+          extraSendEnabled={!!chatImage}
+          preview={chatImage && (
             <View style={styles.imagePreview}>
               <Image source={{ uri: chatImage }} style={styles.imagePreviewThumb} />
               <TouchableOpacity onPress={() => setChatImage(null)} style={styles.removeImageBtn}>
@@ -281,38 +404,7 @@ const OrderChatModal = forwardRef(function OrderChatModal({ visible, pedidoId, u
               </TouchableOpacity>
             </View>
           )}
-          <View style={styles.inputRow}>
-            <TouchableOpacity style={styles.iconButton} onPress={pickImage} activeOpacity={0.8}>
-              <Feather name="image" size={22} color="#64748B" />
-            </TouchableOpacity>
-            <TextInput
-              ref={inputRef}
-              style={styles.input}
-              placeholder="Escribe un mensaje..."
-              placeholderTextColor="#94A3B8"
-              value={newMessage}
-              onChangeText={(t) => {
-                chatLog("OrderChatModal", "change", { len: t.length, senderRole });
-                setNewMessage(t);
-              }}
-              onFocus={() => chatLog("OrderChatModal", "focus", { len: newMessage.length })}
-              onBlur={() => chatLog("OrderChatModal", "blur", { len: newMessage.length })}
-              onSelectionChange={(e) => chatLog("OrderChatModal", "selection", e.nativeEvent.selection)}
-              onPressIn={() => chatLog("OrderChatModal", "pressIn")}
-              onTouchStart={() => chatLog("OrderChatModal", "touchStart")}
-              multiline
-              maxLength={500}
-            />
-            <TouchableOpacity
-              style={[styles.sendButton, (!newMessage.trim() && !chatImage) && styles.sendButtonDisabled]}
-              onPress={() => sendMessage()}
-              disabled={sending || (!newMessage.trim() && !chatImage)}
-              activeOpacity={0.8}
-            >
-              {sending ? <ActivityIndicator size="small" color="#FFFFFF" /> : <Feather name="send" size={18} color="#FFFFFF" />}
-            </TouchableOpacity>
-          </View>
-        </View>
+        />
       </KeyboardAvoidingView>
       <FullscreenImageViewer uri={fullscreenImage} onClose={() => setFullscreenImage(null)} />
     </View>
@@ -320,45 +412,38 @@ const OrderChatModal = forwardRef(function OrderChatModal({ visible, pedidoId, u
 });
 
 const styles = StyleSheet.create({
-  overlay: {
+  flex: { flex: 1 },
+  full: {
     ...StyleSheet.absoluteFillObject,
     zIndex: 2000,
-  },
-  backdrop: {
-    flex: 1,
-    backgroundColor: "rgba(15,23,42,0.35)",
-  },
-  panel: {
-    position: "absolute",
-    bottom: 0,
-    left: 0,
-    right: 0,
-    height: "80%",
-    backgroundColor: "#FFFFFF",
-    borderTopLeftRadius: 28,
-    borderTopRightRadius: 28,
-    shadowColor: "#0F172A",
-    shadowOffset: { width: 0, height: -10 },
-    shadowOpacity: 0.15,
-    shadowRadius: 30,
-    elevation: 20,
-    overflow: "hidden",
+    backgroundColor: "#F8FAFC",
   },
   header: {
     flexDirection: "row",
     alignItems: "center",
     gap: 12,
     borderBottomWidth: 1,
-    borderBottomColor: "#E2E8F0",
+    borderBottomColor: "#F1F5F9",
     paddingHorizontal: 16,
-    paddingVertical: 14,
-    backgroundColor: "#FF5500",
+    paddingVertical: 12,
+    backgroundColor: "#FFFFFF",
+    shadowColor: "#0F172A",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 3,
+    zIndex: 10,
+  },
+  avatarWrap: {
+    position: "relative",
   },
   avatarBox: {
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: "#FFF7ED",
+    borderWidth: 1,
+    borderColor: "#FDBA74",
     justifyContent: "center",
     alignItems: "center",
   },
@@ -366,31 +451,116 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: "#F1F5F9",
+  },
+  onlineDot: {
+    position: "absolute",
+    bottom: 0,
+    right: 0,
+    width: 14,
+    height: 14,
+    borderRadius: 7,
+    backgroundColor: "#10B981",
+    borderWidth: 2,
+    borderColor: "#FFFFFF",
   },
   headerText: {
     flex: 1,
+  },
+  nameRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
   },
   headerTitle: {
     fontSize: 15,
     fontFamily: "MontserratBold",
     fontWeight: "bold",
-    color: "#FFFFFF",
+    color: "#0F172A",
+  },
+  subRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    marginTop: 2,
   },
   headerSub: {
     fontSize: 12,
+    fontFamily: "Montserrat",
+    color: "#64748B",
+  },
+  orderBadge: {
+    backgroundColor: "#FFF7ED",
+    borderWidth: 1,
+    borderColor: "#FDBA74",
+    borderRadius: 8,
+    paddingHorizontal: 6,
+    paddingVertical: 1,
+  },
+  orderBadgeText: {
+    fontSize: 10,
     fontFamily: "MontserratBold",
     fontWeight: "bold",
-    color: "rgba(255,255,255,0.85)",
-    marginTop: 2,
+    color: "#FF5500",
   },
   closeBtn: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: "rgba(255,255,255,0.25)",
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    backgroundColor: "#F1F5F9",
+    borderWidth: 1,
+    borderColor: "#E2E8F0",
     justifyContent: "center",
     alignItems: "center",
+  },
+  statusStrip: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    backgroundColor: "#FFFBEB",
+    borderBottomWidth: 1,
+    borderBottomColor: "#FDE68A",
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+  },
+  statusDot: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+  },
+  statusStripTextBox: {
+    flex: 1,
+  },
+  statusStripTitle: {
+    fontSize: 13,
+    fontFamily: "MontserratBold",
+    fontWeight: "bold",
+  },
+  statusStripText: {
+    fontSize: 11,
+    fontFamily: "Montserrat",
+    color: "#92400E",
+    marginTop: 1,
+  },
+  statusStripAction: {
+    fontSize: 11,
+    fontFamily: "MontserratBold",
+    fontWeight: "bold",
+    color: "#FF5500",
+  },
+  dayRow: {
+    alignItems: "center",
+    marginVertical: 8,
+  },
+  dayLabel: {
+    fontSize: 11,
+    fontFamily: "Montserrat",
+    color: "#94A3B8",
+    backgroundColor: "#E2E8F0",
+    paddingHorizontal: 12,
+    paddingVertical: 3,
+    borderRadius: 10,
+    overflow: "hidden",
   },
   loadingBox: {
     flex: 1,
@@ -422,6 +592,35 @@ const styles = StyleSheet.create({
   },
   otherMessageWrapper: {
     alignSelf: "flex-start",
+    flexDirection: "row",
+    alignItems: "flex-end",
+    gap: 8,
+    maxWidth: "88%",
+  },
+  otherAvatar: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: "#E2E8F0",
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: 2,
+  },
+  otherAvatarText: {
+    fontSize: 10,
+    fontFamily: "MontserratBold",
+    fontWeight: "bold",
+    color: "#64748B",
+  },
+  otherCol: {
+    flex: 1,
+  },
+  otherName: {
+    fontSize: 10,
+    fontFamily: "Montserrat",
+    color: "#94A3B8",
+    marginLeft: 4,
+    marginBottom: 2,
   },
   bubble: {
     borderRadius: 18,
@@ -430,11 +629,23 @@ const styles = StyleSheet.create({
   },
   myBubble: {
     backgroundColor: "#FF5500",
-    borderBottomRightRadius: 6,
+    borderTopRightRadius: 6,
+    shadowColor: "#FF5500",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.35,
+    shadowRadius: 10,
+    elevation: 6,
   },
   otherBubble: {
-    backgroundColor: "#F1F5F9",
-    borderBottomLeftRadius: 6,
+    backgroundColor: "#FFFFFF",
+    borderWidth: 1,
+    borderColor: "#E2E8F0",
+    borderTopLeftRadius: 6,
+    shadowColor: "#0F172A",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 6,
+    elevation: 2,
   },
   messageText: {
     fontSize: 14,
@@ -455,9 +666,14 @@ const styles = StyleSheet.create({
   metaRow: {
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "flex-end",
     gap: 4,
     marginTop: 4,
+  },
+  myMeta: {
+    justifyContent: "flex-end",
+  },
+  otherMeta: {
+    justifyContent: "flex-start",
   },
   time: {
     fontSize: 10,
@@ -484,30 +700,25 @@ const styles = StyleSheet.create({
     flexWrap: "wrap",
     gap: 8,
     paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderTopWidth: 1,
-    borderTopColor: "#E2E8F0",
+    paddingVertical: 6,
+    backgroundColor: "#F8FAFC",
   },
   quickReply: {
-    borderRadius: 12,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 6,
+    borderRadius: 999,
     borderWidth: 1,
     borderColor: "#E2E8F0",
-    backgroundColor: "#F8FAFC",
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-  },
-  quickReplyText: {
-    fontSize: 11,
-    fontFamily: "Montserrat",
-    color: "#0F172A",
-  },
-  inputContainer: {
-    borderTopWidth: 1,
-    borderTopColor: "#E2E8F0",
     backgroundColor: "#FFFFFF",
     paddingHorizontal: 14,
     paddingVertical: 10,
-    paddingBottom: Platform.OS === "ios" ? 24 : 16,
+  },
+  quickReplyText: {
+    fontSize: 12,
+    fontFamily: "Montserrat",
+    color: "#334155",
   },
   imagePreview: {
     flexDirection: "row",
@@ -527,44 +738,6 @@ const styles = StyleSheet.create({
     backgroundColor: "#F1F5F9",
     justifyContent: "center",
     alignItems: "center",
-  },
-  inputRow: {
-    flexDirection: "row",
-    alignItems: "flex-end",
-    gap: 8,
-  },
-  iconButton: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: "#F1F5F9",
-  },
-  input: {
-    flex: 1,
-    minHeight: 42,
-    maxHeight: 110,
-    borderRadius: 22,
-    borderWidth: 1,
-    borderColor: "#E2E8F0",
-    backgroundColor: "#F8FAFC",
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    fontSize: 14,
-    fontFamily: "Montserrat",
-    color: "#0F172A",
-  },
-  sendButton: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: "#FF5500",
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  sendButtonDisabled: {
-    backgroundColor: "#CBD5E1",
   },
 });
 

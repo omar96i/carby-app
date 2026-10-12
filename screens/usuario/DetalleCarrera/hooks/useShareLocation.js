@@ -45,7 +45,7 @@ export const useShareLocation = (enabled) => {
     };
 
     sendLocation();
-    intervalRef.current = setInterval(sendLocation, 5000);
+    intervalRef.current = setInterval(sendLocation, 20000);
 
     return () => {
       if (intervalRef.current) {

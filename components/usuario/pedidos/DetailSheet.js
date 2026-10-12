@@ -1,5 +1,6 @@
 import React, { useEffect, useRef } from "react";
 import { View, Text, TouchableOpacity, StyleSheet, Modal, ScrollView, Animated, Easing, Dimensions, Linking } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import MapView, { Marker } from "react-native-maps";
 import { Ionicons } from "@expo/vector-icons";
 import { COLORS, formatCOP, formatDate, metodoPagoLabel, SHADOWS, RADIUS, calcOrderCosts } from "./helpers";
@@ -53,6 +54,8 @@ export default function DetailSheet({ item, onClose, onNavigate }) {
   const translateY = useRef(new Animated.Value(SCREEN_H)).current;
   const backdropOpacity = useRef(new Animated.Value(0)).current;
   const [visible, setVisible] = React.useState(false);
+  const insets = useSafeAreaInsets();
+  const bottomPad = Math.max(insets.bottom, 12);
 
   useEffect(() => {
     if (!item) {
@@ -124,7 +127,7 @@ export default function DetailSheet({ item, onClose, onNavigate }) {
             </TouchableOpacity>
           </View>
 
-          <ScrollView style={s.scroll} contentContainerStyle={s.scrollContent}>
+          <ScrollView style={s.scroll} contentContainerStyle={[s.scrollContent, { paddingBottom: 16 + bottomPad }]}>
             {/* Title */}
             <View style={s.titleRow}>
               <View style={s.iconBox}>

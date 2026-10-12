@@ -64,7 +64,7 @@ function ChatInput({
           onSelectionChange={(e) => chatLog(tag, "selection", e.nativeEvent.selection)}
           onPressIn={() => chatLog(tag, "pressIn")}
           onTouchStart={() => chatLog(tag, "touchStart")}
-          editable={editable && !sending}
+          editable={editable}
           multiline
           scrollEnabled
           maxLength={500}

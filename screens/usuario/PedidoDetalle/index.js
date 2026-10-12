@@ -6,14 +6,10 @@ import {
   ActivityIndicator,
   StatusBar,
   TouchableOpacity,
-  Image,
-  KeyboardAvoidingView,
-  Platform,
 } from "react-native";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { useNavigation, useRoute, useFocusEffect } from "@react-navigation/native";
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import { Feather, MaterialCommunityIcons } from "@expo/vector-icons";
+import { Feather } from "@expo/vector-icons";
 import { useAudioPlayer } from "expo-audio";
 
 import { usePedido } from "./hooks/usePedido";
@@ -22,14 +18,12 @@ import { useUserPing } from "./hooks/useUserPing";
 import { useDriverLocation } from "./hooks/useDriverLocation";
 import { useNotification } from "../../../context/NotificationContext";
 import { useRoute as useRouteCoords } from "../DetalleCarrera/hooks/useRoute";
-import { getCurrentStepKey, getStepDesc, getOrderCoords } from "./utils";
+import { getCurrentStepKey, getStepDesc, getOrderCoords, getStepLabel, HEADER_TEXT } from "./utils";
 
 import { TopBar } from "./components/TopBar";
 import { OrderMap } from "./components/OrderMap";
 import { OrderSheet } from "./components/OrderSheet";
 import { EvidenceModal } from "./components/EvidenceModal";
-import OrderChatModal from "../../../components/OrderChatModal";
-import ChatUsuario from "../../../components/ChatUsuario";
 import { getImageUrl } from "./utils";
 import AlertaModal from "../../../components/ErrorModal";
 
@@ -40,9 +34,6 @@ export default function PedidoDetalle() {
   const route = useRoute();
   const { pedidoId, pedidoData } = route.params || {};
 
-  const [userInfo, setUserInfo] = useState(null);
-  const [showChat, setShowChat] = useState(false);
-  const [showDriverChat, setShowDriverChat] = useState(false);
   const [showEvidence, setShowEvidence] = useState(false);
   const [alertVisible, setAlertVisible] = useState(false);
   const [alertData, setAlertData] = useState({ message: "", type: "info", onPrimary: null, primaryLabel: "" });
@@ -61,24 +52,61 @@ export default function PedidoDetalle() {
   const routeCoords = useRouteCoords(coords?.start, coords?.end);
 
   const isActive = !["entregado", "cancelado"].includes(currentKey);
-  const { location: userLocation, permissionDenied } = useUserPing(pedidoId > 0);
-  const locationReady = !!userLocation || permissionDenied;
+  const { location: pingLocation, permissionDenied, settled: pingSettled } = useUserPing(pedidoId > 0);
+  const locationReady = !!pingLocation || permissionDenied || pingSettled;
+
+  // Ubicación inicial desde el pedido (llega con el detalle) para no
+  // esperar al GPS; el ping en vivo la reemplaza cuando hay fix.
+  const orderEnd = coords?.end && coords.end.latitude && coords.end.longitude
+    ? { latitude: coords.end.latitude, longitude: coords.end.longitude }
+    : null;
+  const userLocation = pingLocation || orderEnd;
 
   const driverId = pedido?.carrera?.conductor_id;
   const driverLocation = useDriverLocation(driverId, isActive && !!driverId);
 
   const mapRef = useRef(null);
 
+  const openStoreChat = useCallback(() => {
+    const comercio = pedido?.comercio || {};
+    const fotoRaw =
+      comercio.foto_documento_file ||
+      comercio.imagen ||
+      comercio.logo ||
+      comercio.foto ||
+      comercio.foto_perfil ||
+      null;
+    const status = HEADER_TEXT[currentKey] || HEADER_TEXT.pendiente;
+    navigation.navigate("ChatPedido", {
+      pedidoId,
+      peerName: comercio.establecimiento_nombre || comercio.nombre || "Comercio",
+      peerRole: "Soporte del pedido",
+      peerAvatar: getImageUrl(fotoRaw),
+      statusTitle: status.title,
+      statusSub: status.sub,
+      statusTone: status.tone,
+    });
+  }, [navigation, pedidoId, pedido?.comercio, currentKey]);
+
+  const openDriverChat = useCallback(() => {
+    if (!pedido?.carrera?.id) return;
+    const conductor = pedido?.carrera?.conductor || {};
+    const status = HEADER_TEXT[currentKey] || HEADER_TEXT.pendiente;
+    navigation.navigate("ChatConductor", {
+      tripId: pedido.carrera.id,
+      pedidoId,
+      peerName: conductor.nombre_completo || "Repartidor",
+      peerRole: "Repartidor",
+      peerAvatar: getImageUrl(conductor.foto_documento_file),
+      statusTitle: status.title,
+      statusSub: status.sub,
+      statusTone: status.tone,
+    });
+  }, [navigation, pedido?.carrera, pedidoId, currentKey]);
+
   const dingSource = require("../../../assets/sounds/mario-moneda.mp3");
   const dingPlayer = useAudioPlayer(dingSource);
 
-  useEffect(() => {
-    AsyncStorage.getItem("userData").then((data) => {
-      if (data) setUserInfo(JSON.parse(data));
-    });
-  }, []);
-
-  // Sonido al cambiar estado
   useEffect(() => {
     if (!pedido) return;
     const estado = (pedido.estado || "").toLowerCase();
@@ -208,8 +236,8 @@ export default function PedidoDetalle() {
           pedido={pedido}
           currentKey={currentKey}
           bottomPad={bottomPad}
-          onOpenChat={() => setShowChat(true)}
-          onOpenDriverChat={() => setShowDriverChat(true)}
+          onOpenChat={openStoreChat}
+          onOpenDriverChat={openDriverChat}
           hasNewDriverMessages={driverMessageCount > 0}
           onOpenEvidence={() => setShowEvidence(true)}
           onCancel={handleCancel}
@@ -220,54 +248,6 @@ export default function PedidoDetalle() {
             <ActivityIndicator size="large" color="#FF5500" />
             <Text style={styles.loadingOverlayText}>Ubicando pedido...</Text>
           </View>
-        )}
-
-        <OrderChatModal
-          visible={showChat}
-          pedidoId={pedidoId}
-          userInfo={userInfo}
-          onClose={() => setShowChat(false)}
-          peerName={pedido?.comercio?.establecimiento_nombre || pedido?.comercio?.nombre || "Comercio"}
-          peerRole="Soporte del pedido"
-        />
-
-        {showDriverChat && pedido?.carrera?.id && (
-          <KeyboardAvoidingView
-            behavior={Platform.OS === "ios" ? "padding" : undefined}
-            style={styles.driverChatOverlay}
-          >
-            <TouchableOpacity
-              style={styles.driverChatBackdrop}
-              activeOpacity={1}
-              onPress={() => setShowDriverChat(false)}
-            />
-            <View style={[styles.driverChatPanel, { paddingBottom: bottomPad }]}>
-              <View style={styles.driverChatHeader}>
-                {getImageUrl(pedido?.carrera?.conductor?.foto_documento_file) ? (
-                  <Image
-                    source={{ uri: getImageUrl(pedido.carrera.conductor.foto_documento_file) }}
-                    style={styles.driverChatAvatar}
-                  />
-                ) : (
-                  <View style={styles.driverChatAvatarFallback}>
-                    <Feather name="message-circle" size={20} color="#FFFFFF" />
-                  </View>
-                )}
-                <View style={styles.driverChatHeaderText}>
-                  <Text style={styles.driverChatTitle} numberOfLines={1}>
-                    {pedido?.carrera?.conductor?.nombre_completo || "Repartidor"}
-                  </Text>
-                  <Text style={styles.driverChatSub}>Chat del pedido</Text>
-                </View>
-                <TouchableOpacity onPress={() => setShowDriverChat(false)} style={styles.driverChatClose}>
-                  <Feather name="x" size={20} color="#FFFFFF" />
-                </TouchableOpacity>
-              </View>
-              <View style={styles.driverChatBody}>
-                <ChatUsuario tripId={pedido.carrera.id} />
-              </View>
-            </View>
-          </KeyboardAvoidingView>
         )}
 
         <EvidenceModal
@@ -362,78 +342,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontFamily: "Montserrat",
     color: "#64748B",
-  },
-  driverChatOverlay: {
-    ...StyleSheet.absoluteFillObject,
-    zIndex: 2000,
-  },
-  driverChatBackdrop: {
-    flex: 1,
-    backgroundColor: "rgba(15,23,42,0.35)",
-  },
-  driverChatPanel: {
-    position: "absolute",
-    bottom: 0,
-    left: 0,
-    right: 0,
-    height: "80%",
-    backgroundColor: "#FFFFFF",
-    borderTopLeftRadius: 28,
-    borderTopRightRadius: 28,
-    overflow: "hidden",
-    shadowColor: "#0F172A",
-    shadowOffset: { width: 0, height: -10 },
-    shadowOpacity: 0.15,
-    shadowRadius: 30,
-    elevation: 20,
-  },
-  driverChatHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 12,
-    backgroundColor: "#FF5500",
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-  },
-  driverChatAvatar: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: "rgba(255,255,255,0.18)",
-  },
-  driverChatAvatarFallback: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: "rgba(255,255,255,0.18)",
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  driverChatHeaderText: {
-    flex: 1,
-  },
-  driverChatTitle: {
-    fontSize: 16,
-    fontFamily: "MontserratBold",
-    fontWeight: "bold",
-    color: "#FFFFFF",
-  },
-  driverChatSub: {
-    fontSize: 12,
-    fontFamily: "Montserrat",
-    color: "rgba(255,255,255,0.75)",
-    marginTop: 2,
-  },
-  driverChatClose: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: "rgba(255,255,255,0.25)",
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  driverChatBody: {
-    flex: 1,
   },
   finishedWrap: {
     flex: 1,

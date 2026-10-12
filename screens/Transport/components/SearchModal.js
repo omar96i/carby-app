@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
   View,
   Text,
@@ -9,10 +9,14 @@ import {
   StyleSheet,
   Modal,
   KeyboardAvoidingView,
+  Keyboard,
+  Dimensions,
+  useWindowDimensions,
   Platform,
   Animated,
   Easing,
 } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 
 export default function SearchModal({
@@ -32,6 +36,19 @@ export default function SearchModal({
     : (recentLocations || []).map((r) => ({ ...r, recent: true }));
 
   const pulseAnim = useRef(new Animated.Value(0)).current;
+  const insets = useSafeAreaInsets();
+  const windowHeight = useWindowDimensions().height;
+  const [keyboardHeight, setKeyboardHeight] = useState(0);
+
+  useEffect(() => {
+    const show = Keyboard.addListener("keyboardDidShow", (e) => setKeyboardHeight(e.endCoordinates?.height || 0));
+    const hide = Keyboard.addListener("keyboardDidHide", () => setKeyboardHeight(0));
+    return () => { show.remove(); hide.remove(); };
+  }, []);
+
+  // Offset manual solo en Android sin resize (Expo Go). En iOS lo maneja el KAV interno.
+  const windowShrunk = Dimensions.get("screen").height - windowHeight > 50;
+  const manualOffset = Platform.OS === "android" && !windowShrunk ? keyboardHeight : 0;
 
   useEffect(() => {
     if (!visible) {
@@ -57,11 +74,11 @@ export default function SearchModal({
 
   return (
     <Modal visible={visible} animationType="slide" transparent>
-      <KeyboardAvoidingView
-        style={styles.overlay}
-        behavior={Platform.OS === "ios" ? "padding" : undefined}
-      >
-        <View style={styles.sheet}>
+      <View style={styles.overlay}>
+        <View style={[styles.sheet, { marginBottom: manualOffset, maxHeight: windowHeight * 0.9 - manualOffset, paddingBottom: 24 + insets.bottom }]}>
+        <KeyboardAvoidingView
+          behavior={Platform.OS === "ios" ? "padding" : undefined}
+        >
           <View style={styles.handle} />
 
           <View style={styles.header}>
@@ -154,8 +171,9 @@ export default function SearchModal({
               )}
             </ScrollView>
           )}
+        </KeyboardAvoidingView>
         </View>
-      </KeyboardAvoidingView>
+      </View>
     </Modal>
   );
 }

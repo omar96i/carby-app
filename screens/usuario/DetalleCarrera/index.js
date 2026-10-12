@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import {
-  SafeAreaView,
   View,
   Text,
   StyleSheet,
@@ -9,10 +8,10 @@ import {
   KeyboardAvoidingView,
   Platform,
   StatusBar,
-  Image,
   Vibration,
   Animated,
 } from "react-native";
+import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { useNavigation, useFocusEffect, useRoute } from "@react-navigation/native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Feather } from "@expo/vector-icons";
@@ -33,26 +32,24 @@ import { SearchingSheet } from "./components/SearchingSheet";
 import { DriverSheet } from "./components/DriverSheet";
 import { FinishedSheet } from "./components/FinishedSheet";
 import { ShareLiveModal } from "./components/ShareLiveModal";
-import ChatUsuario from "../../../components/ChatUsuario";
 import AlertaModal from "../../../components/ErrorModal";
 
 export default function DetalleCarrera() {
   const navigation = useNavigation();
   const route = useRoute();
+  const insets = useSafeAreaInsets();
   const { tripId = 0, showBack = false } = route.params || {};
 
   const mapRef = useRef(null);
   const [parsedInfo, setParsedInfo] = useState({ addresA: "", addresB: "", observaciones: "" });
-  const [showChat, setShowChat] = useState(false);
   const [shareLive, setShareLive] = useState(true);
   const [shareModalVisible, setShareModalVisible] = useState(false);
   const [alertVisible, setAlertVisible] = useState(false);
   const [alertData, setAlertData] = useState({ message: "", type: "info", onPrimary: null, primaryLabel: "" });
   const [ratingLoading, setRatingLoading] = useState(false);
-  const [isTyping, setIsTyping] = useState(false);
   const arrivedSoundTimes = useRef(0);
 
-  const { tripData, isLoading, error, refetch } = useRideData(tripId, isTyping);
+  const { tripData, isLoading, error, refetch } = useRideData(tripId);
   const { notification } = useNotification();
 
   // Refetch ante push (estado o chat)
@@ -61,7 +58,13 @@ export default function DetalleCarrera() {
     refetch();
   }, [notification, refetch]);
   const driverLocation = useDriverLocation(tripData?.conductor?.id);
-  const { messageCount } = useChatPolling(tripId);
+  const { messageCount, refetch: refetchChatCount } = useChatPolling(tripId);
+
+  // Badge de mensajes por push (sin polling)
+  useEffect(() => {
+    if (!notification) return;
+    refetchChatCount();
+  }, [notification, refetchChatCount]);
   const arrivedPlayer = useAudioPlayer(require("../../../assets/sounds/sonido_close_carro.mp3"));
   useShareLocation(shareLive);
 
@@ -149,6 +152,16 @@ export default function DetalleCarrera() {
   const goHome = () => {
     navigation.replace("BottomTabNavigatorUsuario");
   };
+
+  const openChat = useCallback(() => {
+    const conductor = tripData?.conductor || {};
+    navigation.navigate("ChatConductor", {
+      tripId,
+      peerName: conductor.nombre_completo || "Conductor",
+      peerRole: "Conductor",
+      peerAvatar: getImageUrl(conductor.foto_documento_file),
+    });
+  }, [navigation, tripId, tripData?.conductor]);
 
   const handleCancel = () => {
     showAlert("¿Seguro que deseas cancelar?", "confirm", async () => {
@@ -238,7 +251,7 @@ export default function DetalleCarrera() {
   }
 
   return (
-    <SafeAreaView style={styles.safe}>
+    <SafeAreaView style={styles.safe} edges={['top', 'left', 'right']}>
       <StatusBar barStyle="dark-content" backgroundColor="#F1F5F9" />
       <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === "ios" ? "padding" : undefined}>
         <View style={styles.container}>
@@ -275,7 +288,7 @@ export default function DetalleCarrera() {
               onCancel={handleCancel}
             />
           ) : state === "canceled" ? (
-            <View style={styles.canceledSheet}>
+            <View style={[styles.canceledSheet, { paddingBottom: 40 + insets.bottom }]}>
               <Feather name="x-circle" size={48} color="#FF4757" />
               <Text style={styles.canceledTitle}>Viaje cancelado</Text>
               <Text style={styles.canceledSub}>Tu solicitud fue cancelada correctamente.</Text>
@@ -289,7 +302,6 @@ export default function DetalleCarrera() {
               driverName={tripData?.conductor?.nombre_completo}
               onDone={handleDone}
               loading={ratingLoading}
-              onTypingChange={setIsTyping}
             />
           ) : (
             <DriverSheet
@@ -301,45 +313,11 @@ export default function DetalleCarrera() {
               shareLive={shareLive}
               onToggleShare={handleToggleShare}
               onShowPin={handleShowPin}
-              onShowChat={() => setShowChat(true)}
+              onShowChat={openChat}
               onCall={() => {}}
               onCancel={handleCancel}
               hasNewMessages={messageCount > 0}
             />
-          )}
-
-          {/* Chat overlay */}
-          {showChat && (
-            <View style={styles.chatOverlay}>
-              <TouchableOpacity
-                style={styles.chatBackdrop}
-                activeOpacity={1}
-                onPress={() => setShowChat(false)}
-              />
-              <View style={styles.chatPanel}>
-                <View style={styles.chatHeader}>
-                  <Image
-                    source={
-                      getImageUrl(tripData?.conductor?.foto_documento_file)
-                        ? { uri: getImageUrl(tripData.conductor.foto_documento_file) }
-                        : require("../../../assets/images/nuevo-icono.jpeg")
-                    }
-                    style={styles.chatAvatar}
-                  />
-                  <View style={styles.chatHeaderText}>
-                    <Text style={styles.chatTitle} numberOfLines={1}>
-                      {tripData?.conductor?.nombre_completo || "Conductor"}
-                    </Text>
-                  </View>
-                  <TouchableOpacity onPress={() => setShowChat(false)} style={styles.closeChatBtn}>
-                    <Feather name="x" size={20} color="#FFFFFF" />
-                  </TouchableOpacity>
-                </View>
-                <View style={styles.chatBody}>
-                  <ChatUsuario tripId={tripId} />
-                </View>
-              </View>
-            </View>
           )}
         </View>
 
@@ -472,70 +450,6 @@ const styles = StyleSheet.create({
     fontFamily: "Montserrat",
     color: "#64748B",
     marginTop: 2,
-  },
-  chatOverlay: {
-    position: "absolute",
-    top: 0,
-    bottom: 0,
-    left: 0,
-    right: 0,
-    zIndex: 2000,
-  },
-  chatBackdrop: {
-    flex: 1,
-    backgroundColor: "rgba(15,23,42,0.35)",
-  },
-  chatPanel: {
-    position: "absolute",
-    bottom: 0,
-    left: 0,
-    right: 0,
-    height: "80%",
-    backgroundColor: "#FFFFFF",
-    borderTopLeftRadius: 28,
-    borderTopRightRadius: 28,
-    shadowColor: "#0F172A",
-    shadowOffset: { width: 0, height: -10 },
-    shadowOpacity: 0.15,
-    shadowRadius: 30,
-    elevation: 20,
-    overflow: "hidden",
-  },
-  chatHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 12,
-    backgroundColor: "#FF5500",
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-  },
-  chatAvatar: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: "#FFFFFF",
-    borderWidth: 2,
-    borderColor: "#FFFFFF",
-  },
-  chatHeaderText: {
-    flex: 1,
-  },
-  chatTitle: {
-    fontSize: 16,
-    fontFamily: "MontserratBold",
-    fontWeight: "bold",
-    color: "#FFFFFF",
-  },
-  closeChatBtn: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: "rgba(255,255,255,0.25)",
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  chatBody: {
-    flex: 1,
   },
   canceledSheet: {
     position: "absolute",

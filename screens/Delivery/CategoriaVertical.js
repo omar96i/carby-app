@@ -25,6 +25,7 @@ import { useNavigation, useFocusEffect, useRoute } from "@react-navigation/nativ
 
 import { BASE_URL } from "../../constants/url";
 import ScreenHeader from "../../components/ScreenHeader";
+import FavoriteHeart from "../../components/FavoriteHeart";
 
 const { width } = Dimensions.get("window");
 const ITEM_IMG_SIZE = 120;
@@ -220,6 +221,9 @@ export default function CategoriaVertical() {
               <Ionicons name={esServicio ? "cut-outline" : "image-outline"} size={28} color="#CCC" />
             </View>
           )}
+          <View style={styles.heartPos}>
+            <FavoriteHeart kind={esServicio ? "servicio" : "producto"} productId={item.id} size={16} />
+          </View>
         </View>
         <Text style={styles.itemName} numberOfLines={1}>{item.nombre}</Text>
         <Text style={styles.itemPrice}>{formatPrice(precioFinal)}</Text>
@@ -403,6 +407,12 @@ const styles = StyleSheet.create({
     overflow: "hidden",
     backgroundColor: "#F2F2F2",
     marginBottom: 8,
+  },
+  heartPos: {
+    position: "absolute",
+    top: 6,
+    right: 6,
+    zIndex: 2,
   },
   itemImg: {
     width: "100%",

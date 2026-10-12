@@ -8,11 +8,13 @@ import SecondaryStackNavigator from './StackNavigator';
 import Pedidos from '../screens/conductor/Pedidos';
 import Perfil from '../screens/Perfil';
 import WalletRider from '../screens/Delivery/WalletRider';
+import Demanda from '../screens/Delivery/Demanda';
 const BottomTab = createBottomTabNavigator();
 
 const TAB_META = {
   Home: { label: 'Inicio' },
   Pedidos: { label: 'Pedidos' },
+  Demanda: { label: 'Demanda' },
   WalletRider: { label: 'Billetera' },
   Perfil: { label: 'Cuenta' },
 };
@@ -25,6 +27,9 @@ function TabIconGlyph({ routeName, focused }) {
   }
   if (routeName === 'Pedidos') {
     return <MaterialCommunityIcons name={focused ? 'ticket-confirmation' : 'ticket-confirmation-outline'} color={color} size={size} />;
+  }
+  if (routeName === 'Demanda') {
+    return <MaterialCommunityIcons name={focused ? 'view-dashboard' : 'view-dashboard-outline'} color={color} size={size} />;
   }
   if (routeName === 'WalletRider') {
     return <MaterialCommunityIcons name={focused ? 'wallet' : 'wallet-outline'} color={color} size={size} />;
@@ -75,6 +80,7 @@ export default function BottomTabNavigatorDelivery() {
       screenOptions={{ headerShown: false }}>
       <BottomTab.Screen name="Home" component={SecondaryStackNavigator} />
       <BottomTab.Screen name="Pedidos" component={Pedidos} />
+      <BottomTab.Screen name="Demanda" component={Demanda} />
       <BottomTab.Screen name="WalletRider" component={WalletRider} />
       <BottomTab.Screen name="Perfil" component={Perfil} />
     </BottomTab.Navigator>

@@ -100,6 +100,62 @@ const QuickCategory = memo(({ item, onPress }) => (
   </TouchableOpacity>
 ));
 
+const FavoritosRow = memo(({ onPress }) => {
+  const [cats, setCats] = useState([]);
+
+  useEffect(() => {
+    let alive = true;
+    (async () => {
+      try {
+        const token = await AsyncStorage.getItem("userToken");
+        if (!token) return;
+        const res = await fetch(`${BASE_URL}productos/ultimos-pedidos?limit=20`, {
+          headers: { Accept: "application/json", Authorization: `Bearer ${token}` },
+        });
+        const json = await res.json().catch(() => ({}));
+        const list = Array.isArray(json?.data) ? json.data : [];
+        const seen = new Map();
+        list.forEach((p) => {
+          const c = p?.categoria;
+          if (c?.id && !seen.has(c.id)) seen.set(c.id, c);
+        });
+        if (alive) setCats([...seen.values()].slice(0, 3));
+      } catch {}
+    })();
+    return () => { alive = false; };
+  }, []);
+
+  const catImg = (icono) => {
+    if (!icono) return null;
+    if (String(icono).startsWith("http")) return icono;
+    return `${BASE_URL.toString().replace(/\/api\/?$/, "").replace(/\/$/, "")}/storage/${icono}`;
+  };
+
+  return (
+    <TouchableOpacity style={styles.favRow} onPress={onPress} activeOpacity={0.8}>
+      <View style={styles.favRowIcon}>
+        <Ionicons name="heart" size={16} color="#E11D48" />
+      </View>
+      <View style={styles.favRowText}>
+        <Text style={styles.favRowTitle}>Mis favoritos</Text>
+        <Text style={styles.favRowSub}>Tus frecuentes</Text>
+      </View>
+      {cats.map((c) => (
+        <View key={c.id} style={styles.favCat}>
+          {catImg(c.icono) ? (
+            <Image source={{ uri: catImg(c.icono) }} style={styles.favCatImg} />
+          ) : (
+            <View style={[styles.favCatImg, styles.favCatFallback]}>
+              <Text style={styles.favCatInitial}>{(c.nombre?.[0] || "?").toUpperCase()}</Text>
+            </View>
+          )}
+        </View>
+      ))}
+      <Ionicons name="chevron-forward" size={18} color="#94A3B8" />
+    </TouchableOpacity>
+  );
+});
+
 export default function HomeScreen() {
   // Estados principales
   const [userData, setUserData] = useState(null);
@@ -882,6 +938,9 @@ export default function HomeScreen() {
               ))}
             </View>
 
+            {/* Acceso discreto a favoritos */}
+            <FavoritosRow onPress={() => navigation.navigate("Favoritos", {})} />
+
             {/* Banners de tiendas cercanas */}
             <NearbyBanners location={location} />
 
@@ -1176,6 +1235,68 @@ const styles = StyleSheet.create({
     fontFamily: "Montserrat_400Regular",
     color: "#666",
     marginTop: 2,
+  },
+  favRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#FFF",
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: "#F1F5F9",
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+    marginBottom: 18,
+    gap: 12,
+    shadowColor: "#0F172A",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.25,
+    shadowRadius: 8,
+    elevation: 8,
+  },
+  favRowIcon: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: "#FFF1F2",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  favRowText: { flex: 1 },
+  favRowTitle: {
+    fontSize: 13,
+    fontFamily: "Montserrat_700Bold",
+    color: "#1C1C1E",
+  },
+  favRowSub: {
+    fontSize: 11,
+    fontFamily: "Montserrat_400Regular",
+    color: "#94A3B8",
+  },
+  favCat: {
+    alignItems: "center",
+    width: 44,
+  },
+  favCatImg: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: "#FFFFFF",
+    borderWidth: 1,
+    borderColor: "#F1F5F9",
+    shadowColor: "#0F172A",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.25,
+    shadowRadius: 8,
+    elevation: 8,
+  },
+  favCatFallback: {
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  favCatInitial: {
+    fontSize: 15,
+    fontFamily: "Montserrat_700Bold",
+    color: "#FF5500",
   },
 
   // Modal con mapa
