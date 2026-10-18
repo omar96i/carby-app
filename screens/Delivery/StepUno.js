@@ -145,6 +145,8 @@ export default function StepUno() {
 
   const [availableServices, setAvailableServices] = useState([]);
   const [isLoadingServices, setIsLoadingServices] = useState(false);
+  const [vehicleTypes, setVehicleTypes] = useState([]);
+  const [selectedVehicleTypeId, setSelectedVehicleTypeId] = useState(null);
   const [isLoadingCurrentLocation, setIsLoadingCurrentLocation] = useState(false);
   const [locationError, setLocationError] = useState(null);
   const [isCreatingRide, setIsCreatingRide] = useState(false);
@@ -349,6 +351,7 @@ export default function StepUno() {
         AsyncStorage.removeItem("serviceName");
       }
       getCurrentLocation("pickup");
+      fetchVehicleTypes();
       fetchServices();
       fetchUserPaymentSettings();
 
@@ -709,10 +712,11 @@ export default function StepUno() {
     }
   };
 
-  const fetchServices = async () => {
+  const fetchServices = async (vehicleTypeId = selectedVehicleTypeId) => {
     try {
       setIsLoadingServices(true);
-      const response = await fetch(`${BASE_URL}services`, {
+      const query = vehicleTypeId ? `?vehicle_type_id=${vehicleTypeId}` : "";
+      const response = await fetch(`${BASE_URL}services${query}`, {
         method: "GET",
         headers: { Accept: "application/json" },
       });
@@ -731,6 +735,32 @@ export default function StepUno() {
     } finally {
       setIsLoadingServices(false);
     }
+  };
+
+  const fetchVehicleTypes = async () => {
+    try {
+      const response = await fetch(`${BASE_URL}vehicle-types`, {
+        method: "GET",
+        headers: { Accept: "application/json" },
+      });
+      if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
+      const data = await response.json();
+      if (data?.status && Array.isArray(data.vehicle_types)) {
+        setVehicleTypes(data.vehicle_types.filter((t) => t.activo !== false));
+      } else {
+        setVehicleTypes([]);
+      }
+    } catch (error) {
+      console.error("Error al obtener tipos de vehículo:", error);
+      setVehicleTypes([]);
+    }
+  };
+
+  const handleVehicleTypeSelect = (id) => {
+    const next = id === selectedVehicleTypeId ? null : id;
+    setSelectedVehicleTypeId(next);
+    setSelectedServiceId(null);
+    fetchServices(next);
   };
 
   const getCoordinatesFromAddress = async (address) => {
@@ -1054,6 +1084,7 @@ export default function StepUno() {
           origen: pickupAddress || "",
           destino: deliveryAddress || "",
           metododepago: getPaymentMethodLabel(paymentMethod),
+          vehicle_type_id: selectedVehicleTypeId,
           schedule_id: serviceDetails.schedule_id_vigente ?? serviceDetails.tarifa_vigente?.id ?? null,
           tarifa_vigente: serviceDetails.tarifa_vigente ?? null,
           demanda_nivel: demandaInfo.nivel,
@@ -1195,6 +1226,7 @@ export default function StepUno() {
           precio_base: 0,
           precio_adicional: 0,
         });
+        await fetchVehicleTypes();
         await fetchServices();
         await fetchUserPaymentSettings();
         verifyApiKey();
@@ -1606,6 +1638,36 @@ export default function StepUno() {
                 showsVerticalScrollIndicator={false}
                 keyboardShouldPersistTaps="handled"
               >
+                {vehicleTypes.length > 0 && (
+                  <ScrollView
+                    horizontal
+                    showsHorizontalScrollIndicator={false}
+                    contentContainerStyle={{ gap: 8, paddingVertical: 8, paddingHorizontal: 2 }}
+                  >
+                    {vehicleTypes.map((vt) => {
+                      const active = selectedVehicleTypeId === vt.id;
+                      return (
+                        <TouchableOpacity
+                          key={vt.id}
+                          onPress={() => handleVehicleTypeSelect(vt.id)}
+                          activeOpacity={0.85}
+                          style={{
+                            paddingVertical: 8,
+                            paddingHorizontal: 14,
+                            borderRadius: 999,
+                            borderWidth: 1,
+                            borderColor: active ? "#0F172A" : "#E2E8F0",
+                            backgroundColor: active ? "#0F172A" : "#FFFFFF",
+                          }}
+                        >
+                          <Text style={{ fontSize: 12, fontWeight: "700", color: active ? "#FFFFFF" : "#0F172A" }}>
+                            {vt.nombre}
+                          </Text>
+                        </TouchableOpacity>
+                      );
+                    })}
+                  </ScrollView>
+                )}
                 <VehicleCarousel
                   services={availableServices}
                   selectedId={selectedServiceId}

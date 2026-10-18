@@ -10,7 +10,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import AvailabilitySummary from "./AvailabilitySummary";
 
-export default function OfflinePanel({ availability, checkingSubscription, onConnect, onSubscribe }) {
+export default function OfflinePanel({ availability, checkingSubscription, vehicleTypeNames = [], onConnect, onSubscribe }) {
   const { disponibles = 0 } = availability || {};
   const isEmpty = disponibles <= 0;
   const insets = useSafeAreaInsets();
@@ -26,6 +26,16 @@ export default function OfflinePanel({ availability, checkingSubscription, onCon
 
       {/* Availability card */}
       <AvailabilitySummary availability={availability} />
+
+      {/* Vehicle types (sutil) */}
+      {vehicleTypeNames.length > 0 && (
+        <View style={styles.vehicleRow}>
+          <Ionicons name="car-outline" size={14} color="#94A3B8" />
+          <Text style={styles.vehicleText} numberOfLines={1}>
+            {vehicleTypeNames.join("  ·  ")}
+          </Text>
+        </View>
+      )}
 
       {/* Connect button */}
       <TouchableOpacity
@@ -115,6 +125,21 @@ const styles = StyleSheet.create({
     fontFamily: "Montserrat_700Bold",
     fontSize: 16,
     color: "#FFFFFF",
+  },
+  vehicleRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 6,
+    marginBottom: 14,
+    paddingHorizontal: 8,
+  },
+  vehicleText: {
+    fontFamily: "Montserrat_500Medium",
+    fontSize: 11,
+    color: "#94A3B8",
+    textAlign: "center",
+    flexShrink: 1,
   },
   emptyHint: {
     fontFamily: "Montserrat_500Medium",

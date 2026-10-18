@@ -23,6 +23,7 @@ import {
   Montserrat_800ExtraBold,
 } from "@expo-google-fonts/montserrat";
 import { BASE_URL } from "../../constants/url";
+import { GOOGLE_MAPS_API_KEY } from "../../constants/Keys";
 
 // Valores locales hasta que responda el backend (GET /demanda/parametros)
 const INDICES_DEFAULT = {
@@ -145,20 +146,60 @@ function aumentoDeNivel(nivel, indices) {
   return 0;
 }
 
+// Nombre corto de una ubicación ("Calle 12 #34-56, Pereira") con Google.
+async function reverseGeocodeCorto(lat, lng) {
+  const res = await fetch(
+    `https://maps.googleapis.com/maps/api/geocode/json?latlng=${lat},${lng}&key=${GOOGLE_MAPS_API_KEY}`
+  );
+  const json = await res.json();
+  const lista = Array.isArray(json?.results) ? json.results : [];
+  const valida = lista.find((r) => r?.formatted_address && !/^[\w\d]+\+\w+/.test(r.formatted_address));
+  const addr = valida?.formatted_address || lista[0]?.formatted_address || "";
+  return addr.split(",").slice(0, 2).join(",").trim();
+}
+
+// Rumbo en 8 vientos desde deltas en km (este=x, norte=y)
+function rumbo8(dxKm, dyKm) {
+  const ang = (Math.atan2(dxKm, dyKm) * 180) / Math.PI; // 0=N, 90=E
+  const idx = Math.round(((ang + 360) % 360) / 45) % 8;
+  return ["N", "NE", "E", "SE", "S", "SO", "O", "NO"][idx];
+}
+
 // ─────────────────────────────────────────────
 // Respiración suave (ciclo de 2.4 s): el halo sube y baja sin cortes.
 // Envuelve la sombra con su propio timer: no re-renderiza el resto del mapa
-function PulsoWrapper({ celdas, revelado, fadeIds, celdaKm }) {
+function useLatido(periodo = 2400) {
   const [latido, setLatido] = useState(1);
   useEffect(() => {
     const inicio = Date.now();
     const id = setInterval(() => {
-      const t = ((Date.now() - inicio) % 2400) / 2400;
+      const t = ((Date.now() - inicio) % periodo) / periodo;
       setLatido(0.5 - 0.5 * Math.cos(2 * Math.PI * t));
     }, 120);
     return () => clearInterval(id);
-  }, []);
+  }, [periodo]);
+  return latido;
+}
+function PulsoWrapper({ celdas, revelado, fadeIds, celdaKm }) {
+  const latido = useLatido();
   return <SombraLayer celdas={celdas} revelado={revelado} fadeIds={fadeIds} latido={latido} celdaKm={celdaKm} />;
+}
+
+// Envoltorio del relleno activo: la palpitación vive aquí para no
+// re-renderizar el resto del mapa en cada latido
+function ActivaPulsoWrapper({ celdas, revelado, fadeIds, selectedId, onSelect, radioKm }) {
+  const latido = useLatido();
+  return (
+    <ActivaLayer
+      celdas={celdas}
+      revelado={revelado}
+      fadeIds={fadeIds}
+      selectedId={selectedId}
+      onSelect={onSelect}
+      latido={latido}
+      radioKm={radioKm}
+    />
+  );
 }
 
 // Sombra del blob: doble halo cálido solo en las celdas del borde
@@ -190,50 +231,99 @@ function SombraLayer({ celdas, revelado, fadeIds, latido = 1, celdaKm }) {
   );
 }
 
-// Capas sin bordes: un solo lienzo. Solo la celda tocada lleva contorno.
+// Capas sin bordes: un solo lienzo. La celda tocada lleva doble anillo
+// (halo blanco + color del nivel) en vez del contorno negro.
 // Las zonas sin carreras llevan velo neutro casi invisible.
 // ─────────────────────────────────────────────
-const BajaLayer = React.memo(function BajaLayer({ celdas, selectedId, onSelect }) {
+const BajaLayer = React.memo(function BajaLayer({ celdas, selectedId, onSelect, radioKm }) {
   return (
     <>
       {celdas.map((z) => {
         const isSel = z.id === selectedId;
+        if (!isSel) {
+          // Invisible pero tocable: sin velo gris sobre el mapa
+          return (
+            <Polygon
+              key={z.id}
+              coordinates={z.coords}
+              fillColor="rgba(0,0,0,0)"
+              strokeWidth={0}
+              tappable
+              onPress={() => onSelect(z.id)}
+              zIndex={1}
+            />
+          );
+        }
         return (
-          <Polygon
-            key={z.id}
-            coordinates={z.coords}
-            fillColor="rgba(100,116,139,0.04)"
-            strokeColor={isSel ? "#0F172A" : "transparent"}
-            strokeWidth={isSel ? 2.5 : 0}
-            tappable
-            onPress={() => onSelect(z.id)}
-            zIndex={isSel ? 10 : 1}
-          />
+          <React.Fragment key={z.id}>
+            <Polygon
+              coordinates={crearHexagono(z.latitude, z.longitude, radioKm * 1.14)}
+              fillColor="rgba(100,116,139,0.08)"
+              strokeColor="rgba(15,23,42,0.35)"
+              strokeWidth={5}
+              tappable
+              onPress={() => onSelect(z.id)}
+              zIndex={9}
+            />
+            <Polygon
+              coordinates={z.coords}
+              fillColor="rgba(148,163,184,0.16)"
+              strokeColor="#A1A1AA"
+              strokeWidth={2.5}
+              tappable
+              onPress={() => onSelect(z.id)}
+              zIndex={10}
+            />
+          </React.Fragment>
         );
       })}
     </>
   );
 });
 
-function ActivaLayer({ celdas, revelado, fadeIds, selectedId, onSelect }) {
+function ActivaLayer({ celdas, revelado, fadeIds, selectedId, onSelect, latido = 1, radioKm }) {
+  const pulso = 0.7 + 0.3 * latido;
   return (
     <>
       {celdas.map((z) => {
         const st = NIVEL_STYLE[z.nivel];
-        const alpha = st.base * (fadeIds.includes(z.id) ? revelado : 1);
+        const alpha = st.base * (fadeIds.includes(z.id) ? revelado : 1) * pulso;
         const fill = `rgba(${st.rgb},${alpha.toFixed(3)})`;
         const isSel = z.id === selectedId;
+        if (!isSel) {
+          return (
+            <Polygon
+              key={z.id}
+              coordinates={z.coords}
+              fillColor={fill}
+              strokeWidth={0}
+              tappable
+              onPress={() => onSelect(z.id)}
+              zIndex={2}
+            />
+          );
+        }
         return (
-          <Polygon
-            key={z.id}
-            coordinates={z.coords}
-            fillColor={fill}
-            strokeColor={isSel ? "#0F172A" : "transparent"}
-            strokeWidth={isSel ? 2.5 : 0}
-            tappable
-            onPress={() => onSelect(z.id)}
-            zIndex={isSel ? 10 : 2}
-          />
+          <React.Fragment key={z.id}>
+            <Polygon
+              coordinates={crearHexagono(z.latitude, z.longitude, radioKm * 1.14)}
+              fillColor={fill}
+              strokeColor="rgba(15,23,42,0.35)"
+              strokeWidth={5}
+              tappable
+              onPress={() => onSelect(z.id)}
+              zIndex={9}
+            />
+            <Polygon
+              coordinates={z.coords}
+              fillColor={fill}
+              strokeColor={st.solid}
+              strokeWidth={2.5}
+              tappable
+              onPress={() => onSelect(z.id)}
+              zIndex={10}
+            />
+          </React.Fragment>
         );
       })}
     </>
@@ -638,8 +728,99 @@ export default function Demanda() {
   }, [activas, vecinos]);
 
   const selected = zonas.find((z) => z.id === selectedId) || null;
+
+  // Dirección de la zona seleccionada (se pide al tocarla)
+  const [selectedDireccion, setSelectedDireccion] = useState("");
+  useEffect(() => {
+    if (!selected) {
+      setSelectedDireccion("");
+      return;
+    }
+    let viva = true;
+    setSelectedDireccion("");
+    reverseGeocodeCorto(selected.latitude, selected.longitude)
+      .then((corta) => {
+        if (viva) setSelectedDireccion(corta || "Zona seleccionada");
+      })
+      .catch(() => {
+        if (viva) setSelectedDireccion("Zona seleccionada");
+      });
+    return () => {
+      viva = false;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selected?.id]);
   const bottomPad = 104 + insets.bottom;
   const rangoTxt = `rango ${Math.round(geom.cov * 2)} km`;
+
+  // Dirección del punto evaluado (reverse geocode, cacheada por celda de ~11 m)
+  const [zonaDireccion, setZonaDireccion] = useState("");
+  const zonaGeoKeyRef = useRef("");
+  useEffect(() => {
+    const punto = follow ? userLoc || gridCenter : gridCenter;
+    if (!punto) return;
+    const key = `${punto.latitude.toFixed(4)},${punto.longitude.toFixed(4)}`;
+    if (zonaGeoKeyRef.current === key) return;
+    zonaGeoKeyRef.current = key;
+    setZonaDireccion("");
+    const t = setTimeout(async () => {
+      try {
+        const corta = await reverseGeocodeCorto(punto.latitude, punto.longitude);
+        if (zonaGeoKeyRef.current === key) setZonaDireccion(corta || "Dirección no disponible");
+      } catch (e) {
+        if (zonaGeoKeyRef.current === key) setZonaDireccion("");
+      }
+    }, 800);
+    return () => clearTimeout(t);
+  }, [follow, userLoc, gridCenter]);
+
+  // ── Mi zona: analiza el punto evaluado (tu ubicación en seguimiento,
+  // el pin central en exploración) contra la malla ya calculada.
+  const miZona = useMemo(() => {
+    const punto = follow ? userLoc || gridCenter : gridCenter;
+    if (!punto || zonas.length === 0) return null;
+    let celda = zonas[0];
+    let dMin = Infinity;
+    for (const z of zonas) {
+      const d = distKm(punto.latitude, punto.longitude, z.latitude, z.longitude);
+      if (d < dMin) {
+        dMin = d;
+        celda = z;
+      }
+    }
+    // Zona activa más cercana (distinta a la actual si ya es activa)
+    let mejor = null;
+    let dMejor = Infinity;
+    let dxMejor = 0;
+    let dyMejor = 0;
+    for (const z of activas) {
+      if (z.id === celda.id) continue;
+      const dyKm = (z.latitude - punto.latitude) * 110.574;
+      const dxKm = (z.longitude - punto.longitude) * 111.32 * Math.cos((punto.latitude * Math.PI) / 180);
+      const d = Math.sqrt(dxKm * dxKm + dyKm * dyKm);
+      if (d < dMejor) {
+        dMejor = d;
+        mejor = z;
+        dxMejor = dxKm;
+        dyMejor = dyKm;
+      }
+    }
+    // Cuánto falta para subir de nivel (umbrales del admin)
+    const sigUmbral =
+      celda.nivel === "baja"
+        ? indices.media?.minPedidos ?? null
+        : celda.nivel === "media"
+          ? indices.alta?.minPedidos ?? null
+          : null;
+    return {
+      celda,
+      nearest: mejor,
+      nearestKm: mejor ? dMejor : null,
+      rumbo: mejor ? rumbo8(dxMejor, dyMejor) : null,
+      faltan: sigUmbral != null ? Math.max(sigUmbral - celda.pedidos, 0) : null,
+      explorando: !follow,
+    };
+  }, [follow, userLoc, gridCenter, zonas, activas, indices]);
 
   if (!fontsLoaded) return <View style={styles.loading} />;
 
@@ -679,8 +860,15 @@ export default function Demanda() {
         {borde.length > 0 && (
           <PulsoWrapper celdas={borde} revelado={revelado} fadeIds={fadeIds} celdaKm={geom.R} />
         )}
-        <BajaLayer celdas={bajas} selectedId={selectedId} onSelect={onSelect} />
-        <ActivaLayer celdas={activas} revelado={revelado} fadeIds={fadeIds} selectedId={selectedId} onSelect={onSelect} />
+        <BajaLayer celdas={bajas} selectedId={selectedId} onSelect={onSelect} radioKm={geom.R} />
+        <ActivaPulsoWrapper
+          celdas={activas}
+          revelado={revelado}
+          fadeIds={fadeIds}
+          selectedId={selectedId}
+          onSelect={onSelect}
+          radioKm={geom.R}
+        />
         <MarcadoresLayer altas={altas} medias={medias} revelado={revelado} fadeIds={fadeIds} onSelect={onSelect} />
       </MapView>
 
@@ -718,10 +906,12 @@ export default function Demanda() {
       {selected && (
         <View style={[styles.selectedCard, { top: Math.max(insets.top, 12) + 108 }]}>
           <View style={styles.selectedTop}>
-            <View>
-              <Text style={styles.selectedName}>{selected.nombre}</Text>
+            <View style={styles.selectedTexts}>
+              <Text style={styles.selectedName} numberOfLines={1}>
+                {selectedDireccion || "Buscando dirección…"}
+              </Text>
               <Text style={styles.selectedSub}>
-                {selected.pedidos} carreras · {selected.km2.toFixed(2)} km²
+                {selected.pedidos} carreras en esta zona
               </Text>
             </View>
             <View
@@ -735,22 +925,63 @@ export default function Demanda() {
               </Text>
             </View>
             <TouchableOpacity onPress={() => setSelectedId(null)} hitSlop={12}>
-              <Ionicons name="close" size={20} color="#64748B" />
+              <Ionicons name="close" size={20} color="#A1A1AA" />
             </TouchableOpacity>
           </View>
           <Text style={styles.selectedHint}>
             {selected.nivel === "baja"
-              ? "Sin carreras por ahora en este hexágono."
-              : `Tarifa con aumento del ${selected.aumento}% en este hexágono.`}
+              ? "Poco movimiento por aquí."
+              : `Las carreras en esta zona pagan +${selected.aumento}% extra.`}
           </Text>
         </View>
       )}
 
       {/* ── Bottom flotante ── */}
       <View style={[styles.bottomWrap, { bottom: bottomPad }]}>
+        {miZona && locState !== "buscando" && (
+          <View
+            style={[
+              styles.miZonaCard,
+              { borderLeftColor: NIVEL_STYLE[miZona.celda.nivel].solid },
+            ]}
+          >
+            <View style={styles.miZonaIconWrap}>
+              <Ionicons
+                name="flame"
+                size={20}
+                color={NIVEL_STYLE[miZona.celda.nivel].solid}
+              />
+            </View>
+            <View style={styles.miZonaBody}>
+              <Text style={styles.miZonaTitle}>
+                {miZona.explorando ? "Zona del pin" : "Mi zona"} ·{" "}
+                {NIVEL_STYLE[miZona.celda.nivel].label}
+                {miZona.celda.aumento > 0 ? ` · +${miZona.celda.aumento}%` : ""}
+              </Text>
+              {zonaDireccion ? (
+                <View style={styles.miZonaDirRow}>
+                  <Ionicons name="location-sharp" size={11} color="#94A3B8" />
+                  <Text style={styles.miZonaDir} numberOfLines={1}>
+                    {zonaDireccion}
+                  </Text>
+                </View>
+              ) : null}
+              <Text style={styles.miZonaSub}>
+                {miZona.celda.pedidos} carreras cerca
+                {miZona.celda.nivel === "baja"
+                  ? miZona.nearest
+                    ? ` · caliente más cercana a ${miZona.nearestKm.toFixed(1)} km (${miZona.rumbo})`
+                    : " · sin zonas calientes en rango"
+                  : miZona.faltan == null || miZona.faltan <= 0
+                    ? " · nivel máximo"
+                    : ` · faltan ${miZona.faltan} para Alta`}
+              </Text>
+            </View>
+          </View>
+        )}
         {errorCalor && (
           <TouchableOpacity style={styles.errorPill} onPress={reintentar} activeOpacity={0.85}>
-            <Ionicons name="warning-outline" size={14} color="#B91C1C" />
+            <Ionicons name="warning-outline" size={14} color="#FCA5A5" />
             <Text style={styles.errorText}>{errorCalor} Toca para reintentar.</Text>
           </TouchableOpacity>
         )}
@@ -770,33 +1001,31 @@ export default function Demanda() {
               <Text style={styles.legendText}>Alta</Text>
             </View>
             <TouchableOpacity onPress={() => setInfoVisible(true)} hitSlop={10}>
-              <Ionicons name="information-circle-outline" size={18} color="#64748B" />
+              <Ionicons name="information-circle-outline" size={18} color="#A1A1AA" />
             </TouchableOpacity>
           </View>
           <TouchableOpacity style={styles.refreshBtn} onPress={reintentar} activeOpacity={0.8}>
             {cargando ? (
               <ActivityIndicator size="small" color="#EA580C" />
             ) : (
-              <Ionicons name="refresh" size={18} color="#1C1C1E" />
+              <Ionicons name="refresh" size={18} color="#FFF" />
             )}
           </TouchableOpacity>
         </View>
 
-        <View style={styles.indicesRow}>
-          <View style={[styles.indiceCard, styles.indiceMedia]}>
-            <View style={styles.indiceHeader}>
-              <View style={[styles.indiceDot, { backgroundColor: NIVEL_STYLE.media.solid }]} />
-              <Text style={styles.indiceTitle}>Media</Text>
-            </View>
-            <Text style={styles.indiceBig}>{indices.media ? `+${Number(indices.media.aumentoTarifa)}%` : "—"}</Text>
+        <View style={styles.indicesBar}>
+          <View style={styles.indiceMini}>
+            <View style={[styles.indiceDot, { backgroundColor: NIVEL_STYLE.media.solid }]} />
+            <Text style={styles.indiceMiniText}>
+              Media {indices.media ? `+${Number(indices.media.aumentoTarifa)}%` : "—"}
+            </Text>
           </View>
-
-          <View style={[styles.indiceCard, styles.indiceAlta]}>
-            <View style={styles.indiceHeader}>
-              <View style={[styles.indiceDot, { backgroundColor: NIVEL_STYLE.alta.solid }]} />
-              <Text style={styles.indiceTitle}>Alta</Text>
-            </View>
-            <Text style={styles.indiceBig}>{indices.alta ? `+${Number(indices.alta.aumentoTarifa)}%` : "—"}</Text>
+          <View style={styles.indicesDivider} />
+          <View style={styles.indiceMini}>
+            <View style={[styles.indiceDot, { backgroundColor: NIVEL_STYLE.alta.solid }]} />
+            <Text style={styles.indiceMiniText}>
+              Alta {indices.alta ? `+${Number(indices.alta.aumentoTarifa)}%` : "—"}
+            </Text>
           </View>
         </View>
       </View>
@@ -815,30 +1044,27 @@ export default function Demanda() {
             onPress={() => setInfoVisible(false)}
           />
           <View style={styles.modalCard}>
-            <Text style={styles.modalTitle}>Cómo leer la demanda</Text>
+            <Text style={styles.modalTitle}>Zonas de demanda</Text>
             <ScrollView showsVerticalScrollIndicator={false}>
               <Text style={styles.modalText}>
-                Datos reales del mapa de calor: cada punto es una carrera con su
-                latitud y longitud. Cada hexágono (≈ {geom.area.toFixed(2)} km²)
-                cuenta las carreras en {Number(malla.conteoKm)} km a su alrededor;
-                solo se pintan las celdas con carreras. Rango de {Math.round(geom.cov * 2)} km:
-                en seguimiento se centra en ti, al mover el mapa se recalcula
-                desde el punto central.
+                Los colores muestran dónde hay más pedidos de carreras en este
+                momento. Muévete a las zonas naranjas o rojas: ahí las carreras
+                pagan un porcentaje extra sobre la tarifa normal.
               </Text>
               <View style={styles.modalRow}>
                 <View style={[styles.legendDot, { backgroundColor: NIVEL_STYLE.media.solid }]} />
                 <Text style={styles.modalText}>
-                  Media: {indices.media ? `+${Number(indices.media.aumentoTarifa)}% a la tarifa.` : "sin valor fijado."}
+                  Media: {indices.media ? `las carreras pagan +${Number(indices.media.aumentoTarifa)}% extra.` : "sin aumento por ahora."}
                 </Text>
               </View>
               <View style={styles.modalRow}>
                 <View style={[styles.legendDot, { backgroundColor: NIVEL_STYLE.alta.solid }]} />
                 <Text style={styles.modalText}>
-                  Alta: {indices.alta ? `+${Number(indices.alta.aumentoTarifa)}% a la tarifa.` : "sin valor fijado."}
+                  Alta: {indices.alta ? `las carreras pagan +${Number(indices.alta.aumentoTarifa)}% extra.` : "sin aumento por ahora."}
                 </Text>
               </View>
               <Text style={styles.modalNote}>
-                Los umbrales finales los definirá el backend.
+                La tarjeta "Mi zona" te dice en qué zona estás parado y cuánto extra ganarías ahí.
               </Text>
             </ScrollView>
             <TouchableOpacity
@@ -856,8 +1082,8 @@ export default function Demanda() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#F2F2F7" },
-  loading: { flex: 1, backgroundColor: "#F2F2F7" },
+  container: { flex: 1, backgroundColor: "#131315" },
+  loading: { flex: 1, backgroundColor: "#131315" },
 
   badge: {
     minWidth: 26,
@@ -893,12 +1119,17 @@ const styles = StyleSheet.create({
     zIndex: 5,
   },
   centerDot: {
-    width: 14,
-    height: 14,
-    borderRadius: 7,
-    backgroundColor: "rgba(15,23,42,0.30)",
-    borderWidth: 2,
-    borderColor: "rgba(255,255,255,0.9)",
+    width: 16,
+    height: 16,
+    borderRadius: 8,
+    backgroundColor: "#FFF",
+    borderWidth: 3,
+    borderColor: "#EA580C",
+    shadowColor: "#EA580C",
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.8,
+    shadowRadius: 6,
+    elevation: 5,
   },
 
   topWrap: { position: "absolute", left: 16, right: 16, zIndex: 10 },
@@ -907,16 +1138,23 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 5,
-    backgroundColor: "rgba(255,255,255,0.95)",
+    backgroundColor: "rgba(28,28,30,0.95)",
     paddingVertical: 6,
     paddingHorizontal: 12,
     borderRadius: 999,
     marginTop: 8,
+    borderWidth: 1,
+    borderColor: "rgba(234,88,12,0.35)",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    elevation: 4,
   },
   liveText: {
     fontSize: 11,
     fontFamily: "Montserrat_600SemiBold",
-    color: "#1C1C1E",
+    color: "#F5F5F5",
   },
   liveFollow: {
     fontSize: 11,
@@ -929,9 +1167,11 @@ const styles = StyleSheet.create({
     left: 16,
     right: 16,
     zIndex: 9,
-    backgroundColor: "#FFF",
+    backgroundColor: "#1C1C1E",
     borderRadius: 18,
     padding: 14,
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.08)",
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.15,
@@ -939,15 +1179,16 @@ const styles = StyleSheet.create({
     elevation: 6,
   },
   selectedTop: { flexDirection: "row", alignItems: "center", gap: 10 },
+  selectedTexts: { flex: 1 },
   selectedName: {
     fontSize: 16,
     fontFamily: "Montserrat_800ExtraBold",
-    color: "#0F172A",
+    color: "#FFFFFF",
   },
   selectedSub: {
     fontSize: 12,
     fontFamily: "Montserrat_600SemiBold",
-    color: "#64748B",
+    color: "#A1A1AA",
     marginTop: 2,
   },
   nivelPill: {
@@ -964,7 +1205,7 @@ const styles = StyleSheet.create({
   selectedHint: {
     fontSize: 12,
     fontFamily: "Montserrat_400Regular",
-    color: "#475569",
+    color: "#A1A1AA",
     marginTop: 8,
   },
 
@@ -973,9 +1214,9 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 6,
-    backgroundColor: "#FEF2F2",
+    backgroundColor: "#2A1215",
     borderWidth: 1,
-    borderColor: "#FECACA",
+    borderColor: "#7F1D1D",
     paddingVertical: 8,
     paddingHorizontal: 12,
     borderRadius: 14,
@@ -984,7 +1225,7 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 11,
     fontFamily: "Montserrat_600SemiBold",
-    color: "#B91C1C",
+    color: "#FCA5A5",
   },
   legendRow: { flexDirection: "row", alignItems: "center", gap: 8 },
   legendPill: {
@@ -992,10 +1233,12 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 12,
-    backgroundColor: "rgba(255,255,255,0.96)",
+    backgroundColor: "rgba(28,28,30,0.96)",
     paddingVertical: 8,
     paddingHorizontal: 14,
     borderRadius: 999,
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.08)",
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.12,
@@ -1007,18 +1250,20 @@ const styles = StyleSheet.create({
   legendDotHollow: {
     backgroundColor: "transparent",
     borderWidth: 1.5,
-    borderColor: "#94A3B8",
+    borderColor: "#71717A",
   },
   legendText: {
     fontSize: 11,
     fontFamily: "Montserrat_700Bold",
-    color: "#334155",
+    color: "#D4D4D8",
   },
   refreshBtn: {
     width: 38,
     height: 38,
     borderRadius: 19,
-    backgroundColor: "rgba(255,255,255,0.96)",
+    backgroundColor: "rgba(28,28,30,0.96)",
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.08)",
     justifyContent: "center",
     alignItems: "center",
     shadowColor: "#000",
@@ -1028,50 +1273,103 @@ const styles = StyleSheet.create({
     elevation: 3,
   },
 
-  indicesRow: { flexDirection: "row", gap: 10 },
-  indiceCard: {
-    flex: 1,
-    backgroundColor: "rgba(255,255,255,0.97)",
+  miZonaCard: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    backgroundColor: "rgba(28,28,30,0.97)",
     borderRadius: 18,
-    padding: 12,
+    paddingVertical: 10,
+    paddingHorizontal: 14,
     borderLeftWidth: 5,
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.08)",
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.12,
     shadowRadius: 10,
     elevation: 4,
   },
-  indiceMedia: { borderLeftColor: "#F59E0B" },
-  indiceAlta: { borderLeftColor: "#EA580C" },
-  indiceHeader: { flexDirection: "row", alignItems: "center", gap: 6, marginBottom: 6 },
-  indiceDot: { width: 10, height: 10, borderRadius: 5 },
-  indiceTitle: {
+  miZonaIconWrap: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: "rgba(234,88,12,0.16)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  miZonaBody: { flex: 1 },
+  miZonaDirRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 3,
+    marginTop: 2,
+  },
+  miZonaDir: {
+    flex: 1,
+    fontSize: 11,
+    fontFamily: "Montserrat_600SemiBold",
+    color: "#94A3B8",
+  },
+  miZonaTitle: {
     fontSize: 13,
     fontFamily: "Montserrat_800ExtraBold",
-    color: "#0F172A",
+    color: "#FFFFFF",
   },
-  indiceBig: {
-    fontSize: 26,
-    fontFamily: "Montserrat_800ExtraBold",
-    color: "#0F172A",
+  miZonaSub: {
+    fontSize: 11,
+    fontFamily: "Montserrat_600SemiBold",
+    color: "#A1A1AA",
+    marginTop: 2,
   },
+  indicesBar: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-evenly",
+    backgroundColor: "rgba(28,28,30,0.96)",
+    borderRadius: 999,
+    paddingVertical: 7,
+    paddingHorizontal: 14,
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.08)",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.12,
+    shadowRadius: 6,
+    elevation: 3,
+  },
+  indiceMini: { flexDirection: "row", alignItems: "center", gap: 5 },
+  indiceMiniText: {
+    fontSize: 11,
+    fontFamily: "Montserrat_700Bold",
+    color: "#E4E4E7",
+  },
+  indicesDivider: { width: 1, height: 14, backgroundColor: "#E2E8F0" },
+  indiceDot: { width: 10, height: 10, borderRadius: 5 },
 
   modalOverlay: {
     flex: 1,
-    backgroundColor: "rgba(15,23,42,0.45)",
+    backgroundColor: "rgba(0,0,0,0.65)",
     justifyContent: "center",
     paddingHorizontal: 24,
   },
   modalCard: {
-    backgroundColor: "#FFF",
+    backgroundColor: "#1C1C1E",
     borderRadius: 22,
     padding: 20,
     maxHeight: "70%",
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.08)",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.3,
+    shadowRadius: 24,
+    elevation: 12,
   },
   modalTitle: {
     fontSize: 16,
     fontFamily: "Montserrat_800ExtraBold",
-    color: "#0F172A",
+    color: "#FFFFFF",
     marginBottom: 10,
   },
   modalRow: { flexDirection: "row", gap: 8, marginTop: 10, alignItems: "flex-start" },
@@ -1079,7 +1377,7 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 13,
     fontFamily: "Montserrat_400Regular",
-    color: "#334155",
+    color: "#D4D4D8",
     lineHeight: 19,
   },
   modalNote: {

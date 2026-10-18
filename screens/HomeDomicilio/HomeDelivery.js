@@ -338,6 +338,49 @@ export default function HomeDelivery() {
     } catch (e) { return null; }
   };
 
+  const driverVehicleTypeNames = (() => {
+    const u = userData;
+    if (!u) return [];
+    if (Array.isArray(u.vehicleTypes)) return u.vehicleTypes.map((v) => v.nombre).filter(Boolean);
+    if (Array.isArray(u.vehicle_types)) return u.vehicle_types.map((v) => v.nombre).filter(Boolean);
+    return [];
+  })();
+
+  const getDriverVehicleTypeIds = async () => {
+    try {
+      const pickIds = (u) => {
+        if (!u) return [];
+        if (Array.isArray(u.vehicle_type_ids)) return u.vehicle_type_ids.map((v) => Number(v)).filter(Boolean);
+        if (Array.isArray(u.vehicleTypes)) return u.vehicleTypes.map((v) => Number(v.id)).filter(Boolean);
+        if (Array.isArray(u.vehicle_types)) return u.vehicle_types.map((v) => Number(v.id)).filter(Boolean);
+        return [];
+      };
+      let ids = pickIds(userData);
+      if (ids.length > 0) return ids;
+      const stored = await AsyncStorage.getItem("userData");
+      if (stored) {
+        ids = pickIds(JSON.parse(stored));
+        if (ids.length > 0) return ids;
+      }
+      const parsed = stored ? JSON.parse(stored) : userData;
+      const token = await AsyncStorage.getItem("userToken");
+      if (!parsed?.id || !token) return [];
+      const res = await fetch(`${BASE_URL}usuario/${parsed.id}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const json = await res.json();
+      ids = pickIds(json?.data);
+      if (ids.length > 0) {
+        const merged = { ...(parsed || {}), vehicleTypes: json.data.vehicleTypes };
+        await AsyncStorage.setItem("userData", JSON.stringify(merged));
+        setUserData((prev) => (prev ? { ...prev, vehicleTypes: json.data.vehicleTypes } : prev));
+      }
+      return ids;
+    } catch (e) {
+      return [];
+    }
+  };
+
   const fetchNearbyTrips = async (explicitLocation = null) => {
     try {
       let loc = explicitLocation || userLocation;
@@ -348,7 +391,9 @@ export default function HomeDelivery() {
       if (!userToken) return;
 
       const url = `${BASE_URL}carreras/nearby`;
+      const vehicleIds = await getDriverVehicleTypeIds();
       const body = { lat: loc.latitude, lng: loc.longitude };
+      if (vehicleIds.length > 0) body.vehicle_type_ids = vehicleIds;
       console.log("[HomeDelivery] API CALL ->", url);
       console.log("[HomeDelivery] PARAMS ->", JSON.stringify(body));
 
@@ -713,6 +758,7 @@ export default function HomeDelivery() {
         <OfflinePanel
           availability={availability}
           checkingSubscription={checkingSubscription}
+          vehicleTypeNames={driverVehicleTypeNames}
           onConnect={toggleConnection}
           onSubscribe={goToSubscriptions}
         />

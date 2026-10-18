@@ -75,6 +75,8 @@ export default function RegisterRiderScreen() {
   const [ciudades, setCiudades] = useState([]);
   const [distritos, setDistritos] = useState([]);
   const [images, setImages] = useState({});
+  const [vehicleTypes, setVehicleTypes] = useState([]);
+  const [selectedVehicleTypeIds, setSelectedVehicleTypeIds] = useState([]);
 
   // UI States
   const [showPickerModal, setShowPickerModal] = useState(false);
@@ -94,6 +96,26 @@ export default function RegisterRiderScreen() {
   };
 
   // --- EFECTOS: CARGA DE DATOS ---
+  useEffect(() => {
+    const loadVehicleTypes = async () => {
+      try {
+        const res = await fetch(`${API_URL}vehicle-types`, { headers: { Accept: "application/json" } });
+        const data = await res.json();
+        if (data?.status && Array.isArray(data.vehicle_types)) {
+          setVehicleTypes(data.vehicle_types.filter((t) => t.activo !== false));
+        }
+      } catch (e) {
+        console.error("Error cargando tipos de vehículo:", e);
+      }
+    };
+    loadVehicleTypes();
+  }, []);
+
+  const toggleVehicleType = (id) => {
+    setSelectedVehicleTypeIds((prev) =>
+      prev.includes(id) ? prev.filter((v) => v !== id) : [...prev, id]
+    );
+  };
   useEffect(() => {
     if (!pais) {
         setDepartamentos([]);
@@ -311,6 +333,10 @@ export default function RegisterRiderScreen() {
         showAlert({ title: "Placa inválida", message: "La placa debe tener al menos 5 caracteres.", type: "error" });
         return false;
       }
+      if (vehicleTypes.length > 0 && selectedVehicleTypeIds.length === 0) {
+        showAlert({ title: "Tipo de vehículo", message: "Elige al menos un tipo de vehículo al que puedes prestar servicio.", type: "error" });
+        return false;
+      }
     }
     return true;
   };
@@ -353,6 +379,7 @@ export default function RegisterRiderScreen() {
       dataToSend.append("departamento", departamento);
       dataToSend.append("ciudad", ciudad);
       dataToSend.append("distrito", formData.distrito);
+      selectedVehicleTypeIds.forEach((id) => dataToSend.append("vehicle_type_ids[]", String(id)));
 
       Object.keys(images).forEach(key => {
         if (images[key]) {
@@ -583,6 +610,34 @@ export default function RegisterRiderScreen() {
           {step === 4 && (
             <View>
               <Text style={styles.title}>Datos del Vehículo</Text>
+              {vehicleTypes.length > 0 && (
+                <>
+                  <Text style={styles.label}>Tipos a los que puedes prestar servicio</Text>
+                  <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 20 }}>
+                    {vehicleTypes.map((vt) => {
+                      const active = selectedVehicleTypeIds.includes(vt.id);
+                      return (
+                        <TouchableOpacity
+                          key={vt.id}
+                          onPress={() => toggleVehicleType(vt.id)}
+                          style={{
+                            paddingVertical: 10,
+                            paddingHorizontal: 14,
+                            borderRadius: 20,
+                            borderWidth: 1,
+                            borderColor: active ? '#fa6205' : '#DDD',
+                            backgroundColor: active ? '#fa6205' : '#FFFFFF',
+                          }}
+                        >
+                          <Text style={{ color: active ? '#FFF' : '#1C1C1E', fontFamily: 'Montserrat_700Bold', fontSize: 13 }}>
+                            {vt.nombre}
+                          </Text>
+                        </TouchableOpacity>
+                      );
+                    })}
+                  </View>
+                </>
+              )}
               <Text style={styles.label}>Placa</Text>
               <TextInput style={styles.inputDark} placeholder="ABC-123" placeholderTextColor="#777" maxLength={7} autoCapitalize="characters" value={formData.placa} onChangeText={(v) => handleInputChange('placa', v.toUpperCase())} />
               <Text style={styles.label}>Marca</Text>
