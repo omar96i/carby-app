@@ -30,7 +30,6 @@ export function useLoadedAssets() {
         console.warn(e);
       } finally {
         setLoadingComplete(true);
-        SplashScreen.hideAsync();
       }
     }
 

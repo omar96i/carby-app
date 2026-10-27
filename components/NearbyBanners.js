@@ -1,16 +1,15 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, Image, ActivityIndicator, TouchableOpacity, Dimensions } from 'react-native';
-import Carousel from 'react-native-reanimated-carousel';
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, Image, ActivityIndicator, TouchableOpacity, FlatList } from 'react-native';
 import { useNavigation } from "@react-navigation/native";
 import { BASE_URL } from "../constants/url";
+import LogoComercio from "./LogoComercio";
+import { C, TituloSeccion } from "./home/ProductoHome";
 
-const { width } = Dimensions.get('window');
+const CARD_W = 262;
 
 const NearbyBanners = ({ location }) => {
   const [banners, setBanners] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [activeSlide, setActiveSlide] = useState(0);
-  const carouselRef = useRef(null);
   const navigation = useNavigation();
 
   useEffect(() => {
@@ -43,7 +42,6 @@ const NearbyBanners = ({ location }) => {
   const handleBannerPress = (item) => {
     if (!item.comercio) return;
     const comercio = item.comercio;
-
     navigation.navigate("Shop", {
       establishmentId: comercio.id,
       userId: comercio.id,
@@ -52,27 +50,19 @@ const NearbyBanners = ({ location }) => {
   };
 
   const renderItem = ({ item }) => {
-    if (!item || !item.file) {
-      return (
-        <View style={styles.slide}>
-          <Text style={styles.errorText}>Banner no disponible</Text>
-        </View>
-      );
-    }
-
+    if (!item || !item.file) return null;
     const imageUrl = `https://back.carbycol.com/storage/${item.file}`;
+    const nombre = item.comercio?.establecimiento_nombre || item.comercio?.nombre_completo || '';
 
     return (
-      <TouchableOpacity
-        style={styles.slide}
-        activeOpacity={0.95}
-        onPress={() => handleBannerPress(item)}
-      >
-        <Image
-          source={{ uri: imageUrl }}
-          style={styles.bannerImage}
-          resizeMode="cover"
-        />
+      <TouchableOpacity style={styles.card} activeOpacity={0.92} onPress={() => handleBannerPress(item)}>
+        <Image source={{ uri: imageUrl }} style={styles.bannerImage} resizeMode="cover" />
+        <View style={styles.info}>
+          <View style={styles.logoWrap}>
+            <LogoComercio comercio={item.comercio} comercioId={item.comercio?.id} size={46} />
+          </View>
+          <Text style={styles.nombre} numberOfLines={1}>{nombre}</Text>
+        </View>
       </TouchableOpacity>
     );
   };
@@ -91,82 +81,66 @@ const NearbyBanners = ({ location }) => {
 
   return (
     <View style={styles.container}>
-      <Carousel
-        ref={carouselRef}
-        data={banners}
+      <TituloSeccion icono="storefront" titulo="Tiendas cerca de ti" sub="Cerca de tu ubicación" />
+      <FlatList
+        data={banners.filter((b) => b && b.file)}
         renderItem={renderItem}
-        width={width - 32}
-        height={220}
-        onSnapToItem={(index) => setActiveSlide(index)}
-        autoPlay={banners.length > 1}
-        autoPlayInterval={25000}
-        style={{ width: '100%' }}
-        mode="default"
-        loop={banners.length > 1}
+        keyExtractor={(item, index) => (item.id ?? index).toString()}
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        snapToInterval={CARD_W + 12}
+        decelerationRate="fast"
+        contentContainerStyle={styles.listContent}
       />
-      {banners.length > 1 && (
-        <View style={styles.paginationContainer}>
-          {banners.map((_, index) => (
-            <View
-              key={index}
-              style={[
-                styles.paginationDot,
-                activeSlide === index ? styles.paginationActiveDot : styles.paginationInactiveDot,
-              ]}
-            />
-          ))}
-        </View>
-      )}
     </View>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
-    marginBottom: 20,
-    marginTop: 4,
-    width: '100%',
+    marginBottom: 28,
   },
-  slide: {
-    height: 220,
-    width: width - 32,
+  listContent: {
+    paddingRight: 16,
+    gap: 12,
+  },
+  card: {
+    width: CARD_W,
+    backgroundColor: C.surface,
     borderRadius: 24,
     overflow: 'hidden',
-    alignSelf: 'center',
-    backgroundColor: '#F0F0F0',
   },
   bannerImage: {
-    width: '100%',
-    height: '100%',
+    width: CARD_W,
+    height: 128,
+    backgroundColor: C.bg,
   },
-  errorText: {
-    color: '#999',
-    fontSize: 13,
-    textAlign: 'center',
+  info: {
+    paddingTop: 30,
+    paddingHorizontal: 14,
+    paddingBottom: 14,
+  },
+  logoWrap: {
+    position: 'absolute',
+    left: 14,
+    top: -27,
+    width: 54,
+    height: 54,
+    borderRadius: 27,
+    backgroundColor: C.surface,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  nombre: {
+    fontSize: 14.5,
+    fontFamily: "Montserrat_800ExtraBold",
+    color: C.ink,
   },
   emptyBanner: {
-    width: '100%',
     height: 120,
     justifyContent: 'center',
     alignItems: 'center',
-  },
-  paginationContainer: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingTop: 10,
-    gap: 8,
-  },
-  paginationDot: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
-  },
-  paginationActiveDot: {
-    backgroundColor: '#FF5A00',
-  },
-  paginationInactiveDot: {
-    backgroundColor: '#CCC',
+    marginBottom: 20,
   },
 });
 

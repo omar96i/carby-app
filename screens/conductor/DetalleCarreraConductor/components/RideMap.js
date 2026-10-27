@@ -81,7 +81,7 @@ export const RideMap = ({
                 stroke="#FFFFFF"
                 strokeWidth="2"
               />
-              <SvgText x="15" y="17" textAnchor="middle" fill="#FFFFFF" fontSize="12" fontFamily="MontserratBold">
+              <SvgText x="15" y="17" textAnchor="middle" fill="#FFFFFF" fontSize="12" fontFamily="Montserrat_700Bold">
                 B
               </SvgText>
             </Svg>

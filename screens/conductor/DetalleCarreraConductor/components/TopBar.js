@@ -11,7 +11,7 @@ export const TopBar = ({ state, isDelivery, onBack }) => {
   const sub = isDelivery && state !== "finished" ? "Dirígete al comercio y luego al cliente" : config.sub;
 
   return (
-    <View style={[styles.container, { top: insets.top + 8 }]}>
+    <View style={[styles.container, { top: 8 }]}>
       <View style={styles.row}>
         {onBack && (
           <TouchableOpacity onPress={onBack} style={styles.backBtn} activeOpacity={0.8}>
@@ -65,7 +65,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 10,
-    backgroundColor: "rgba(255,255,255,0.95)",
+    backgroundColor: "#FFFFFF",
     borderRadius: 24,
     borderWidth: 1,
     borderColor: "#E2E8F0",
@@ -90,14 +90,13 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 14,
-    fontFamily: "MontserratBold",
-    fontWeight: "bold",
-    color: "#0F172A",
+    fontFamily: "Montserrat_700Bold",
+    color: "#1C1C1E",
   },
   subtitle: {
-    fontSize: 11,
-    fontFamily: "Montserrat",
-    color: "#64748B",
+    fontSize: 11.5,
+    fontFamily: "Montserrat_400Regular",
+    color: "#71717A",
     marginTop: 2,
   },
 });

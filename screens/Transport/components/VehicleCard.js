@@ -1,97 +1,77 @@
 import React from "react";
 import { TouchableOpacity, View, Text, Image, StyleSheet } from "react-native";
-import { MaterialCommunityIcons } from "@expo/vector-icons";
+import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
+
+export const VEHICLE_CARD_W = 116;
 
 export default function VehicleCard({ name, iconUrl, price, selected, onPress }) {
   return (
     <TouchableOpacity
       style={[styles.card, selected && styles.cardActive]}
       onPress={onPress}
-      activeOpacity={0.85}
+      activeOpacity={0.8}
     >
-      <View style={styles.topRow}>
-        <Text style={styles.name} numberOfLines={1}>{name}</Text>
-      </View>
       <View style={styles.iconWrap}>
         {iconUrl ? (
           <Image source={{ uri: iconUrl }} style={styles.vehicleImg} resizeMode="contain" />
         ) : (
-          <MaterialCommunityIcons name="package-variant-closed" size={40} color="#FF5500" />
+          <MaterialCommunityIcons name="package-variant-closed" size={32} color="#fa6205" />
         )}
       </View>
-      <View style={styles.bottomRow}>
-        <Text style={[styles.price, selected && styles.priceActive]}>
-          {price ? `$${price}` : "--"}
-        </Text>
+      <View style={styles.nameRow}>
+        <Text style={styles.name} numberOfLines={1}>{name}</Text>
+        {selected && <Ionicons name="checkmark-circle" size={16} color="#fa6205" />}
       </View>
+      <Text style={[styles.price, selected && styles.priceActive]}>
+        {price ? `$${price}` : "--"}
+      </Text>
     </TouchableOpacity>
   );
 }
 
 const styles = StyleSheet.create({
   card: {
-    width: 138,
-    height: 150,
-    backgroundColor: "#FFFFFF",
-    borderWidth: 1.5,
-    borderColor: "#E2E8F0",
-    borderRadius: 18,
-    padding: 10,
-    justifyContent: "space-between",
-    marginRight: 12,
-    shadowColor: "#0F172A",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.06,
-    shadowRadius: 16,
-    elevation: 3,
+    width: VEHICLE_CARD_W,
+    backgroundColor: "#F4F4F5",
+    borderRadius: 20,
+    borderWidth: 2,
+    borderColor: "transparent",
+    paddingHorizontal: 10,
+    paddingTop: 8,
+    paddingBottom: 10,
   },
   cardActive: {
-    borderColor: "#FF5500",
-    borderWidth: 2,
-    backgroundColor: "#FFF0E8",
-    shadowColor: "#FF5500",
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.5,
-    shadowRadius: 20,
-    elevation: 10,
-  },
-  topRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-  },
-  name: {
-    fontSize: 13,
-    fontFamily: "MontserratBold",
-    fontWeight: "bold",
-    color: "#0F172A",
+    backgroundColor: "#FFF0E5",
+    borderColor: "#fa6205",
   },
   iconWrap: {
+    height: 58,
     alignItems: "center",
     justifyContent: "center",
-    height: 74,
+    marginBottom: 6,
   },
   vehicleImg: {
-    width: 130,
-    height: 72,
-    shadowColor: "#0F172A",
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.12,
-    shadowRadius: 12,
-    elevation: 4,
+    width: 92,
+    height: 56,
   },
-  bottomRow: {
+  nameRow: {
     flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "flex-end",
+    alignItems: "center",
+    gap: 4,
+  },
+  name: {
+    flex: 1,
+    fontSize: 13.5,
+    fontFamily: "Montserrat_700Bold",
+    color: "#1C1C1E",
   },
   price: {
     fontSize: 14,
-    fontFamily: "MontserratBold",
-    fontWeight: "bold",
-    color: "#0F172A",
+    fontFamily: "Montserrat_800ExtraBold",
+    color: "#1C1C1E",
+    marginTop: 2,
   },
   priceActive: {
-    color: "#FF5500",
+    color: "#fa6205",
   },
 });

@@ -6,11 +6,15 @@ import { FontAwesome, MaterialIcons, MaterialCommunityIcons, Ionicons } from "@e
 const AnimatedCircle = Animated.createAnimatedComponent(View);
 const STEP_WIDTH = 108;
 const LINE_TOP = 24;
+const STEP_WIDTH_C = 84;
+const LINE_TOP_C = 17;
 
 // Stepper horizontal con scroll manual:
 // - permite deslizar para ver estados faltantes
 // - al cambiar el estado actual, anima relleno de barra + rebote del circulo
-export default function OrderStatusStepper({ steps, currentStatus, label = "" }) {
+export default function OrderStatusStepper({ steps, currentStatus, label = "", compact = false }) {
+  const stepW = compact ? STEP_WIDTH_C : STEP_WIDTH;
+  const lineTop = compact ? LINE_TOP_C : LINE_TOP;
   const scrollRef = useRef(null);
   const firstPaintRef = useRef(true);
 
@@ -21,7 +25,7 @@ export default function OrderStatusStepper({ steps, currentStatus, label = "" })
   const previousIndex = useSharedValue(-1);
 
   useEffect(() => {
-    const targetFill = safeIndex * STEP_WIDTH;
+    const targetFill = safeIndex * stepW;
 
     if (firstPaintRef.current) {
       fillWidth.value = targetFill;
@@ -32,7 +36,7 @@ export default function OrderStatusStepper({ steps, currentStatus, label = "" })
 
     previousIndex.value = safeIndex;
     scrollRef.current?.scrollTo({
-      x: Math.max(0, safeIndex * STEP_WIDTH - STEP_WIDTH),
+      x: Math.max(0, safeIndex * stepW - stepW),
       animated: true,
     });
   }, [safeIndex]);
@@ -50,14 +54,15 @@ export default function OrderStatusStepper({ steps, currentStatus, label = "" })
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}
       >
-        <View style={[styles.track, { width: STEP_WIDTH * steps.length }]}>
-          <View style={[styles.lineBg, { left: STEP_WIDTH / 2, width: STEP_WIDTH * (steps.length - 1), top: LINE_TOP }]} />
-          <Animated.View style={[styles.lineFill, { left: STEP_WIDTH / 2, top: LINE_TOP }, fillStyle]} />
+        <View style={[styles.track, { width: stepW * steps.length }]}>
+          <View style={[styles.lineBg, compact && styles.lineC, { left: stepW / 2, width: stepW * (steps.length - 1), top: lineTop }]} />
+          <Animated.View style={[styles.lineFill, compact && styles.lineC, { left: stepW / 2, top: lineTop }, fillStyle]} />
           {steps.map((step, index) => (
             <StepItem
               key={step.key}
               step={step}
-              slotW={STEP_WIDTH}
+              slotW={stepW}
+              compact={compact}
               isActive={index === safeIndex}
               isCompleted={index < safeIndex}
               isPending={index > safeIndex}
@@ -69,7 +74,7 @@ export default function OrderStatusStepper({ steps, currentStatus, label = "" })
   );
 }
 
-function StepItem({ step, slotW, isActive, isCompleted, isPending }) {
+function StepItem({ step, slotW, isActive, isCompleted, isPending, compact }) {
   const scale = useSharedValue(1);
 
   useEffect(() => {
@@ -90,16 +95,16 @@ function StepItem({ step, slotW, isActive, isCompleted, isPending }) {
 
   return (
     <View style={{ width: slotW, alignItems: "center" }}>
-      <AnimatedCircle style={[styles.circle, circleStyle]}>
+      <AnimatedCircle style={[styles.circle, compact && styles.circleC, circleStyle]}>
         {isCompleted ? (
-          <FontAwesome name="check" size={16} color="#FFF" />
+          <FontAwesome name="check" size={compact ? 13 : 16} color="#FFF" />
         ) : (
-          renderIcon(step.icon, isPending ? "#999" : "#FFF", 18)
+          renderIcon(step.icon, isPending ? "#999" : "#FFF", compact ? 14 : 18)
         )}
       </AnimatedCircle>
       <Text
         numberOfLines={2}
-        style={[styles.stepLabel, (isActive || isCompleted) && styles.stepLabelActive, isActive && styles.stepLabelCurrent]}
+        style={[styles.stepLabel, compact && styles.stepLabelC, (isActive || isCompleted) && styles.stepLabelActive, isActive && styles.stepLabelCurrent]}
       >
         {step.label}
       </Text>
@@ -144,5 +149,8 @@ const styles = StyleSheet.create({
   },
   stepLabel: { fontSize: 10, color: "#a1a1aa", marginTop: 8, textAlign: "center", textTransform: "uppercase", fontWeight: "700", letterSpacing: 0.3, paddingHorizontal: 4 },
   stepLabelActive: { color: "#1c1c1e" },
+  circleC: { width: 34, height: 34, borderRadius: 17, borderWidth: 0 },
+  lineC: { height: 3 },
+  stepLabelC: { fontSize: 11, textTransform: "none", letterSpacing: 0, fontWeight: "normal", fontFamily: "Montserrat_700Bold", marginTop: 6 },
   stepLabelCurrent: { color: "#fa6205" },
 });

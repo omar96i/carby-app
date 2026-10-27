@@ -19,7 +19,9 @@ import { useAlert } from "../../context/AlertContext";
 import MaterialCommunityIcons from "react-native-vector-icons/MaterialCommunityIcons";
 import { useFonts, Montserrat_400Regular, Montserrat_600SemiBold, Montserrat_700Bold } from "@expo-google-fonts/montserrat";
 import * as ImagePicker from "expo-image-picker";
-import DatePickerComponent from "../../components/DatePickerComponent";
+import SelectorFecha from "../../components/registro/SelectorFecha";
+import { RegistroScreen, RegistroHeader, RegistroCard, CampoTexto, CampoSelector, registroStyles, C } from "../../components/registro/RegistroUI";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 // --- IMPORTACIÓN DE DATOS GEOGRÁFICOS ---
 import peruData from "../../BaseColombia/colombia.json"; 
@@ -36,6 +38,7 @@ const COUNTRY_INFO = {
 
 export default function RegisterStoreScreen() {
   const navigation = useNavigation();
+  const insets = useSafeAreaInsets();
   const { showAlert } = useAlert();
   const scrollRef = useRef(null);
 
@@ -448,8 +451,9 @@ export default function RegisterStoreScreen() {
   // Paso 1: Aviso Importante + SELECTOR DE PAÍS
   const renderStep1 = () => (
     <View style={styles.warningContainer}>
-      <MaterialCommunityIcons name="storefront-outline" size={80} color="#fa6205" style={{ marginBottom: 20 }} />
-      <Text style={styles.warningTitle}>Registro de Comercio</Text>
+      <View style={styles.warningIcon}>
+        <MaterialCommunityIcons name="storefront-outline" size={44} color={C.brand} />
+      </View>
        
        {/* SELECTOR DE PAÍS - Oculto, siempre Colombia */}
 
@@ -457,14 +461,14 @@ export default function RegisterStoreScreen() {
       <View style={styles.bulletPoints}>
         {["RUT o Cámara de Comercio", "Foto de cédula", "Datos del Negocio", "Fotos de tus productos o carta", "Precios actualizados", "Foto o QR de Pago (Nequi / Bancolombia)"].map((item, index) => (
           <View key={index} style={styles.bulletItem}>
-            <MaterialCommunityIcons name="check-circle-outline" size={20} color="#fa6205" />
+            <MaterialCommunityIcons name="check-circle" size={20} color={C.brand} />
             <Text style={styles.bulletText}>{item}</Text>
           </View>
         ))}
       </View>
 
       <View style={styles.infoBox}>
-        <MaterialCommunityIcons name="lightbulb-on-outline" size={24} color="#1C1C1E" />
+        <MaterialCommunityIcons name="lightbulb-on-outline" size={24} color={C.brand} />
         <Text style={styles.infoText}>
           "Si quieres que te facilitemos tu registro de productos, puedes contactarnos enviándonos unas fotos de tu carta y nuestro equipo te apoyará."
         </Text>
@@ -475,18 +479,18 @@ export default function RegisterStoreScreen() {
   // Paso 2: Datos Negocio
   const renderStep2 = () => (
     <View>
-      <Text style={styles.title}>Datos del Negocio</Text>
 
       <Text style={styles.label}>Nombre del negocio *</Text>
-      <TextInput style={styles.inputDark} placeholder="Ej. Bodega Don Pepe" placeholderTextColor="#777" value={formData.establecimiento_nombre} onChangeText={(v) => handleInputChange('establecimiento_nombre', v)} maxLength={60} />
+      <CampoTexto icon="store" placeholder="Ej. Bodega Don Pepe" value={formData.establecimiento_nombre} onChangeText={(v) => handleInputChange('establecimiento_nombre', v)} maxLength={60} />
 
       <Text style={styles.label}>Categoría *</Text>
-      <TouchableOpacity style={styles.inputDark} onPress={() => openPicker('categoria', categorias, "Selecciona Categoría")}>
-        <Text style={[styles.inputText, !formData.global_categoria_id && { color: '#777' }]}>
-          {getCategoryLabel() || "Selecciona..."}
-        </Text>
-        <MaterialCommunityIcons name="chevron-down" size={20} color="#fa6205" />
-      </TouchableOpacity>
+      <CampoSelector
+        icon="shape"
+        value={getCategoryLabel()}
+        placeholder="Selecciona..."
+        active={showPickerModal && pickerTarget === 'categoria'}
+        onPress={() => openPicker('categoria', categorias, "Selecciona Categoría")}
+      />
       {categorias.length === 0 && <Text style={{color:'#d9534f', fontSize:12, marginTop:-15, marginBottom:15}}>Cargando categorías de {pais ? COUNTRY_INFO[pais].label : '...'}...</Text>}
     </View>
   );
@@ -494,45 +498,50 @@ export default function RegisterStoreScreen() {
   // Paso 3: Ubicación (Adaptado al país)
   const renderStep3 = () => (
     <View>
-      <Text style={styles.title}>Ubicación ({pais ? COUNTRY_INFO[pais].label : ''})</Text>
 
       <Text style={styles.label}>Departamento *</Text>
-      <TouchableOpacity style={styles.inputDark} onPress={() => openPicker('departamento', departamentos, "Selecciona Departamento")}>
-        <Text style={[styles.inputText, !formData.departamento && { color: '#777' }]}>{formData.departamento || "Selecciona..."}</Text>
-        <MaterialCommunityIcons name="chevron-down" size={20} color="#fa6205" />
-      </TouchableOpacity>
+      <CampoSelector
+        icon="map"
+        value={formData.departamento}
+        placeholder="Selecciona..."
+        active={showPickerModal && pickerTarget === 'departamento'}
+        onPress={() => openPicker('departamento', departamentos, "Selecciona Departamento")}
+      />
 
       <Text style={styles.label}>Provincia/Ciudad *</Text>
-      <TouchableOpacity style={[styles.inputDark, !formData.departamento && { opacity: 0.5 }]} disabled={!formData.departamento} onPress={() => openPicker('ciudad', ciudades, "Selecciona Ciudad")}>
-        <Text style={[styles.inputText, !formData.ciudad && { color: '#777' }]}>{formData.ciudad || "Selecciona..."}</Text>
-        <MaterialCommunityIcons name="chevron-down" size={20} color="#fa6205" />
-      </TouchableOpacity>
+      <CampoSelector
+        icon="city-variant"
+        value={formData.ciudad}
+        placeholder="Selecciona..."
+        disabled={!formData.departamento}
+        active={showPickerModal && pickerTarget === 'ciudad'}
+        onPress={() => openPicker('ciudad', ciudades, "Selecciona Ciudad")}
+      />
 
       {distritos.length > 0 && (
         <>
             <Text style={styles.label}>Distrito</Text>
-            <TouchableOpacity 
-                style={styles.inputDark} 
+            <CampoSelector
+                icon="map-marker-radius"
+                value={formData.distrito}
+                placeholder="Selecciona..."
+                active={showPickerModal && pickerTarget === 'distrito'}
                 onPress={() => openPicker('distrito', distritos, "Selecciona Distrito")}
-            >
-                <Text style={[styles.inputText, !formData.distrito && { color: '#777' }]}>{formData.distrito || "Selecciona..."}</Text>
-                <MaterialCommunityIcons name="chevron-down" size={20} color="#fa6205" />
-            </TouchableOpacity>
+            />
         </>
       )}
 
       <Text style={styles.label}>Dirección Exacta *</Text>
-      <TextInput style={styles.inputDark} placeholder="Av. Principal 123" placeholderTextColor="#777" value={formData.direccion} onChangeText={(v) => handleInputChange('direccion', v)} maxLength={80} />
+      <CampoTexto icon="home-map-marker" placeholder="Av. Principal 123" value={formData.direccion} onChangeText={(v) => handleInputChange('direccion', v)} maxLength={80} />
     </View>
   );
 
   // Paso 4: Representante y Seguridad
   const renderStep4 = () => (
     <View>
-      <Text style={styles.title}>Contacto y Seguridad</Text>
 
       <Text style={styles.label}>Representante Legal *</Text>
-      <TextInput style={styles.inputDark} placeholder="Nombre completo" placeholderTextColor="#777" value={formData.persona_natural} onChangeText={(v) => {
+      <CampoTexto icon="account-tie" placeholder="Nombre completo" value={formData.persona_natural} onChangeText={(v) => {
         setFormData(prev => ({
           ...prev,
           persona_natural: v,
@@ -542,27 +551,31 @@ export default function RegisterStoreScreen() {
 
       <Text style={styles.label}>Tipo de Documento *</Text>
       {/* --- AQUI USAMOS LA FUNCIÓN DINÁMICA DE OPCIONES --- */}
-      <TouchableOpacity style={styles.inputDark} onPress={() => openPicker('tipoDocumento', getDocumentOptions(), "Tipo de Documento")}>
-        <Text style={styles.inputText}>{formData.tipo_documento || "Selecciona..."}</Text>
-        <MaterialCommunityIcons name="chevron-down" size={20} color="#fa6205" />
-      </TouchableOpacity>
+      <CampoSelector
+        icon="card-account-details"
+        value={getDocumentOptions().find((o) => o.value === formData.tipo_documento)?.label || formData.tipo_documento}
+        placeholder="Selecciona..."
+        active={showPickerModal && pickerTarget === 'tipoDocumento'}
+        onPress={() => openPicker('tipoDocumento', getDocumentOptions(), "Tipo de Documento")}
+      />
 
       <Text style={styles.label}>Número de Documento *</Text>
-      <TextInput style={styles.inputDark} placeholder="Número" placeholderTextColor="#777" keyboardType="numeric" value={formData.numero_documento} onChangeText={(v) => handleInputChange('numero_documento', v)} maxLength={10} />
+      <CampoTexto icon="numeric" placeholder="Número" keyboardType="numeric" value={formData.numero_documento} onChangeText={(v) => handleInputChange('numero_documento', v)} maxLength={10} />
 
       <Text style={styles.label}>Fecha de Nacimiento *</Text>
-      <TouchableOpacity style={styles.inputDark} onPress={() => setShowDateModal(true)}>
-        <Text style={[styles.inputText, !formData.fecha_nacimiento && { color: '#777' }]}>
-          {formData.fecha_nacimiento || "Seleccionar fecha"}
-        </Text>
-        <MaterialCommunityIcons name="calendar-month" size={22} color="#fa6205" />
-      </TouchableOpacity>
+      <CampoSelector
+        icon="cake-variant"
+        value={formData.fecha_nacimiento}
+        placeholder="Seleccionar fecha"
+        trailingIcon="calendar-month"
+        active={showDateModal}
+        onPress={() => setShowDateModal(true)}
+      />
 
       <Text style={styles.label}>Teléfono de Contacto *</Text>
-      <TextInput 
-        style={styles.inputDark} 
-        placeholder={pais ? COUNTRY_INFO[pais].phonePlaceholder : "Celular"} 
-        placeholderTextColor="#777" 
+      <CampoTexto
+        icon="phone"
+        placeholder={pais ? COUNTRY_INFO[pais].phonePlaceholder : "Celular"}
         keyboardType="phone-pad" 
         value={formData.numero_telefono} 
         onChangeText={(v) => handleInputChange('numero_telefono', v)} 
@@ -570,23 +583,21 @@ export default function RegisterStoreScreen() {
       />
 
       <Text style={styles.label}>Correo Electrónico *</Text>
-      <TextInput style={styles.inputDark} placeholder="email@tienda.com" placeholderTextColor="#777" keyboardType="email-address" autoCapitalize="none" value={formData.email} onChangeText={(v) => handleInputChange('email', v)} maxLength={50} />
+      <CampoTexto icon="email" placeholder="email@tienda.com" keyboardType="email-address" autoCapitalize="none" value={formData.email} onChangeText={(v) => handleInputChange('email', v)} maxLength={50} />
 
-      <View style={{ height: 1, backgroundColor: '#333', marginVertical: 15 }} />
+      <View style={{ height: StyleSheet.hairlineWidth, backgroundColor: C.edge, marginTop: 4, marginBottom: 22 }} />
 
       <Text style={styles.label}>Contraseña *</Text>
-      <TextInput style={styles.inputDark} placeholder="Mínimo 9 caracteres" placeholderTextColor="#777" secureTextEntry value={formData.password} onChangeText={(v) => handleInputChange('password', v)} maxLength={30} />
+      <CampoTexto icon="lock" placeholder="Mínimo 9 caracteres" secureTextEntry value={formData.password} onChangeText={(v) => handleInputChange('password', v)} maxLength={30} />
 
       <Text style={styles.label}>Repetir Contraseña *</Text>
-      <TextInput style={styles.inputDark} placeholder="Confirma contraseña" placeholderTextColor="#777" secureTextEntry value={formData.repeatPassword} onChangeText={(v) => handleInputChange('repeatPassword', v)} maxLength={30} />
+      <CampoTexto icon="lock-check" placeholder="Confirma contraseña" secureTextEntry value={formData.repeatPassword} onChangeText={(v) => handleInputChange('repeatPassword', v)} maxLength={30} />
     </View>
   );
 
   // Paso 5: Documentación
   const renderStep5 = () => (
     <View>
-      <Text style={styles.title}>Documentación</Text>
-      <Text style={styles.subtitle}>Sube las fotos obligatorias.</Text>
 
       <View style={styles.docGrid}>
         {imageFields.map((doc) => (
@@ -599,13 +610,13 @@ export default function RegisterStoreScreen() {
               <Image source={{ uri: images[doc.id].uri }} style={styles.docImagePreview} />
             ) : (
               <View style={styles.docPlaceholder}>
-                <MaterialCommunityIcons name="plus" size={35} color="#fa6205" />
+                <View style={styles.docIcon}><MaterialCommunityIcons name="camera-plus" size={24} color={C.brand} /></View>
                 <Text style={styles.docLabel}>{doc.label}</Text>
               </View>
             )}
             {images[doc.id] && (
               <View style={styles.checkBadge}>
-                <MaterialCommunityIcons name="check" size={14} color="#000" />
+                <MaterialCommunityIcons name="check" size={14} color={C.surface} />
               </View>
             )}
           </TouchableOpacity>
@@ -629,14 +640,14 @@ export default function RegisterStoreScreen() {
             <Image source={{ uri: qrImage.uri }} style={styles.docImagePreview} />
           ) : (
             <View style={styles.docPlaceholder}>
-              <MaterialCommunityIcons name="qrcode-scan" size={40} color="#fa6205" />
+              <View style={styles.docIcon}><MaterialCommunityIcons name="qrcode-scan" size={24} color={C.brand} /></View>
               <Text style={styles.docLabel}>Subir Imagen del QR</Text>
             </View>
           )}
 
           {qrImage && (
             <View style={styles.checkBadge}>
-              <MaterialCommunityIcons name="check" size={14} color="#000" />
+              <MaterialCommunityIcons name="check" size={14} color={C.surface} />
             </View>
           )}
         </TouchableOpacity>
@@ -645,25 +656,16 @@ export default function RegisterStoreScreen() {
     </View>
   );
 
+  const TITULOS = { 1: "Registro de Comercio", 2: "Datos del Negocio", 3: `Ubicación (${pais ? COUNTRY_INFO[pais].label : ''})`, 4: "Contacto y Seguridad", 5: "Documentación" };
+  const SUBTITULOS = { 5: "Sube las fotos obligatorias." };
+
   return (
-    <KeyboardAvoidingView
-      style={{ flex: 1, backgroundColor: "#F2F2F7" }}
-      behavior={Platform.OS === "ios" ? "padding" : "height"}
-    >
+    <RegistroScreen>
       <View style={styles.container}>
 
-        {/* HEADER */}
-        <View style={styles.headerArea}>
-          <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButtonHeader}>
-            <MaterialCommunityIcons name="arrow-left" size={24} color="#1C1C1E" />
-          </TouchableOpacity>
-          <Image source={require("../../assets/images/nuevo-icono.jpeg")} style={styles.logoSmall} />
-          <View style={styles.progressBarContainer}>
-            <View style={[styles.progressBarFill, { width: `${(step / totalSteps) * 100}%` }]} />
-          </View>
-          <Text style={styles.stepText}>Paso {step} de {totalSteps}</Text>
-        </View>
+        <RegistroHeader step={step} totalSteps={totalSteps} onBack={() => navigation.goBack()} title={TITULOS[step]} subtitle={SUBTITULOS[step]} />
 
+        <RegistroCard>
         <ScrollView ref={scrollRef} showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
 
           {step === 1 && renderStep1()}
@@ -680,32 +682,35 @@ export default function RegisterStoreScreen() {
               </TouchableOpacity>
             )}
             <TouchableOpacity
-              style={[styles.buttonPrimary, step > 1 && { flex: 1 }]}
+              style={[styles.buttonPrimary, { flex: 1 }]}
+              activeOpacity={0.8}
               onPress={step === totalSteps ? handlePreRegister : handleNextStep}
             >
               <Text style={styles.buttonTextPrimary}>
                 {step === 1 ? "Comenzar Registro" : step === totalSteps ? "Finalizar" : "Siguiente"}
               </Text>
-              {step < totalSteps && <MaterialCommunityIcons name="arrow-right" size={20} color="#F2F2F7" style={{ marginLeft: 8 }} />}
+              {step < totalSteps && <MaterialCommunityIcons name="arrow-right" size={20} color={C.surface} style={{ marginLeft: 8 }} />}
             </TouchableOpacity>
           </View>
 
         </ScrollView>
+        </RegistroCard>
 
         {/* MODALES */}
         <Modal animationType="slide" transparent visible={showPickerModal} onRequestClose={() => setShowPickerModal(false)}>
           <View style={styles.modalOverlay}>
-            <View style={styles.modalContent}>
+            <View style={[styles.modalContent, { paddingBottom: insets.bottom + 16 }]}>
+              <View style={styles.grabber} />
               <View style={styles.modalHeader}>
                 <Text style={styles.modalTitle}>{modalTitle}</Text>
                 <TouchableOpacity onPress={() => setShowPickerModal(false)}><Text style={styles.modalCloseText}>Cerrar</Text></TouchableOpacity>
               </View>
               <FlatList data={pickerOptions} keyExtractor={(item, index) => index.toString()} renderItem={({ item }) => (
-                <TouchableOpacity style={styles.modalItem} onPress={() => handlePickerSelect(item)}>
+                <TouchableOpacity style={styles.modalItem} activeOpacity={0.8} onPress={() => handlePickerSelect(item)}>
                   <Text style={styles.modalItemText}>{item.label}</Text>
                   {/* Icono check si es el seleccionado */}
                   {((pickerTarget === 'pais' && pais === item.value) || (pickerTarget === 'departamento' && formData.departamento === item.value)) && 
-                    <MaterialCommunityIcons name="check" size={20} color="#fa6205" />
+                    <MaterialCommunityIcons name="check-circle" size={22} color={C.brand} />
                   }
                 </TouchableOpacity>
               )} />
@@ -718,7 +723,7 @@ export default function RegisterStoreScreen() {
             <View style={styles.dateModalContent}>
               <Text style={styles.modalTitle}>Fecha de Nacimiento</Text>
               <View style={styles.datePickerContainer}>
-                <DatePickerComponent fechaNacimiento={formData.fecha_nacimiento} setFechaNacimiento={(val) => handleInputChange("fecha_nacimiento", val)} />
+                <SelectorFecha fechaNacimiento={formData.fecha_nacimiento} setFechaNacimiento={(val) => handleInputChange("fecha_nacimiento", val)} />
               </View>
               <TouchableOpacity style={styles.buttonPrimary} onPress={() => setShowDateModal(false)}>
                 <Text style={styles.buttonTextPrimary}>Confirmar Fecha</Text>
@@ -729,16 +734,17 @@ export default function RegisterStoreScreen() {
 
         <Modal animationType="slide" transparent visible={modalVisible} onRequestClose={() => setModalVisible(false)}>
           <View style={styles.modalOverlay}>
-            <View style={styles.modalContent}>
-              <Text style={styles.modalTitle}>Código de Referido</Text>
-              <Text style={[styles.inputText, { textAlign: 'center', marginBottom: 15, color: '#ccc' }]}>
+            <View style={[styles.modalContent, { paddingBottom: insets.bottom + 16 }]}>
+              <View style={styles.grabber} />
+              <Text style={[styles.modalTitle, { textAlign: 'center' }]}>Código de Referido</Text>
+              <Text style={styles.referidoText}>
                 Si tienes un código, ingrésalo. Si no, continúa.
               </Text>
-              <TextInput style={styles.inputDark} placeholder="Código (Opcional)" placeholderTextColor="#777" value={codigoReferido} onChangeText={setCodigoReferido} maxLength={20} />
+              <CampoTexto icon="ticket-percent" placeholder="Código (Opcional)" value={codigoReferido} onChangeText={setCodigoReferido} maxLength={20} />
               <TouchableOpacity style={styles.buttonPrimary} onPress={finalizarRegistro}>
                 <Text style={styles.buttonTextPrimary}>Finalizar Registro</Text>
               </TouchableOpacity>
-              <TouchableOpacity style={[styles.buttonSecondary, { marginTop: 10 }]} onPress={() => setModalVisible(false)}>
+              <TouchableOpacity style={[styles.buttonSecondary, { marginTop: 10, marginRight: 0 }]} onPress={() => setModalVisible(false)}>
                 <Text style={styles.buttonTextSecondary}>Cancelar</Text>
               </TouchableOpacity>
             </View>
@@ -749,7 +755,7 @@ export default function RegisterStoreScreen() {
         <Modal transparent={true} visible={isLoading} animationType="fade">
           <View style={styles.loadingOverlay}>
             <View style={styles.loadingContainer}>
-              <ActivityIndicator size="large" color="#fa6205" />
+              <ActivityIndicator size="large" color={C.brand} />
               <Text style={styles.loadingText}>Registrando tienda...</Text>
               <Text style={styles.loadingSubText}>Servidor: {pais === 'CO' ? 'Colombia' : 'Perú'}</Text>
             </View>
@@ -757,69 +763,29 @@ export default function RegisterStoreScreen() {
         </Modal>
 
       </View>
-    </KeyboardAvoidingView>
+    </RegistroScreen>
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#F2F2F7" },
-  scrollContent: { paddingHorizontal: 24, paddingBottom: 50 },
-  headerArea: { paddingTop: 60, paddingHorizontal: 24, marginBottom: 20 },
-  backButtonHeader: { marginBottom: 15, alignSelf: 'flex-start' },
-  logoSmall: { width: 80, height: 80, resizeMode: "contain", alignSelf: "center", marginBottom: 20, borderRadius: 16 },
+const styles = {
+  ...registroStyles,
+  ...StyleSheet.create({
+    container: { flex: 1 },
+    inputText: { fontSize: 15, fontFamily: "Montserrat_400Regular", color: C.ink },
+    referidoText: { fontSize: 14, lineHeight: 20, fontFamily: "Montserrat_400Regular", color: C.muted, textAlign: "center", marginBottom: 16 },
 
-  progressBarContainer: { height: 4, backgroundColor: "#333", borderRadius: 2, marginBottom: 8, width: '100%' },
-  progressBarFill: { height: "100%", backgroundColor: "#fa6205", borderRadius: 2 },
-  stepText: { color: "#777", fontSize: 12, fontFamily: "Montserrat_400Regular", textAlign: "right" },
+    // Aviso
+    warningContainer: { alignItems: 'center', paddingVertical: 8 },
+    warningIcon: { width: 88, height: 88, borderRadius: 999, backgroundColor: C.iconBg, alignItems: 'center', justifyContent: 'center', marginBottom: 16 },
+    warningTitle: { fontSize: 24, fontFamily: "Montserrat_800ExtraBold", color: C.ink, marginBottom: 6 },
+    warningSub: { fontSize: 15, fontFamily: "Montserrat_600SemiBold", color: C.muted, marginBottom: 18 },
+    bulletPoints: { width: '100%', marginBottom: 20, backgroundColor: C.bg, borderRadius: 22, paddingVertical: 8, paddingHorizontal: 14 },
+    bulletItem: { flexDirection: 'row', alignItems: 'center', paddingVertical: 8 },
+    bulletText: { color: C.ink, fontSize: 14, fontFamily: "Montserrat_600SemiBold", marginLeft: 10, flex: 1 },
+    infoBox: { flexDirection: 'row', backgroundColor: C.iconBg, padding: 16, borderRadius: 22, alignItems: 'center' },
+    infoText: { color: C.ink, fontSize: 13, lineHeight: 19, fontFamily: "Montserrat_400Regular", marginLeft: 12, flex: 1, fontStyle: 'italic' },
 
-  title: { fontSize: 26, fontFamily: "Montserrat_700Bold", color: '#1C1C1E', marginBottom: 8 },
-  subtitle: { fontSize: 15, fontFamily: "Montserrat_400Regular", color: "#A0A0A0", marginBottom: 25 },
-  label: { fontSize: 14, fontFamily: "Montserrat_700Bold", color: "#DDD", marginBottom: 8, marginLeft: 4 },
-
-  inputDark: { backgroundColor: "#FFFFFF", borderRadius: 12, borderWidth: 1, borderColor: "#DDD", paddingHorizontal: 16, paddingVertical: 14, fontSize: 16, fontFamily: "Montserrat_400Regular", color: '#1C1C1E', marginBottom: 20, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  inputText: { fontSize: 16, fontFamily: "Montserrat_400Regular", color: '#1C1C1E' },
-
-  // Aviso
-  warningContainer: { alignItems: 'center', paddingVertical: 20 },
-  warningTitle: { fontSize: 22, fontFamily: "Montserrat_700Bold", color: "#fa6205", marginBottom: 10 },
-  warningSub: { fontSize: 16, fontFamily: "Montserrat_600SemiBold", color: '#1C1C1E', marginBottom: 20 },
-  bulletPoints: { width: '100%', marginBottom: 30 },
-  bulletItem: { flexDirection: 'row', alignItems: 'center', marginBottom: 12 },
-  bulletText: { color: '#1C1C1E', fontSize: 15, fontFamily: "Montserrat_400Regular", marginLeft: 10 },
-  infoBox: { flexDirection: 'row', backgroundColor: '#FFFFFF', padding: 15, borderRadius: 12, borderWidth: 1, borderColor: '#444', alignItems: 'center' },
-  infoText: { color: '#444', fontSize: 13, fontFamily: "Montserrat_400Regular", marginLeft: 10, flex: 1, fontStyle: 'italic' },
-
-  // Grid Docs
-  docGrid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between' },
-  docSquare: { width: '48%', aspectRatio: 1, backgroundColor: '#FFFFFF', borderRadius: 12, marginBottom: 15, borderStyle: 'dashed', borderWidth: 1, borderColor: '#666', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' },
-  docSquareDone: { borderStyle: 'solid', borderWidth: 2, borderColor: '#fa6205' },
-  docPlaceholder: { alignItems: 'center', padding: 10 },
-  docLabel: { color: '#999', fontSize: 12, fontFamily: 'Montserrat_400Regular', marginTop: 10, textAlign: 'center' },
-  docImagePreview: { width: '100%', height: '100%', resizeMode: 'cover' },
-  checkBadge: { position: 'absolute', top: 8, right: 8, backgroundColor: '#fa6205', borderRadius: 10, padding: 4, zIndex: 2 },
-
-  // Botones
-  navButtons: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 20 },
-  buttonPrimary: { backgroundColor: "#fa6205", borderRadius: 12, paddingVertical: 16, paddingHorizontal: 20, alignItems: "center", justifyContent: 'center', flexDirection: 'row' },
-  buttonTextPrimary: { color: "#F2F2F7", fontFamily: "Montserrat_700Bold", fontSize: 16 },
-  buttonSecondary: { paddingVertical: 15, paddingHorizontal: 20, alignItems: "center", marginRight: 10 },
-  buttonTextSecondary: { color: '#1C1C1E', fontFamily: "Montserrat_700Bold", fontSize: 15 },
-
-  // Modales
-  modalOverlay: { flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(0,0,0,0.5)' },
-  modalContent: { backgroundColor: '#FFFFFF', borderTopLeftRadius: 20, borderTopRightRadius: 20, maxHeight: '60%', padding: 20 },
-  modalHeader: { flexDirection: 'row', justifyContent: 'space-between', paddingBottom: 15, borderBottomWidth: 1, borderBottomColor: '#444' },
-  modalTitle: { color: '#1C1C1E', fontSize: 18, fontFamily: "Montserrat_700Bold", marginBottom: 10 },
-  modalCloseText: { color: '#fa6205', fontSize: 16, fontFamily: "Montserrat_700Bold" },
-  modalItem: { padding: 16, borderBottomWidth: 1, borderBottomColor: '#333', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  modalItemText: { color: '#1C1C1E', fontSize: 16, fontFamily: "Montserrat_400Regular" },
-
-  dateModalOverlay: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: 'rgba(0,0,0,0.8)' },
-  dateModalContent: { width: '90%', backgroundColor: '#FFFFFF', borderRadius: 20, padding: 20, alignItems: 'center' },
-  datePickerContainer: { backgroundColor: '#FFF', borderRadius: 10, padding: 10, width: '100%', alignItems: 'center', marginBottom: 20 },
-
-  loadingOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.85)', justifyContent: 'center', alignItems: 'center' },
-  loadingContainer: { backgroundColor: '#FFFFFF', padding: 25, borderRadius: 20, alignItems: 'center', width: '80%' },
-  loadingText: { color: '#1C1C1E', fontSize: 18, fontFamily: "Montserrat_700Bold", marginTop: 20, marginBottom: 5 },
-  loadingSubText: { color: '#AAA', fontSize: 14, fontFamily: "Montserrat_400Regular" }
-});
+    // Botones
+    navButtons: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 'auto', paddingTop: 16 },
+  }),
+};

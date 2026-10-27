@@ -19,7 +19,9 @@ import { useAlert } from "../../context/AlertContext";
 import MaterialCommunityIcons from "react-native-vector-icons/MaterialCommunityIcons";
 import { useFonts, Montserrat_400Regular, Montserrat_700Bold } from "@expo-google-fonts/montserrat";
 import * as ImagePicker from "expo-image-picker";
-import DatePickerComponent from "../../components/DatePickerComponent";
+import SelectorFecha from "../../components/registro/SelectorFecha";
+import { RegistroScreen, RegistroHeader, RegistroCard, CampoTexto, CampoSelector, registroStyles, C } from "../../components/registro/RegistroUI";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 // --- IMPORTACIÓN DE DATOS GEOGRÁFICOS ---
 import peruData from "../../BaseColombia/colombia.json"; 
@@ -36,6 +38,7 @@ const COUNTRY_INFO = {
 
 export default function RegisterRiderScreen() {
   const navigation = useNavigation();
+  const insets = useSafeAreaInsets();
   const { showAlert } = useAlert();
   const scrollRef = useRef(null);
 
@@ -457,35 +460,24 @@ export default function RegisterRiderScreen() {
     setShowPickerModal(false);
   };
 
+  const TITULOS = { 1: "¿Cómo vas a trabajar?", 2: "Datos Personales", 3: "Ubicación y Seguridad", 4: "Datos del Vehículo", 5: "Documentación" };
+  const SUBTITULOS = { 1: "Selecciona la categoría que mejor se adapte.", 5: "Toca el cuadro para subir la foto." };
+
   return (
-    <KeyboardAvoidingView
-      style={{ flex: 1, backgroundColor: "#F2F2F7" }}
-      behavior={Platform.OS === "ios" ? "padding" : "height"}
-    >
+    <RegistroScreen>
       <View style={styles.container}>
 
-        {/* HEADER */}
-        <View style={styles.headerArea}>
-          <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButtonHeader}>
-            <MaterialCommunityIcons name="arrow-left" size={24} color="#1C1C1E" />
-          </TouchableOpacity>
-          <Image source={require("../../assets/images/nuevo-icono.jpeg")} style={styles.logoSmall} />
-          <View style={styles.progressBarContainer}>
-            <View style={[styles.progressBarFill, { width: `${(step / totalSteps) * 100}%` }]} />
-          </View>
-          <Text style={styles.stepText}>Paso {step} de {totalSteps}</Text>
-        </View>
+        <RegistroHeader step={step} totalSteps={totalSteps} onBack={() => navigation.goBack()} title={TITULOS[step]} subtitle={SUBTITULOS[step]} />
 
+        <RegistroCard>
         <ScrollView ref={scrollRef} showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
 
           {/* PASO 1: PAÍS Y ROL */}
           {step === 1 && (
              <View>
-               <Text style={styles.title}>¿Cómo vas a trabajar?</Text>
                
                {/* SELECTOR DE PAÍS - Oculto, siempre Colombia */}
                
-              <Text style={styles.subtitle}>Selecciona la categoría que mejor se adapte.</Text>
 
               <View style={styles.cardsList}>
                 {[
@@ -501,7 +493,7 @@ export default function RegisterRiderScreen() {
                       <MaterialCommunityIcons
                         name={item.icon}
                         size={30}
-                        color={formData.tipo_usuario === item.id ? '#FFF' : '#1C1C1E'}
+                        color={formData.tipo_usuario === item.id ? C.surface : C.brand}
                       />
                     </View>
                     <View style={styles.cardTexts}>
@@ -524,33 +516,36 @@ export default function RegisterRiderScreen() {
           {/* PASO 2: DATOS PERSONALES */}
           {step === 2 && (
             <View>
-              <Text style={styles.title}>Datos Personales</Text>
 
               <Text style={styles.label}>Tipo de documento</Text>
-              <TouchableOpacity style={styles.inputDark} onPress={() => openPicker('tipoDocumento', getDocumentOptions(), "Selecciona Documento")}>
-                <Text style={[styles.inputText, !tipoDocumento && { color: '#777' }]}>{tipoDocumento || "Selecciona..."}</Text>
-                <MaterialCommunityIcons name="chevron-down" size={20} color="#fa6205" />
-              </TouchableOpacity>
+              <CampoSelector
+                icon="card-account-details"
+                value={getDocumentOptions().find((o) => o.value === tipoDocumento)?.label || tipoDocumento}
+                placeholder="Selecciona..."
+                active={showPickerModal && pickerTarget === 'tipoDocumento'}
+                onPress={() => openPicker('tipoDocumento', getDocumentOptions(), "Selecciona Documento")}
+              />
 
               <Text style={styles.label}>Número de documento</Text>
-              <TextInput style={styles.inputDark} placeholder="Ej. 123456789" placeholderTextColor="#777" keyboardType="numeric" value={formData.numero_documento} onChangeText={(v) => handleInputChange('numero_documento', v)} maxLength={10} />
+              <CampoTexto icon="numeric" placeholder="Ej. 123456789" keyboardType="numeric" value={formData.numero_documento} onChangeText={(v) => handleInputChange('numero_documento', v)} maxLength={10} />
 
               <Text style={styles.label}>Nombre completo</Text>
-              <TextInput style={styles.inputDark} placeholder="Ej. Juan Pérez" placeholderTextColor="#777" value={formData.nombre_completo} onChangeText={(v) => handleInputChange('nombre_completo', v)} maxLength={50} />
+              <CampoTexto icon="account" placeholder="Ej. Juan Pérez" value={formData.nombre_completo} onChangeText={(v) => handleInputChange('nombre_completo', v)} maxLength={50} />
 
               <Text style={styles.label}>Fecha de nacimiento</Text>
-              <TouchableOpacity style={styles.inputDark} onPress={() => setShowDateModal(true)}>
-                <Text style={[styles.inputText, !fechaNacimiento && { color: '#777' }]}>
-                  {fechaNacimiento || "Seleccionar fecha"}
-                </Text>
-                <MaterialCommunityIcons name="calendar-month" size={22} color="#fa6205" />
-              </TouchableOpacity>
+              <CampoSelector
+                icon="cake-variant"
+                value={fechaNacimiento}
+                placeholder="Seleccionar fecha"
+                trailingIcon="calendar-month"
+                active={showDateModal}
+                onPress={() => setShowDateModal(true)}
+              />
 
               <Text style={styles.label}>Teléfono</Text>
-              <TextInput 
-                style={styles.inputDark} 
-                placeholder={pais ? COUNTRY_INFO[pais].phonePlaceholder : "Celular"} 
-                placeholderTextColor="#777" 
+              <CampoTexto
+                icon="phone"
+                placeholder={pais ? COUNTRY_INFO[pais].phonePlaceholder : "Celular"}
                 keyboardType="phone-pad" 
                 value={formData.numero_telefono} 
                 onChangeText={(v) => handleInputChange('numero_telefono', v)} 
@@ -558,58 +553,66 @@ export default function RegisterRiderScreen() {
               />
 
               <Text style={styles.label}>Correo electrónico</Text>
-              <TextInput style={styles.inputDark} placeholder="ejemplo@email.com" placeholderTextColor="#777" keyboardType="email-address" autoCapitalize="none" value={formData.email} onChangeText={(v) => handleInputChange('email', v)} maxLength={50} />
+              <CampoTexto icon="email" placeholder="ejemplo@email.com" keyboardType="email-address" autoCapitalize="none" value={formData.email} onChangeText={(v) => handleInputChange('email', v)} maxLength={50} />
             </View>
           )}
 
           {/* PASO 3: UBICACIÓN */}
           {step === 3 && (
             <View>
-              <Text style={styles.title}>Ubicación y Seguridad</Text>
 
               <Text style={styles.label}>Departamento</Text>
-              <TouchableOpacity style={styles.inputDark} onPress={() => openPicker('departamento', departamentos, "Selecciona Departamento")}>
-                <Text style={[styles.inputText, !departamento && { color: '#777' }]}>{departamento || "Selecciona..."}</Text>
-                <MaterialCommunityIcons name="chevron-down" size={20} color="#fa6205" />
-              </TouchableOpacity>
+              <CampoSelector
+                icon="map"
+                value={departamento}
+                placeholder="Selecciona..."
+                active={showPickerModal && pickerTarget === 'departamento'}
+                onPress={() => openPicker('departamento', departamentos, "Selecciona Departamento")}
+              />
 
               <Text style={styles.label}>Ciudad/Provincia</Text>
-              <TouchableOpacity style={[styles.inputDark, !departamento && { opacity: 0.5 }]} disabled={!departamento} onPress={() => openPicker('ciudad', ciudades, "Selecciona Ciudad")}>
-                <Text style={[styles.inputText, !ciudad && { color: '#777' }]}>{ciudad || "Selecciona..."}</Text>
-                <MaterialCommunityIcons name="chevron-down" size={20} color="#fa6205" />
-              </TouchableOpacity>
+              <CampoSelector
+                icon="city-variant"
+                value={ciudad}
+                placeholder="Selecciona..."
+                disabled={!departamento}
+                active={showPickerModal && pickerTarget === 'ciudad'}
+                onPress={() => openPicker('ciudad', ciudades, "Selecciona Ciudad")}
+              />
 
               {/* DISTRITO: SOLO SI HAY DATOS (PERÚ) */}
               {distritos.length > 0 && (
                 <>
                   <Text style={styles.label}>Distrito</Text>
-                  <TouchableOpacity style={styles.inputDark} onPress={() => openPicker('distrito', distritos, "Selecciona Distrito")}>
-                    <Text style={[styles.inputText, !formData.distrito && { color: '#777' }]}>{formData.distrito || "Selecciona..."}</Text>
-                    <MaterialCommunityIcons name="chevron-down" size={20} color="#fa6205" />
-                  </TouchableOpacity>
+                  <CampoSelector
+                    icon="map-marker-radius"
+                    value={formData.distrito}
+                    placeholder="Selecciona..."
+                    active={showPickerModal && pickerTarget === 'distrito'}
+                    onPress={() => openPicker('distrito', distritos, "Selecciona Distrito")}
+                  />
                 </>
               )}
 
               <Text style={styles.label}>Dirección de residencia</Text>
-              <TextInput style={styles.inputDark} placeholder="Dirección completa" placeholderTextColor="#777" value={formData.direccion_residencia} onChangeText={(v) => handleInputChange('direccion_residencia', v)} maxLength={80} />
+              <CampoTexto icon="home-map-marker" placeholder="Dirección completa" value={formData.direccion_residencia} onChangeText={(v) => handleInputChange('direccion_residencia', v)} maxLength={80} />
 
               <View style={{ marginTop: 10 }}>
                 <Text style={styles.label}>Código de Referido (Opcional)</Text>
-                <TextInput style={styles.inputDark} placeholder="Si tienes uno, ingrésalo" placeholderTextColor="#777" value={formData.codigo_referido_padre} onChangeText={(v) => handleInputChange('codigo_referido_padre', v)} maxLength={20} />
+                <CampoTexto icon="ticket-percent" placeholder="Si tienes uno, ingrésalo" value={formData.codigo_referido_padre} onChangeText={(v) => handleInputChange('codigo_referido_padre', v)} maxLength={20} />
               </View>
 
               <Text style={[styles.title, { marginTop: 10, fontSize: 20 }]}>Seguridad</Text>
               <Text style={styles.label}>Contraseña</Text>
-              <TextInput style={styles.inputDark} placeholder="Mínimo 9 caracteres" placeholderTextColor="#777" secureTextEntry value={formData.password} onChangeText={(v) => handleInputChange('password', v)} maxLength={30} />
+              <CampoTexto icon="lock" placeholder="Mínimo 9 caracteres" secureTextEntry value={formData.password} onChangeText={(v) => handleInputChange('password', v)} maxLength={30} />
               <Text style={styles.label}>Repetir Contraseña</Text>
-              <TextInput style={styles.inputDark} placeholder="Confirma tu contraseña" placeholderTextColor="#777" secureTextEntry value={formData.repeatPassword} onChangeText={(v) => handleInputChange('repeatPassword', v)} maxLength={30} />
+              <CampoTexto icon="lock-check" placeholder="Confirma tu contraseña" secureTextEntry value={formData.repeatPassword} onChangeText={(v) => handleInputChange('repeatPassword', v)} maxLength={30} />
             </View>
           )}
 
           {/* PASO 4: VEHÍCULO */}
           {step === 4 && (
             <View>
-              <Text style={styles.title}>Datos del Vehículo</Text>
               {vehicleTypes.length > 0 && (
                 <>
                   <Text style={styles.label}>Tipos a los que puedes prestar servicio</Text>
@@ -621,15 +624,15 @@ export default function RegisterRiderScreen() {
                           key={vt.id}
                           onPress={() => toggleVehicleType(vt.id)}
                           style={{
-                            paddingVertical: 10,
-                            paddingHorizontal: 14,
-                            borderRadius: 20,
-                            borderWidth: 1,
-                            borderColor: active ? '#fa6205' : '#DDD',
-                            backgroundColor: active ? '#fa6205' : '#FFFFFF',
+                            paddingVertical: 11,
+                            paddingHorizontal: 16,
+                            borderRadius: 999,
+                            borderWidth: 1.5,
+                            borderColor: active ? C.brand : C.edge,
+                            backgroundColor: active ? C.brand : C.surface,
                           }}
                         >
-                          <Text style={{ color: active ? '#FFF' : '#1C1C1E', fontFamily: 'Montserrat_700Bold', fontSize: 13 }}>
+                          <Text style={{ color: active ? C.surface : C.ink, fontFamily: 'Montserrat_700Bold', fontSize: 13 }}>
                             {vt.nombre}
                           </Text>
                         </TouchableOpacity>
@@ -639,13 +642,13 @@ export default function RegisterRiderScreen() {
                 </>
               )}
               <Text style={styles.label}>Placa</Text>
-              <TextInput style={styles.inputDark} placeholder="ABC-123" placeholderTextColor="#777" maxLength={7} autoCapitalize="characters" value={formData.placa} onChangeText={(v) => handleInputChange('placa', v.toUpperCase())} />
+              <CampoTexto icon="card-text-outline" placeholder="ABC-123" maxLength={7} autoCapitalize="characters" value={formData.placa} onChangeText={(v) => handleInputChange('placa', v.toUpperCase())} />
               <Text style={styles.label}>Marca</Text>
-              <TextInput style={styles.inputDark} placeholder="Ej. Chevrolet" placeholderTextColor="#777" value={formData.marca_vehiculo} onChangeText={(v) => handleInputChange('marca_vehiculo', v)} maxLength={30} />
+              <CampoTexto icon="car" placeholder="Ej. Chevrolet" value={formData.marca_vehiculo} onChangeText={(v) => handleInputChange('marca_vehiculo', v)} maxLength={30} />
               <Text style={styles.label}>Línea / Modelo</Text>
-              <TextInput style={styles.inputDark} placeholder="Ej. Spark GT" placeholderTextColor="#777" value={formData.linea} onChangeText={(v) => handleInputChange('linea', v)} maxLength={30} />
+              <CampoTexto icon="car-side" placeholder="Ej. Spark GT" value={formData.linea} onChangeText={(v) => handleInputChange('linea', v)} maxLength={30} />
               <Text style={styles.label}>Color</Text>
-              <TextInput style={styles.inputDark} placeholder="Ej. Negro" placeholderTextColor="#777" value={formData.color} onChangeText={(v) => handleInputChange('color', v)} maxLength={20} />
+              <CampoTexto icon="palette" placeholder="Ej. Negro" value={formData.color} onChangeText={(v) => handleInputChange('color', v)} maxLength={20} />
             </View>
           )}
 
@@ -653,11 +656,6 @@ export default function RegisterRiderScreen() {
           {step === 5 && (
             <View>
               {/* --- SECCIÓN 1: DOCUMENTACIÓN --- */}
-              <Text style={styles.title}>Documentación</Text>
-              <Text style={styles.subtitle}>
-                Toca el cuadro para subir la foto.
-              </Text>
-
               <View style={styles.docGrid}>
                 {getFilteredDocs().map((doc) => (
                   <TouchableOpacity
@@ -669,7 +667,7 @@ export default function RegisterRiderScreen() {
                       <Image source={{ uri: images[doc.id].uri }} style={styles.docImagePreview} />
                     ) : (
                       <View style={styles.docPlaceholder}>
-                        <MaterialCommunityIcons name="plus" size={35} color="#fa6205" />
+                        <View style={styles.docIcon}><MaterialCommunityIcons name="camera-plus" size={24} color={C.brand} /></View>
                         <Text style={styles.docLabel}>
                           {doc.label} {doc.required ? '*' : ''}
                         </Text>
@@ -677,7 +675,7 @@ export default function RegisterRiderScreen() {
                     )}
                     {images[doc.id] && (
                       <View style={styles.checkBadge}>
-                        <MaterialCommunityIcons name="check" size={14} color="#000" />
+                        <MaterialCommunityIcons name="check" size={14} color={C.surface} />
                       </View>
                     )}
                   </TouchableOpacity>
@@ -703,14 +701,14 @@ export default function RegisterRiderScreen() {
                     <Image source={{ uri: qrImage.uri }} style={styles.docImagePreview} />
                   ) : (
                     <View style={styles.docPlaceholder}>
-                      <MaterialCommunityIcons name="qrcode-scan" size={40} color="#fa6205" />
+                      <View style={styles.docIcon}><MaterialCommunityIcons name="qrcode-scan" size={24} color={C.brand} /></View>
                       <Text style={styles.docLabel}>Subir Imagen del QR</Text>
                     </View>
                   )}
 
                   {qrImage && (
                     <View style={styles.checkBadge}>
-                      <MaterialCommunityIcons name="check" size={14} color="#000" />
+                      <MaterialCommunityIcons name="check" size={14} color={C.surface} />
                     </View>
                   )}
                 </TouchableOpacity>
@@ -726,18 +724,19 @@ export default function RegisterRiderScreen() {
                 <Text style={styles.buttonTextSecondary}>Atrás</Text>
               </TouchableOpacity>
             )}
-            <TouchableOpacity style={[styles.buttonPrimary, step > 1 && { flex: 1 }]} onPress={step === totalSteps ? handleSubmit : handleNextStep}>
+            <TouchableOpacity style={[styles.buttonPrimary, { flex: 1 }]} activeOpacity={0.8} onPress={step === totalSteps ? handleSubmit : handleNextStep}>
               <Text style={styles.buttonTextPrimary}>{step === totalSteps ? "Finalizar Registro" : "Siguiente"}</Text>
-              {step < totalSteps && <MaterialCommunityIcons name="arrow-right" size={20} color="#F2F2F7" style={{ marginLeft: 8 }} />}
+              {step < totalSteps && <MaterialCommunityIcons name="arrow-right" size={20} color={C.surface} style={{ marginLeft: 8 }} />}
             </TouchableOpacity>
           </View>
         </ScrollView>
+        </RegistroCard>
 
         {/* MODAL DE LOADING */}
         <Modal transparent={true} visible={isLoading} animationType="fade">
           <View style={styles.loadingOverlay}>
             <View style={styles.loadingContainer}>
-              <ActivityIndicator size="large" color="#fa6205" />
+              <ActivityIndicator size="large" color={C.brand} />
               <Text style={styles.loadingText}>Procesando registro...</Text>
               <Text style={styles.loadingSubText}>Servidor: {pais === 'CO' ? 'Colombia' : 'Perú'}</Text>
             </View>
@@ -747,17 +746,18 @@ export default function RegisterRiderScreen() {
         {/* MODALES OTROS */}
         <Modal animationType="slide" transparent visible={showPickerModal} onRequestClose={() => setShowPickerModal(false)}>
           <View style={styles.modalOverlay}>
-            <View style={styles.modalContent}>
+            <View style={[styles.modalContent, { paddingBottom: insets.bottom + 16 }]}>
+              <View style={styles.grabber} />
               <View style={styles.modalHeader}>
                 <Text style={styles.modalTitle}>{modalTitle}</Text>
                 <TouchableOpacity onPress={() => setShowPickerModal(false)}><Text style={styles.modalCloseText}>Cerrar</Text></TouchableOpacity>
               </View>
               <FlatList data={pickerOptions} keyExtractor={(item, index) => index.toString()} renderItem={({ item }) => (
-                <TouchableOpacity style={styles.modalItem} onPress={() => handlePickerSelect(item)}>
+                <TouchableOpacity style={styles.modalItem} activeOpacity={0.8} onPress={() => handlePickerSelect(item)}>
                   <Text style={styles.modalItemText}>{item.label}</Text>
                   {/* Check de seleccionado */}
                   {((pickerTarget === 'pais' && pais === item.value) || (pickerTarget === 'departamento' && departamento === item.value)) && 
-                    <MaterialCommunityIcons name="check" size={20} color="#fa6205" />
+                    <MaterialCommunityIcons name="check-circle" size={22} color={C.brand} />
                   }
                 </TouchableOpacity>
               )} />
@@ -770,7 +770,7 @@ export default function RegisterRiderScreen() {
             <View style={styles.dateModalContent}>
               <Text style={styles.modalTitle}>Fecha de Nacimiento</Text>
               <View style={styles.datePickerContainer}>
-                <DatePickerComponent fechaNacimiento={fechaNacimiento} setFechaNacimiento={setFechaNacimiento} />
+                <SelectorFecha fechaNacimiento={fechaNacimiento} setFechaNacimiento={setFechaNacimiento} />
               </View>
               <TouchableOpacity style={styles.buttonPrimary} onPress={() => setShowDateModal(false)}>
                 <Text style={styles.buttonTextPrimary}>Confirmar Fecha</Text>
@@ -780,80 +780,31 @@ export default function RegisterRiderScreen() {
         </Modal>
 
       </View>
-    </KeyboardAvoidingView>
+    </RegistroScreen>
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#F2F2F7" },
-  scrollContent: { paddingHorizontal: 24, paddingBottom: 50 },
-  headerArea: { paddingTop: 60, paddingHorizontal: 24, marginBottom: 20 },
-  backButtonHeader: { marginBottom: 15, alignSelf: 'flex-start' },
-  logoSmall: { width: 80, height: 80, resizeMode: "contain", alignSelf: "center", marginBottom: 20, borderRadius: 16 },
+const styles = {
+  ...registroStyles,
+  ...StyleSheet.create({
+    container: { flex: 1 },
 
-  // Progreso
-  progressBarContainer: { height: 4, backgroundColor: "#333", borderRadius: 2, marginBottom: 8, width: '100%' },
-  progressBarFill: { height: "100%", backgroundColor: "#fa6205", borderRadius: 2 },
-  stepText: { color: "#777", fontSize: 12, fontFamily: "Montserrat_400Regular", textAlign: "right" },
+    // --- TARJETAS (LISTA) ---
+    cardsList: { marginTop: 4, gap: 12 },
+    cardRow: { flexDirection: 'row', alignItems: 'center', backgroundColor: C.surface, borderRadius: 24, padding: 16, borderWidth: 1.5, borderColor: C.edge },
+    cardRowActive: { backgroundColor: C.iconBg, borderColor: C.brand },
+    iconContainer: { width: 52, height: 52, borderRadius: 999, backgroundColor: C.iconBg, alignItems: 'center', justifyContent: 'center', marginRight: 14 },
+    iconContainerActive: { backgroundColor: C.brand },
+    cardTitle: { fontSize: 16, fontFamily: "Montserrat_800ExtraBold", color: C.ink },
+    cardTitleActive: { color: C.ink },
+    cardDesc: { fontSize: 13, fontFamily: "Montserrat_400Regular", color: C.muted, marginTop: 2 },
+    cardDescActive: { color: C.ink },
+    radioOuter: { width: 24, height: 24, borderRadius: 999, borderWidth: 2, borderColor: C.edge, alignItems: 'center', justifyContent: 'center' },
+    radioOuterActive: { borderColor: C.brand, backgroundColor: C.brand },
+    radioInner: { width: 10, height: 10, borderRadius: 999, backgroundColor: C.surface },
+    cardTexts: { flex: 1, marginLeft: 0 },
 
-  // Textos
-  title: { fontSize: 26, fontFamily: "Montserrat_700Bold", color: '#1C1C1E', marginBottom: 8 },
-  subtitle: { fontSize: 15, fontFamily: "Montserrat_400Regular", color: "#A0A0A0", marginBottom: 25 },
-  label: { fontSize: 14, fontFamily: "Montserrat_700Bold", color: "#DDD", marginBottom: 8, marginLeft: 4 },
-
-  // --- TARJETAS (LISTA) ---
-  cardsList: { marginTop: 10, gap: 15 },
-  cardRow: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#FFFFFF', borderRadius: 12, padding: 16, borderWidth: 1, borderColor: '#444' },
-  cardRowActive: { backgroundColor: '#fa6205', borderColor: '#fa6205' },
-  iconContainer: { width: 50, height: 50, borderRadius: 25, backgroundColor: '#FFFFFF', alignItems: 'center', justifyContent: 'center', marginRight: 15, borderWidth: 1, borderColor: '#DDD' },
-  iconContainerActive: { backgroundColor: '#1C1C1E', borderColor: '#1C1C1E' },
-
-  cardTitle: { fontSize: 16, fontFamily: "Montserrat_700Bold", color: '#1C1C1E' },
-  cardTitleActive: { color: "#F2F2F7" },
-  cardDesc: { fontSize: 13, fontFamily: "Montserrat_400Regular", color: "#AAA", marginTop: 2 },
-  cardDescActive: { color: "#333" },
-  radioOuter: { width: 22, height: 22, borderRadius: 11, borderWidth: 2, borderColor: '#666', alignItems: 'center', justifyContent: 'center' },
-  radioOuterActive: { borderColor: '#F2F2F7' },
-  radioInner: { width: 12, height: 12, borderRadius: 6, backgroundColor: '#F2F2F7' },
-  cardTexts: { flex: 1, marginLeft: 0 },
-
-  // Inputs Dark
-  inputDark: { backgroundColor: "#FFFFFF", borderRadius: 12, borderWidth: 1, borderColor: "#DDD", paddingHorizontal: 16, paddingVertical: 14, fontSize: 16, fontFamily: "Montserrat_400Regular", color: '#1C1C1E', marginBottom: 20, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  inputText: { fontSize: 16, fontFamily: "Montserrat_400Regular", color: '#1C1C1E' },
-
-  // Grid Documentos
-  docGrid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between' },
-  docSquare: { width: '48%', aspectRatio: 1, backgroundColor: '#FFFFFF', borderRadius: 12, marginBottom: 15, borderStyle: 'dashed', borderWidth: 1, borderColor: '#666', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' },
-  docSquareDone: { borderStyle: 'solid', borderWidth: 2, borderColor: '#fa6205' },
-  docPlaceholder: { alignItems: 'center', padding: 10 },
-  docLabel: { color: '#999', fontSize: 12, fontFamily: 'Montserrat_400Regular', marginTop: 10, textAlign: 'center' },
-  docImagePreview: { width: '100%', height: '100%', resizeMode: 'cover' },
-  checkBadge: { position: 'absolute', top: 8, right: 8, backgroundColor: '#fa6205', borderRadius: 10, padding: 4, zIndex: 2 },
-
-  // Botones
-  navButtons: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 20 },
-  buttonPrimary: { backgroundColor: "#fa6205", borderRadius: 12, paddingVertical: 16, paddingHorizontal: 20, alignItems: "center", justifyContent: 'center', flexDirection: 'row' },
-  buttonTextPrimary: { color: "#F2F2F7", fontFamily: "Montserrat_700Bold", fontSize: 16 },
-  buttonSecondary: { paddingVertical: 15, paddingHorizontal: 20, alignItems: "center", marginRight: 10 },
-  buttonTextSecondary: { color: '#1C1C1E', fontFamily: "Montserrat_700Bold", fontSize: 15 },
-
-  // Modales
-  modalOverlay: { flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(0,0,0,0.5)' },
-  modalContent: { backgroundColor: '#FFFFFF', borderTopLeftRadius: 20, borderTopRightRadius: 20, maxHeight: '60%', padding: 20 },
-  modalHeader: { flexDirection: 'row', justifyContent: 'space-between', paddingBottom: 15, borderBottomWidth: 1, borderBottomColor: '#444' },
-  modalTitle: { color: '#1C1C1E', fontSize: 18, fontFamily: "Montserrat_700Bold", marginBottom: 10 },
-  modalCloseText: { color: '#fa6205', fontSize: 16, fontFamily: "Montserrat_700Bold" },
-  modalItem: { padding: 16, borderBottomWidth: 1, borderBottomColor: '#333', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  modalItemText: { color: '#1C1C1E', fontSize: 16, fontFamily: "Montserrat_400Regular" },
-
-  // Modal Fecha
-  dateModalOverlay: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: 'rgba(0,0,0,0.8)' },
-  dateModalContent: { width: '90%', backgroundColor: '#FFFFFF', borderRadius: 20, padding: 20, alignItems: 'center' },
-  datePickerContainer: { backgroundColor: '#FFF', borderRadius: 10, padding: 10, width: '100%', alignItems: 'center', marginBottom: 20 },
-
-  // ESTILOS PARA LOADING
-  loadingOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.85)', justifyContent: 'center', alignItems: 'center' },
-  loadingContainer: { backgroundColor: '#FFFFFF', padding: 25, borderRadius: 20, alignItems: 'center', width: '80%' },
-  loadingText: { color: '#1C1C1E', fontSize: 18, fontFamily: "Montserrat_700Bold", marginTop: 20, marginBottom: 5 },
-  loadingSubText: { color: '#AAA', fontSize: 14, fontFamily: "Montserrat_400Regular" }
-});
+    // Botones
+    navButtons: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 'auto', paddingTop: 16 },
+  }),
+};

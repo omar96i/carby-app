@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { BASE_URL } from "../../constants/url";
 import logger from "../../utils/logger";
@@ -84,6 +84,8 @@ function normalizeCarrera(c) {
     destino: info.destino || "",
     observaciones: info.observaciones || "",
     tipo_viaje: c.tipo_viaje || "Estándar",
+    vehicle_type_id: info.vehicle_type_id ?? null,
+    categoria_nombre: c.service?.nombre || c.vehicle_type?.nombre || null,
     conductor: {
       name: conductor.nombre_completo || "Conductor",
       photo: conductor.foto || null,
@@ -113,9 +115,18 @@ export default function usePedidos() {
   const [mostrarCarrerasUsuario, setMostrarCarrerasUsuario] = useState(false);
   const [countActivas, setCountActivas] = useState(0);
   const [countHistorial, setCountHistorial] = useState(0);
+  const cacheRef = useRef({ activos: null, historial: null });
+  const tabActualRef = useRef(null);
 
   async function fetchPedidos(tab) {
-    setIsLoading(true);
+    tabActualRef.current = tab;
+    const enCache = tab === "historial" ? cacheRef.current.historial : cacheRef.current.activos;
+    if (enCache) {
+      setPedidos(enCache);
+      setFilteredPedidos(enCache);
+    } else {
+      setIsLoading(true);
+    }
     setError(null);
     try {
       const token = await AsyncStorage.getItem("userToken");
@@ -156,19 +167,13 @@ export default function usePedidos() {
       logger.response("HISTORIAL", resHistorial.status, `pedidos: ${historialPedidos.length} | carreras: ${historialCarreras.length}`);
       logger.summary(tab === "historial" ? "HISTORIAL" : "ACTIVOS", `mostrando: ${items.length} (activas: ${allActivos.length}, historial: ${allHistorial.length})`);
 
-      items.forEach((item, i) => {
-        logger.response(`ITEM_${i + 1}`, "-", {
-          id: item.id,
-          es_carrera: item.es_carrera,
-          estado: item.estado,
-          costo_total: item.costo_total,
-          metodo_pago: item.metodo_pago,
-        });
-      });
+      cacheRef.current = { activos: allActivos, historial: allHistorial };
 
-      setPedidos(items);
-      setFilteredPedidos(items);
-      setMostrarCarrerasUsuario((tab === "historial" ? historialCarreras : activosCarreras).length > 0);
+      const tabVisible = tabActualRef.current || tab;
+      const visibles = tabVisible === "historial" ? allHistorial : allActivos;
+      setPedidos(visibles);
+      setFilteredPedidos(visibles);
+      setMostrarCarrerasUsuario((tabVisible === "historial" ? historialCarreras : activosCarreras).length > 0);
     } catch (err) {
       logger.error("FETCH", "Error fetching pedidos", err);
       setError(err.message || "Error al cargar pedidos");

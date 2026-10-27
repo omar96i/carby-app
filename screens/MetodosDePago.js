@@ -9,11 +9,12 @@ import {
   Platform,
   ActivityIndicator,
   Switch,
-  StyleSheet
+  StyleSheet,
+  StatusBar
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
-import { FontAwesome } from '@expo/vector-icons';
+import { FontAwesome, Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as ImagePicker from 'expo-image-picker';
 import { BASE_URL } from '../constants/url';
@@ -385,123 +386,162 @@ const MetodosPago = () => {
     );
   }
 
-  return (
-    <SafeAreaView style={styles.safeContainer} edges={['top', 'left', 'right']}>
-      <ScreenHeader title="Métodos de Pago" showBackButton />
-      <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: Math.max(insets.bottom, 12) + 16 }}>
-        <Text style={styles.subtitle}>Configura tus métodos para recibir pagos</Text>
+  const estadoPill = (activo, texto) => (
+    <View style={[mp.pill, activo ? mp.pillOn : mp.pillOff]}>
+      <View style={[mp.pillDot, { backgroundColor: activo ? "#10B981" : "#A1A1AA" }]} />
+      <Text style={[mp.pillText, { color: activo ? "#6EE7B7" : "#D4D4D8" }]}>{texto}</Text>
+    </View>
+  );
 
-        {/* Sección de QR */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Código QR</Text>
-          
-          <View style={styles.switchRow}>
-            <Text style={styles.switchLabel}>Habilitar pago por QR</Text>
+  return (
+    <SafeAreaView style={mp.screen} edges={['left', 'right']}>
+      <StatusBar barStyle="light-content" backgroundColor="#1C1C1E" />
+
+      <View style={[mp.header, { paddingTop: insets.top + 6 }]}>
+        <View style={mp.headerBar}>
+          <TouchableOpacity style={mp.backBtn} onPress={() => navigation.goBack()} activeOpacity={0.8}>
+            <Ionicons name="arrow-back" size={20} color="#FFF" />
+          </TouchableOpacity>
+          <Text style={mp.headerTitle}>Métodos de pago</Text>
+          <View style={mp.backBtnEspacio} />
+        </View>
+        <Text style={mp.headerSub}>Configura tus métodos para recibir pagos</Text>
+        <View style={mp.pills}>
+          {estadoPill(qrEstado, qrEstado ? "QR activo" : "QR apagado")}
+          {isTipoComercio && estadoPill(mercadoPagoEstado, mercadoPagoEstado ? "Mercado Pago activo" : "Mercado Pago apagado")}
+        </View>
+      </View>
+
+      <ScrollView contentContainerStyle={mp.scroll} showsVerticalScrollIndicator={false}>
+        <View style={[mp.card, qrEstado && mp.cardOn]}>
+          <View style={mp.cardTop}>
+            <View style={[mp.cardIcon, qrEstado && mp.cardIconOn]}>
+              <Ionicons name="qr-code" size={22} color={qrEstado ? "#FFF" : "#fa6205"} />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={mp.cardTitle}>Código QR</Text>
+              <Text style={mp.cardSub}>Habilitar pago por QR</Text>
+            </View>
             <Switch
-              trackColor={{ false: "#767577", true: "#fa6205" }}
-              thumbColor={qrEstado ? "#FFF" : "#f4f3f4"}
-              ios_backgroundColor="#3e3e3e"
+              trackColor={{ false: "#E4E4E7", true: "#fa6205" }}
+              thumbColor="#FFF"
+              ios_backgroundColor="#E4E4E7"
               onValueChange={setQrEstado}
               value={qrEstado}
             />
           </View>
 
           {qrEstado && (
-            <View style={styles.qrContainer}>
-              <Text style={styles.fieldLabel}>Imagen de QR</Text>
-              
-                <TouchableOpacity 
-                  style={styles.imagePickerButton}
-                  onPress={pickQrImage}
-                >
-                  <FontAwesome name="camera" size={18} color="#fa6205" />
-                  <Text style={styles.imagePickerText}>Seleccionar imagen QR</Text>
-                </TouchableOpacity>
-              
-              {qrImagePreview && (
-                <View style={styles.imagePreviewContainer}>
-                  <Image
-                    source={{ uri: qrImagePreview }}
-                    style={styles.imagePreview}
-                    resizeMode="contain"
-                  />
+            <View style={mp.cardBody}>
+              <Text style={mp.label}>Imagen de QR</Text>
+              {qrImagePreview ? (
+                <View style={mp.qrWrap}>
+                  <View style={mp.qrMarco}>
+                    <Image source={{ uri: qrImagePreview }} style={mp.qrImg} resizeMode="contain" />
+                  </View>
+                  <TouchableOpacity style={mp.qrCambiar} onPress={pickQrImage} activeOpacity={0.8}>
+                    <Ionicons name="camera" size={16} color="#1C1C1E" />
+                    <Text style={mp.qrCambiarText}>Cambiar imagen</Text>
+                  </TouchableOpacity>
                 </View>
+              ) : (
+                <TouchableOpacity style={mp.subir} onPress={pickQrImage} activeOpacity={0.8}>
+                  <View style={mp.subirIcon}>
+                    <Ionicons name="camera" size={22} color="#fa6205" />
+                  </View>
+                  <Text style={mp.subirText}>Seleccionar imagen QR</Text>
+                  <Text style={mp.subirSub}>Una foto clara de tu código para que el cliente lo escanee</Text>
+                </TouchableOpacity>
               )}
             </View>
           )}
         </View>
 
-        {/* Sección de Mercado Pago - solo visible para comercios */}
         {isTipoComercio && (
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Mercado Pago</Text>
-            
-            <View style={styles.switchRow}>
-              <Text style={styles.switchLabel}>Habilitar Mercado Pago</Text>
+          <View style={[mp.card, mercadoPagoEstado && mp.cardOn]}>
+            <View style={mp.cardTop}>
+              <View style={[mp.cardIcon, mercadoPagoEstado && mp.cardIconOn]}>
+                <Ionicons name="card" size={22} color={mercadoPagoEstado ? "#FFF" : "#fa6205"} />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={mp.cardTitle}>Mercado Pago</Text>
+                <Text style={mp.cardSub}>Habilitar Mercado Pago</Text>
+              </View>
               <Switch
-                trackColor={{ false: "#767577", true: "#fa6205" }}
-                thumbColor={mercadoPagoEstado ? "#FFF" : "#f4f3f4"}
-                ios_backgroundColor="#3e3e3e"
+                trackColor={{ false: "#E4E4E7", true: "#fa6205" }}
+                thumbColor="#FFF"
+                ios_backgroundColor="#E4E4E7"
                 onValueChange={setMercadoPagoEstado}
                 value={mercadoPagoEstado}
               />
             </View>
 
             {mercadoPagoEstado && (
-              <View style={styles.mpContainer}>
-                <Text style={styles.fieldLabel}>Public Key</Text>
-                <TextInput
-                  style={styles.input}
-                  value={publicKey}
-                  onChangeText={setPublicKey}
-                  placeholder="Ingresa la Public Key de Mercado Pago"
-                  placeholderTextColor="#999"
-                />
-                
-                <Text style={styles.fieldLabel}>Access Token</Text>
-                <TextInput
-                  style={styles.input}
-                  value={accessToken}
-                  onChangeText={setAccessToken}
-                  placeholder="Ingresa el Access Token de Mercado Pago"
-                  placeholderTextColor="#999"
-                  secureTextEntry={true}
-                />
+              <View style={mp.cardBody}>
+                <Text style={mp.label}>Public Key</Text>
+                <View style={mp.input}>
+                  <Ionicons name="key-outline" size={17} color="#A1A1AA" />
+                  <TextInput
+                    style={mp.inputText}
+                    value={publicKey}
+                    onChangeText={setPublicKey}
+                    placeholder="Ingresa la Public Key de Mercado Pago"
+                    placeholderTextColor="#A1A1AA"
+                  />
+                </View>
+
+                <Text style={[mp.label, { marginTop: 14 }]}>Access Token</Text>
+                <View style={mp.input}>
+                  <Ionicons name="lock-closed-outline" size={17} color="#A1A1AA" />
+                  <TextInput
+                    style={mp.inputText}
+                    value={accessToken}
+                    onChangeText={setAccessToken}
+                    placeholder="Ingresa el Access Token de Mercado Pago"
+                    placeholderTextColor="#A1A1AA"
+                    secureTextEntry={true}
+                  />
+                </View>
               </View>
             )}
           </View>
         )}
 
-        {/* Botón único para guardar todas las configuraciones */}
-        <TouchableOpacity
-          style={[styles.mainSaveButton, { opacity: isSaving ? 0.7 : 1 }]}
-          onPress={saveAllPaymentMethods}
-          disabled={isSaving}
-        >
-          {isSaving ? (
-            <ActivityIndicator size="small" color="#FFF" />
-          ) : (
-            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-              <FontAwesome name="save" size={18} color="#FFF" style={styles.saveIcon} />
-              <Text style={styles.mainSaveButtonText}>Guardar métodos de pago</Text>
-            </View>
-          )}
-        </TouchableOpacity>
-
-        <View style={styles.infoContainer}>
-          <Text style={styles.infoText}>
+        <View style={mp.info}>
+          <Ionicons name="information-circle" size={20} color="#fa6205" />
+          <Text style={mp.infoText}>
             Configura tus métodos de pago para que los clientes puedan pagarte de la forma más conveniente.
           </Text>
         </View>
       </ScrollView>
-        <AlertaModal
-          visible={alertVisible}
-          mensaje={alertData.message}
-          tipo={alertData.type}
-          onCerrar={() => setAlertVisible(false)}
-          onPrimary={alertData.onPrimary}
-          primaryLabel={alertData.primaryLabel}
-        />
+
+      {/* Botón único para guardar todas las configuraciones */}
+      <View style={[mp.footer, { paddingBottom: Math.max(insets.bottom, 12) + 8 }]}>
+        <TouchableOpacity
+          style={[mp.saveBtn, isSaving && { opacity: 0.7 }]}
+          onPress={saveAllPaymentMethods}
+          disabled={isSaving}
+          activeOpacity={0.85}
+        >
+          {isSaving ? (
+            <ActivityIndicator size="small" color="#FFF" />
+          ) : (
+            <>
+              <Ionicons name="checkmark-circle" size={20} color="#FFF" />
+              <Text style={mp.saveText}>Guardar métodos de pago</Text>
+            </>
+          )}
+        </TouchableOpacity>
+      </View>
+
+      <AlertaModal
+        visible={alertVisible}
+        mensaje={alertData.message}
+        tipo={alertData.type}
+        onCerrar={() => setAlertVisible(false)}
+        onPrimary={alertData.onPrimary}
+        primaryLabel={alertData.primaryLabel}
+      />
     </SafeAreaView>
   );
 };
@@ -659,6 +699,56 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     lineHeight: 18,
   },
+});
+
+const mp = StyleSheet.create({
+  screen: { flex: 1, backgroundColor: "#F4F4F5" },
+  header: { backgroundColor: "#1C1C1E", paddingHorizontal: 16, paddingBottom: 20, borderBottomLeftRadius: 28, borderBottomRightRadius: 28 },
+  headerBar: { flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
+  backBtn: { width: 38, height: 38, borderRadius: 19, backgroundColor: "rgba(255,255,255,0.1)", justifyContent: "center", alignItems: "center" },
+  backBtnEspacio: { width: 38 },
+  headerTitle: { fontSize: 17, fontFamily: "Montserrat_800ExtraBold", color: "#FFF" },
+  headerSub: { fontSize: 13, fontFamily: "Montserrat_400Regular", color: "#A1A1AA", textAlign: "center", marginTop: 10 },
+  pills: { flexDirection: "row", justifyContent: "center", flexWrap: "wrap", gap: 8, marginTop: 14 },
+  pill: { flexDirection: "row", alignItems: "center", gap: 6, height: 30, paddingHorizontal: 12, borderRadius: 15 },
+  pillOn: { backgroundColor: "rgba(16,185,129,0.16)" },
+  pillOff: { backgroundColor: "rgba(255,255,255,0.08)" },
+  pillDot: { width: 7, height: 7, borderRadius: 4 },
+  pillText: { fontSize: 11.5, fontFamily: "Montserrat_700Bold" },
+
+  scroll: { padding: 16, paddingBottom: 24 },
+  card: { backgroundColor: "#FFF", borderRadius: 24, padding: 16, marginBottom: 14, borderWidth: 1.5, borderColor: "transparent" },
+  cardOn: { borderColor: "#FDD0A5" },
+  cardTop: { flexDirection: "row", alignItems: "center", gap: 12 },
+  cardIcon: { width: 46, height: 46, borderRadius: 23, backgroundColor: "#FFF0E5", alignItems: "center", justifyContent: "center" },
+  cardIconOn: { backgroundColor: "#fa6205" },
+  cardTitle: { fontSize: 15.5, fontFamily: "Montserrat_800ExtraBold", color: "#1C1C1E" },
+  cardSub: { fontSize: 12, fontFamily: "Montserrat_400Regular", color: "#71717A", marginTop: 2 },
+  cardBody: { marginTop: 16, paddingTop: 16, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: "#E4E4E7" },
+  label: { fontSize: 13, fontFamily: "Montserrat_700Bold", color: "#1C1C1E", marginBottom: 8 },
+
+  qrWrap: { alignItems: "center" },
+  qrMarco: { width: 210, height: 210, borderRadius: 24, backgroundColor: "#FFF", borderWidth: 1, borderColor: "#E4E4E7", padding: 12, alignItems: "center", justifyContent: "center" },
+  qrImg: { width: "100%", height: "100%" },
+  qrCambiar: { flexDirection: "row", alignItems: "center", gap: 6, height: 40, paddingHorizontal: 18, borderRadius: 20, backgroundColor: "#F4F4F5", marginTop: 12 },
+  qrCambiarText: { fontSize: 13, fontFamily: "Montserrat_700Bold", color: "#1C1C1E" },
+  subir: { alignItems: "center", paddingVertical: 22, paddingHorizontal: 16, borderRadius: 20, borderWidth: 1.5, borderColor: "#FDD0A5", borderStyle: "dashed", backgroundColor: "#FFFAF5" },
+  subirIcon: { width: 52, height: 52, borderRadius: 26, backgroundColor: "#FFF0E5", alignItems: "center", justifyContent: "center", marginBottom: 10 },
+  subirText: { fontSize: 14, fontFamily: "Montserrat_700Bold", color: "#fa6205" },
+  subirSub: { fontSize: 11.5, lineHeight: 16, fontFamily: "Montserrat_400Regular", color: "#71717A", marginTop: 4, textAlign: "center" },
+
+  input: { flexDirection: "row", alignItems: "center", gap: 10, height: 50, borderRadius: 16, backgroundColor: "#F4F4F5", paddingHorizontal: 14 },
+  inputText: { flex: 1, height: "100%", fontSize: 14, fontFamily: "Montserrat_600SemiBold", color: "#1C1C1E", padding: 0 },
+
+  info: { flexDirection: "row", alignItems: "flex-start", gap: 10, backgroundColor: "#FFF", borderRadius: 20, padding: 14 },
+  infoText: { flex: 1, fontSize: 12.5, lineHeight: 18, fontFamily: "Montserrat_400Regular", color: "#71717A" },
+
+  footer: { paddingHorizontal: 16, paddingTop: 10, backgroundColor: "#F4F4F5" },
+  saveBtn: {
+    flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, height: 54, borderRadius: 27, backgroundColor: "#fa6205",
+    shadowColor: "#fa6205", shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.35, shadowRadius: 16, elevation: 8,
+  },
+  saveText: { fontSize: 15, fontFamily: "Montserrat_700Bold", color: "#FFF" },
 });
 
 export default MetodosPago;

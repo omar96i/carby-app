@@ -31,6 +31,18 @@ export function validateQrReady({ qrEnabled, qrImageUrl }) {
   return { ok: true };
 }
 
+const Paso = ({ n, done, last, children }) => (
+  <View style={s.stepRow}>
+    <View style={s.stepRail}>
+      <View style={[s.stepNum, done && s.stepNumDone]}>
+        {done ? <Ionicons name="checkmark" size={14} color="#FFF" /> : <Text style={s.stepNumText}>{n}</Text>}
+      </View>
+      {!last && <View style={s.stepLine} />}
+    </View>
+    <View style={[s.stepBody, !last && s.stepBodySpaced]}>{children}</View>
+  </View>
+);
+
 export default function QrPaymentCard({
   qrEnabled,
   qrImageUrl,
@@ -67,11 +79,13 @@ export default function QrPaymentCard({
     }
   };
 
+  const qrListo = !!qrImageUrl && !qrError;
+
   return (
     <View style={s.card}>
       <View style={s.head}>
         <View style={s.headIcon}>
-          <Ionicons name="qr-code-outline" size={20} color={C.brand} />
+          <Ionicons name="qr-code" size={20} color={C.brand} />
         </View>
         <View style={{ flex: 1 }}>
           <Text style={s.title}>Pago con QR</Text>
@@ -81,86 +95,74 @@ export default function QrPaymentCard({
 
       {showNotice && (
         <View style={s.notice}>
-          <Ionicons name="time-outline" size={15} color="#B45309" />
+          <Ionicons name="time" size={16} color="#D97706" />
           <Text style={s.noticeText}>
             Puedes reservar ahora y pagar después, pero sube el comprobante antes de tu cita para que el comercio la tome como válida.
           </Text>
         </View>
       )}
 
-      <View style={s.steps}>
-        <View style={s.stepRow}>
-          <View style={[s.stepNum, qrImageUrl && !qrError && s.stepNumDone]}>
-            <Text style={[s.stepNumText, qrImageUrl && !qrError && { color: "#FFF" }]}>1</Text>
-          </View>
-          <View style={{ flex: 1 }}>
-            <Text style={s.stepTitle}>Escanea el QR para pagar</Text>
-            {qrImageUrl && !qrError ? (
-              <>
-                <TouchableOpacity onPress={() => setViewerUri(qrImageUrl)} activeOpacity={0.8}>
-                  <Image
-                    source={{ uri: qrImageUrl }}
-                    style={s.qr}
-                    resizeMode="contain"
-                    onError={() => setQrError(true)}
-                  />
-                </TouchableOpacity>
-                <Text style={s.tapHint}>Toca la imagen para ampliarla</Text>
-              </>
-            ) : (
-              <Text style={s.stepHint}>
-                {qrError
-                  ? "No pudimos cargar la imagen del QR. Igual puedes reservar y subir el comprobante después."
-                  : "El comercio aún no publica su QR."}
-              </Text>
-            )}
-          </View>
-        </View>
+      <Paso n={1} done={qrListo}>
+        <Text style={s.stepTitle}>Escanea el QR para pagar</Text>
+        {qrListo ? (
+          <TouchableOpacity style={s.qrFrame} onPress={() => setViewerUri(qrImageUrl)} activeOpacity={0.85}>
+            <Image
+              source={{ uri: qrImageUrl }}
+              style={s.qr}
+              resizeMode="contain"
+              onError={() => setQrError(true)}
+            />
+            <View style={s.tapHintRow}>
+              <Ionicons name="expand" size={12} color={C.muted} />
+              <Text style={s.tapHint}>Toca la imagen para ampliarla</Text>
+            </View>
+          </TouchableOpacity>
+        ) : (
+          <Text style={s.stepHint}>
+            {qrError
+              ? "No pudimos cargar la imagen del QR. Igual puedes reservar y subir el comprobante después."
+              : "El comercio aún no publica su QR."}
+          </Text>
+        )}
+      </Paso>
 
-        <View style={s.stepRow}>
-          <View style={s.stepNum}><Text style={s.stepNumText}>2</Text></View>
-          <View style={{ flex: 1 }}>
-            <Text style={s.stepTitle}>Paga desde tu app</Text>
-            <Text style={s.stepHint}>Nequi, Bancolombia u otra app que lea QR. Guarda el pantallazo del pago.</Text>
-          </View>
-        </View>
+      <Paso n={2}>
+        <Text style={s.stepTitle}>Paga desde tu app</Text>
+        <Text style={s.stepHint}>Nequi, Bancolombia u otra app que lea QR. Guarda el pantallazo del pago.</Text>
+      </Paso>
 
-        <View style={s.stepRow}>
-          <View style={[s.stepNum, comprobante && s.stepNumDone]}>
-            <Text style={[s.stepNumText, comprobante && { color: "#FFF" }]}>{comprobante ? "✓" : "3"}</Text>
-          </View>
-          <View style={{ flex: 1 }}>
-            <Text style={s.stepTitle}>Sube el comprobante {comprobante ? "✓" : "(opcional ahora)"}</Text>
-            {comprobante ? (
-              <>
-                <TouchableOpacity style={s.filePrev} onPress={() => setViewerUri(comprobante.uri)} activeOpacity={0.8}>
-                  <Image source={{ uri: comprobante.uri }} style={s.fileBig} resizeMode="cover" />
-                  <View style={s.fileZoom}>
-                    <Ionicons name="expand-outline" size={14} color="#FFF" />
-                    <Text style={s.fileZoomText}>Toca para ampliar</Text>
-                  </View>
-                </TouchableOpacity>
-                <View style={s.fileRow}>
-                  <View style={s.fileOk}>
-                    <Ionicons name="checkmark-circle" size={15} color={C.green} />
-                    <Text style={s.fileName} numberOfLines={1}>Comprobante listo · se enviará con tu reserva</Text>
-                  </View>
-                  <TouchableOpacity style={s.fileDel} onPress={onRemoveComprobante} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-                    <Ionicons name="trash-outline" size={16} color="#EF4444" />
-                  </TouchableOpacity>
-                </View>
-              </>
-            ) : (
-              <TouchableOpacity style={s.upBtn} onPress={pickComprobante} disabled={picking} activeOpacity={0.8}>
-                {picking
-                  ? <ActivityIndicator size="small" color="#FFF" />
-                  : <Ionicons name="cloud-upload-outline" size={18} color="#FFF" />}
-                <Text style={s.upText}>{picking ? "Abriendo galería…" : "Subir comprobante"}</Text>
+      <Paso n={3} done={!!comprobante} last>
+        <Text style={s.stepTitle}>
+          Sube el comprobante{comprobante ? "" : " (opcional ahora)"}
+        </Text>
+        {comprobante ? (
+          <>
+            <TouchableOpacity style={s.filePrev} onPress={() => setViewerUri(comprobante.uri)} activeOpacity={0.85}>
+              <Image source={{ uri: comprobante.uri }} style={s.fileBig} resizeMode="cover" />
+              <View style={s.fileZoom}>
+                <Ionicons name="expand" size={12} color="#FFF" />
+                <Text style={s.fileZoomText}>Toca para ampliar</Text>
+              </View>
+            </TouchableOpacity>
+            <View style={s.fileRow}>
+              <View style={s.fileOk}>
+                <Ionicons name="checkmark-circle" size={16} color={C.green} />
+                <Text style={s.fileName} numberOfLines={1}>Comprobante listo · se enviará con tu reserva</Text>
+              </View>
+              <TouchableOpacity style={s.fileDel} onPress={onRemoveComprobante} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }} activeOpacity={0.8}>
+                <Ionicons name="trash-outline" size={17} color="#EF4444" />
               </TouchableOpacity>
-            )}
-          </View>
-        </View>
-      </View>
+            </View>
+          </>
+        ) : (
+          <TouchableOpacity style={s.upBtn} onPress={pickComprobante} disabled={picking} activeOpacity={0.8}>
+            {picking
+              ? <ActivityIndicator size="small" color="#FFF" />
+              : <Ionicons name="cloud-upload-outline" size={18} color="#FFF" />}
+            <Text style={s.upText}>{picking ? "Abriendo galería…" : "Subir comprobante"}</Text>
+          </TouchableOpacity>
+        )}
+      </Paso>
 
       <FullscreenImageViewer uri={viewerUri} onClose={() => setViewerUri(null)} />
     </View>
@@ -177,31 +179,39 @@ export function qrFileForUpload(comprobante) {
 }
 
 const s = StyleSheet.create({
-  card: { backgroundColor: C.surface, borderRadius: 18, padding: 16, borderWidth: 1, borderColor: "#F0F0F0", marginTop: 12 },
-  head: { flexDirection: "row", alignItems: "center", gap: 10, marginBottom: 10 },
-  headIcon: { width: 42, height: 42, borderRadius: 14, backgroundColor: "#FFF0E5", justifyContent: "center", alignItems: "center" },
-  title: { fontSize: 15, fontFamily: "Montserrat_800ExtraBold", color: C.ink },
-  sub: { fontSize: 12, fontFamily: "Montserrat_400Regular", color: C.muted, marginTop: 2 },
+  card: { backgroundColor: C.bg, borderRadius: 24, padding: 16 },
+  head: { flexDirection: "row", alignItems: "center", gap: 12, marginBottom: 12 },
+  headIcon: { width: 44, height: 44, borderRadius: 22, backgroundColor: C.surface, justifyContent: "center", alignItems: "center" },
+  title: { fontSize: 16, fontFamily: "Montserrat_800ExtraBold", color: C.ink },
+  sub: { fontSize: 12.5, fontFamily: "Montserrat_400Regular", color: C.muted, marginTop: 2 },
   total: { fontFamily: "Montserrat_800ExtraBold", color: C.brand },
-  notice: { flexDirection: "row", gap: 8, backgroundColor: "#FFFBEB", borderRadius: 12, padding: 10, marginBottom: 12, borderWidth: 1, borderColor: "#FDE68A" },
-  noticeText: { flex: 1, fontSize: 11, fontFamily: "Montserrat_600SemiBold", color: "#92400E", lineHeight: 15 },
-  steps: { gap: 14 },
-  stepRow: { flexDirection: "row", gap: 10 },
-  stepNum: { width: 26, height: 26, borderRadius: 13, backgroundColor: C.bg, justifyContent: "center", alignItems: "center", marginTop: 1 },
+  notice: { flexDirection: "row", alignItems: "flex-start", gap: 10, backgroundColor: C.surface, borderRadius: 18, paddingVertical: 12, paddingHorizontal: 14, marginBottom: 18 },
+  noticeText: { flex: 1, fontSize: 12, fontFamily: "Montserrat_600SemiBold", color: "#92400E", lineHeight: 17 },
+
+  stepRow: { flexDirection: "row", gap: 12 },
+  stepRail: { alignItems: "center", width: 28 },
+  stepNum: { width: 28, height: 28, borderRadius: 14, backgroundColor: C.ink, justifyContent: "center", alignItems: "center" },
   stepNumDone: { backgroundColor: C.green },
-  stepNumText: { fontSize: 13, fontFamily: "Montserrat_800ExtraBold", color: C.ink },
-  stepTitle: { fontSize: 13, fontFamily: "Montserrat_800ExtraBold", color: C.ink, marginBottom: 6 },
-  stepHint: { fontSize: 11, fontFamily: "Montserrat_400Regular", color: C.muted, lineHeight: 15 },
-  qr: { width: "100%", aspectRatio: 1, maxWidth: 260, borderRadius: 12, backgroundColor: "#FFF", borderWidth: 1, borderColor: "#EEE" },
-  tapHint: { fontSize: 10, fontFamily: "Montserrat_600SemiBold", color: C.muted, marginTop: 4 },
-  upBtn: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, backgroundColor: C.ink, borderRadius: 14, paddingVertical: 13, marginTop: 4 },
-  upText: { fontSize: 13, fontFamily: "Montserrat_800ExtraBold", color: "#FFF" },
-  filePrev: { borderRadius: 12, overflow: "hidden", borderWidth: 1, borderColor: "#A7F3D0", backgroundColor: "#ECFDF5" },
+  stepNumText: { fontSize: 13, fontFamily: "Montserrat_800ExtraBold", color: C.surface },
+  stepLine: { flex: 1, width: 2, borderRadius: 1, backgroundColor: "#D4D4D8", marginVertical: 4 },
+  stepBody: { flex: 1, paddingTop: 4 },
+  stepBodySpaced: { paddingBottom: 18 },
+  stepTitle: { fontSize: 14, fontFamily: "Montserrat_800ExtraBold", color: C.ink, marginBottom: 6 },
+  stepHint: { fontSize: 12.5, fontFamily: "Montserrat_400Regular", color: C.muted, lineHeight: 18 },
+
+  qrFrame: { backgroundColor: C.surface, borderRadius: 22, padding: 14, alignItems: "center", marginTop: 4 },
+  qr: { width: "100%", maxWidth: 240, aspectRatio: 1 },
+  tapHintRow: { flexDirection: "row", alignItems: "center", gap: 5, marginTop: 8 },
+  tapHint: { fontSize: 11.5, fontFamily: "Montserrat_600SemiBold", color: C.muted },
+
+  upBtn: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, backgroundColor: C.ink, borderRadius: 999, height: 50, marginTop: 6 },
+  upText: { fontSize: 14, fontFamily: "Montserrat_700Bold", color: "#FFF" },
+  filePrev: { borderRadius: 18, overflow: "hidden", backgroundColor: C.surface, marginTop: 4 },
   fileBig: { width: "100%", height: 170 },
   fileZoom: { position: "absolute", bottom: 8, alignSelf: "center", flexDirection: "row", alignItems: "center", gap: 5, backgroundColor: "rgba(0,0,0,0.55)", paddingHorizontal: 10, paddingVertical: 5, borderRadius: 999 },
-  fileZoomText: { fontSize: 10, fontFamily: "Montserrat_700Bold", color: "#FFF" },
+  fileZoomText: { fontSize: 11, fontFamily: "Montserrat_700Bold", color: "#FFF" },
   fileRow: { flexDirection: "row", alignItems: "center", gap: 8, marginTop: 8 },
-  fileOk: { flex: 1, flexDirection: "row", alignItems: "center", gap: 6, backgroundColor: "#ECFDF5", borderRadius: 12, padding: 9, borderWidth: 1, borderColor: "#A7F3D0" },
-  fileName: { flex: 1, fontSize: 11, fontFamily: "Montserrat_700Bold", color: "#047857" },
+  fileOk: { flex: 1, flexDirection: "row", alignItems: "center", gap: 6, backgroundColor: "#ECFDF5", borderRadius: 999, paddingVertical: 9, paddingHorizontal: 12 },
+  fileName: { flex: 1, fontSize: 11.5, fontFamily: "Montserrat_700Bold", color: "#047857" },
   fileDel: { width: 38, height: 38, borderRadius: 19, backgroundColor: "#FEF2F2", justifyContent: "center", alignItems: "center" },
 });

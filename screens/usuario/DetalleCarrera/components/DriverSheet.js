@@ -338,14 +338,14 @@ const styles = StyleSheet.create({
   },
   collapsedName: {
     fontSize: 15,
-    fontFamily: "MontserratBold",
+    fontFamily: "Montserrat_700Bold",
     fontWeight: "bold",
     color: "#0F172A",
     lineHeight: 18,
   },
   collapsedPlate: {
     fontSize: 14,
-    fontFamily: "MontserratBold",
+    fontFamily: "Montserrat_700Bold",
     fontWeight: "bold",
     color: "#64748B",
     marginTop: 4,
@@ -402,7 +402,7 @@ const styles = StyleSheet.create({
   },
   ratingText: {
     fontSize: 10,
-    fontFamily: "MontserratBold",
+    fontFamily: "Montserrat_700Bold",
     fontWeight: "bold",
     color: "#B45309",
   },
@@ -411,19 +411,19 @@ const styles = StyleSheet.create({
   },
   driverName: {
     fontSize: 15,
-    fontFamily: "MontserratBold",
+    fontFamily: "Montserrat_700Bold",
     fontWeight: "bold",
     color: "#0F172A",
   },
   driverCar: {
     fontSize: 12,
-    fontFamily: "Montserrat",
+    fontFamily: "Montserrat_400Regular",
     color: "#64748B",
     marginTop: 2,
   },
   driverTrips: {
     fontSize: 11,
-    fontFamily: "MontserratBold",
+    fontFamily: "Montserrat_700Bold",
     fontWeight: "bold",
     color: "#10B981",
     marginTop: 2,
@@ -444,14 +444,14 @@ const styles = StyleSheet.create({
   },
   plateText: {
     fontSize: 13,
-    fontFamily: "MontserratBold",
+    fontFamily: "Montserrat_700Bold",
     fontWeight: "bold",
     color: "#0F172A",
     letterSpacing: 0.5,
   },
   plateLabel: {
     fontSize: 8,
-    fontFamily: "MontserratBold",
+    fontFamily: "Montserrat_700Bold",
     fontWeight: "bold",
     color: "#94A3B8",
     textTransform: "uppercase",
@@ -481,7 +481,7 @@ const styles = StyleSheet.create({
   },
   actionText: {
     fontSize: 13,
-    fontFamily: "MontserratBold",
+    fontFamily: "Montserrat_700Bold",
     fontWeight: "bold",
     color: "#0F172A",
   },
@@ -526,7 +526,7 @@ const styles = StyleSheet.create({
   },
   liveText: {
     fontSize: 12,
-    fontFamily: "MontserratBold",
+    fontFamily: "Montserrat_700Bold",
     fontWeight: "bold",
     color: "#FFFFFF",
   },
@@ -555,7 +555,7 @@ const styles = StyleSheet.create({
   },
   detailLabel: {
     fontSize: 10,
-    fontFamily: "MontserratBold",
+    fontFamily: "Montserrat_700Bold",
     fontWeight: "bold",
     color: "#94A3B8",
     textTransform: "uppercase",
@@ -576,7 +576,7 @@ const styles = StyleSheet.create({
   },
   pinDigitText: {
     fontSize: 18,
-    fontFamily: "MontserratBold",
+    fontFamily: "Montserrat_700Bold",
     fontWeight: "bold",
     color: "#FF5500",
   },
@@ -601,14 +601,14 @@ const styles = StyleSheet.create({
   },
   paymentLabel: {
     fontSize: 11,
-    fontFamily: "MontserratBold",
+    fontFamily: "Montserrat_700Bold",
     fontWeight: "bold",
     color: "#0F172A",
     lineHeight: 13,
   },
   paymentValue: {
     fontSize: 14,
-    fontFamily: "MontserratBold",
+    fontFamily: "Montserrat_700Bold",
     fontWeight: "bold",
     color: "#FF5500",
     marginTop: 3,
@@ -623,7 +623,7 @@ const styles = StyleSheet.create({
   },
   sectionLabel: {
     fontSize: 10,
-    fontFamily: "MontserratBold",
+    fontFamily: "Montserrat_700Bold",
     fontWeight: "bold",
     color: "#94A3B8",
     textTransform: "uppercase",
@@ -643,12 +643,12 @@ const styles = StyleSheet.create({
   },
   pinAlertText: {
     fontSize: 12,
-    fontFamily: "Montserrat",
+    fontFamily: "Montserrat_400Regular",
     color: "#0F172A",
     textAlign: "center",
   },
   pinAlertBold: {
-    fontFamily: "MontserratBold",
+    fontFamily: "Montserrat_700Bold",
     fontWeight: "bold",
     color: "#FF5500",
   },
@@ -674,7 +674,7 @@ const styles = StyleSheet.create({
   },
   cancelBtnText: {
     fontSize: 13,
-    fontFamily: "MontserratBold",
+    fontFamily: "Montserrat_700Bold",
     fontWeight: "bold",
     color: "#FF4757",
   },
@@ -697,7 +697,7 @@ const styles = StyleSheet.create({
   photoModalName: {
     flex: 1,
     fontSize: 16,
-    fontFamily: "MontserratBold",
+    fontFamily: "Montserrat_700Bold",
     fontWeight: "bold",
     color: "#FFFFFF",
     marginRight: 12,

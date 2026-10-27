@@ -95,20 +95,20 @@ const styles = StyleSheet.create({
   },
   name: {
     fontSize: 16,
-    fontFamily: "MontserratBold",
+    fontFamily: "Montserrat_700Bold",
     fontWeight: "bold",
     color: "#0F172A",
   },
   detail: {
     fontSize: 12,
-    fontFamily: "MontserratBold",
+    fontFamily: "Montserrat_700Bold",
     fontWeight: "bold",
     color: "#64748B",
     marginTop: 2,
   },
   empty: {
     fontSize: 14,
-    fontFamily: "MontserratRegular",
+    fontFamily: "Montserrat_400Regular",
     color: "#94A3B8",
     textAlign: "center",
     paddingVertical: 16,

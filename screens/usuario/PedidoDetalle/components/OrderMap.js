@@ -70,11 +70,11 @@ export const OrderMap = ({
             <Svg width={30} height={30} viewBox="0 0 30 30">
               <Path
                 d="M15 2 C21 2 26 7 26 13 C26 17 21 22 15 30 C9 22 4 17 4 13 C4 7 9 2 15 2 Z"
-                fill="#FF5500"
+                fill="#fa6205"
                 stroke="#FFFFFF"
                 strokeWidth="2"
               />
-              <SvgText x="15" y="17" textAnchor="middle" fill="#FFFFFF" fontSize="12" fontFamily="MontserratBold">
+              <SvgText x="15" y="17" textAnchor="middle" fill="#FFFFFF" fontSize="12" fontFamily="Montserrat_700Bold">
                 B
               </SvgText>
             </Svg>
@@ -120,8 +120,8 @@ export const OrderMap = ({
 
       {route && route.length > 0 && (
         <>
-          <Polyline coordinates={route} strokeWidth={6} strokeColor="rgba(255,85,0,0.15)" />
-          <Polyline coordinates={route} strokeWidth={3} strokeColor="#FF5500" />
+          <Polyline coordinates={route} strokeWidth={6} strokeColor="rgba(250,98,5,0.15)" />
+          <Polyline coordinates={route} strokeWidth={3} strokeColor="#fa6205" />
         </>
       )}
     </MapView>
@@ -155,7 +155,7 @@ const styles = StyleSheet.create({
     width: 10,
     height: 4,
     borderRadius: 2,
-    backgroundColor: "rgba(255,85,0,0.35)",
+    backgroundColor: "rgba(250,98,5,0.35)",
     marginTop: 2,
   },
   userMarker: {
@@ -178,18 +178,18 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: "#FF5500",
+    backgroundColor: "#fa6205",
   },
   driverMarker: {
     width: 34,
     height: 34,
     borderRadius: 17,
-    backgroundColor: "#FF5500",
+    backgroundColor: "#fa6205",
     borderWidth: 3,
     borderColor: "#FFFFFF",
     justifyContent: "center",
     alignItems: "center",
-    shadowColor: "#FF5500",
+    shadowColor: "#fa6205",
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 10,

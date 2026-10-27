@@ -268,17 +268,20 @@ export default function RoleSwitcher({ userData: ud, onSwitchSuccess }) {
 }
 
 const s = StyleSheet.create({
-  wrapper: { marginHorizontal: 16, marginTop: 12, marginBottom: 12, backgroundColor: C.surface, borderRadius: 18, padding: 16, borderWidth: 1, borderColor: "#F0F0F0" },
-  hint: { fontSize: 10, fontFamily: "Montserrat_600SemiBold", color: C.muted, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 10 },
-  grid: { flexDirection: "row", gap: 6 },
+  wrapper: { marginHorizontal: 16, marginTop: 12, marginBottom: 12, backgroundColor: C.surface, borderRadius: 20, padding: 14 },
+  hint: { fontSize: 12.5, fontFamily: "Montserrat_700Bold", color: C.muted, marginBottom: 10, marginLeft: 2 },
+  grid: { flexDirection: "row", gap: 8 },
   tile: { alignItems: "center", gap: 6, paddingVertical: 4 },
-  tileActiveShrink: { flex: 1, backgroundColor: C.brand, borderRadius: 12, paddingVertical: 8, paddingHorizontal: 4, alignItems: "center", gap: 4 },
-  tileInactiveShrink: { flex: 1, backgroundColor: C.bg, borderRadius: 12, paddingVertical: 8, paddingHorizontal: 4, alignItems: "center", gap: 4 },
-  tileIcon: { width: 28, height: 28, borderRadius: 8, backgroundColor: "#E8E8ED", justifyContent: "center", alignItems: "center" },
-  tileIconActive: { backgroundColor: "rgba(255,255,255,0.2)" },
-  tileLabel: { fontSize: 9, fontFamily: "Montserrat_600SemiBold", color: C.ink, textAlign: "center" },
+  tileActiveShrink: {
+    flex: 1, backgroundColor: C.brand, borderRadius: 16, paddingVertical: 12, paddingHorizontal: 4, alignItems: "center", gap: 6,
+    shadowColor: C.brand, shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.3, shadowRadius: 10, elevation: 5,
+  },
+  tileInactiveShrink: { flex: 1, backgroundColor: C.bg, borderRadius: 16, paddingVertical: 12, paddingHorizontal: 4, alignItems: "center", gap: 6 },
+  tileIcon: { width: 34, height: 34, borderRadius: 17, backgroundColor: C.surface, justifyContent: "center", alignItems: "center" },
+  tileIconActive: { backgroundColor: "rgba(255,255,255,0.22)" },
+  tileLabel: { fontSize: 10.5, fontFamily: "Montserrat_700Bold", color: C.ink, textAlign: "center" },
   tileLabelActive: { color: C.surface, fontFamily: "Montserrat_800ExtraBold" },
-  check: { position: "absolute", top: 2, right: 2, zIndex: 1 },
+  check: { position: "absolute", top: 5, right: 5, zIndex: 1 },
 
   modalBg: { flex: 1, backgroundColor: "rgba(0,0,0,0.5)", justifyContent: "center", alignItems: "center", padding: 20 },
   modalCard: { backgroundColor: C.surface, borderRadius: 24, padding: 24, width: "100%", alignItems: "center" },

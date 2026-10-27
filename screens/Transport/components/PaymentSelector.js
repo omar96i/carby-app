@@ -19,18 +19,14 @@ export default function PaymentSelector({ paymentMethod, onPress }) {
   const label = PAYMENT_LABELS[paymentMethod] || "Metodo de pago";
 
   return (
-    <TouchableOpacity style={styles.row} onPress={onPress} activeOpacity={0.7}>
+    <TouchableOpacity style={styles.row} onPress={onPress} activeOpacity={0.8}>
       <View style={styles.iconWrap}>
-        <MaterialCommunityIcons
-          name={iconName}
-          size={16}
-          color="#09090b"
-        />
+        <MaterialCommunityIcons name={iconName} size={17} color="#1C1C1E" />
       </View>
       <Text style={styles.label} numberOfLines={1}>
         {label}
       </Text>
-      <Ionicons name="chevron-down" size={16} color="#a1a1aa" style={{ marginLeft: 8 }} />
+      <Ionicons name="chevron-down" size={15} color="#71717A" />
     </TouchableOpacity>
   );
 }
@@ -39,37 +35,25 @@ const styles = StyleSheet.create({
   row: {
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "space-between",
-    backgroundColor: "#fafafa",
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: "#e4e4e7",
-    paddingHorizontal: 12,
-    height: 48,
-    minWidth: 130,
+    backgroundColor: "#F4F4F5",
+    borderRadius: 999,
+    paddingLeft: 6,
+    paddingRight: 16,
+    height: 56,
   },
   iconWrap: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    backgroundColor: "#ffffff",
-    borderWidth: 1,
-    borderColor: "#e4e4e7",
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: "#FFF",
     justifyContent: "center",
     alignItems: "center",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
-    elevation: 1,
   },
   label: {
     flex: 1,
-    fontSize: 13,
-    fontFamily: "MontserratBold",
-    fontWeight: "bold",
-    color: "#09090b",
-    marginHorizontal: 8,
-    marginTop: 2,
+    fontSize: 14.5,
+    fontFamily: "Montserrat_700Bold",
+    color: "#1C1C1E",
+    marginHorizontal: 12,
   },
 });

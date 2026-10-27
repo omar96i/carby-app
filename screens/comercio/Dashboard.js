@@ -1,14 +1,14 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
-import { View, ScrollView, StyleSheet, ActivityIndicator, RefreshControl, Text, TouchableOpacity, Modal, Image, FlatList, TextInput } from "react-native";
+import { View, ScrollView, StyleSheet, ActivityIndicator, RefreshControl, Text, TouchableOpacity, Modal, Image, FlatList, TextInput, Dimensions } from "react-native";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { useNavigation, useFocusEffect } from "@react-navigation/native";
 import { useFonts, Montserrat_400Regular, Montserrat_700Bold, Montserrat_600SemiBold, Montserrat_800ExtraBold } from "@expo-google-fonts/montserrat";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Ionicons } from "@expo/vector-icons";
+import * as ImagePicker from "expo-image-picker";
 import AlertaModal from "../../components/ErrorModal";
 
 import ShopHeader from "../../components/comercio/dashboard/ShopHeader";
-import SeccionCreator from "../../components/comercio/dashboard/SeccionCreator";
 import ItemCreator from "../../components/comercio/dashboard/ItemCreator";
 import Inventario from "../../components/comercio/dashboard/Inventario";
 import BannerManager from "../../components/comercio/dashboard/BannerManager";
@@ -26,6 +26,7 @@ import useOnboardingStatus from "../../hooks/comercio/useOnboardingStatus";
 import logger from "../../utils/logger";
 
 const C = { brand: "#fa6205", ink: "#1C1C1E", surface: "#FFF", muted: "#71717A", bg: "#F4F4F5", green: "#10B981" };
+const ACCESO_W = (Dimensions.get("window").width - 32 - 8 * 3) / 4;
 
 function toMinutes(t) {
   const parts = String(t || "00:00").slice(0, 5).split(":");
@@ -71,9 +72,9 @@ export default function Dashboard() {
   const [fontsLoaded] = useFonts({ Montserrat_400Regular, Montserrat_700Bold, Montserrat_600SemiBold, Montserrat_800ExtraBold });
 
   const { categorias, fetchCategorias, createCategoria, updateCategoria, deleteCategoria } = useCategorias();
-  const { productos, fetchProductos, createProducto, deleteProducto, toggleProducto } = useProductos();
+  const { productos, fetchProductos, createProducto, createAdicional, deleteProducto, toggleProducto } = useProductos();
   const { servicios, fetchServicios, createServicio, deleteServicio } = useServicios();
-  const { establishmentName, profileImageUrl, shopActive, averageRating, ratings, tipoCategoria, loading: shopLoading, fetchShopInfo, getCurrentLocation, saveShopLocation, userData, currentLocation, shopLocation, shopAddress } = useShopInfo();
+  const { establishmentName, profileImageUrl, shopActive, averageRating, ratings, tipoCategoria, loading: shopLoading, fetchShopInfo, getCurrentLocation, saveShopLocation, updateShopPhoto, userData, currentLocation, shopLocation, shopAddress } = useShopInfo();
   const { banners, loading: bannersLoading, fetchBanners, uploadBanner, toggleBanner, deleteBanner } = useBanners();
   const { horarios, fetchHorarios } = useHorarios();
   const { status: setupStatus, loading: setupLoading, fetchStatus } = useOnboardingStatus();
@@ -99,6 +100,10 @@ export default function Dashboard() {
   const [editCatName, setEditCatName] = useState("");
   const [deleteItemModal, setDeleteItemModal] = useState(false);
   const [selectedItem, setSelectedItem] = useState(null);
+  const [itemSheet, setItemSheet] = useState(false);
+  const [itemSheetCat, setItemSheetCat] = useState(null);
+  const abrirNuevoItem = (categoriaId = null) => { setItemSheetCat(categoriaId); setItemSheet(true); };
+  const [pedirSeccion, setPedirSeccion] = useState(0);
 
   // Onboarding / paso a paso (solo visible mientras falten pasos)
   const GUIDE_KEY = "comercio_guia_v1";
@@ -197,8 +202,8 @@ export default function Dashboard() {
     if (stepKey === "ubicacion") handleOpenLocation();
     else if (stepKey === "horarios") setHorariosIntroVisible(true);
     else if (stepKey === "perfil") nav.navigate("CrearPerfil");
-    else if (stepKey === "seccion") scrollTo("seccion");
-    else if (stepKey === "producto") scrollTo("producto");
+    else if (stepKey === "seccion") { scrollTo("seccion"); setTimeout(() => setPedirSeccion((n) => n + 1), 400); }
+    else if (stepKey === "producto") setTimeout(() => abrirNuevoItem(), 400);
   };
 
   const loadAll = useCallback(async () => {
@@ -226,7 +231,30 @@ export default function Dashboard() {
   const handleDeleteCategoria = async () => { try { await deleteCategoria(selectedCat.id); setDeleteCatModal(false); showAlert("Sección ocultada. El historial no se afecta.", "success"); refreshStatus(); } catch (e) { setDeleteCatModal(false); showAlert(e?.message || "Error al eliminar", "error"); } };
   const openEditCat = (cat) => { setSelectedCat(cat); setEditCatName(cat.nombre); setEditCatModal(true); };
   const openDeleteCat = (cat) => { setSelectedCat(cat); setDeleteCatModal(true); };
-  const handleCreateItem = async (form) => { try { if (form.tipo === "servicio") await createServicio(form); else await createProducto(form); showAlert("¡Creado exitosamente!", "success"); refreshStatus(); } catch (e) { showAlert(e?.message || "Error al crear", "error"); } };
+  const handleCreateItem = async (form) => {
+    try {
+      let fallidas = 0;
+      if (form.tipo === "servicio") await createServicio(form);
+      else {
+        const nuevoId = await createProducto(form);
+        for (const ad of form.adicionales || []) {
+          try {
+            if (!nuevoId) throw new Error("sin id");
+            await createAdicional(nuevoId, ad);
+          } catch (e) { fallidas++; }
+        }
+      }
+      setItemSheet(false);
+      if (fallidas) {
+        setTimeout(() => showAlert(`Producto creado, pero ${fallidas === 1 ? "1 adición no se guardó" : `${fallidas} adiciones no se guardaron`}. Agrégalas con "Adiciones" en Mi menú.`, "error"), 350);
+        refreshStatus();
+        return true;
+      }
+      setTimeout(() => showAlert("¡Creado exitosamente!", "success"), 350);
+      refreshStatus();
+      return true;
+    } catch (e) { showAlert(e?.message || "Error al crear", "error"); return false; }
+  };
   const confirmDeleteItem = (item) => { setSelectedItem(item); setDeleteItemModal(true); };
   const handleDeleteItemConfirm = async () => {
     if (!selectedItem) return;
@@ -243,6 +271,7 @@ export default function Dashboard() {
     if (item.tipo === "servicio") nav.navigate("EditarServicio", { serviceId: item.id });
     else nav.navigate("EditarProducto", { productId: item.id });
   };
+  const handleAdicionesItem = (item) => nav.navigate("EditarProducto", { productId: item.id, verAdiciones: true });
   const handleToggleItem = (item) => {
     if (item.tipo === "servicio") return;
     const isActive = item.activo === undefined ? true : item.activo !== 0;
@@ -291,18 +320,49 @@ export default function Dashboard() {
   };
   const handleSolicitarRider = () => nav.navigate("StepUno");
 
+  const [subiendoLogo, setSubiendoLogo] = useState(false);
+  const handleCambiarLogo = async () => {
+    try {
+      const permiso = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (!permiso.granted) { showAlert("Se necesita acceso a la galería para cambiar el logo", "error"); return; }
+      const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ["images"], allowsEditing: true, aspect: [1, 1], quality: 0.8 });
+      if (result.canceled || !result.assets?.[0]) return;
+      setSubiendoLogo(true);
+      await updateShopPhoto(result.assets[0].uri);
+      showAlert("Logo actualizado.", "success");
+      fetchShopInfo();
+    } catch (e) {
+      showAlert(e?.message || "No se pudo subir el logo.", "error");
+    } finally {
+      setSubiendoLogo(false);
+    }
+  };
+
   const handleUploadBanner = async (foto) => { try { await uploadBanner(foto); } catch { showAlert("Error al subir banner", "error"); } };
   const handleToggleBanner = async (banner) => { try { await toggleBanner(banner); } catch {} };
   const handleDeleteBanner = async (id) => { try { await deleteBanner(id); } catch {} };
 
   if (!fontsLoaded) return <SafeAreaView style={ds.safe}><ActivityIndicator size="large" color={C.brand} /></SafeAreaView>;
 
+  const textoHorario = hasHorarios
+    ? (abiertoAhora
+        ? (openNow.cierra ? `Abierto · cierra ${String(openNow.cierra).slice(0, 5)}` : "Abierto ahora")
+        : (openNow.abre ? `Cerrado · abre ${String(openNow.abre).slice(0, 5)}` : "Cerrado ahora"))
+    : "Sin horarios";
+
   const allItems = [...productos.map(p => ({ ...p, tipo: "producto" })), ...servicios.map(s => ({ ...s, tipo: "servicio", categoria_id: s.categoria_id || categorias[0]?.id }))];
 
   return (
     <SafeAreaView style={ds.safe} edges={['top', 'left', 'right']}>
       <View style={ds.root}>
-        <ShopHeader business={{ nombre: establishmentName, ubicacion: locationText }} image={profileImageUrl} />
+        <ShopHeader
+          business={{ nombre: establishmentName, ubicacion: locationText }}
+          image={profileImageUrl}
+          estado={{ abierto: abiertoAhora, publico: esPublico, horarioTexto: textoHorario }}
+          onEstadoPress={() => (esPublico ? nav.navigate("Horarios") : goMotivo())}
+          onCambiarFoto={handleCambiarLogo}
+          subiendoFoto={subiendoLogo}
+        />
         <ScrollView ref={scrollRef} style={ds.scroll} contentContainerStyle={[ds.scrollContent, { paddingBottom: 104 + insets.bottom }]} showsVerticalScrollIndicator={false}
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={[C.brand]} />}>
 
@@ -384,96 +444,118 @@ export default function Dashboard() {
           </View>
           ) : null}
 
-          {/* Ratings + Horarios */}
-          <View style={ds.row}>
-            <TouchableOpacity style={[ds.statCard, { flex: 1 }]} onPress={() => setRatingsModal(true)}>
-              <Text style={ds.statVal}>{averageRating > 0 ? averageRating.toFixed(1) : "--"}</Text>
-              <View style={{ flexDirection: "row", marginVertical: 2 }}>{renderStars(averageRating)}</View>
-              <Text style={ds.statSub}>{ratings.length} {ratings.length === 1 ? "calificación" : "calificaciones"}</Text>
+          {setupReady && setupComplete && !esPublico && (
+            <TouchableOpacity style={ds.aviso} onPress={goMotivo} activeOpacity={0.85}>
+              <View style={ds.avisoIcon}>
+                <Ionicons name="eye-off" size={18} color="#EF4444" />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={ds.avisoTitle}>Tus clientes no te ven ahora</Text>
+                <Text style={ds.avisoSub} numberOfLines={2}>{motivoNoPublico || (!abiertoAhora ? "Estás fuera de tu horario de atención" : "No público")}</Text>
+              </View>
+              <Ionicons name="chevron-forward" size={18} color="#EF4444" />
             </TouchableOpacity>
-            <TouchableOpacity
-              style={[ds.statCard, { flex: 1 }, highlight === "horarios" && ds.highlightBox, !esPublico && ds.statCardAlert]}
-              onPress={() => (esPublico ? nav.navigate("Horarios") : goMotivo())}
-              onLayout={(e) => { sectionY.current.horarios = e.nativeEvent.layout.y; }}
-            >
-              <View style={ds.horarioTop}>
-                <Ionicons name="time-outline" size={22} color={abiertoAhora ? C.green : C.brand} style={{ marginBottom: 4 }} />
-                <View style={[ds.openPill, abiertoAhora ? ds.openPillOn : ds.openPillOff]}>
-                  <View style={[ds.openDot, abiertoAhora ? ds.openDotOn : ds.openDotOff]} />
-                  <Text style={[ds.openPillText, abiertoAhora ? ds.openPillTextOn : ds.openPillTextOff]}>
-                    {abiertoAhora ? "Abierto" : "Cerrado"}
-                  </Text>
-                </View>
+          )}
+
+          <View style={ds.stats}>
+            <TouchableOpacity style={ds.stat} onPress={() => setRatingsModal(true)} activeOpacity={0.7}>
+              <View style={ds.statTop}>
+                <Ionicons name="star" size={16} color="#F59E0B" />
+                <Text style={ds.statNum}>{averageRating > 0 ? averageRating.toFixed(1) : "--"}</Text>
               </View>
-              <Text style={[ds.statVal, { fontSize: 14 }]}>Mis horarios</Text>
-              <Text style={ds.statSub}>
-                {hasHorarios
-                  ? (abiertoAhora
-                      ? (openNow.cierra ? `Cierra ${String(openNow.cierra).slice(0, 5)}` : "Abierto ahora")
-                      : (openNow.abre ? `Abre ${String(openNow.abre).slice(0, 5)}` : "Cerrado ahora"))
-                  : "Configura días y horas"}
-              </Text>
-              <View style={[ds.pubRow, esPublico ? ds.pubRowOn : ds.pubRowOff]}>
-                <View style={[ds.pubDot, esPublico ? ds.pubDotOn : ds.pubDotOff]} />
-                <Text style={[ds.pubText, esPublico ? ds.pubTextOn : ds.pubTextOff]} numberOfLines={1}>
-                  {esPublico ? "Público · visible" : (motivoNoPublico || "No público")}
-                </Text>
+              <Text style={ds.statLabel}>{ratings.length} {ratings.length === 1 ? "calificación" : "calificaciones"}</Text>
+            </TouchableOpacity>
+            <View style={ds.statSep} />
+            <TouchableOpacity style={ds.stat} onPress={() => scrollTo("seccion")} activeOpacity={0.7}>
+              <View style={ds.statTop}>
+                <Ionicons name={isServicios ? "cut" : "restaurant"} size={16} color={C.brand} />
+                <Text style={ds.statNum}>{allItemsCount}</Text>
               </View>
+              <Text style={ds.statLabel}>en tu menú</Text>
+            </TouchableOpacity>
+            <View style={ds.statSep} />
+            <TouchableOpacity style={ds.stat} onPress={() => nav.navigate("Horarios")} activeOpacity={0.7}>
+              <View style={ds.statTop}>
+                <Ionicons name="calendar" size={16} color={C.green} />
+                <Text style={ds.statNum}>{horariosCount}</Text>
+              </View>
+              <Text style={ds.statLabel}>{horariosCount === 1 ? "día de atención" : "días de atención"}</Text>
             </TouchableOpacity>
           </View>
-
-          {/* Rider Banner */}
-          <TouchableOpacity style={ds.riderBanner} onPress={handleSolicitarRider}>
-            <Ionicons name="car" size={22} color="#FFF" />
-            <View style={{ flex: 1 }}>
-              <Text style={ds.riderTitle}>Solicitar un Rider</Text>
-              <Text style={ds.riderSub}>Envía tus productos con un conductor</Text>
-            </View>
-            <Ionicons name="chevron-forward" size={20} color="#FFF" />
-          </TouchableOpacity>
-
-          {/* Ubicación + Perfil en el mismo row */}
-          <View style={ds.row}>
-            <View
-              style={[{ flex: 1 }, highlight === "ubicacion" && ds.highlightBox, { borderRadius: 14 }]}
-              onLayout={(e) => { sectionY.current.ubicacion = e.nativeEvent.layout.y; }}
-            >
-              <TouchableOpacity style={[ds.miniCard, { flex: 1 }]} onPress={handleOpenLocation} activeOpacity={0.85}>
-                <View style={ds.miniIcon}>
-                  {locationLoading ? <ActivityIndicator size="small" color={C.brand} /> : <Ionicons name="location" size={18} color={C.brand} />}
-                </View>
-                <Text style={ds.miniTitle} numberOfLines={1}>Mi ubicación</Text>
-                <Text style={ds.miniSub} numberOfLines={1}>{locationText || "Marcar en mapa"}</Text>
-              </TouchableOpacity>
-            </View>
-            {isServicios && (
-              <TouchableOpacity style={[ds.miniCard, ds.miniCardPerfil, { flex: 1 }]} onPress={() => nav.navigate("CrearPerfil")} activeOpacity={0.85}>
-                <View style={ds.miniIconPerfil}>
-                  <Ionicons name="person-circle-outline" size={18} color="#7C3AED" />
-                </View>
-                <Text style={ds.miniTitle} numberOfLines={1}>Mi perfil</Text>
-                <Text style={ds.miniSub} numberOfLines={1}>{hasPerfil ? `${setupStatus?.counts?.perfiles || 0} creados` : "Crear perfil"}</Text>
-              </TouchableOpacity>
-            )}
-          </View>
-
-          <BannerManager banners={banners} loading={bannersLoading} onUpload={handleUploadBanner} onToggle={handleToggleBanner} onDelete={handleDeleteBanner} />
 
           <View
-            style={[highlight === "seccion" && ds.highlightBox, { borderRadius: 24 }]}
-            onLayout={(e) => { sectionY.current.seccion = e.nativeEvent.layout.y; }}
-          >
-            <SeccionCreator categorias={categorias} onCreate={handleCreateCategoria} onEdit={openEditCat} onDelete={openDeleteCat} />
-          </View>
-          <View
-            style={[highlight === "producto" && ds.highlightBox, { borderRadius: 24 }]}
+            style={[ds.ctaWrap, highlight === "producto" && ds.highlightBox]}
             onLayout={(e) => { sectionY.current.producto = e.nativeEvent.layout.y; }}
           >
-            <ItemCreator categorias={categorias} onCreate={handleCreateItem} showServicios={isServicios} rangoPrecios={setupStatus?.rango_precios} />
+            <TouchableOpacity style={ds.cta} onPress={() => abrirNuevoItem()} activeOpacity={0.85}>
+              <View style={ds.ctaIcon}>
+                <Ionicons name="add" size={26} color={C.brand} />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={ds.ctaTitle}>{isServicios ? "Nuevo producto o servicio" : "Nuevo producto"}</Text>
+                <Text style={ds.ctaSub}>Foto, nombre y precio. Ves cómo queda antes de publicar</Text>
+              </View>
+              <Ionicons name="chevron-forward" size={20} color="#FFF" />
+            </TouchableOpacity>
           </View>
-          <Inventario categorias={categorias} productos={allItems} onDelete={confirmDeleteItem} onToggle={handleToggleItem} onEdit={handleEditItem} />
+
+          <View
+            style={ds.accesos}
+            onLayout={(e) => { sectionY.current.horarios = e.nativeEvent.layout.y; sectionY.current.ubicacion = e.nativeEvent.layout.y; }}
+          >
+            {[
+              { key: "rider", icon: "car", label: "Pedir rider", sub: "Enviar pedido", onPress: handleSolicitarRider },
+              { key: "horarios", icon: "time", label: "Horarios", sub: hasHorarios ? (abiertoAhora ? "Abierto" : "Cerrado") : "Configurar", onPress: () => nav.navigate("Horarios") },
+              { key: "ubicacion", icon: "location", label: "Ubicación", sub: hasLocation ? "Marcada" : "Marcar", onPress: handleOpenLocation, loading: locationLoading },
+              isServicios
+                ? { key: "perfil", icon: "person-circle", label: "Mi perfil", sub: hasPerfil ? `${setupStatus?.counts?.perfiles || 0} creados` : "Crear", onPress: () => nav.navigate("CrearPerfil") }
+                : { key: "publicidad", icon: "megaphone", label: "Publicidad", sub: banners.length ? "1 banner" : "Subir", onPress: () => scrollTo("publicidad") },
+            ].map((a) => (
+              <TouchableOpacity key={a.key} style={[ds.acceso, highlight === a.key && ds.highlightBox]} onPress={a.onPress} activeOpacity={0.8}>
+                <View style={ds.accesoIcon}>
+                  {a.loading ? <ActivityIndicator size="small" color={C.brand} /> : <Ionicons name={a.icon} size={20} color={C.brand} />}
+                </View>
+                <Text style={ds.accesoLabel} numberOfLines={1}>{a.label}</Text>
+                <Text style={ds.accesoSub} numberOfLines={1}>{a.sub}</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+
+          <View
+            style={[ds.menuWrap, highlight === "seccion" && ds.highlightBox]}
+            onLayout={(e) => { sectionY.current.seccion = e.nativeEvent.layout.y; }}
+          >
+            <Inventario
+              categorias={categorias}
+              productos={allItems}
+              onDelete={confirmDeleteItem}
+              onToggle={handleToggleItem}
+              onEdit={handleEditItem}
+              onAdiciones={handleAdicionesItem}
+              onCreateSeccion={handleCreateCategoria}
+              onEditSeccion={openEditCat}
+              onDeleteSeccion={openDeleteCat}
+              onNuevoProducto={abrirNuevoItem}
+              abrirSeccion={pedirSeccion}
+            />
+          </View>
+
+          <View onLayout={(e) => { sectionY.current.publicidad = e.nativeEvent.layout.y; }}>
+            <BannerManager banners={banners} loading={bannersLoading} onUpload={handleUploadBanner} onToggle={handleToggleBanner} onDelete={handleDeleteBanner} />
+          </View>
         </ScrollView>
       </View>
+
+      <ItemCreator
+        visible={itemSheet}
+        onClose={() => setItemSheet(false)}
+        categorias={categorias}
+        onCreate={handleCreateItem}
+        onCreateSeccion={handleCreateCategoria}
+        showServicios={isServicios}
+        rangoPrecios={setupStatus?.rango_precios}
+        initialCategoriaId={itemSheetCat}
+      />
 
       {/* Guía paso a paso */}
       <OnboardingGuide
@@ -661,5 +743,26 @@ const ds = StyleSheet.create({
   miniSub: { fontSize: 10, fontFamily: "Montserrat_400Regular", color: C.muted, marginTop: 2 },
   badgeRow: { flexDirection: "row", alignItems: "center", gap: 6 },
   checkPill: { width: 18, height: 18, borderRadius: 9, backgroundColor: C.green, justifyContent: "center", alignItems: "center" },
+  aviso: { flexDirection: "row", alignItems: "center", gap: 12, backgroundColor: "#FEF2F2", borderRadius: 20, padding: 14, marginBottom: 14, borderWidth: 1, borderColor: "#FECACA" },
+  avisoIcon: { width: 38, height: 38, borderRadius: 19, backgroundColor: "#FFF", alignItems: "center", justifyContent: "center" },
+  avisoTitle: { fontSize: 13.5, fontFamily: "Montserrat_800ExtraBold", color: "#B91C1C" },
+  avisoSub: { fontSize: 12, fontFamily: "Montserrat_600SemiBold", color: "#DC2626", marginTop: 2 },
+  stats: { flexDirection: "row", alignItems: "center", backgroundColor: C.surface, borderRadius: 22, paddingVertical: 14, marginBottom: 14, borderWidth: 1, borderColor: "#E4E4E7" },
+  stat: { flex: 1, alignItems: "center" },
+  statTop: { flexDirection: "row", alignItems: "center", gap: 5 },
+  statNum: { fontSize: 20, fontFamily: "Montserrat_800ExtraBold", color: C.ink },
+  statLabel: { fontSize: 11, fontFamily: "Montserrat_600SemiBold", color: C.muted, marginTop: 2 },
+  statSep: { width: 1, height: 32, backgroundColor: "#E4E4E7" },
+  ctaWrap: { borderRadius: 24, marginBottom: 14 },
+  cta: { flexDirection: "row", alignItems: "center", gap: 14, backgroundColor: C.brand, borderRadius: 24, padding: 16, shadowColor: C.brand, shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.35, shadowRadius: 16, elevation: 8 },
+  ctaIcon: { width: 48, height: 48, borderRadius: 24, backgroundColor: "#FFF", alignItems: "center", justifyContent: "center" },
+  ctaTitle: { fontSize: 17, fontFamily: "Montserrat_800ExtraBold", color: "#FFF" },
+  ctaSub: { fontSize: 11.5, lineHeight: 16, fontFamily: "Montserrat_600SemiBold", color: "rgba(255,255,255,0.85)", marginTop: 2 },
+  accesos: { flexDirection: "row", gap: 8, marginBottom: 22 },
+  acceso: { width: ACCESO_W, backgroundColor: C.surface, borderRadius: 20, paddingVertical: 12, alignItems: "center", borderWidth: 1, borderColor: "#E4E4E7" },
+  accesoIcon: { width: 40, height: 40, borderRadius: 20, backgroundColor: "#FFF0E5", alignItems: "center", justifyContent: "center", marginBottom: 8 },
+  accesoLabel: { fontSize: 11.5, fontFamily: "Montserrat_700Bold", color: C.ink },
+  accesoSub: { fontSize: 10.5, fontFamily: "Montserrat_400Regular", color: C.muted, marginTop: 1 },
+  menuWrap: { borderRadius: 24, marginBottom: 18 },
   highlightBox: { borderWidth: 2, borderColor: C.brand, shadowColor: C.brand, shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0.35, shadowRadius: 12, elevation: 4 },
 });

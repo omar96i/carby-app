@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { View, StyleSheet, Text, TouchableOpacity, Linking, ActivityIndicator } from 'react-native';
+import { View, StyleSheet, Text, TouchableOpacity, Linking, ActivityIndicator, ScrollView } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Location from 'expo-location';
@@ -67,7 +68,7 @@ export default function LocationVerification() {
     // Muestra un indicador de carga mientras se verifica
     if (isLoading) {
         return (
-            <View style={styles.container}>
+            <View style={styles.loading}>
                 <ActivityIndicator size="large" color="#fa6205" />
             </View>
         );
@@ -75,23 +76,54 @@ export default function LocationVerification() {
 
     // Renderizado de la pantalla de permisos
     return (
-        <View style={styles.container}>
-            <Ionicons name="location-sharp" size={80} color="#fa6205" />
-            <Text style={styles.title}>Necesitamos tu ubicación en tiempo real</Text>
-            <Text style={styles.subtitle}>CarBy utiliza tu ubicación en tiempo real para:</Text>
-            <View style={styles.reasonsContainer}>
-                <Text style={styles.reasonText}>• Mostrar conductores y negocios cercanos</Text>
-                <Text style={styles.reasonText}>• Seguir tu viaje y entrega de pedidos</Text>
-                <Text style={styles.reasonText}>• Mejorar tu seguridad y la correcta operación del servicio</Text>
+        <SafeAreaView style={styles.container}>
+            <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
+                <View style={styles.content}>
+                    <View style={styles.iconRing}>
+                        <View style={styles.iconHalo}>
+                            <View style={styles.iconCircle}>
+                                <Ionicons name="location-sharp" size={34} color="#FFF" />
+                            </View>
+                        </View>
+                    </View>
+                    <Text style={styles.title}>Necesitamos tu ubicación en tiempo real</Text>
+                    <Text style={styles.subtitle}>Carby utiliza tu ubicación en tiempo real para:</Text>
+
+                    <View style={styles.reasonsContainer}>
+                        <View style={styles.reasonRow}>
+                            <View style={styles.reasonIcon}>
+                                <Ionicons name="car-sport" size={22} color="#fa6205" />
+                            </View>
+                            <Text style={styles.reasonText}>Mostrar conductores y negocios cercanos</Text>
+                        </View>
+                        <View style={styles.reasonRow}>
+                            <View style={styles.reasonIcon}>
+                                <Ionicons name="navigate" size={22} color="#fa6205" />
+                            </View>
+                            <Text style={styles.reasonText}>Seguir tu viaje y entrega de pedidos</Text>
+                        </View>
+                        <View style={styles.reasonRow}>
+                            <View style={styles.reasonIcon}>
+                                <Ionicons name="shield-checkmark" size={22} color="#fa6205" />
+                            </View>
+                            <Text style={styles.reasonText}>Mejorar tu seguridad y la correcta operación del servicio</Text>
+                        </View>
+                    </View>
+
+                    <Text style={styles.privacyText}>
+                        <Ionicons name="lock-closed-outline" size={13} color="#71717A" />
+                        {'  '}Tu ubicación no se comparte y solo se usa mientras utilizas la app.
+                    </Text>
+                </View>
+            </ScrollView>
+
+            <View style={styles.footer}>
+                <TouchableOpacity style={styles.button} activeOpacity={0.8} onPress={handleContinueOrEnable}>
+                    <Text style={styles.buttonText}>
+                        {permissionStatus === 'granted' ? 'Continuar' : 'Habilitar Ubicación'}
+                    </Text>
+                </TouchableOpacity>
             </View>
-            <Text style={styles.privacyText}>
-                Tu ubicación no se comparte y solo se usa mientras utilizas la app.
-            </Text>
-            <TouchableOpacity style={styles.button} onPress={handleContinueOrEnable}>
-                <Text style={styles.buttonText}>
-                    {permissionStatus === 'granted' ? 'Continuar' : 'Habilitar Ubicación'}
-                </Text>
-            </TouchableOpacity>
             <AlertaModal
                 visible={alertVisible}
                 mensaje={alertData.message}
@@ -100,58 +132,138 @@ export default function LocationVerification() {
                 onPrimary={alertData.onPrimary}
                 primaryLabel={alertData.primaryLabel}
             />
-        </View>
+        </SafeAreaView>
     );
 }
 
 // Estilos para la pantalla de permisos
+const C = { brand: "#fa6205", brandEdge: "#C94E00", ink: "#1C1C1E", surface: "#FFF", muted: "#71717A", bg: "#F4F4F5", iconBg: "#FFF0E5", ringBg: "#FFF7F0" };
+
 const styles = StyleSheet.create({
-    container: {
+    loading: {
         flex: 1,
-        backgroundColor: 'white',
+        backgroundColor: C.surface,
         justifyContent: 'center',
         alignItems: 'center',
-        padding: 30,
+    },
+    container: {
+        flex: 1,
+        backgroundColor: C.surface,
+    },
+    scroll: {
+        flexGrow: 1,
+        justifyContent: 'center',
+        paddingHorizontal: 20,
+        paddingVertical: 24,
+    },
+    content: {
+        alignItems: 'center',
+    },
+    iconRing: {
+        width: 136,
+        height: 136,
+        borderRadius: 999,
+        backgroundColor: C.ringBg,
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginBottom: 24,
+    },
+    iconHalo: {
+        width: 104,
+        height: 104,
+        borderRadius: 999,
+        backgroundColor: C.iconBg,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    iconCircle: {
+        width: 68,
+        height: 68,
+        borderRadius: 999,
+        backgroundColor: C.brand,
+        borderBottomWidth: 4,
+        borderBottomColor: C.brandEdge,
+        justifyContent: 'center',
+        alignItems: 'center',
     },
     title: {
         fontSize: 24,
-        fontWeight: 'bold',
+        fontFamily: 'Montserrat_800ExtraBold',
+        color: C.ink,
         textAlign: 'center',
-        marginTop: 20,
-        marginBottom: 10,
+        marginBottom: 8,
     },
     subtitle: {
-        fontSize: 16,
+        fontSize: 15,
+        fontFamily: 'Montserrat_400Regular',
+        color: C.muted,
         textAlign: 'center',
-        color: '#666',
-        marginBottom: 20,
+        lineHeight: 22,
+        maxWidth: 290,
+        marginBottom: 28,
     },
     reasonsContainer: {
-        alignSelf: 'flex-start',
-        marginBottom: 30,
-        paddingHorizontal: 20,
+        alignSelf: 'stretch',
+        gap: 20,
+        backgroundColor: C.surface,
+        borderRadius: 24,
+        borderWidth: 1,
+        borderColor: '#EDEDEF',
+        borderBottomWidth: 6,
+        borderBottomColor: '#E4E4E7',
+        paddingVertical: 20,
+        paddingHorizontal: 16,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 8 },
+        shadowOpacity: 0.08,
+        shadowRadius: 16,
+        elevation: 6,
+    },
+    reasonRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 16,
+    },
+    reasonIcon: {
+        width: 48,
+        height: 48,
+        borderRadius: 16,
+        backgroundColor: C.ink,
+        justifyContent: 'center',
+        alignItems: 'center',
     },
     reasonText: {
-        fontSize: 16,
-        color: '#333',
-        marginBottom: 10,
+        flex: 1,
+        fontSize: 15,
+        fontFamily: 'Montserrat_600SemiBold',
+        color: C.ink,
+        lineHeight: 21,
+    },
+    footer: {
+        paddingHorizontal: 20,
+        paddingTop: 8,
+        paddingBottom: 16,
     },
     privacyText: {
-        fontSize: 14,
+        marginTop: 28,
+        paddingHorizontal: 8,
+        fontSize: 13,
+        fontFamily: 'Montserrat_400Regular',
+        color: C.muted,
         textAlign: 'center',
-        color: '#888',
-        marginBottom: 40,
+        lineHeight: 18,
     },
     button: {
-        backgroundColor: '#fa6205',
-        paddingVertical: 15,
-        paddingHorizontal: 80,
-        borderRadius: 10,
-    },
+        backgroundColor: C.brand,
+        minHeight: 56,
+        borderRadius: 16,
+        justifyContent: 'center',
+        alignItems: 'center',
+        paddingHorizontal: 20, shadowColor: "#fa6205", shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.35, shadowRadius: 16, elevation: 8 },
     buttonText: {
-        color: 'black',
-        fontSize: 18,
-        fontWeight: 'bold',
+        color: C.surface,
+        fontSize: 17,
+        fontFamily: 'Montserrat_700Bold',
     },
 });
 

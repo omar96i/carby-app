@@ -12,7 +12,7 @@ import OrderChatModal from "../../components/OrderChatModal";
 export default function ChatPedido() {
   const navigation = useNavigation();
   const route = useRoute();
-  const { pedidoId, peerName, peerRole, peerAvatar, senderRole, statusTitle, statusSub, statusTone } = route.params || {};
+  const { pedidoId, peerName, peerRole, peerAvatar, peerComercioId, senderRole, statusTitle, statusSub, statusTone } = route.params || {};
   const [userInfo, setUserInfo] = useState(null);
 
   useEffect(() => {
@@ -53,6 +53,7 @@ export default function ChatPedido() {
         peerName={peerName || "Comercio"}
         peerRole={peerRole || "Soporte del pedido"}
         peerAvatar={peerAvatar}
+        peerComercioId={peerComercioId}
         senderRole={senderRole || "usuario"}
         statusTitle={statusTitle}
         statusSub={statusSub}

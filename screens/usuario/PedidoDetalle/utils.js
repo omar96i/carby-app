@@ -66,9 +66,9 @@ export const getStepDesc = (key) => {
 
 export const HEADER_TEXT = {
   pendiente: { title: "Pedido pendiente", sub: "Esperando que el comercio acepte", tone: "#F59E0B" },
-  aceptado: { title: "Pedido aceptado", sub: "El comercio preparará tu orden", tone: "#FF5500" },
-  confirmado: { title: "Pedido confirmado", sub: "El comercio lo está preparando", tone: "#FF5500" },
-  preparado: { title: "Pedido en preparación", sub: "La cocina está trabajando", tone: "#FF5500" },
+  aceptado: { title: "Pedido aceptado", sub: "El comercio preparará tu orden", tone: "#fa6205" },
+  confirmado: { title: "Pedido confirmado", sub: "El comercio lo está preparando", tone: "#fa6205" },
+  preparado: { title: "Pedido en preparación", sub: "La cocina está trabajando", tone: "#fa6205" },
   completado: { title: "Listo para reparto", sub: "Buscando repartidor cercano", tone: "#3B82F6" },
   asignado: { title: "Repartidor asignado", sub: "Va en camino al comercio", tone: "#3B82F6" },
   en_comercio: { title: "Repartidor en el comercio", sub: "Están recogiendo tu pedido", tone: "#3B82F6" },

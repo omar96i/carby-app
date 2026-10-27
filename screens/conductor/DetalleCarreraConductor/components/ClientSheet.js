@@ -14,6 +14,7 @@ import {
   Modal,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import LogoComercio from "../../../../components/LogoComercio";
 import { Feather, Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { formatCurrency, getImageUrl, formatPaymentMethod, isElectronicPayment } from "../utils";
 import SafetyProtection from "../../../../components/SafetyProtection";
@@ -213,13 +214,11 @@ export const ClientSheet = ({
           {pedido && (
             <View style={styles.pedidoCard}>
               <View style={styles.pedidoHeader}>
-                {comercioImage ? (
-                  <Image source={{ uri: comercioImage }} style={styles.commerceImage} resizeMode="cover" />
-                ) : (
-                  <View style={styles.commerceIconFallback}>
-                    <Ionicons name="storefront" size={20} color="#FF5500" />
-                  </View>
-                )}
+                <LogoComercio
+                  comercio={comercioImage ? { foto: comercioImage } : comercio}
+                  comercioId={comercio?.id || pedido?.comercio_id}
+                  size={44}
+                />
                 <View style={styles.pedidoHeaderText}>
                   <Text style={styles.pedidoLabel}>Comercio</Text>
                   <Text style={styles.pedidoTitle} numberOfLines={1}>{comercioName}</Text>
@@ -430,7 +429,7 @@ const styles = StyleSheet.create({
   },
   serviceName: {
     fontSize: 14,
-    fontFamily: "MontserratBold",
+    fontFamily: "Montserrat_700Bold",
     fontWeight: "bold",
     color: "#0F172A",
   },
@@ -446,14 +445,14 @@ const styles = StyleSheet.create({
   },
   paymentBadgeText: {
     color: "#FFFFFF",
-    fontFamily: "MontserratBold",
+    fontFamily: "Montserrat_700Bold",
     fontWeight: "bold",
     fontSize: 10,
     marginLeft: 4,
   },
   servicePrice: {
     fontSize: 18,
-    fontFamily: "MontserratBold",
+    fontFamily: "Montserrat_700Bold",
     fontWeight: "bold",
     color: "#FF5500",
   },
@@ -475,13 +474,13 @@ const styles = StyleSheet.create({
   },
   collapsedName: {
     fontSize: 15,
-    fontFamily: "MontserratBold",
+    fontFamily: "Montserrat_700Bold",
     fontWeight: "bold",
     color: "#0F172A",
   },
   collapsedSub: {
     fontSize: 12,
-    fontFamily: "Montserrat",
+    fontFamily: "Montserrat_400Regular",
     color: "#64748B",
     marginTop: 3,
   },
@@ -537,7 +536,7 @@ const styles = StyleSheet.create({
   },
   ratingText: {
     fontSize: 10,
-    fontFamily: "MontserratBold",
+    fontFamily: "Montserrat_700Bold",
     fontWeight: "bold",
     color: "#B45309",
   },
@@ -560,7 +559,7 @@ const styles = StyleSheet.create({
   photoModalName: {
     flex: 1,
     fontSize: 16,
-    fontFamily: "MontserratBold",
+    fontFamily: "Montserrat_700Bold",
     fontWeight: "bold",
     color: "#FFFFFF",
     marginRight: 12,
@@ -583,13 +582,13 @@ const styles = StyleSheet.create({
   },
   clientName: {
     fontSize: 15,
-    fontFamily: "MontserratBold",
+    fontFamily: "Montserrat_700Bold",
     fontWeight: "bold",
     color: "#0F172A",
   },
   clientTrips: {
     fontSize: 11,
-    fontFamily: "MontserratBold",
+    fontFamily: "Montserrat_700Bold",
     fontWeight: "bold",
     color: "#10B981",
     marginTop: 2,
@@ -631,7 +630,7 @@ const styles = StyleSheet.create({
   },
   routeLabel: {
     fontSize: 10,
-    fontFamily: "MontserratBold",
+    fontFamily: "Montserrat_700Bold",
     fontWeight: "bold",
     color: "#94A3B8",
     textTransform: "uppercase",
@@ -639,7 +638,7 @@ const styles = StyleSheet.create({
   },
   routeAddress: {
     fontSize: 13,
-    fontFamily: "Montserrat",
+    fontFamily: "Montserrat_400Regular",
     color: "#0F172A",
     marginTop: 2,
     marginBottom: 10,
@@ -683,7 +682,7 @@ const styles = StyleSheet.create({
   },
   pedidoLabel: {
     fontSize: 10,
-    fontFamily: "MontserratBold",
+    fontFamily: "Montserrat_700Bold",
     fontWeight: "bold",
     color: "#FF5500",
     textTransform: "uppercase",
@@ -692,19 +691,19 @@ const styles = StyleSheet.create({
   },
   pedidoTitle: {
     fontSize: 14,
-    fontFamily: "MontserratBold",
+    fontFamily: "Montserrat_700Bold",
     fontWeight: "bold",
     color: "#0F172A",
   },
   pedidoAddress: {
     fontSize: 12,
-    fontFamily: "Montserrat",
+    fontFamily: "Montserrat_400Regular",
     color: "#64748B",
     marginTop: 2,
   },
   pedidoItems: {
     fontSize: 12,
-    fontFamily: "Montserrat",
+    fontFamily: "Montserrat_400Regular",
     color: "#64748B",
     lineHeight: 17,
   },
@@ -771,7 +770,7 @@ const styles = StyleSheet.create({
   },
   liveText: {
     fontSize: 12,
-    fontFamily: "MontserratBold",
+    fontFamily: "Montserrat_700Bold",
     fontWeight: "bold",
     color: "#FFFFFF",
   },
@@ -808,7 +807,7 @@ const styles = StyleSheet.create({
   },
   actionText: {
     fontSize: 13,
-    fontFamily: "MontserratBold",
+    fontFamily: "Montserrat_700Bold",
     fontWeight: "bold",
     color: "#0F172A",
   },
@@ -846,7 +845,7 @@ const styles = StyleSheet.create({
   },
   primaryBtnText: {
     fontSize: 14,
-    fontFamily: "MontserratBold",
+    fontFamily: "Montserrat_700Bold",
     fontWeight: "bold",
     color: "#FFFFFF",
   },
@@ -856,7 +855,7 @@ const styles = StyleSheet.create({
   },
   cancelLinkText: {
     fontSize: 13,
-    fontFamily: "Montserrat",
+    fontFamily: "Montserrat_400Regular",
     color: "#94A3B8",
   },
 });

@@ -39,7 +39,7 @@ export default function BidPanel({
 
       {isBelowSuggested && (
         <View style={styles.warnBadge}>
-          <Ionicons name="alert-circle" size={12} color="#B45309" style={{ marginRight: 6 }} />
+          <Ionicons name="alert-circle" size={13} color="#B45309" />
           <Text style={styles.warnText}>Precio por debajo de lo sugerido</Text>
         </View>
       )}
@@ -55,48 +55,16 @@ export default function BidPanel({
           ]}
         >
           {({ pressed }) => (
-            <Text style={[
-              styles.stepBtnText,
-              !canDecrease500 && styles.stepBtnTextDisabled,
-              pressed && canDecrease500 && styles.stepBtnTextPressed,
-            ]}>- $500</Text>
+            <Text style={[styles.stepBtnText, pressed && canDecrease500 && styles.stepBtnTextPressed]}>- $500</Text>
           )}
         </Pressable>
 
-        <Animated.View
-          style={[
-            styles.display,
-            priceAnim && {
-              borderColor: priceAnim.interpolate({
-                inputRange: [1, 1.2],
-                outputRange: ["#E2E8F0", "#FF5500"],
-              }),
-              shadowColor: priceAnim.interpolate({
-                inputRange: [1, 1.2],
-                outputRange: ["transparent", "#FF5500"],
-              }),
-              shadowOffset: { width: 0, height: 0 },
-              shadowOpacity: priceAnim.interpolate({
-                inputRange: [1, 1.2],
-                outputRange: [0, 0.35],
-              }),
-              shadowRadius: priceAnim.interpolate({
-                inputRange: [1, 1.2],
-                outputRange: [0, 16],
-              }),
-            },
-          ]}
-        >
+        <View style={styles.display}>
           <Text style={styles.currency}>$</Text>
-          <Animated.Text
-            style={[
-              styles.amount,
-              priceAnim && { transform: [{ scale: priceAnim }] },
-            ]}
-          >
+          <Animated.Text style={[styles.amount, priceAnim && { transform: [{ scale: priceAnim }] }]}>
             {displayPrice}
           </Animated.Text>
-        </Animated.View>
+        </View>
 
         <Pressable
           onPress={onIncrease}
@@ -113,28 +81,27 @@ export default function BidPanel({
           const isActive = chip.isReset && bidOffset === 0;
           const disabled = chip.delta < 0 && !canDecrease500;
           return (
-          <Pressable
-            key={i}
-            onPress={() => chip.isReset ? onReset() : onChipDelta(chip.delta)}
-            disabled={disabled}
-            style={({ pressed }) => [
-              styles.chip,
-              isActive && styles.chipActive,
-              disabled && styles.chipDisabled,
-              pressed && !disabled && styles.chipPressed,
-            ]}
-          >
-            {({ pressed }) => (
-              <Text style={[
-                styles.chipText,
-                isActive && styles.chipTextActive,
-                disabled && styles.chipTextDisabled,
-                pressed && !disabled && styles.chipTextPressed,
-              ]}>
-                {chip.label}
-              </Text>
-            )}
-          </Pressable>
+            <Pressable
+              key={i}
+              onPress={() => chip.isReset ? onReset() : onChipDelta(chip.delta)}
+              disabled={disabled}
+              style={({ pressed }) => [
+                styles.chip,
+                isActive && styles.chipActive,
+                disabled && styles.chipDisabled,
+                pressed && !disabled && styles.chipPressed,
+              ]}
+            >
+              {({ pressed }) => (
+                <Text
+                  style={[styles.chipText, (isActive || (pressed && !disabled)) && styles.chipTextActive]}
+                  numberOfLines={1}
+                  adjustsFontSizeToFit
+                >
+                  {chip.label}
+                </Text>
+              )}
+            </Pressable>
           );
         })}
       </View>
@@ -142,14 +109,14 @@ export default function BidPanel({
   );
 }
 
+const C = { brand: "#fa6205", ink: "#1C1C1E", surface: "#FFF", muted: "#71717A", bg: "#F4F4F5", green: "#10B981" };
+
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: "#F8FAFC",
-    borderWidth: 1,
-    borderColor: "#E2E8F0",
-    borderRadius: 18,
-    padding: 12,
-    marginTop: 16,
+    backgroundColor: C.bg,
+    borderRadius: 22,
+    padding: 14,
+    marginTop: 14,
   },
   header: {
     flexDirection: "row",
@@ -158,49 +125,41 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   title: {
-    fontSize: 11,
-    fontFamily: "MontserratBold",
-    fontWeight: "bold",
-    color: "#475569",
-    textTransform: "uppercase",
-    letterSpacing: 0.6,
+    fontSize: 15,
+    fontFamily: "Montserrat_800ExtraBold",
+    color: C.ink,
   },
   recBadge: {
     backgroundColor: "#ECFDF5",
-    borderWidth: 1,
-    borderColor: "#A7F3D0",
-    borderRadius: 12,
+    borderRadius: 999,
     paddingHorizontal: 10,
-    paddingVertical: 4,
+    paddingVertical: 5,
   },
   recBadgePressed: {
-    backgroundColor: "#FF5500",
-    borderColor: "#FF5500",
+    backgroundColor: C.green,
   },
   recText: {
-    fontSize: 11,
-    fontFamily: "MontserratBold",
-    fontWeight: "bold",
+    fontSize: 11.5,
+    fontFamily: "Montserrat_700Bold",
     color: "#059669",
   },
   recTextPressed: {
-    color: "#FFFFFF",
+    color: C.surface,
   },
   warnBadge: {
     flexDirection: "row",
     alignItems: "center",
+    alignSelf: "flex-start",
+    gap: 6,
     backgroundColor: "#FEF3C7",
-    borderWidth: 1,
-    borderColor: "#FCD34D",
-    borderRadius: 8,
+    borderRadius: 999,
     paddingHorizontal: 10,
-    paddingVertical: 4,
-    marginBottom: 8,
+    paddingVertical: 5,
+    marginBottom: 10,
   },
   warnText: {
-    fontSize: 11,
-    fontFamily: "MontserratBold",
-    fontWeight: "bold",
+    fontSize: 11.5,
+    fontFamily: "Montserrat_700Bold",
     color: "#B45309",
   },
   controls: {
@@ -210,112 +169,80 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   stepBtn: {
-    backgroundColor: "#FFFFFF",
-    borderWidth: 1.5,
-    borderColor: "#FF5500",
-    borderRadius: 14,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    minHeight: 44,
+    backgroundColor: C.surface,
+    borderRadius: 999,
+    paddingHorizontal: 16,
+    height: 46,
     justifyContent: "center",
     alignItems: "center",
-    shadowColor: "#0F172A",
-    shadowOffset: { width: 0, height: 4 },
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.06,
-    shadowRadius: 16,
+    shadowRadius: 6,
     elevation: 2,
   },
   stepBtnDisabled: {
-    opacity: 0.3,
-    borderColor: "#e4e4e7",
-    backgroundColor: "#F4F4F5",
+    opacity: 0.4,
+    shadowOpacity: 0,
+    elevation: 0,
   },
   stepBtnPressed: {
-    backgroundColor: "#FF5500",
+    backgroundColor: C.brand,
   },
   stepBtnText: {
-    fontSize: 13,
-    fontFamily: "MontserratBold",
-    fontWeight: "bold",
-    color: "#FF5500",
-  },
-  stepBtnTextDisabled: {
-    color: "#a1a1aa",
+    fontSize: 13.5,
+    fontFamily: "Montserrat_700Bold",
+    color: C.ink,
   },
   stepBtnTextPressed: {
-    color: "#FFFFFF",
+    color: C.surface,
   },
   display: {
     flex: 1,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#FFFFFF",
-    borderWidth: 1.5,
-    borderColor: "#E2E8F0",
-    borderRadius: 14,
-    paddingVertical: 6,
-    paddingHorizontal: 16,
-    minHeight: 44,
   },
   currency: {
-    fontSize: 16,
-    fontFamily: "MontserratBold",
-    fontWeight: "bold",
-    color: "#FF5500",
-    marginRight: 4,
+    fontSize: 18,
+    fontFamily: "Montserrat_800ExtraBold",
+    color: C.brand,
+    marginRight: 3,
   },
   amount: {
-    fontSize: 22,
-    fontFamily: "MontserratBold",
-    fontWeight: "bold",
-    color: "#0F172A",
+    fontSize: 28,
+    fontFamily: "Montserrat_800ExtraBold",
+    color: C.ink,
   },
   chipsRow: {
     flexDirection: "row",
     gap: 6,
-    marginTop: 10,
+    marginTop: 12,
   },
   chip: {
     flex: 1,
-    backgroundColor: "#FFFFFF",
-    borderWidth: 1,
-    borderColor: "#E2E8F0",
-    borderRadius: 10,
-    paddingVertical: 6,
+    backgroundColor: C.surface,
+    borderRadius: 999,
+    height: 32,
     paddingHorizontal: 4,
     alignItems: "center",
+    justifyContent: "center",
   },
   chipActive: {
-    backgroundColor: "#FF5500",
-    borderColor: "#FF5500",
-    shadowColor: "#FF5500",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 10,
-    elevation: 4,
+    backgroundColor: C.brand,
   },
   chipPressed: {
-    backgroundColor: "#FF5500",
-    borderColor: "#FF5500",
+    backgroundColor: C.brand,
   },
   chipDisabled: {
-    opacity: 0.3,
-    borderColor: "#e4e4e7",
+    opacity: 0.4,
   },
   chipText: {
-    fontSize: 10,
-    fontFamily: "MontserratBold",
-    fontWeight: "bold",
-    color: "#475569",
+    fontSize: 11,
+    fontFamily: "Montserrat_700Bold",
+    color: C.muted,
   },
   chipTextActive: {
-    color: "#FFFFFF",
-  },
-  chipTextPressed: {
-    color: "#FFFFFF",
-  },
-  chipTextDisabled: {
-    color: "#a1a1aa",
+    color: C.surface,
   },
 });

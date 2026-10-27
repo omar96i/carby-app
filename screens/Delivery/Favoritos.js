@@ -16,6 +16,7 @@ import { useNavigation, useFocusEffect } from "@react-navigation/native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import AlertaModal from "../../components/ErrorModal";
 import ScreenHeader from "../../components/ScreenHeader";
+import LogoComercio from "../../components/LogoComercio";
 import { BASE_URL } from "../../constants/url";
 import useFavoritos from "../../hooks/usuario/useFavoritos";
 import { getCartBusiness, clearCart } from "../../utils/cartBusiness";
@@ -99,7 +100,10 @@ export default function Favoritos() {
         cart.push(cartItem);
       }
       await AsyncStorage.setItem("cart", JSON.stringify(cart));
-      showAlert(`${item.nombre} agregado al carrito`, "success", () => navigation.navigate("Cart"), "Ver carrito", "Agregado");
+      showAlert(`${item.nombre} agregado al carrito`, "success", () => {
+        setAlertVisible(false);
+        navigation.navigate("Carrito");
+      }, "Ver carrito", "Agregado");
     } catch {
       showAlert("No se pudo agregar al carrito", "error");
     }
@@ -184,9 +188,11 @@ export default function Favoritos() {
         <Text style={s.name} numberOfLines={2}>{item.nombre}</Text>
 
         <View style={s.storeRow}>
-          <View style={s.storeLogo}>
-            <Text style={s.storeLogoText}>{((storeName || "T")[0] || "T").toUpperCase()}</Text>
-          </View>
+          <LogoComercio
+            comercio={isServ ? item.perfil?.user : item.comercio}
+            comercioId={isServ ? (item.perfil?.user_id ?? item.user_id) : item.comercio?.id}
+            size={18}
+          />
           <Text style={s.storeName} numberOfLines={1}>{storeName}</Text>
         </View>
         <Text style={s.meta} numberOfLines={1}>{meta}</Text>

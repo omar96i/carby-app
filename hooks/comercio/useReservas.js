@@ -57,7 +57,10 @@ export default function useReservas() {
         cliente_nombre: r.user_perfil?.user?.nombre_completo || "Cliente",
         servicio_nombre: r.user_perfil?.nombre || perfilSeleccionado || "Perfil",
         servicio_descripcion: r.user_perfil?.descripcion || "",
-        fecha_formateada: new Date(r.fecha).toLocaleDateString("es-ES", {
+        fecha_formateada: (() => {
+          const [y, m, d] = String(r.fecha || "").slice(0, 10).split("-").map(Number);
+          return y && m && d ? new Date(y, m - 1, d) : new Date(r.fecha);
+        })().toLocaleDateString("es-ES", {
           weekday: "long", year: "numeric", month: "long", day: "numeric",
         }),
         hora_inicio_formateada: r.hora_inicio?.slice(0, 5) || "",

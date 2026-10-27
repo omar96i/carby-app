@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useCallback } from "react";
+import React, { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import {
   View,
   Text,
@@ -30,6 +30,7 @@ import { getCartBusiness, clearCart } from "../../utils/cartBusiness";
 import FavoriteHeart from "../../components/FavoriteHeart";
 import { BASE_URL } from "../../constants/url";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { LinearGradient } from "expo-linear-gradient";
 
 const { width } = Dimensions.get("window");
 const PRODUCT_CARD_WIDTH = (width - 48) / 2;
@@ -77,6 +78,8 @@ const Shop = () => {
 
   const [establishmentDisplayName] = useState(establishmentName);
   const [rating, setRating] = useState(promedio_puntuacion_restaurante);
+  const [tiendaActiva, setTiendaActiva] = useState(null);
+  const [distanciaTienda, setDistanciaTienda] = useState(null);
   const [comercioPedidos, setComercioPedidos] = useState([]);
   const [loadingRatings, setLoadingRatings] = useState(false);
 
@@ -85,6 +88,16 @@ const Shop = () => {
   const [addedProductName, setAddedProductName] = useState("");
   const [addedQuantity, setAddedQuantity] = useState(1);
   const [profilePhoto, setProfilePhoto] = useState(null);
+  const [pastHero, setPastHero] = useState(false);
+  const tabsY = useRef(0);
+  const [activeCat, setActiveCat] = useState(null);
+  const scrollRef = useRef(null);
+  const chipsRef = useRef(null);
+  const tabsH = useRef(0);
+  const contentY = useRef(0);
+  const sectionYs = useRef({});
+  const chipXs = useRef({});
+  const bloqueoChip = useRef(0);
 
   const [fontsLoaded] = useFonts({
     Montserrat_400Regular,
@@ -115,6 +128,26 @@ const Shop = () => {
       if (data && data.data) {
         const userData = data.data;
         if (userData.promedio_puntuacion_restaurante !== undefined) setRating(userData.promedio_puntuacion_restaurante);
+        if (userData.tienda_estado !== undefined && userData.tienda_estado !== null) {
+          setTiendaActiva(userData.tienda_estado === "activo" || userData.tienda_estado === 1 || userData.tienda_estado === true);
+        }
+        const loc = userData.user_location || userData.userLocation || null;
+        if (loc && loc.latitud && loc.longitud) {
+          try {
+            const guardada = await AsyncStorage.getItem("userLocation");
+            const yo = guardada ? JSON.parse(guardada) : null;
+            if (yo?.latitude && yo?.longitude) {
+              const rad = (g) => (g * Math.PI) / 180;
+              const lat2 = parseFloat(loc.latitud);
+              const lng2 = parseFloat(loc.longitud);
+              const dLat = rad(lat2 - yo.latitude);
+              const dLng = rad(lng2 - yo.longitude);
+              const a = Math.sin(dLat / 2) ** 2 + Math.cos(rad(yo.latitude)) * Math.cos(rad(lat2)) * Math.sin(dLng / 2) ** 2;
+              const km = 6371 * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+              setDistanciaTienda(km < 1 ? `A ${Math.round(km * 1000)} m` : `A ${km.toFixed(1)} km`);
+            }
+          } catch (e) {}
+        }
         if (userData.foto_documento_file) setProfilePhoto(getImageUrl(userData.foto_documento_file));
         if (userData.comercio_pedidos) {
           const pedidosConCalificacion = userData.comercio_pedidos.filter((pedido) => pedido.puntuacion_restaurante !== null);
@@ -335,7 +368,7 @@ const Shop = () => {
             <Image source={{ uri: imageUrl }} style={styles.productImg} />
           ) : (
             <View style={styles.productPlaceholder}>
-              <Ionicons name="image-outline" size={28} color="#CCC" />
+              <Ionicons name="image-outline" size={28} color={C.placeholder} />
             </View>
           )}
           {pctDescuento > 0 && (
@@ -348,9 +381,16 @@ const Shop = () => {
           </View>
         </View>
         <View style={styles.productBody}>
-          <Text style={styles.productPrice}>{formatPrice(precioFinal)}</Text>
-          {descuento > 0 && <Text style={styles.productOriginalPrice}>{formatPrice(precioOriginal)}</Text>}
           <Text style={styles.productName} numberOfLines={2}>{product.nombre}</Text>
+          <View style={styles.priceRow}>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.productPrice}>{formatPrice(precioFinal)}</Text>
+              {descuento > 0 && <Text style={styles.productOriginalPrice}>{formatPrice(precioOriginal)}</Text>}
+            </View>
+            <View style={styles.addCircle}>
+              <Ionicons name="add" size={18} color={C.surface} />
+            </View>
+          </View>
         </View>
       </TouchableOpacity>
     );
@@ -375,7 +415,7 @@ const Shop = () => {
             <Image source={{ uri: imageUrl }} style={styles.productImg} />
           ) : (
             <View style={styles.productPlaceholder}>
-              <Ionicons name="image-outline" size={28} color="#CCC" />
+              <Ionicons name="image-outline" size={28} color={C.placeholder} />
             </View>
           )}
           {pctDescuento > 0 && (
@@ -388,10 +428,17 @@ const Shop = () => {
           </View>
         </View>
         <View style={styles.productBody}>
-          <Text style={styles.productPrice}>{formatPrice(precioFinal)}</Text>
-          {descuento > 0 && <Text style={styles.productOriginalPrice}>{formatPrice(precioOriginal)}</Text>}
           <Text style={styles.productName} numberOfLines={2}>{servicio.nombre}</Text>
           <Text style={styles.serviceLabel}>Servicio</Text>
+          <View style={styles.priceRow}>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.productPrice}>{formatPrice(precioFinal)}</Text>
+              {descuento > 0 && <Text style={styles.productOriginalPrice}>{formatPrice(precioOriginal)}</Text>}
+            </View>
+            <View style={styles.addCircle}>
+              <Ionicons name="add" size={18} color={C.surface} />
+            </View>
+          </View>
         </View>
       </TouchableOpacity>
     );
@@ -401,7 +448,11 @@ const Shop = () => {
     const productos = category.productos || [];
     const servicios = category.servicios || [];
     return (
-      <View key={category.id.toString()} style={styles.section}>
+      <View
+        key={category.id.toString()}
+        style={styles.section}
+        onLayout={(e) => { sectionYs.current[category.id] = e.nativeEvent.layout.y; }}
+      >
         <Text style={styles.sectionTitle}>{category.nombre}</Text>
         <View style={styles.productsGrid}>
           {productos.map(renderProductCard)}
@@ -414,28 +465,60 @@ const Shop = () => {
   if (!fontsLoaded || loading) {
     return (
       <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#FF5A00" />
+        <ActivityIndicator size="large" color={C.brand} />
       </View>
     );
   }
 
   const heroImage = isSede && imagenSede ? getImageUrl(imagenSede) : profilePhoto;
+  const onScrollTienda = (e) => {
+    const { contentOffset, layoutMeasurement, contentSize } = e.nativeEvent;
+    const y = contentOffset.y;
+    const fijas = tabsY.current > 0 && y >= tabsY.current - 1;
+    if (fijas !== pastHero) setPastHero(fijas);
+
+    if (Date.now() < bloqueoChip.current || filteredSections.length === 0) return;
+    let actual = filteredSections[0].id;
+    const alFinal = y + layoutMeasurement.height >= contentSize.height - 2;
+    filteredSections.forEach((cat) => {
+      const sy = sectionYs.current[cat.id];
+      if (sy !== undefined && contentY.current + sy - tabsH.current - 2 <= y) actual = cat.id;
+    });
+    if (alFinal) actual = filteredSections[filteredSections.length - 1].id;
+    if (actual !== activeCat) marcarCategoria(actual);
+  };
+
+  const marcarCategoria = (id) => {
+    setActiveCat(id);
+    const x = chipXs.current[id];
+    if (x !== undefined) chipsRef.current?.scrollTo({ x: Math.max(0, x - 16), animated: true });
+  };
+
+  const irACategoria = (id) => {
+    const sy = sectionYs.current[id];
+    if (sy === undefined) return;
+    bloqueoChip.current = Date.now() + 700;
+    marcarCategoria(id);
+    scrollRef.current?.scrollTo({ y: contentY.current + sy - tabsH.current, animated: true });
+  };
+
+  const catSeleccionada = filteredSections.some((c) => c.id === activeCat) ? activeCat : filteredSections[0]?.id;
 
   return (
     <View style={styles.container}>
-      <StatusBar barStyle="light-content" backgroundColor="#111" />
+      <StatusBar barStyle={pastHero ? "dark-content" : "light-content"} translucent backgroundColor="transparent" />
 
-      <ScrollView showsVerticalScrollIndicator={false} stickyHeaderIndices={[2]} contentContainerStyle={{ paddingBottom: Math.max(insets.bottom, 12) }}>
+      <ScrollView ref={scrollRef} showsVerticalScrollIndicator={false} stickyHeaderIndices={[2]} onScroll={onScrollTienda} scrollEventThrottle={32} contentContainerStyle={{ paddingBottom: Math.max(insets.bottom, 12) }}>
         {/* Hero */}
         <View style={styles.heroWrap}>
           <Image
             source={heroImage ? { uri: heroImage } : require("../../assets/images/imagen.jpg")}
             style={styles.heroImage}
           />
-          <View style={styles.heroOverlay} />
+          <LinearGradient colors={["rgba(0,0,0,0.25)", "rgba(0,0,0,0)", "rgba(255,255,255,0)", C.surface]} locations={[0, 0.35, 0.6, 1]} style={styles.heroOverlay} pointerEvents="none" />
           <View style={[styles.heroNav, { top: insets.top + 8 }]}>
-            <TouchableOpacity style={styles.iconBtn} onPress={() => navigation.goBack()}>
-              <Ionicons name="close" size={22} color="#1C1C1E" />
+            <TouchableOpacity style={styles.iconBtn} onPress={() => navigation.goBack()} activeOpacity={0.8}>
+              <Ionicons name="close" size={22} color={C.ink} />
             </TouchableOpacity>
           </View>
         </View>
@@ -447,38 +530,52 @@ const Shop = () => {
               source={heroImage ? { uri: heroImage } : require("../../assets/images/imagen.jpg")}
               style={styles.logoImg}
             />
-            <Text style={styles.storeName}>{establishmentDisplayName || "Comercio"}</Text>
+            <Text style={styles.storeName} numberOfLines={2}>{establishmentDisplayName || "Comercio"}</Text>
           </View>
 
           <View style={styles.statsCard}>
             <View style={styles.statItem}>
-              <Text style={styles.statLabel}>Cerca de ti</Text>
-              <View style={styles.statRow}>
-                <Ionicons name="location" size={14} color="#00A650" />
-                <Text style={[styles.statValue, { color: "#00A650" }]}>¡Abierto!</Text>
+              <View style={styles.statIcon}>
+                <Ionicons name="location" size={16} color={tiendaActiva === false ? C.muted : C.green} />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.statLabel}>{distanciaTienda || "Cerca de ti"}</Text>
+                <Text style={[styles.statValue, { color: tiendaActiva === false ? C.muted : C.green }]}>
+                  {tiendaActiva === false ? "Cerrado" : "¡Abierto!"}
+                </Text>
               </View>
             </View>
-            <View style={styles.statDivider} />
-            <TouchableOpacity style={styles.statItem} onPress={() => setRatingsModalVisible(true)}>
-              <Text style={styles.statLabel}>Calificación</Text>
-              <View style={styles.statRow}>
-                <FontAwesome name="star" size={12} color="#FFD700" />
+            <TouchableOpacity style={styles.statItem} onPress={() => setRatingsModalVisible(true)} activeOpacity={0.8}>
+              <View style={styles.statIcon}>
+                <Ionicons name="star" size={16} color="#EAB308" />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.statLabel}>Calificación</Text>
                 <Text style={styles.statValue}>{rating ? parseFloat(rating).toFixed(1) : "0.0"}</Text>
               </View>
+              <Ionicons name="chevron-forward" size={16} color={C.placeholder} />
             </TouchableOpacity>
           </View>
 
           {maxDiscount > 0 && (
             <View style={styles.promoBanner}>
-              <Text style={styles.promoTitle}>Hasta {maxDiscount}% OFF imperdible</Text>
-              <Text style={styles.promoDesc}>Disfruta este descuento en tu pedido y recíbelo en minutos.</Text>
+              <View style={styles.promoIcon}>
+                <Ionicons name="pricetag" size={18} color={C.surface} />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.promoTitle}>Hasta {maxDiscount}% OFF imperdible</Text>
+                <Text style={styles.promoDesc}>Disfruta este descuento en tu pedido y recíbelo en minutos.</Text>
+              </View>
             </View>
           )}
         </View>
 
-        {/* Sticky tabs */}
-        <View style={styles.tabsWrap}>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.tabsContent}>
+        <View
+          style={[styles.tabsWrap, { paddingTop: insets.top + 10, marginTop: -insets.top }, pastHero && styles.tabsWrapFijas]}
+          onLayout={(e) => { tabsY.current = e.nativeEvent.layout.y; tabsH.current = e.nativeEvent.layout.height; }}
+          pointerEvents="box-none"
+        >
+          <View style={styles.tabsTrack}>
             {TABS.map((tab) => {
               const active = activeTab === tab.id;
               return (
@@ -489,15 +586,39 @@ const Shop = () => {
                   activeOpacity={0.8}
                 >
                   <Text style={[styles.tabText, active && styles.tabTextActive]}>{tab.label}</Text>
-                  {active && <View style={styles.tabIndicator} />}
                 </TouchableOpacity>
               );
             })}
-          </ScrollView>
+          </View>
+
+          {!error && filteredSections.length > 0 && (
+            <ScrollView
+              ref={chipsRef}
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              style={styles.chipsScroll}
+              contentContainerStyle={styles.chipsContent}
+            >
+              {filteredSections.map((cat) => {
+                const activa = catSeleccionada === cat.id;
+                return (
+                  <TouchableOpacity
+                    key={cat.id.toString()}
+                    style={[styles.chip, activa && styles.chipActiva]}
+                    onPress={() => irACategoria(cat.id)}
+                    onLayout={(e) => { chipXs.current[cat.id] = e.nativeEvent.layout.x; }}
+                    activeOpacity={0.8}
+                  >
+                    <Text style={[styles.chipText, activa && styles.chipTextActiva]}>{cat.nombre}</Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </ScrollView>
+          )}
         </View>
 
         {/* Content */}
-        <View style={styles.content}>
+        <View style={styles.content} onLayout={(e) => { contentY.current = e.nativeEvent.layout.y; }}>
           {error ? (
             <View style={styles.errorContainer}>
               <Text style={styles.errorText}>{error}</Text>
@@ -507,16 +628,23 @@ const Shop = () => {
             </View>
           ) : filteredSections.length === 0 ? (
             <View style={styles.emptyWrap}>
-              <Ionicons name="fast-food-outline" size={48} color="#CCC" />
+              <View style={styles.emptyIcon}>
+                <Ionicons name={activeTab === "descuentos" ? "pricetag-outline" : "fast-food-outline"} size={26} color={C.brand} />
+              </View>
               <Text style={styles.emptyText}>No hay productos en esta sección.</Text>
             </View>
           ) : (
             <>
               {activeTab === "descuentos" && (
-                <Text style={styles.sectionIntroTitle}>Descuentos</Text>
-              )}
-              {activeTab !== "menu" && (
-                <Text style={styles.sectionIntroSubtitle}>Las mejores opciones para ti</Text>
+                <View style={styles.sectionIntro}>
+                  <View style={styles.sectionIntroIcon}>
+                    <Ionicons name="pricetag" size={16} color={C.surface} />
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.sectionIntroTitle}>Descuentos</Text>
+                    <Text style={styles.sectionIntroSubtitle}>Las mejores opciones para ti</Text>
+                  </View>
+                </View>
               )}
               {filteredSections.map(renderSection)}
             </>
@@ -530,7 +658,7 @@ const Shop = () => {
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
             <View style={styles.successIconCircle}>
-              <Ionicons name="checkmark" size={40} color="#FFF" />
+              <Ionicons name="checkmark" size={36} color={C.surface} />
             </View>
             <Text style={styles.modalTitle}>¡Agregado!</Text>
             <Text style={styles.modalText}>{addedQuantity} {addedProductName} se añadió a tu pedido.</Text>
@@ -558,11 +686,11 @@ const Shop = () => {
             <View style={styles.ratingHeader}>
               <Text style={styles.ratingTitle}>Opiniones</Text>
               <TouchableOpacity onPress={() => setRatingsModalVisible(false)}>
-                <Ionicons name="close-circle" size={30} color="#666" />
+                <Ionicons name="close-circle" size={30} color={C.placeholder} />
               </TouchableOpacity>
             </View>
             {loadingRatings ? (
-              <ActivityIndicator size="large" color="#FF5A00" />
+              <ActivityIndicator size="large" color={C.brand} />
             ) : (
               <FlatList
                 data={comercioPedidos}
@@ -611,317 +739,125 @@ const Shop = () => {
   );
 };
 
+const C = { brand: "#fa6205", ink: "#1C1C1E", surface: "#FFF", muted: "#71717A", bg: "#F4F4F5", edge: "#E4E4E7", iconBg: "#FFF0E5", green: "#10B981", placeholder: "#A1A1AA" };
+const BOTON_ELEVADO = { shadowColor: "#fa6205", shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.35, shadowRadius: 16, elevation: 8 };
+
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#FFF",
-  },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: "#FFF",
-  },
-  heroWrap: {
-    width: "100%",
-    height: 220,
-    position: "relative",
-  },
-  heroImage: {
-    width: "100%",
-    height: "100%",
-    resizeMode: "cover",
-  },
-  heroOverlay: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: "rgba(0,0,0,0.15)",
-  },
-  heroNav: {
-    position: "absolute",
-    left: 0,
-    right: 0,
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    paddingHorizontal: 16,
-  },
-  heroNavRight: {
-    flexDirection: "row",
-    gap: 8,
-  },
+  container: { flex: 1, backgroundColor: C.surface },
+  loadingContainer: { flex: 1, justifyContent: "center", alignItems: "center", backgroundColor: C.surface },
+
+  heroWrap: { width: "100%", height: 200, position: "relative", backgroundColor: C.bg },
+  heroImage: { width: "100%", height: "100%", resizeMode: "cover" },
+  heroOverlay: { ...StyleSheet.absoluteFillObject },
+  heroNav: { position: "absolute", left: 0, right: 0, flexDirection: "row", justifyContent: "space-between", alignItems: "center", paddingHorizontal: 16 },
+  heroNavRight: { flexDirection: "row", gap: 8 },
   iconBtn: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: "rgba(255,255,255,0.95)",
-    justifyContent: "center",
-    alignItems: "center",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    width: 42, height: 42, borderRadius: 21, backgroundColor: C.surface, justifyContent: "center", alignItems: "center",
+    shadowColor: "#000", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.15, shadowRadius: 6, elevation: 4,
   },
-  infoHeader: {
-    paddingHorizontal: 16,
-    paddingTop: 16,
-    paddingBottom: 10,
-  },
-  logoRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 12,
-    marginBottom: 14,
-  },
+
+  infoHeader: { paddingHorizontal: 16, marginTop: -40, paddingBottom: 14 },
+  logoRow: { flexDirection: "row", alignItems: "flex-end", gap: 12, marginBottom: 14 },
   logoImg: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-    borderWidth: 2,
-    borderColor: "#FFF",
-    backgroundColor: "#F2F2F2",
+    width: 72, height: 72, borderRadius: 20, borderWidth: 3, borderColor: C.surface, backgroundColor: C.bg,
+    shadowColor: "#000", shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.12, shadowRadius: 10, elevation: 4,
   },
-  storeName: {
-    fontSize: 22,
-    fontFamily: "Montserrat_700Bold",
-    color: "#1C1C1E",
-    flex: 1,
-  },
-  statsCard: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "#F9F9F9",
-    borderRadius: 16,
-    paddingVertical: 14,
-    paddingHorizontal: 12,
-    marginBottom: 12,
-  },
+  storeName: { flex: 1, fontSize: 21, lineHeight: 25, fontFamily: "Montserrat_800ExtraBold", color: C.ink, paddingBottom: 4 },
+
+  statsCard: { flexDirection: "row", gap: 10 },
   statItem: {
-    flex: 1,
-    alignItems: "center",
-    gap: 3,
+    flex: 1, flexDirection: "row", alignItems: "center", gap: 10, backgroundColor: C.bg,
+    borderRadius: 18, paddingVertical: 10, paddingHorizontal: 10,
   },
-  statDivider: {
-    width: 1,
-    height: 28,
-    backgroundColor: "#E0E0E0",
+  statIcon: { width: 34, height: 34, borderRadius: 17, backgroundColor: C.surface, alignItems: "center", justifyContent: "center" },
+  statDivider: { width: 0 },
+  statLabel: { fontSize: 11.5, fontFamily: "Montserrat_600SemiBold", color: C.muted },
+  statRow: { flexDirection: "row", alignItems: "center", gap: 4 },
+  statValue: { fontSize: 14, fontFamily: "Montserrat_800ExtraBold", color: C.ink, marginTop: 1 },
+  nearYouBadge: { flexDirection: "row", alignItems: "center", gap: 8 },
+  nearYouText: { flex: 1, fontSize: 14, fontFamily: "Montserrat_700Bold", color: C.green },
+
+  promoBanner: { flexDirection: "row", alignItems: "center", gap: 10, backgroundColor: C.iconBg, borderRadius: 18, paddingVertical: 10, paddingHorizontal: 10, marginTop: 10 },
+  promoIcon: { width: 34, height: 34, borderRadius: 17, backgroundColor: C.brand, alignItems: "center", justifyContent: "center" },
+  promoTitle: { fontSize: 14, fontFamily: "Montserrat_800ExtraBold", color: C.ink, marginBottom: 1 },
+  promoDesc: { fontSize: 12, lineHeight: 17, fontFamily: "Montserrat_400Regular", color: C.muted },
+
+  tabsWrap: { backgroundColor: "transparent", paddingBottom: 12, paddingHorizontal: 16 },
+  tabsWrapFijas: { backgroundColor: C.surface, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: C.edge },
+  tabsTrack: { flexDirection: "row", backgroundColor: C.bg, borderRadius: 999, padding: 4 },
+  tabItem: { flex: 1, alignItems: "center", paddingVertical: 9, borderRadius: 999 },
+  tabItemActive: {
+    backgroundColor: C.surface,
+    shadowColor: "#000", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.08, shadowRadius: 6, elevation: 2,
   },
-  statLabel: {
-    fontSize: 12,
-    fontFamily: "Montserrat_600SemiBold",
-    color: "#999",
-  },
-  statRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 4,
-  },
-  statValue: {
-    fontSize: 14,
-    fontFamily: "Montserrat_700Bold",
-    color: "#1C1C1E",
-  },
-  nearYouBadge: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-    backgroundColor: "#E8F8F1",
-    paddingVertical: 10,
-    paddingHorizontal: 14,
-    borderRadius: 12,
-    marginBottom: 14,
-  },
-  nearYouText: {
-    flex: 1,
-    fontSize: 14,
-    fontFamily: "Montserrat_700Bold",
-    color: "#00A650",
-  },
-  promoBanner: {
-    backgroundColor: "#FFF8E1",
-    borderRadius: 16,
-    padding: 16,
-    marginBottom: 4,
-  },
-  promoTitle: {
-    fontSize: 15,
-    fontFamily: "Montserrat_700Bold",
-    color: "#1C1C1E",
-    marginBottom: 4,
-  },
-  promoDesc: {
-    fontSize: 12,
-    fontFamily: "Montserrat_400Regular",
-    color: "#666",
-  },
-  tabsWrap: {
-    backgroundColor: "#FFF",
-    paddingVertical: 8,
-    borderBottomWidth: 1,
-    borderBottomColor: "#F2F2F2",
-  },
-  tabsContent: {
-    paddingHorizontal: 16,
-    gap: 20,
-  },
-  tabItem: {
-    paddingVertical: 8,
-    position: "relative",
-  },
-  tabItemActive: {},
-  tabText: {
-    fontSize: 15,
-    fontFamily: "Montserrat_600SemiBold",
-    color: "#999",
-  },
-  tabTextActive: {
-    color: "#1C1C1E",
-    fontFamily: "Montserrat_700Bold",
-  },
-  tabIndicator: {
-    position: "absolute",
-    bottom: 0,
-    left: 0,
-    right: 0,
-    height: 2.5,
-    backgroundColor: "#1C1C1E",
-    borderRadius: 2,
-  },
-  content: {
-    paddingHorizontal: 16,
-    paddingTop: 16,
-  },
-  sectionIntroTitle: {
-    fontSize: 20,
-    fontFamily: "Montserrat_700Bold",
-    color: "#1C1C1E",
-    marginBottom: 2,
-  },
-  sectionIntroSubtitle: {
-    fontSize: 13,
-    fontFamily: "Montserrat_400Regular",
-    color: "#888",
-    marginBottom: 16,
-  },
-  section: {
-    marginBottom: 24,
-  },
-  sectionTitle: {
-    fontSize: 17,
-    fontFamily: "Montserrat_700Bold",
-    color: "#1C1C1E",
-    marginBottom: 12,
-  },
-  productsGrid: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: 12,
-  },
+  tabText: { fontSize: 14, fontFamily: "Montserrat_700Bold", color: C.muted },
+  tabTextActive: { color: C.ink, fontFamily: "Montserrat_800ExtraBold" },
+  tabIndicator: { height: 0 },
+  chipsScroll: { marginTop: 10, marginHorizontal: -16 },
+  chipsContent: { paddingHorizontal: 16, gap: 8 },
+  chip: { paddingHorizontal: 14, paddingVertical: 7, borderRadius: 999, backgroundColor: C.bg },
+  chipActiva: { backgroundColor: C.ink },
+  chipText: { fontSize: 13, fontFamily: "Montserrat_700Bold", color: C.muted },
+  chipTextActiva: { color: C.surface },
+
+  content: { paddingHorizontal: 16, paddingTop: 4, backgroundColor: C.surface, flexGrow: 1 },
+  sectionIntro: { flexDirection: "row", alignItems: "center", gap: 10, marginBottom: 14 },
+  sectionIntroIcon: { width: 34, height: 34, borderRadius: 17, backgroundColor: C.brand, alignItems: "center", justifyContent: "center" },
+  sectionIntroTitle: { fontSize: 18, fontFamily: "Montserrat_800ExtraBold", color: C.ink },
+  sectionIntroSubtitle: { fontSize: 12.5, fontFamily: "Montserrat_400Regular", color: C.muted, marginTop: 1 },
+  section: { marginBottom: 20 },
+  sectionTitle: { fontSize: 18, fontFamily: "Montserrat_800ExtraBold", color: C.ink, marginBottom: 12 },
+  productsGrid: { flexDirection: "row", flexWrap: "wrap", columnGap: 12, rowGap: 14 },
+
   productCard: {
-    width: PRODUCT_CARD_WIDTH,
-    marginBottom: 6,
+    width: PRODUCT_CARD_WIDTH, backgroundColor: C.surface, borderRadius: 22, padding: 6,
+    shadowColor: "#000", shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.06, shadowRadius: 14, elevation: 3,
   },
   productImgWrap: {
-    width: PRODUCT_CARD_WIDTH,
-    height: PRODUCT_CARD_WIDTH,
-    borderRadius: 16,
-    overflow: "hidden",
-    backgroundColor: "#F2F2F2",
-    marginBottom: 8,
-    position: "relative",
+    width: PRODUCT_CARD_WIDTH - 12, height: PRODUCT_CARD_WIDTH - 12, borderRadius: 18, overflow: "hidden",
+    backgroundColor: C.bg, position: "relative",
   },
-  productImg: {
-    width: "100%",
-    height: "100%",
-  },
-  productPlaceholder: {
-    width: "100%",
-    height: "100%",
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  discountBadge: {
-    position: "absolute",
-    top: 8,
-    left: 8,
-    backgroundColor: "#FFD700",
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 8,
-  },
-  heartPos: {
-    position: "absolute",
-    top: 8,
-    right: 8,
-    zIndex: 2,
-  },
-  discountBadgeText: {
-    fontSize: 11,
-    fontFamily: "Montserrat_800ExtraBold",
-    color: "#1C1C1E",
-  },
-  productBody: {
-    paddingHorizontal: 2,
-  },
-  productPrice: {
-    fontSize: 16,
-    fontFamily: "Montserrat_800ExtraBold",
-    color: "#1C1C1E",
-    marginBottom: 1,
-  },
-  productOriginalPrice: {
-    fontSize: 12,
-    fontFamily: "Montserrat_400Regular",
-    color: "#BBB",
-    textDecorationLine: "line-through",
-    marginBottom: 2,
-  },
-  productName: {
-    fontSize: 13,
-    fontFamily: "Montserrat_600SemiBold",
-    color: "#1C1C1E",
-    lineHeight: 17,
-  },
-  serviceLabel: {
-    fontSize: 11,
-    fontFamily: "Montserrat_600SemiBold",
-    color: "#FF5A00",
-    marginTop: 2,
-  },
-  emptyWrap: {
-    alignItems: "center",
-    paddingVertical: 60,
-    gap: 12,
-  },
-  emptyText: {
-    fontSize: 14,
-    fontFamily: "Montserrat_600SemiBold",
-    color: "#999",
-  },
+  productImg: { width: "100%", height: "100%" },
+  productPlaceholder: { width: "100%", height: "100%", justifyContent: "center", alignItems: "center" },
+  discountBadge: { position: "absolute", top: 8, left: 8, backgroundColor: C.brand, paddingHorizontal: 8, paddingVertical: 3, borderRadius: 999 },
+  discountBadgeText: { fontSize: 11, fontFamily: "Montserrat_800ExtraBold", color: C.surface },
+  heartPos: { position: "absolute", top: 8, right: 8, zIndex: 2 },
+  productBody: { paddingHorizontal: 6, paddingTop: 10, paddingBottom: 4 },
+  productName: { fontSize: 13.5, fontFamily: "Montserrat_700Bold", color: C.ink, lineHeight: 18, minHeight: 36 },
+  priceRow: { flexDirection: "row", alignItems: "center", marginTop: 6 },
+  productPrice: { fontSize: 15, fontFamily: "Montserrat_800ExtraBold", color: C.brand },
+  productOriginalPrice: { fontSize: 11.5, fontFamily: "Montserrat_400Regular", color: C.placeholder, textDecorationLine: "line-through" },
+  addCircle: { width: 32, height: 32, borderRadius: 16, backgroundColor: C.brand, alignItems: "center", justifyContent: "center", ...BOTON_ELEVADO, shadowOpacity: 0.3, shadowRadius: 10, elevation: 4 },
+  serviceLabel: { fontSize: 11, fontFamily: "Montserrat_700Bold", color: C.brand, marginTop: 2 },
+
+  emptyWrap: { alignItems: "center", gap: 12, paddingVertical: 40, paddingHorizontal: 20 },
+  emptyIcon: { width: 56, height: 56, borderRadius: 28, backgroundColor: C.iconBg, alignItems: "center", justifyContent: "center" },
+  emptyText: { fontSize: 14, fontFamily: "Montserrat_600SemiBold", color: C.muted },
   errorContainer: { alignItems: "center", margin: 20 },
-  errorText: { color: "#ff6b6b", fontFamily: "Montserrat_400Regular" },
-  retryButton: { backgroundColor: "#FF5A00", padding: 10, borderRadius: 8, marginTop: 10 },
-  retryButtonText: { color: "#FFF", fontFamily: "Montserrat_700Bold" },
-  modalOverlay: { flex: 1, backgroundColor: "rgba(0,0,0,0.8)", justifyContent: "center", alignItems: "center" },
-  modalContent: { width: "80%", backgroundColor: "#FFF", borderRadius: 20, padding: 25, alignItems: "center" },
-  successIconCircle: { width: 70, height: 70, borderRadius: 35, backgroundColor: "#FF5A00", justifyContent: "center", alignItems: "center", marginBottom: 15 },
-  modalTitle: { color: "#1C1C1E", fontFamily: "Montserrat_700Bold", fontSize: 20, marginBottom: 10 },
-  modalText: { color: "#666", fontFamily: "Montserrat_400Regular", textAlign: "center", marginBottom: 20 },
-  modalActions: { width: "100%" },
-  btnPrimary: { backgroundColor: "#FF5A00", padding: 15, borderRadius: 30, alignItems: "center", marginBottom: 10 },
-  btnPrimaryText: { fontFamily: "Montserrat_700Bold", color: "#FFF" },
-  btnSecondary: { padding: 10, alignItems: "center", marginBottom: 5 },
-  btnSecondaryText: { fontFamily: "Montserrat_600SemiBold", color: "#666" },
-  ratingsModalContent: { width: "100%", height: "70%", marginTop: "auto", backgroundColor: "#FFF", borderTopLeftRadius: 25, borderTopRightRadius: 25, padding: 20 },
-  ratingHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 20 },
-  ratingTitle: { color: "#1C1C1E", fontSize: 20, fontFamily: "Montserrat_700Bold" },
-  scoreBigContainer: { alignItems: "center", paddingVertical: 20, borderBottomWidth: 1, borderBottomColor: "#E0E0E0", marginBottom: 15 },
-  scoreBig: { color: "#1C1C1E", fontSize: 48, fontFamily: "Montserrat_700Bold" },
-  reviewItem: { marginBottom: 15, backgroundColor: "#ECECEC", padding: 15, borderRadius: 10 },
+  errorText: { color: "#EF4444", fontFamily: "Montserrat_400Regular" },
+  retryButton: { backgroundColor: C.brand, paddingHorizontal: 22, height: 46, justifyContent: "center", borderRadius: 999, marginTop: 12, ...BOTON_ELEVADO },
+  retryButtonText: { color: C.surface, fontFamily: "Montserrat_700Bold" },
+
+  modalOverlay: { flex: 1, backgroundColor: "rgba(0,0,0,0.5)", justifyContent: "center", alignItems: "center" },
+  modalContent: { width: "84%", backgroundColor: C.surface, borderRadius: 28, padding: 24, alignItems: "center" },
+  successIconCircle: { width: 68, height: 68, borderRadius: 34, backgroundColor: C.brand, justifyContent: "center", alignItems: "center", marginBottom: 14 },
+  modalTitle: { color: C.ink, fontFamily: "Montserrat_800ExtraBold", fontSize: 20, marginBottom: 6 },
+  modalText: { color: C.muted, fontFamily: "Montserrat_400Regular", textAlign: "center", marginBottom: 20 },
+  modalActions: { width: "100%", gap: 10 },
+  btnPrimary: { backgroundColor: C.brand, height: 52, borderRadius: 999, alignItems: "center", justifyContent: "center", ...BOTON_ELEVADO },
+  btnPrimaryText: { fontFamily: "Montserrat_700Bold", color: C.surface, fontSize: 15 },
+  btnSecondary: { height: 50, borderRadius: 999, backgroundColor: C.bg, alignItems: "center", justifyContent: "center" },
+  btnSecondaryText: { fontFamily: "Montserrat_700Bold", color: C.ink, fontSize: 15 },
+  ratingsModalContent: { width: "100%", height: "70%", marginTop: "auto", backgroundColor: C.surface, borderTopLeftRadius: 28, borderTopRightRadius: 28, padding: 20 },
+  ratingHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 16 },
+  ratingTitle: { color: C.ink, fontSize: 20, fontFamily: "Montserrat_800ExtraBold" },
+  scoreBigContainer: { alignItems: "center", paddingVertical: 18, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: C.edge, marginBottom: 14 },
+  scoreBig: { color: C.ink, fontSize: 46, fontFamily: "Montserrat_800ExtraBold" },
+  reviewItem: { marginBottom: 12, backgroundColor: C.bg, padding: 14, borderRadius: 18 },
   reviewHeader: { flexDirection: "row", justifyContent: "space-between", marginBottom: 5 },
-  reviewUser: { color: "#1C1C1E", fontFamily: "Montserrat_700Bold" },
-  reviewDate: { color: "#666", fontSize: 12 },
-  reviewText: { color: "#555", fontStyle: "italic", marginTop: 5 },
+  reviewUser: { color: C.ink, fontFamily: "Montserrat_700Bold" },
+  reviewDate: { color: C.muted, fontSize: 12, fontFamily: "Montserrat_400Regular" },
+  reviewText: { color: C.muted, fontStyle: "italic", marginTop: 5, fontFamily: "Montserrat_400Regular" },
 });
 
 export default Shop;

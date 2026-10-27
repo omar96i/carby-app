@@ -143,10 +143,43 @@ export default function useShopInfo() {
     }
   }, [userData, getCurrentLocation]);
 
+  const updateShopPhoto = useCallback(async (uri) => {
+    const token = await AsyncStorage.getItem("userToken");
+    const userId = userData?.id || (await AsyncStorage.getItem("userId"));
+    if (!token || !userId) throw new Error("No se encontró tu sesión");
+    const tipoUsuario = userData?.tipo_usuario || (await AsyncStorage.getItem("tipoUsuario"));
+    if (!tipoUsuario) throw new Error("No se pudo determinar el tipo de usuario");
+
+    const filename = uri.split("/").pop();
+    const match = /\.(\w+)$/.exec(filename);
+    const type = match ? `image/${match[1]}` : "image/jpeg";
+    const fd = new FormData();
+    fd.append("foto_documento_file", { uri, name: filename || "logo.jpg", type });
+    fd.append("tipo_usuario", tipoUsuario);
+
+    logger.request("POST", `${BASE_URL}usuario/actualizar/${userId}`, { foto: filename });
+    const res = await fetch(`${BASE_URL}usuario/actualizar/${userId}`, {
+      method: "POST",
+      headers: { Accept: "application/json", Authorization: `Bearer ${token}` },
+      body: fd,
+    });
+    const text = await res.text();
+    let data = null;
+    try { data = JSON.parse(text); } catch {}
+    if (!res.ok) throw new Error(data?.message || "No se pudo actualizar el logo");
+
+    const nueva = data?.data?.fotografia_perfil || data?.data?.foto_document_file || data?.data?.foto_documento_file;
+    if (nueva) {
+      const url = getImageUrl(nueva);
+      setProfileImageUrl(url);
+      await AsyncStorage.setItem("userProfileImage", url);
+    }
+  }, [userData]);
+
   return {
     userData, establishmentName, profileImageUrl, shopActive, averageRating, ratings,
     paymentType, tipoCategoria, currentLocation, shopLocation, shopAddress, loading,
-    fetchShopInfo, toggleTienda, getCurrentLocation, saveShopLocation,
+    fetchShopInfo, toggleTienda, getCurrentLocation, saveShopLocation, updateShopPhoto,
     setShopActive, setCurrentLocation,
   };
 }

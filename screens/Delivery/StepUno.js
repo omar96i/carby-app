@@ -39,11 +39,12 @@ import NoteInput from "../Transport/components/NoteInput";
 import SearchModal from "../Transport/components/SearchModal";
 
 import PeekSummary from "../Transport/components/PeekSummary";
+import { useAlturaTecladoAndroid } from "../../hooks/useAlturaTecladoAndroid";
 
 const screenH = Dimensions.get("window").height;
 const screenW = Dimensions.get("window").width;
 const COLLAPSED_BASE_H = 94;
-const EXPANDED_RATIO = 0.58;
+const EXPANDED_RATIO = 0.62;
 
 const decodePolyline = (encoded) => {
   const points = [];
@@ -99,9 +100,13 @@ export default function StepUno() {
   const mapRef = useRef(null);
   const navigation = useNavigation();
   const insets = useSafeAreaInsets();
+  const tecladoAndroid = useAlturaTecladoAndroid();
+  const sheetScrollRef = useRef(null);
   const bottomPad = Math.max(insets.bottom, 12);
   const collapsedSheetH = COLLAPSED_BASE_H + bottomPad;
-  const expandedSheetH = Math.round(screenH * EXPANDED_RATIO) + bottomPad;
+  const [altoPantalla, setAltoPantalla] = useState(0);
+  const altoUtil = altoPantalla || screenH;
+  const expandedSheetH = Math.round(altoUtil * EXPANDED_RATIO) + bottomPad;
   const { expoPushToken, notification } = useNotification();
 
   const [selectedServiceId, setSelectedServiceId] = useState(null);
@@ -226,7 +231,10 @@ export default function StepUno() {
     setAlertVisible(true);
   };
 
-  const goBack = () => navigation.goBack();
+  const goBack = () => {
+    if (navigation.canGoBack()) navigation.goBack();
+    else navigation.navigate("Home");
+  };
 
   const resetAll = () => {
     setSelectedServiceId(null);
@@ -1335,26 +1343,6 @@ export default function StepUno() {
     ).start();
   }, []);
 
-  // Animacion de destello en boton de accion
-  useEffect(() => {
-    Animated.loop(
-      Animated.sequence([
-        Animated.timing(shimmerAnim, { toValue: screenW, duration: 900, useNativeDriver: true }),
-        Animated.timing(shimmerAnim, { toValue: screenW, duration: 5000, useNativeDriver: true }),
-      ])
-    ).start();
-  }, []);
-
-  // Animacion del handle del bottom sheet
-  useEffect(() => {
-    Animated.loop(
-      Animated.sequence([
-        Animated.timing(dragHandleAnim, { toValue: 1, duration: 1200, useNativeDriver: false }),
-        Animated.timing(dragHandleAnim, { toValue: 0, duration: 1200, useNativeDriver: false }),
-      ])
-    ).start();
-  }, []);
-
   // Bottom sheet animation
   useEffect(() => {
     Animated.spring(sheetAnim, {
@@ -1450,7 +1438,14 @@ export default function StepUno() {
 
   return (
     <SafeAreaView style={styles.safe} edges={['top', 'left', 'right']}>
-      <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === "ios" ? "padding" : undefined}>
+      <KeyboardAvoidingView
+        style={styles.flex}
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
+        onLayout={(e) => {
+          const alto = Math.round(e.nativeEvent.layout.height + insets.top);
+          if (alto > 0 && Math.abs(alto - altoPantalla) > 1) setAltoPantalla(alto);
+        }}
+      >
         {/* MAPA */}
         <View style={styles.mapContainer}>
           <MapView
@@ -1459,7 +1454,7 @@ export default function StepUno() {
             region={mapRegion}
             showsUserLocation={false}
             showsMyLocationButton={false}
-            loadingIndicatorColor="#FF5500"
+            loadingIndicatorColor="#fa6205"
             onRegionChangeComplete={(region) => {
               if (!ignoreNextRegionChange) setMapRegion(region);
               else setIgnoreNextRegionChange(false);
@@ -1494,7 +1489,7 @@ export default function StepUno() {
                     <Svg width={30} height={30} viewBox="0 0 30 30">
                       <Path
                         d="M15 2 C21 2 26 7 26 13 C26 17 21 22 15 30 C9 22 4 17 4 13 C4 7 9 2 15 2 Z"
-                        fill="#FF5500"
+                        fill="#fa6205"
                         stroke="#FFFFFF"
                         strokeWidth="2"
                       />
@@ -1504,7 +1499,7 @@ export default function StepUno() {
                         textAnchor="middle"
                         fill="#FFFFFF"
                         fontSize="12"
-                        fontFamily="MontserratBold"
+                        fontFamily="Montserrat_700Bold"
                       >B</SvgText>
                     </Svg>
                   </Animated.View>
@@ -1514,8 +1509,8 @@ export default function StepUno() {
             )}
             {routeCoords.length > 0 && (
               <>
-                <Polyline coordinates={routeCoords} strokeWidth={6} strokeColor="rgba(255,85,0,0.15)" />
-                <Polyline coordinates={routeCoords} strokeWidth={3} strokeColor="#FF5500" />
+                <Polyline coordinates={routeCoords} strokeWidth={6} strokeColor="rgba(250,98,5,0.15)" />
+                <Polyline coordinates={routeCoords} strokeWidth={3} strokeColor="#fa6205" />
               </>
             )}
           </MapView>
@@ -1524,49 +1519,42 @@ export default function StepUno() {
           {!searchModalVisible && !pinMode && (
             <View style={styles.hdr}>
               <View style={styles.hdrRow}>
-                <TouchableOpacity style={styles.backBtn} onPress={goBack} activeOpacity={0.8}>
-                  <Ionicons name="arrow-back" size={20} color="#0F172A" />
-                </TouchableOpacity>
-                <View style={styles.brandPill}>
-                  <Image
-                    source={require("../../assets/images/nuevo-icono.jpeg")}
-                    style={styles.logoImg}
-                    resizeMode="contain"
-                  />
-                  <Text style={styles.brandText}>
-                    Car<Text style={{ color: "#FF5500" }}>By</Text>
-                  </Text>
+                <View style={styles.hdrBtns}>
+                  <TouchableOpacity style={styles.backBtn} onPress={goBack} activeOpacity={0.8}>
+                    <Ionicons name="arrow-back" size={20} color="#1C1C1E" />
+                  </TouchableOpacity>
+                  <TouchableOpacity style={styles.backBtn} onPress={centerMapOnUserLocation} activeOpacity={0.8}>
+                    <MaterialCommunityIcons name="crosshairs-gps" size={20} color="#fa6205" />
+                  </TouchableOpacity>
                 </View>
-                <View style={{ width: 44 }} />
-              </View>
-              <DestinationBar
-                address={deliveryAddress}
-                onPress={openSearchForDestination}
-                onMapPress={() => openLocationPicker(false)}
-              />
-              {deliveryCoord && (
-                <RouteInfoBar
-                  distance={distanceInKm ? distanceInKm.toFixed(1) : "0.0"}
-                  eta={routeDurationInTraffic !== null ? String(Math.max(2, routeDurationInTraffic)) : "3"}
-                  trafficLevel={trafficLevel}
+                <DestinationBar
+                  onOriginPress={() => openLocationPicker(true)}
+                  origin={pickupAddress}
+                  address={deliveryAddress}
+                  onPress={openSearchForDestination}
+                  onMapPress={() => openLocationPicker(false)}
+                  footer={deliveryCoord ? (
+                    <RouteInfoBar
+                      embedded
+                      distance={distanceInKm ? distanceInKm.toFixed(1) : "0.0"}
+                      eta={routeDurationInTraffic !== null ? String(Math.max(2, routeDurationInTraffic)) : "3"}
+                      trafficLevel={trafficLevel}
+                    />
+                  ) : null}
                 />
-              )}
+              </View>
             </View>
           )}
 
-          {/* FAB de ubicacion */}
-          {!pinMode && (
-            <TouchableOpacity style={styles.fabLocate} onPress={centerMapOnUserLocation} activeOpacity={0.8}>
-              <MaterialCommunityIcons name="crosshairs-gps" size={22} color="#0F172A" />
-            </TouchableOpacity>
-          )}
 
           {/* Overlay modo pin */}
           {pinMode && (
             <>
               <View style={styles.pinBanner} pointerEvents="none">
                 <View style={styles.pinBannerContent}>
-                  <Ionicons name="location" size={18} color="#FF5500" />
+                  <View style={styles.pinBannerIcon}>
+                    <Ionicons name="location" size={18} color="#fa6205" />
+                  </View>
                   <View style={{ flex: 1 }}>
                     <Text style={styles.pinBannerTitle}>
                       {isLocationPickup ? "Seleccionando punto de recogida" : "Seleccionando destino"}
@@ -1603,21 +1591,14 @@ export default function StepUno() {
         {/* BOTTOM SHEET */}
         {!pinMode && !isCreatingRide && (
         <Animated.View
-          style={[styles.sheet, { height: sheetAnim, paddingBottom: bottomPad }]}
+          style={[
+            styles.sheet,
+            { height: sheetAnim, paddingBottom: bottomPad },
+            tecladoAndroid > 0 && { bottom: tecladoAndroid, paddingBottom: 0, maxHeight: altoUtil - tecladoAndroid - insets.top - 24 },
+          ]}
           {...panResponder.panHandlers}
         >
           <View style={styles.dragHandleZone}>
-            <Animated.View
-              style={[
-                styles.sheetTopBorder,
-                {
-                  width: dragHandleAnim.interpolate({
-                    inputRange: [0, 1],
-                    outputRange: [42, screenW * 0.3],
-                  }),
-                },
-              ]}
-            />
             <View style={styles.dragHandle} />
           </View>
 
@@ -1633,6 +1614,7 @@ export default function StepUno() {
           ) : (
             <>
               <ScrollView
+                ref={sheetScrollRef}
                 style={styles.sheetScroll}
                 contentContainerStyle={[styles.sheetContent, { paddingBottom: 16 + bottomPad }]}
                 showsVerticalScrollIndicator={false}
@@ -1642,7 +1624,7 @@ export default function StepUno() {
                   <ScrollView
                     horizontal
                     showsHorizontalScrollIndicator={false}
-                    contentContainerStyle={{ gap: 8, paddingVertical: 8, paddingHorizontal: 2 }}
+                    contentContainerStyle={styles.vtChips}
                   >
                     {vehicleTypes.map((vt) => {
                       const active = selectedVehicleTypeId === vt.id;
@@ -1651,16 +1633,9 @@ export default function StepUno() {
                           key={vt.id}
                           onPress={() => handleVehicleTypeSelect(vt.id)}
                           activeOpacity={0.85}
-                          style={{
-                            paddingVertical: 8,
-                            paddingHorizontal: 14,
-                            borderRadius: 999,
-                            borderWidth: 1,
-                            borderColor: active ? "#0F172A" : "#E2E8F0",
-                            backgroundColor: active ? "#0F172A" : "#FFFFFF",
-                          }}
+                          style={[styles.vtChip, active && styles.vtChipActive]}
                         >
-                          <Text style={{ fontSize: 12, fontWeight: "700", color: active ? "#FFFFFF" : "#0F172A" }}>
+                          <Text style={[styles.vtChipText, active && styles.vtChipTextActive]}>
                             {vt.nombre}
                           </Text>
                         </TouchableOpacity>
@@ -1677,13 +1652,13 @@ export default function StepUno() {
                 />
 
                 {demandaInfo.aumento > 0 && (
-                  <View style={{ flexDirection: "row", alignItems: "center", gap: 10, backgroundColor: "#0F172A", borderRadius: 14, paddingVertical: 10, paddingHorizontal: 14, shadowColor: "#000", shadowOffset: { width: 0, height: 3 }, shadowOpacity: 0.25, shadowRadius: 8, elevation: 4 }}>
-                    <View style={{ width: 30, height: 30, borderRadius: 15, backgroundColor: "rgba(255,255,255,0.12)", justifyContent: "center", alignItems: "center" }}>
-                      <Ionicons name="flame" size={15} color="#FB923C" />
+                  <View style={styles.demanda}>
+                    <View style={styles.demandaIcon}>
+                      <Ionicons name="flame" size={15} color="#fa6205" />
                     </View>
                     <View style={{ flex: 1 }}>
-                      <Text style={{ fontSize: 12, fontWeight: "700", color: "#FFFFFF" }}>Zona muy concurrida</Text>
-                      <Text style={{ fontSize: 11, color: "rgba(255,255,255,0.7)", marginTop: 1 }}>Puede aplicar aumento en la tarifa</Text>
+                      <Text style={styles.demandaTitle}>Zona muy concurrida</Text>
+                      <Text style={styles.demandaSub}>Puede aplicar aumento en la tarifa</Text>
                     </View>
                   </View>
                 )}
@@ -1704,17 +1679,21 @@ export default function StepUno() {
                     <TouchableOpacity
                       onPress={openSearchForDestination}
                       activeOpacity={0.9}
-                      style={{ ...StyleSheet.absoluteFillObject, backgroundColor: "rgba(255,255,255,0.72)", borderRadius: 12, justifyContent: "center", alignItems: "center" }}
+                      style={styles.sinDestino}
                     >
-                      <View style={{ flexDirection: "row", alignItems: "center", gap: 6, backgroundColor: "rgba(255,255,255,0.92)", borderWidth: 1, borderColor: "#FDBA74", borderRadius: 999, paddingVertical: 8, paddingHorizontal: 14 }}>
-                        <Ionicons name="location-outline" size={14} color="#EA580C" />
-                        <Text style={{ fontSize: 12, fontWeight: "700", color: "#9A3412" }}>Selecciona a dónde vamos</Text>
+                      <View style={styles.sinDestinoPill}>
+                        <Ionicons name="search" size={15} color="#fa6205" />
+                        <Text style={styles.sinDestinoText}>Selecciona a dónde vamos</Text>
                       </View>
                     </TouchableOpacity>
                   )}
                 </View>
 
-                <NoteInput value={observations} onChangeText={setObservations} />
+                <NoteInput
+                  value={observations}
+                  onChangeText={setObservations}
+                  onFocus={() => setTimeout(() => sheetScrollRef.current?.scrollToEnd({ animated: true }), 250)}
+                />
 
                 <View style={styles.actionsRow}>
                   <PaymentSelector paymentMethod={paymentMethod} onPress={() => setPaymentModalVisible(true)} />
@@ -1728,20 +1707,6 @@ export default function StepUno() {
                     onPress={handleContinue}
                     activeOpacity={0.8}
                   >
-                    <Animated.View
-                      style={[
-                        styles.shimmer,
-                        { transform: [{ translateX: shimmerAnim }] },
-                      ]}
-                      pointerEvents="none"
-                    >
-                      <LinearGradient
-                        colors={["rgba(255,255,255,0)", "rgba(255,255,255,0.4)", "rgba(255,255,255,0)"]}
-                        start={{ x: 0, y: 0 }}
-                        end={{ x: 1, y: 0 }}
-                        style={styles.shimmerGradient}
-                      />
-                    </Animated.View>
                     {isCreatingRide ? (
                       <ActivityIndicator size="small" color="#FFF" />
                     ) : (
@@ -1783,7 +1748,7 @@ export default function StepUno() {
           animationOutTiming={300}
           useNativeDriverForBackdrop
         >
-          <View style={styles.paymentSheet}>
+          <View style={[styles.paymentSheet, { paddingBottom: bottomPad + 16 }]}>
             <View style={styles.paymentHandle} />
             <Text style={styles.paymentTitle}>Metodo de pago</Text>
             <View style={styles.paymentOptions}>
@@ -1793,13 +1758,13 @@ export default function StepUno() {
                   onPress={() => { handlePaymentMethodSelect("efectivo"); setPaymentModalVisible(false); }}
                 >
                   <View style={styles.paymentOptionIcon}>
-                    <MaterialCommunityIcons name="cash" size={20} color="#0F172A" />
+                    <MaterialCommunityIcons name="cash" size={20} color="#1C1C1E" />
                   </View>
                   <View style={{ flex: 1 }}>
                     <Text style={styles.paymentOptionText}>Efectivo</Text>
                     <Text style={styles.paymentOptionSub}>Paga al recibir</Text>
                   </View>
-                  {paymentMethod === "efectivo" && <Ionicons name="checkmark-circle" size={22} color="#FF5500" />}
+                  {paymentMethod === "efectivo" && <Ionicons name="checkmark-circle" size={22} color="#fa6205" />}
                 </TouchableOpacity>
               )}
               <TouchableOpacity
@@ -1807,26 +1772,26 @@ export default function StepUno() {
                 onPress={() => { handlePaymentMethodSelect("nequi"); setPaymentModalVisible(false); }}
               >
                 <View style={styles.paymentOptionIcon}>
-                  <MaterialCommunityIcons name="cellphone" size={20} color="#0F172A" />
+                  <MaterialCommunityIcons name="cellphone" size={20} color="#1C1C1E" />
                 </View>
                 <View style={{ flex: 1 }}>
                   <Text style={styles.paymentOptionText}>Nequi</Text>
                   <Text style={styles.paymentOptionSub}>Pago por Nequi</Text>
                 </View>
-                {paymentMethod === "nequi" && <Ionicons name="checkmark-circle" size={22} color="#FF5500" />}
+                {paymentMethod === "nequi" && <Ionicons name="checkmark-circle" size={22} color="#fa6205" />}
               </TouchableOpacity>
               <TouchableOpacity
                 style={[styles.paymentOption, paymentMethod === "bancolombia" && styles.paymentOptionActive]}
                 onPress={() => { handlePaymentMethodSelect("bancolombia"); setPaymentModalVisible(false); }}
               >
                 <View style={styles.paymentOptionIcon}>
-                  <MaterialCommunityIcons name="bank" size={20} color="#0F172A" />
+                  <MaterialCommunityIcons name="bank" size={20} color="#1C1C1E" />
                 </View>
                 <View style={{ flex: 1 }}>
                   <Text style={styles.paymentOptionText}>Bancolombia</Text>
                   <Text style={styles.paymentOptionSub}>Transferencia Bancolombia</Text>
                 </View>
-                {paymentMethod === "bancolombia" && <Ionicons name="checkmark-circle" size={22} color="#FF5500" />}
+                {paymentMethod === "bancolombia" && <Ionicons name="checkmark-circle" size={22} color="#fa6205" />}
               </TouchableOpacity>
             </View>
           </View>
@@ -1878,7 +1843,7 @@ export default function StepUno() {
         {isLoadingCurrentLocation && (
           <View style={[styles.globalLoadingContainer, { backgroundColor: "rgba(255,255,255,0.92)" }]}>
             <View style={styles.globalLoadingContent}>
-              <ActivityIndicator size="large" color="#FF5500" />
+              <ActivityIndicator size="large" color="#fa6205" />
               <Text style={styles.globalLoadingText}>Ubicandote...</Text>
               <Text style={styles.globalLoadingSub}>Estamos buscando tu ubicacion actual</Text>
             </View>
@@ -1907,7 +1872,7 @@ export default function StepUno() {
                         },
                       ]}
                     >
-                      <Ionicons name="car-sport" size={48} color="#FF5500" />
+                      <Ionicons name="car-sport" size={48} color="#fa6205" />
                     </Animated.View>
                   </View>
                   <Text style={styles.creatingRideTitle}>Se está creando tu arrendamiento</Text>
@@ -1934,38 +1899,39 @@ export default function StepUno() {
 }
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: "#F1F5F9" },
+  safe: { flex: 1, backgroundColor: "#FFF" },
   flex: { flex: 1 },
-  mapContainer: { flex: 1, backgroundColor: "#E2E8F0" },
+  mapContainer: { flex: 1, backgroundColor: "#E4E4E7" },
   map: { ...StyleSheet.absoluteFillObject },
 
   // Header flotante
   hdr: {
     position: "absolute",
-    top: Platform.OS === "android" ? (StatusBar.currentHeight || 0) + 12 : 52,
-    left: 12,
-    right: 12,
+    top: 10,
+    left: 14,
+    right: 14,
     zIndex: 1000,
-    gap: 8,
+    gap: 10,
   },
   hdrRow: {
     flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
+    alignItems: "flex-start",
+    gap: 10,
+  },
+  hdrBtns: {
+    gap: 8,
   },
   backBtn: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: "rgba(255,255,255,0.95)",
-    borderWidth: 1,
-    borderColor: "#E2E8F0",
+    width: 42,
+    height: 42,
+    borderRadius: 21,
+    backgroundColor: "#FFF",
     justifyContent: "center",
     alignItems: "center",
-    shadowColor: "#0F172A",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.08,
-    shadowRadius: 16,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.12,
+    shadowRadius: 14,
     elevation: 6,
   },
   brandPill: {
@@ -1977,8 +1943,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 6,
     borderWidth: 1,
-    borderColor: "#E2E8F0",
-    shadowColor: "#0F172A",
+    borderColor: "#E4E4E7",
+    shadowColor: "#1C1C1E",
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.08,
     shadowRadius: 16,
@@ -1991,9 +1957,8 @@ const styles = StyleSheet.create({
   },
   brandText: {
     fontSize: 19,
-    fontFamily: "MontserratBold",
-    fontWeight: "bold",
-    color: "#0F172A",
+    fontFamily: "Montserrat_700Bold",
+    color: "#1C1C1E",
     letterSpacing: -0.3,
   },
 
@@ -2001,21 +1966,22 @@ const styles = StyleSheet.create({
   fabLocate: {
     position: "absolute",
     right: 14,
-    top: 220,
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: "rgba(255,255,255,0.95)",
-    borderWidth: 1.5,
-    borderColor: "rgba(228,228,231,0.85)",
+    top: 118,
+    width: 46,
+    height: 46,
+    borderRadius: 23,
+    backgroundColor: "#FFF",
     justifyContent: "center",
     alignItems: "center",
-    shadowColor: "#0F172A",
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.08,
-    shadowRadius: 28,
-    elevation: 8,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.12,
+    shadowRadius: 14,
+    elevation: 6,
     zIndex: 900,
+  },
+  fabLocateConRuta: {
+    top: 164,
   },
 
   destMarkerBox: {
@@ -2029,49 +1995,54 @@ const styles = StyleSheet.create({
     width: 10,
     height: 4,
     borderRadius: 2,
-    backgroundColor: "rgba(255,85,0,0.35)",
+    backgroundColor: "rgba(250,98,5,0.35)",
     marginTop: 2,
   },
 
   // Pin overlay
   pinBanner: {
     position: "absolute",
-    top: Platform.OS === "android" ? 70 : 50,
-    left: 16,
-    right: 16,
+    top: 12,
+    left: 14,
+    right: 14,
     zIndex: 50,
     alignItems: "center",
   },
   pinBannerContent: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 10,
-    backgroundColor: "rgba(255,255,255,0.96)",
-    borderRadius: 16,
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    borderWidth: 1.5,
-    borderColor: "#FF5500",
-    shadowColor: "#FF5500",
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.35,
-    shadowRadius: 24,
-    elevation: 10,
-    maxWidth: "100%",
+    gap: 12,
+    backgroundColor: "#FFF",
+    borderRadius: 22,
+    paddingLeft: 8,
+    paddingRight: 16,
+    paddingVertical: 8,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.12,
+    shadowRadius: 14,
+    elevation: 6,
+    width: "100%",
+  },
+  pinBannerIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: "#FFF0E5",
+    alignItems: "center",
+    justifyContent: "center",
   },
   pinBannerTitle: {
-    fontSize: 12,
-    fontFamily: "MontserratBold",
-    fontWeight: "bold",
-    color: "#FF5500",
+    fontSize: 11,
+    fontFamily: "Montserrat_700Bold",
+    color: "#fa6205",
     textTransform: "uppercase",
-    letterSpacing: 0.8,
+    letterSpacing: 0.6,
   },
   pinBannerAddress: {
-    fontSize: 12,
-    fontFamily: "MontserratBold",
-    fontWeight: "bold",
-    color: "#0F172A",
+    fontSize: 14,
+    fontFamily: "Montserrat_700Bold",
+    color: "#1C1C1E",
     marginTop: 2,
   },
   pinCenterOverlay: {
@@ -2085,7 +2056,7 @@ const styles = StyleSheet.create({
     width: 46,
     height: 46,
     borderRadius: 23,
-    backgroundColor: "#FF5500",
+    backgroundColor: "#fa6205",
     borderTopLeftRadius: 23,
     borderTopRightRadius: 23,
     borderBottomLeftRadius: 4,
@@ -2094,7 +2065,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     borderWidth: 3,
     borderColor: "#FFFFFF",
-    shadowColor: "#FF5500",
+    shadowColor: "#fa6205",
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.35,
     shadowRadius: 20,
@@ -2107,7 +2078,7 @@ const styles = StyleSheet.create({
     width: 14,
     height: 5,
     borderRadius: 7,
-    backgroundColor: "rgba(15,23,42,0.25)",
+    backgroundColor: "rgba(28,28,30,0.25)",
     marginTop: 6,
   },
   pinBottomBar: {
@@ -2120,38 +2091,35 @@ const styles = StyleSheet.create({
     zIndex: 30,
   },
   pinCancelBtn: {
-    flex: 1,
+    height: 56,
+    paddingHorizontal: 22,
     backgroundColor: "#FFF",
-    borderRadius: 18,
-    paddingVertical: 14,
+    borderRadius: 999,
     alignItems: "center",
-    borderWidth: 1.5,
-    borderColor: "#E2E8F0",
-    shadowColor: "#0F172A",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.06,
-    shadowRadius: 16,
-    elevation: 4,
+    justifyContent: "center",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.12,
+    shadowRadius: 14,
+    elevation: 6,
   },
-  pinCancelText: { fontSize: 14, fontFamily: "MontserratBold",
-    fontWeight: "bold", color: "#0F172A" },
+  pinCancelText: { fontSize: 15, fontFamily: "Montserrat_700Bold", color: "#1C1C1E" },
   pinConfirmBtn: {
-    flex: 2,
-    backgroundColor: "#FF5500",
-    borderRadius: 18,
-    paddingVertical: 14,
+    flex: 1,
+    height: 56,
+    backgroundColor: "#fa6205",
+    borderRadius: 999,
     alignItems: "center",
     flexDirection: "row",
     justifyContent: "center",
     gap: 8,
-    shadowColor: "#FF5500",
+    shadowColor: "#fa6205",
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.35,
-    shadowRadius: 24,
+    shadowRadius: 16,
     elevation: 8,
   },
-  pinConfirmText: { fontSize: 14, fontFamily: "MontserratBold",
-    fontWeight: "bold", color: "#FFF" },
+  pinConfirmText: { fontSize: 15, fontFamily: "Montserrat_700Bold", color: "#FFF" },
 
   // Bottom sheet
   sheet: {
@@ -2159,40 +2127,51 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
     right: 0,
-    backgroundColor: "rgba(255,255,255,0.96)",
-    borderTopLeftRadius: 34,
-    borderTopRightRadius: 34,
-    borderWidth: 1,
-    borderColor: "#E2E8F0",
-    borderBottomWidth: 0,
-    shadowColor: "#0F172A",
-    shadowOffset: { width: 0, height: -10 },
-    shadowOpacity: 0.12,
-    shadowRadius: 40,
+    backgroundColor: "#FFF",
+    borderTopLeftRadius: 28,
+    borderTopRightRadius: 28,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: -6 },
+    shadowOpacity: 0.1,
+    shadowRadius: 20,
     elevation: 20,
     zIndex: 800,
   },
   dragHandleZone: {
     width: "100%",
-    paddingTop: 8,
-    paddingBottom: 10,
+    paddingTop: 10,
+    paddingBottom: 8,
     alignItems: "center",
-    gap: 6,
   },
   sheetTopBorder: {
     height: 2,
     borderRadius: 3,
     marginTop: -10,
-    backgroundColor: "#FF5500",
+    backgroundColor: "#fa6205",
   },
   dragHandle: {
-    width: 42,
+    width: 40,
     height: 5,
-    borderRadius: 3,
-    backgroundColor: "#FF5500",
+    borderRadius: 999,
+    backgroundColor: "#E4E4E7",
   },
   sheetScroll: { flex: 1 },
   sheetContent: { paddingHorizontal: 16, paddingBottom: 24 },
+  vtChips: { gap: 8, paddingVertical: 2, paddingHorizontal: 2 },
+  vtChip: { paddingVertical: 8, paddingHorizontal: 16, borderRadius: 999, backgroundColor: "#F4F4F5" },
+  vtChipActive: { backgroundColor: "#1C1C1E" },
+  vtChipText: { fontSize: 13, fontFamily: "Montserrat_700Bold", color: "#71717A" },
+  vtChipTextActive: { color: "#FFF" },
+  demanda: { flexDirection: "row", alignItems: "center", gap: 10, backgroundColor: "#1C1C1E", borderRadius: 18, paddingVertical: 10, paddingHorizontal: 12, marginTop: 12 },
+  demandaIcon: { width: 32, height: 32, borderRadius: 16, backgroundColor: "rgba(250,98,5,0.18)", justifyContent: "center", alignItems: "center" },
+  demandaTitle: { fontSize: 13, fontFamily: "Montserrat_700Bold", color: "#FFF" },
+  demandaSub: { fontSize: 11.5, fontFamily: "Montserrat_400Regular", color: "rgba(255,255,255,0.7)", marginTop: 1 },
+  sinDestino: { ...StyleSheet.absoluteFillObject, top: 14, backgroundColor: "rgba(255,255,255,0.75)", borderRadius: 22, justifyContent: "center", alignItems: "center" },
+  sinDestinoPill: {
+    flexDirection: "row", alignItems: "center", gap: 8, backgroundColor: "#FFF", borderRadius: 999, height: 44, paddingHorizontal: 18,
+    shadowColor: "#000", shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.1, shadowRadius: 10, elevation: 4,
+  },
+  sinDestinoText: { fontSize: 13.5, fontFamily: "Montserrat_700Bold", color: "#1C1C1E" },
   sheetHeader: {
     flexDirection: "row",
     alignItems: "center",
@@ -2203,13 +2182,12 @@ const styles = StyleSheet.create({
     width: 4,
     height: 18,
     borderRadius: 4,
-    backgroundColor: "#FF5500",
+    backgroundColor: "#fa6205",
   },
   sheetTitle: {
     fontSize: 15,
-    fontFamily: "MontserratBold",
-    fontWeight: "bold",
-    color: "#0F172A",
+    fontFamily: "Montserrat_700Bold",
+    color: "#1C1C1E",
   },
   sectionHeader: {
     flexDirection: "row",
@@ -2219,38 +2197,31 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     fontSize: 15,
-    fontFamily: "MontserratBold",
-    fontWeight: "bold",
-    color: "#0F172A",
+    fontFamily: "Montserrat_700Bold",
+    color: "#1C1C1E",
   },
 
   // Acciones
   actionsRow: {
-    flexDirection: "row",
-    alignItems: "center",
     gap: 10,
-    marginTop: 16,
+    marginTop: 12,
   },
   goBtn: {
-    flex: 1,
-    height: 48,
-    borderRadius: 18,
-    backgroundColor: "#FF5500",
+    height: 56,
+    borderRadius: 999,
+    backgroundColor: "#fa6205",
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
     gap: 8,
-    shadowColor: "#FF5500",
+    shadowColor: "#fa6205",
     shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.4,
-    shadowRadius: 24,
+    shadowOpacity: 0.35,
+    shadowRadius: 16,
     elevation: 8,
-    overflow: "hidden",
   },
   goBtnDisabled: {
-    backgroundColor: "#CBD5E1",
-    shadowOpacity: 0,
-    elevation: 0,
+    opacity: 0.45,
   },
   shimmer: {
     ...StyleSheet.absoluteFillObject,
@@ -2262,81 +2233,72 @@ const styles = StyleSheet.create({
     height: "100%",
   },
   goBtnText: {
-    fontSize: 14,
-    fontFamily: "MontserratBold",
-    fontWeight: "bold",
+    fontSize: 16,
+    fontFamily: "Montserrat_700Bold",
     color: "#FFF",
-    letterSpacing: 0.3,
   },
 
   // Payment modal
   paymentModal: { justifyContent: "flex-end", margin: 0 },
   paymentSheet: {
     backgroundColor: "#FFFFFF",
-    borderTopLeftRadius: 34,
-    borderTopRightRadius: 34,
-    paddingHorizontal: 24,
-    paddingTop: 12,
-    paddingBottom: 40,
+    borderTopLeftRadius: 28,
+    borderTopRightRadius: 28,
+    paddingHorizontal: 20,
+    paddingTop: 10,
+    paddingBottom: 32,
   },
   paymentHandle: {
-    width: 48,
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: "#E2E8F0",
+    width: 40,
+    height: 5,
+    borderRadius: 999,
+    backgroundColor: "#E4E4E7",
     alignSelf: "center",
-    marginBottom: 24,
+    marginBottom: 16,
   },
   paymentTitle: {
-    fontSize: 24,
-    fontFamily: "MontserratBold",
-    fontWeight: "bold",
-    color: "#0F172A",
-    marginBottom: 20,
+    fontSize: 19,
+    fontFamily: "Montserrat_800ExtraBold",
+    color: "#1C1C1E",
+    marginBottom: 14,
   },
-  paymentOptions: { gap: 12 },
+  paymentOptions: { gap: 8 },
   paymentOption: {
     flexDirection: "row",
     alignItems: "center",
-    padding: 16,
-    backgroundColor: "#F8FAFC",
-    borderRadius: 18,
-    borderWidth: 1.5,
-    borderColor: "transparent",
+    paddingVertical: 12,
+    paddingHorizontal: 12,
+    backgroundColor: "#F4F4F5",
+    borderRadius: 20,
     gap: 12,
   },
   paymentOptionActive: {
-    borderColor: "rgba(255,85,0,0.4)",
-    backgroundColor: "rgba(255,85,0,0.04)",
+    backgroundColor: "#FFF0E5",
   },
   paymentOptionIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 42,
+    height: 42,
+    borderRadius: 21,
     backgroundColor: "#FFFFFF",
-    borderWidth: 1,
-    borderColor: "#E2E8F0",
     justifyContent: "center",
     alignItems: "center",
   },
   paymentOptionText: {
     fontSize: 15,
-    fontFamily: "MontserratBold",
-    fontWeight: "bold",
-    color: "#0F172A",
+    fontFamily: "Montserrat_700Bold",
+    color: "#1C1C1E",
   },
   paymentOptionSub: {
     fontSize: 12,
-    fontFamily: "MontserratBold",
-    fontWeight: "bold",
-    color: "#64748B",
+    fontFamily: "Montserrat_400Regular",
+    color: "#71717A",
     marginTop: 2,
   },
 
   // Loading
   globalLoadingContainer: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: "rgba(15,23,42,0.55)",
+    backgroundColor: "rgba(28,28,30,0.55)",
     justifyContent: "center",
     alignItems: "center",
     zIndex: 99999,
@@ -2346,7 +2308,7 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     padding: 24,
     alignItems: "center",
-    shadowColor: "#0F172A",
+    shadowColor: "#1C1C1E",
     shadowOffset: { width: 0, height: 20 },
     shadowOpacity: 0.2,
     shadowRadius: 60,
@@ -2355,15 +2317,14 @@ const styles = StyleSheet.create({
   globalLoadingText: {
     marginTop: 12,
     fontSize: 14,
-    fontFamily: "MontserratBold",
-    fontWeight: "bold",
-    color: "#0F172A",
+    fontFamily: "Montserrat_700Bold",
+    color: "#1C1C1E",
   },
   globalLoadingSub: {
     marginTop: 4,
     fontSize: 12,
-    fontFamily: "Montserrat",
-    color: "#64748B",
+    fontFamily: "Montserrat_400Regular",
+    color: "#71717A",
     textAlign: "center",
   },
   creatingRideContent: {
@@ -2372,7 +2333,7 @@ const styles = StyleSheet.create({
     paddingVertical: 36,
     paddingHorizontal: 32,
     alignItems: "center",
-    shadowColor: "#0F172A",
+    shadowColor: "#1C1C1E",
     shadowOffset: { width: 0, height: 24 },
     shadowOpacity: 0.22,
     shadowRadius: 70,
@@ -2385,7 +2346,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     borderBottomWidth: 3,
-    borderBottomColor: "#E2E8F0",
+    borderBottomColor: "#E4E4E7",
     marginBottom: 20,
   },
   creatingRideVehicle: {
@@ -2393,16 +2354,15 @@ const styles = StyleSheet.create({
   },
   creatingRideTitle: {
     fontSize: 17,
-    fontFamily: "MontserratBold",
-    fontWeight: "bold",
-    color: "#0F172A",
+    fontFamily: "Montserrat_700Bold",
+    color: "#1C1C1E",
     textAlign: "center",
   },
   creatingRideSub: {
     marginTop: 6,
     fontSize: 13,
-    fontFamily: "Montserrat",
-    color: "#64748B",
+    fontFamily: "Montserrat_400Regular",
+    color: "#71717A",
     textAlign: "center",
   },
   creatingRideSuccessIcon: {
@@ -2410,20 +2370,20 @@ const styles = StyleSheet.create({
   },
   goToRideBtn: {
     marginTop: 20,
-    backgroundColor: "#FF5500",
+    backgroundColor: "#fa6205",
     paddingHorizontal: 28,
-    paddingVertical: 14,
-    borderRadius: 14,
-    shadowColor: "#FF5500",
+    height: 54,
+    justifyContent: "center",
+    borderRadius: 999,
+    shadowColor: "#fa6205",
     shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.3,
+    shadowOpacity: 0.35,
     shadowRadius: 16,
-    elevation: 6,
+    elevation: 8,
   },
   goToRideBtnText: {
     fontSize: 15,
-    fontFamily: "MontserratBold",
-    fontWeight: "bold",
+    fontFamily: "Montserrat_700Bold",
     color: "#FFFFFF",
   },
 });

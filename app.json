@@ -8,9 +8,9 @@
     "scheme": "carby",
     "userInterfaceStyle": "light",
     "splash": {
-      "image": "./assets/images/nuevo-icono.jpeg",
+      "image": "./assets/images/splash-carby.png",
       "resizeMode": "contain",
-      "backgroundColor": "#F2F2F7"
+      "backgroundColor": "#fa6205"
     },
     "updates": {
       "checkAutomatically": "ON_LOAD",

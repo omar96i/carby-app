@@ -24,11 +24,23 @@ import { useFonts } from "expo-font";
 import { useNavigation, useFocusEffect, useRoute } from "@react-navigation/native";
 
 import { BASE_URL } from "../../constants/url";
-import ScreenHeader from "../../components/ScreenHeader";
 import FavoriteHeart from "../../components/FavoriteHeart";
+import LogoComercio from "../../components/LogoComercio";
+import FocusAwareStatusBar from "../../components/FocusAwareStatusBar";
 
 const { width } = Dimensions.get("window");
-const ITEM_IMG_SIZE = 120;
+const CARD_PRODUCTO = 150;
+const CARD_SERVICIO = 200;
+
+const C = {
+  brand: "#fa6205",
+  ink: "#1C1C1E",
+  ink2: "#2C2C2E",
+  muted: "#71717A",
+  bg: "#F4F4F5",
+  edge: "#E4E4E7",
+  surface: "#FFFFFF",
+};
 
 export default function CategoriaVertical() {
   const route = useRoute();
@@ -178,7 +190,7 @@ export default function CategoriaVertical() {
     return (
       <TouchableOpacity
         key={cat.id}
-        style={[styles.catItem, seleccionada && styles.catItemSelected]}
+        style={styles.catItem}
         activeOpacity={0.85}
         onPress={() => onSelectCategoria(cat)}
       >
@@ -186,10 +198,10 @@ export default function CategoriaVertical() {
           {cat.icono ? (
             <Image source={{ uri: getImageUrl(cat.icono) }} style={styles.catIcon} />
           ) : (
-            <Ionicons name={esServicios ? "cut-outline" : "restaurant-outline"} size={28} color="#FF5A00" />
+            <Ionicons name={esServicios ? "cut-outline" : "restaurant-outline"} size={26} color={C.brand} />
           )}
         </View>
-        <Text style={[styles.catName, seleccionada && styles.catNameSelected]}>
+        <Text style={[styles.catName, seleccionada && styles.catNameSelected]} numberOfLines={2}>
           {cat.nombre}
         </Text>
       </TouchableOpacity>
@@ -203,33 +215,47 @@ export default function CategoriaVertical() {
     const precioFinal = precioOriginal - descuento;
 
     const esServicio = esServicios;
+    const abrir = () => (esServicio ? navigateToService(item, comercio) : navigateToShop(comercio));
 
     return (
       <TouchableOpacity
         key={item.id}
-        style={styles.itemCard}
+        style={[styles.itemCard, { width: esServicio ? CARD_SERVICIO : CARD_PRODUCTO }]}
         activeOpacity={0.9}
-        onPress={() =>
-          esServicio ? navigateToService(item, comercio) : navigateToShop(comercio)
-        }
+        onPress={abrir}
       >
-        <View style={styles.itemImgWrap}>
+        <View style={[styles.itemImgWrap, { height: esServicio ? 128 : 136 }]}>
           {imageUrl ? (
             <Image source={{ uri: imageUrl }} style={styles.itemImg} />
           ) : (
             <View style={styles.itemPlaceholder}>
-              <Ionicons name={esServicio ? "cut-outline" : "image-outline"} size={28} color="#CCC" />
+              <Ionicons name={esServicio ? "cut-outline" : "image-outline"} size={28} color="#A1A1AA" />
             </View>
           )}
           <View style={styles.heartPos}>
-            <FavoriteHeart kind={esServicio ? "servicio" : "producto"} productId={item.id} size={16} />
+            <FavoriteHeart kind={esServicio ? "servicio" : "producto"} productId={item.id} size={15} style={styles.heartBtn} />
           </View>
+          {esServicio && !!Number(item.tiempo) && (
+            <View style={styles.duracion}>
+              <Ionicons name="time-outline" size={12} color="#FFFFFF" />
+              <Text style={styles.duracionTexto}>{Number(item.tiempo)} min</Text>
+            </View>
+          )}
         </View>
-        <Text style={styles.itemName} numberOfLines={1}>{item.nombre}</Text>
-        <Text style={styles.itemPrice}>{formatPrice(precioFinal)}</Text>
-        {descuento > 0 && (
-          <Text style={styles.itemOriginalPrice}>{formatPrice(precioOriginal)}</Text>
-        )}
+        <Text style={styles.itemName} numberOfLines={2}>{item.nombre}</Text>
+        <View style={styles.itemPie}>
+          <View style={styles.itemPrecios}>
+            <Text style={styles.itemPrice} numberOfLines={1}>{formatPrice(precioFinal)}</Text>
+            {descuento > 0 && (
+              <Text style={styles.itemOriginalPrice} numberOfLines={1}>{formatPrice(precioOriginal)}</Text>
+            )}
+          </View>
+          {esServicio && (
+            <TouchableOpacity style={styles.reservarBtn} activeOpacity={0.85} onPress={abrir}>
+              <Text style={styles.reservarTexto}>Reservar</Text>
+            </TouchableOpacity>
+          )}
+        </View>
       </TouchableOpacity>
     );
   };
@@ -241,6 +267,7 @@ export default function CategoriaVertical() {
     return (
       <View key={comercio.id} style={styles.comercioSection}>
         <View style={styles.comercioHeader}>
+          <LogoComercio comercio={comercio} comercioId={comercio.id} size={42} />
           <Text style={styles.comercioName} numberOfLines={1}>{comercio.establecimiento_nombre}</Text>
           <TouchableOpacity
             style={styles.verMasBtn}
@@ -248,23 +275,21 @@ export default function CategoriaVertical() {
             onPress={() => navigateToShop(comercio)}
           >
             <Text style={styles.verMasText}>Ver más</Text>
-            <Ionicons name="chevron-forward" size={16} color="#FF5A00" />
+            <Ionicons name="chevron-forward" size={14} color={C.brand} />
           </TouchableOpacity>
         </View>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-          <View style={styles.itemsRow}>
-            {items.map((item) => renderItem(item, comercio))}
-          </View>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.itemsRow}>
+          {items.map((item) => renderItem(item, comercio))}
         </ScrollView>
       </View>
     );
   };
 
-  if (!fontsLoaded || loading) {
+  if (!fontsLoaded) {
     return (
       <SafeAreaView style={styles.safeContainer}>
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#FF5A00" />
+          <ActivityIndicator size="large" color={C.brand} />
         </View>
       </SafeAreaView>
     );
@@ -272,29 +297,61 @@ export default function CategoriaVertical() {
 
   return (
     <SafeAreaView style={styles.safeContainer} edges={['top', 'left', 'right']}>
-      <ScreenHeader title={esServicios ? "Servicios" : "Restaurantes"} showBackButton />
+      <FocusAwareStatusBar barStyle="dark-content" />
+      <ScrollView
+        style={styles.scroll}
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ paddingBottom: Math.max(insets.bottom, 12) + 24 }}
+      >
+        <View style={styles.header}>
+          <View style={styles.headerFila}>
+            <TouchableOpacity
+              style={styles.volverBtn}
+              onPress={() => navigation.goBack()}
+              activeOpacity={0.8}
+              accessibilityLabel="Volver"
+            >
+              <Ionicons name="arrow-back" size={20} color="#FFFFFF" />
+            </TouchableOpacity>
+            {!!location && (
+              <View style={styles.cercaPill}>
+                <Ionicons name="location" size={13} color={C.brand} />
+                <Text style={styles.cercaTexto}>Cerca de tu ubicación</Text>
+              </View>
+            )}
+          </View>
+          <Text style={styles.titulo}>{esServicios ? "Servicios" : "Restaurantes"}</Text>
+          {esServicios && <Text style={styles.subtitulo}>Citas y reservas</Text>}
 
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: Math.max(insets.bottom, 12) }}>
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          style={styles.categoriasScroll}
-          contentContainerStyle={styles.categoriasScrollContent}
-        >
-          {categorias.map(renderCategoriaItem)}
-        </ScrollView>
+          {categorias.length > 0 && (
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              style={styles.categoriasScroll}
+              contentContainerStyle={styles.categoriasScrollContent}
+            >
+              {categorias.map(renderCategoriaItem)}
+            </ScrollView>
+          )}
+        </View>
 
         <View style={styles.content}>
-          {refreshing ? (
+          {loading ? (
+            <View style={styles.refreshingWrap}>
+              <ActivityIndicator size="large" color={C.brand} />
+            </View>
+          ) : refreshing ? (
             <View style={styles.refreshingWrap}>
               <Animated.View style={{ transform: [{ translateY: bounceAnim }] }}>
-                <Ionicons name="cube" size={42} color="#FF5A00" />
+                <Ionicons name="cube" size={42} color={C.brand} />
               </Animated.View>
               <Text style={styles.refreshingText}>Buscando...</Text>
             </View>
           ) : comercios.length === 0 ? (
             <View style={styles.emptyWrap}>
-              <Ionicons name={esServicios ? "cut-outline" : "restaurant-outline"} size={48} color="#CCC" />
+              <View style={styles.emptyIcon}>
+                <Ionicons name={esServicios ? "cut-outline" : "restaurant-outline"} size={34} color={C.brand} />
+              </View>
               <Text style={styles.emptyText}>
                 No hay {esServicios ? "servicios" : "negocios"} disponibles
               </Text>
@@ -313,106 +370,182 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "#FFFFFF",
   },
+  scroll: {
+    flex: 1,
+    backgroundColor: C.bg,
+  },
   loadingContainer: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
   },
+  header: {
+    backgroundColor: C.ink,
+    paddingHorizontal: 20,
+    paddingTop: 16,
+    paddingBottom: 22,
+    borderBottomLeftRadius: 36,
+    borderBottomRightRadius: 36,
+  },
+  headerFila: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+  },
+  volverBtn: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: C.ink2,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  cercaPill: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    height: 32,
+    paddingHorizontal: 12,
+    borderRadius: 16,
+    backgroundColor: C.ink2,
+  },
+  cercaTexto: {
+    fontSize: 11.5,
+    fontFamily: "Montserrat_700Bold",
+    color: "rgba(255,255,255,0.8)",
+  },
+  titulo: {
+    fontSize: 30,
+    lineHeight: 36,
+    fontFamily: "Montserrat_800ExtraBold",
+    color: "#FFFFFF",
+    letterSpacing: -0.6,
+    marginTop: 18,
+  },
+  subtitulo: {
+    fontSize: 13,
+    fontFamily: "Montserrat_600SemiBold",
+    color: "rgba(255,255,255,0.6)",
+    marginTop: 2,
+  },
   categoriasScroll: {
     flexGrow: 0,
-    paddingTop: 16,
-    paddingBottom: 8,
+    marginTop: 18,
+    marginHorizontal: -20,
   },
   categoriasScrollContent: {
-    paddingHorizontal: 16,
+    paddingHorizontal: 20,
     gap: 10,
   },
   catItem: {
     alignItems: "center",
-    width: 80,
-  },
-  catItemSelected: {
-    opacity: 1,
+    width: 74,
   },
   catIconWrap: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
-    backgroundColor: "#FFF5EC",
+    width: 66,
+    height: 66,
+    borderRadius: 22,
+    backgroundColor: C.ink2,
     justifyContent: "center",
     alignItems: "center",
-    marginBottom: 6,
-    borderWidth: 1.5,
+    marginBottom: 7,
+    borderWidth: 2,
     borderColor: "transparent",
   },
   catIconWrapSelected: {
-    backgroundColor: "#FFEDE5",
-    borderColor: "#FF5A00",
+    borderColor: C.brand,
   },
   catIcon: {
-    width: 38,
-    height: 38,
+    width: 44,
+    height: 44,
     resizeMode: "contain",
   },
   catName: {
-    fontSize: 12,
-    fontFamily: "Montserrat_600SemiBold",
-    color: "#666",
+    fontSize: 11.5,
+    lineHeight: 14,
+    fontFamily: "Montserrat_700Bold",
+    color: "#FFFFFF",
     textAlign: "center",
   },
   catNameSelected: {
-    color: "#FF5A00",
-    fontFamily: "Montserrat_700Bold",
+    color: C.brand,
   },
   content: {
-    paddingHorizontal: 16,
-    paddingBottom: 30,
+    paddingTop: 4,
+    paddingBottom: 8,
   },
   comercioSection: {
-    marginBottom: 24,
+    marginTop: 22,
   },
   comercioHeader: {
     flexDirection: "row",
-    justifyContent: "space-between",
     alignItems: "center",
+    gap: 10,
+    paddingHorizontal: 16,
     marginBottom: 12,
   },
   comercioName: {
     flex: 1,
-    fontSize: 16,
-    fontFamily: "Montserrat_700Bold",
-    color: "#1C1C1E",
+    fontSize: 17,
+    fontFamily: "Montserrat_800ExtraBold",
+    color: C.ink,
   },
   verMasBtn: {
     flexDirection: "row",
     alignItems: "center",
     gap: 2,
+    height: 32,
+    paddingHorizontal: 12,
+    borderRadius: 16,
+    backgroundColor: C.surface,
   },
   verMasText: {
-    fontSize: 13,
-    fontFamily: "Montserrat_600SemiBold",
-    color: "#FF5A00",
+    fontSize: 12,
+    fontFamily: "Montserrat_700Bold",
+    color: C.brand,
   },
   itemsRow: {
     flexDirection: "row",
-    gap: 10,
+    gap: 12,
+    paddingHorizontal: 16,
   },
   itemCard: {
-    width: ITEM_IMG_SIZE,
+    backgroundColor: C.surface,
+    borderRadius: 22,
+    padding: 6,
   },
   itemImgWrap: {
-    width: ITEM_IMG_SIZE,
-    height: ITEM_IMG_SIZE,
-    borderRadius: 16,
+    borderRadius: 18,
     overflow: "hidden",
-    backgroundColor: "#F2F2F2",
-    marginBottom: 8,
+    backgroundColor: C.edge,
   },
   heartPos: {
     position: "absolute",
-    top: 6,
-    right: 6,
+    top: 8,
+    right: 8,
     zIndex: 2,
+  },
+  heartBtn: {
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+  },
+  duracion: {
+    position: "absolute",
+    left: 8,
+    bottom: 8,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    backgroundColor: "rgba(28,28,30,0.85)",
+    borderRadius: 999,
+    paddingHorizontal: 9,
+    paddingVertical: 4,
+  },
+  duracionTexto: {
+    fontSize: 11,
+    fontFamily: "Montserrat_700Bold",
+    color: "#FFFFFF",
   },
   itemImg: {
     width: "100%",
@@ -426,30 +559,66 @@ const styles = StyleSheet.create({
   },
   itemName: {
     fontSize: 13,
-    fontFamily: "Montserrat_600SemiBold",
-    color: "#1C1C1E",
-    marginBottom: 2,
+    lineHeight: 17,
+    minHeight: 34,
+    fontFamily: "Montserrat_700Bold",
+    color: C.ink,
+    marginTop: 9,
+    marginHorizontal: 6,
+  },
+  itemPie: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 6,
+    marginTop: 6,
+    marginHorizontal: 6,
+    marginBottom: 4,
+  },
+  itemPrecios: {
+    flexShrink: 1,
   },
   itemPrice: {
-    fontSize: 14,
+    fontSize: 15,
     fontFamily: "Montserrat_800ExtraBold",
-    color: "#FF5A00",
+    color: C.brand,
   },
   itemOriginalPrice: {
     fontSize: 11,
     fontFamily: "Montserrat_400Regular",
-    color: "#BBB",
+    color: "#A1A1AA",
     textDecorationLine: "line-through",
+  },
+  reservarBtn: {
+    height: 32,
+    paddingHorizontal: 12,
+    borderRadius: 16,
+    backgroundColor: C.ink,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  reservarTexto: {
+    fontSize: 11.5,
+    fontFamily: "Montserrat_800ExtraBold",
+    color: "#FFFFFF",
   },
   emptyWrap: {
     alignItems: "center",
     paddingVertical: 60,
     gap: 12,
   },
+  emptyIcon: {
+    width: 72,
+    height: 72,
+    borderRadius: 36,
+    backgroundColor: "#FFF0E5",
+    alignItems: "center",
+    justifyContent: "center",
+  },
   emptyText: {
     fontSize: 14,
     fontFamily: "Montserrat_600SemiBold",
-    color: "#999",
+    color: C.muted,
   },
   refreshingWrap: {
     alignItems: "center",
@@ -459,6 +628,6 @@ const styles = StyleSheet.create({
   refreshingText: {
     fontSize: 14,
     fontFamily: "Montserrat_600SemiBold",
-    color: "#999",
+    color: C.muted,
   },
 });

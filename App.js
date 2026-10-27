@@ -11,12 +11,14 @@ import { NotificationProvider } from "./context/NotificationContext";
 import { AlertProvider } from "./context/AlertContext";
 import { configureUrl } from "./constants/url";
 import AlertaModal from "./components/ErrorModal";
+import SplashAnimado from "./components/SplashAnimado";
 
 
 export default function App() {
   const isLoadingComplete = useLoadedAssets();
   const colorScheme = useColorScheme();
   const [alertVisible, setAlertVisible] = useState(false);
+  const [splashDone, setSplashDone] = useState(false);
   const [alertData, setAlertData] = useState({ message: "", type: "info", onPrimary: null, primaryLabel: "" });
 
   const showAlert = (message, type = "info", onPrimary = null, primaryLabel = null) => {
@@ -82,6 +84,7 @@ export default function App() {
           onPrimary={alertData.onPrimary}
           primaryLabel={alertData.primaryLabel}
         />
+        {!splashDone && <SplashAnimado onFinish={() => setSplashDone(true)} />}
       </SafeAreaProvider>
     );
   }

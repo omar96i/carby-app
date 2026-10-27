@@ -23,10 +23,12 @@ import {
 import { useFonts } from "expo-font";
 import { useNavigation, useRoute, useFocusEffect } from "@react-navigation/native";
 import { BASE_URL } from "../../constants/url";
+import LogoComercio from "../../components/LogoComercio";
 import AlertaModal from "../../components/ErrorModal";
 import { getCartBusiness, clearCart } from "../../utils/cartBusiness";
 import FavoriteHeart from "../../components/FavoriteHeart";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { LinearGradient } from "expo-linear-gradient";
 
 const { width, height } = Dimensions.get("window");
 const IMG_HEIGHT = height * 0.4;
@@ -186,10 +188,9 @@ const Producto = () => {
   return (
     <View style={styles.container}>
       <StatusBar barStyle="dark-content" translucent backgroundColor="transparent" />
-      
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{paddingBottom: 100 + insets.bottom}}>
-        
-        {/* Imagen Header Inmersiva */}
+
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 110 + insets.bottom }}>
+
         <View style={styles.imageContainer}>
           <Image
             source={{
@@ -199,140 +200,125 @@ const Producto = () => {
             resizeMode="cover"
             defaultSource={require("../../assets/images/imagen.jpg")}
           />
-          {/* Overlay gradiente para el botón de atrás */}
+          <LinearGradient colors={["rgba(255,255,255,0)", C.surface]} style={styles.imageFade} pointerEvents="none" />
           <View style={[styles.headerOverlay, { top: insets.top + 8 }]}>
-             <TouchableOpacity style={styles.backButtonCircle} onPress={() => navigation.goBack()}>
-                <Ionicons name="arrow-back" size={24} color="#FFF" />
+             <TouchableOpacity style={styles.backButtonCircle} onPress={() => navigation.goBack()} activeOpacity={0.8}>
+                <Ionicons name="arrow-back" size={22} color={C.ink} />
              </TouchableOpacity>
+             {product?.id && <FavoriteHeart productId={product.id} size={20} style={styles.backButtonCircle} />}
           </View>
         </View>
 
-        {/* Contenido Principal (Sheet Effect) */}
         <View style={styles.contentSheet}>
-            
-            {/* Header del Producto */}
-            <View style={styles.mainInfoContainer}>
-                <View style={{flex: 1}}>
-                    <View style={styles.nameRow}>
-                        <Text style={[styles.productName, { flex: 1 }]}>{product?.nombre || "Producto"}</Text>
-                        {product?.id && <FavoriteHeart productId={product.id} size={20} />}
-                    </View>
-                    <Text style={styles.description}>
-                        {product?.descripcion || "Sin descripción disponible"}
-                    </Text>
-                </View>
-                <View style={styles.priceTag}>
-                    {descuento > 0 && (
-                      <Text style={styles.priceTagOriginal}>$ {precioOriginal.toLocaleString()}</Text>
-                    )}
-                    <Text style={styles.priceTagText}>$ {pricePerUnit.toLocaleString()}</Text>
-                    {descuento > 0 && (
-                      <View style={styles.discountBadge}>
-                        <Text style={styles.discountBadgeText}>-{pctDescuento}%</Text>
-                      </View>
-                    )}
-                </View>
+            {(!!establishmentName || descuento > 0) && (
+              <View style={styles.tagsRow}>
+                {!!establishmentName && (
+                  <View style={styles.tag}>
+                    <LogoComercio comercioId={product?.user_id} size={18} iconName="storefront-outline" />
+                    <Text style={styles.tagText} numberOfLines={1}>{establishmentName}</Text>
+                  </View>
+                )}
+                {descuento > 0 && (
+                  <View style={styles.tag}>
+                    <Text style={styles.tagText}>-{pctDescuento}%</Text>
+                  </View>
+                )}
+              </View>
+            )}
+
+            <Text style={styles.productName}>{product?.nombre || "Producto"}</Text>
+            <View style={styles.priceRow}>
+                <Text style={styles.priceText}>$ {pricePerUnit.toLocaleString()}</Text>
+                {descuento > 0 && (
+                  <Text style={styles.priceOriginal}>$ {precioOriginal.toLocaleString()}</Text>
+                )}
             </View>
+            <Text style={styles.description}>
+                {product?.descripcion || "Sin descripción disponible"}
+            </Text>
 
-            {/* Separador */}
-            <View style={styles.divider} />
-
-            {/* Selector de Cantidad Principal */}
-             <View style={styles.mainQuantityRow}>
-                <Text style={styles.sectionTitle}>Cantidad</Text>
-                <View style={styles.quantityPill}>
-                    <TouchableOpacity onPress={decreaseQuantity} style={styles.qtyBtn}>
-                        <Ionicons name="remove" size={22} color={quantity > 1 ? "#1C1C1E" : "#999"} />
-                    </TouchableOpacity>
-                    <Text style={styles.qtyText}>{quantity}</Text>
-                    <TouchableOpacity onPress={increaseQuantity} style={styles.qtyBtn}>
-                        <Ionicons name="add" size={22} color="#1C1C1E" />
-                    </TouchableOpacity>
-                </View>
-            </View>
-
-             {/* Adicionales Section */}
              {adicionales.length > 0 && (
                 <View style={styles.adicionalesSection}>
-                    <Text style={styles.sectionTitle}>Adicionales / Extras</Text>
-                    <Text style={styles.sectionSubtitle}>Selecciona tus acompañamientos</Text>
-                    
+                    <View style={styles.sectionHeader}>
+                        <Text style={styles.sectionTitle}>Adicionales / Extras</Text>
+                        <Text style={styles.sectionSubtitle}>Selecciona tus acompañamientos</Text>
+                    </View>
+                    <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.adicionalesRow}>
                     {adicionales.map((adicional) => {
                         const isSelected = selectedAdicionales.find((item) => item.id === adicional.id);
                         return (
-                            <TouchableOpacity 
-                                key={adicional.id} 
+                            <TouchableOpacity
+                                key={adicional.id}
                                 style={[styles.adicionalCard, isSelected && styles.adicionalCardSelected]}
                                 onPress={() => toggleAdicional(adicional)}
-                                activeOpacity={0.8}
+                                activeOpacity={0.85}
                             >
-                                <View style={styles.adicionalLeft}>
-                                     {/* Checkbox Circular */}
-                                    <View style={[styles.checkbox, isSelected && styles.checkboxSelected]}>
-                                        {isSelected && <Ionicons name="checkmark" size={14} color="#FFF" />}
+                                {adicional.file ? (
+                                    <Image source={{ uri: getImageUrl(adicional.file) }} style={styles.adicionalImage} resizeMode="contain" />
+                                ) : (
+                                    <View style={[styles.adicionalImage, styles.adicionalImageEmpty]}>
+                                        <Ionicons name="fast-food-outline" size={26} color={C.brand} />
                                     </View>
-
-                                    {adicional.file ? (
-                                        <Image source={{ uri: getImageUrl(adicional.file) }} style={styles.adicionalImage} />
-                                    ) : null}
-
-                                    <View style={{marginLeft: 10, flex:1}}>
-                                        <Text style={styles.adicionalName}>{adicional.nombre}</Text>
-                                        <Text style={styles.adicionalPrice}>+$ {parseFloat(adicional.precio).toLocaleString()}</Text>
-                                    </View>
+                                )}
+                                <View style={[styles.checkbox, isSelected && styles.checkboxSelected]}>
+                                    <Ionicons name={isSelected ? "checkmark" : "add"} size={16} color={isSelected ? C.surface : C.brand} />
                                 </View>
+                                <Text style={styles.adicionalName} numberOfLines={2}>{adicional.nombre}</Text>
+                                {!!adicional.descripcion && (
+                                    <Text style={styles.adicionalDesc} numberOfLines={3}>{adicional.descripcion}</Text>
+                                )}
+                                <Text style={styles.adicionalPrice}>+$ {parseFloat(adicional.precio).toLocaleString()}</Text>
 
                                 {/* Controles de cantidad solo si está seleccionado */}
                                 {isSelected && (
                                     <View style={styles.adicionalQtyWrapper}>
-                                        <TouchableOpacity 
+                                        <TouchableOpacity
                                             onPress={(e) => { e.stopPropagation(); updateAdicionalQuantity(adicional.id, -1); }}
                                             style={styles.miniQtyBtn}
                                         >
-                                            <Ionicons name="remove" size={16} color="#1C1C1E" />
+                                            <Ionicons name="remove" size={16} color={C.surface} />
                                         </TouchableOpacity>
                                         <Text style={styles.miniQtyText}>{isSelected.quantity}</Text>
-                                        <TouchableOpacity 
+                                        <TouchableOpacity
                                             onPress={(e) => { e.stopPropagation(); updateAdicionalQuantity(adicional.id, 1); }}
                                             style={styles.miniQtyBtn}
                                         >
-                                            <Ionicons name="add" size={16} color="#1C1C1E" />
+                                            <Ionicons name="add" size={16} color={C.surface} />
                                         </TouchableOpacity>
                                     </View>
                                 )}
                             </TouchableOpacity>
                         );
                     })}
+                    </ScrollView>
                 </View>
             )}
         </View>
       </ScrollView>
 
-      {/* Footer Flotante */}
       <View style={[styles.footerContainer, { paddingBottom: Math.max(insets.bottom, 12) + 8 }]}>
          <View style={styles.footerContent}>
-            <View>
-                <Text style={styles.footerLabel}>Total a pagar</Text>
-                <Text style={styles.footerTotal}>$ {totalPrice.toLocaleString()}</Text>
-                {selectedAdicionales.length > 0 && (
-                    <Text style={styles.footerSubtext}>Incl. extras</Text>
-                )}
+            <View style={styles.quantityPill}>
+                <TouchableOpacity onPress={decreaseQuantity} style={styles.qtyBtn}>
+                    <Ionicons name="remove" size={20} color={quantity > 1 ? C.ink : C.placeholder} />
+                </TouchableOpacity>
+                <Text style={styles.qtyText}>{quantity}</Text>
+                <TouchableOpacity onPress={increaseQuantity} style={styles.qtyBtn}>
+                    <Ionicons name="add" size={20} color={C.ink} />
+                </TouchableOpacity>
             </View>
-            <TouchableOpacity style={styles.addToCartBtn} onPress={addToCart}>
-                <Text style={styles.addToCartText}>Agregar {quantity > 1 ? `(${quantity})` : ''}</Text>
-                <View style={styles.cartIconCircle}>
-                    <Ionicons name="cart" size={18} color="#fa6205" />
-                </View>
+            <TouchableOpacity style={styles.addToCartBtn} onPress={() => addToCart()} activeOpacity={0.85}>
+                <Text style={styles.addToCartText}>Agregar</Text>
+                <Text style={styles.addToCartTotal}>$ {totalPrice.toLocaleString()}</Text>
             </TouchableOpacity>
          </View>
       </View>
 
-      {/* Modal Success */}
       <Modal animationType="fade" transparent={true} visible={modalVisible} onRequestClose={() => setModalVisible(false)}>
         <View style={styles.modalOverlay}>
           <View style={styles.modalContainer}>
             <View style={styles.successIconCircle}>
-              <Ionicons name="checkmark" size={40} color="#FFF" />
+              <Ionicons name="checkmark" size={36} color={C.surface} />
             </View>
             <Text style={styles.modalTitle}>¡Listo!</Text>
             <Text style={styles.modalText}>{addedQuantity} {addedProductName} añadido.</Text>
@@ -359,304 +345,77 @@ const Producto = () => {
   );
 };
 
+const C = { brand: "#fa6205", ink: "#1C1C1E", surface: "#FFF", muted: "#71717A", bg: "#F4F4F5", edge: "#E4E4E7", iconBg: "#FFF0E5", tint: "#FFF8F3", placeholder: "#A1A1AA" };
+const BOTON_ELEVADO = { shadowColor: "#fa6205", shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.35, shadowRadius: 16, elevation: 8 };
+
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#F2F2F7",
-  },
-  
-  // --- HEADER & IMAGEN ---
-  imageContainer: {
-    height: IMG_HEIGHT,
-    width: "100%",
-    position: 'relative',
-  },
-  productImage: {
-    width: "100%",
-    height: "100%",
-  },
-  headerOverlay: {
-    position: 'absolute',
-    left: 20,
-    zIndex: 10,
-  },
+  container: { flex: 1, backgroundColor: C.surface },
+
+  imageContainer: { height: IMG_HEIGHT, width: "100%", backgroundColor: C.bg },
+  productImage: { width: "100%", height: "100%" },
+  imageFade: { position: "absolute", left: 0, right: 0, bottom: 0, height: 120 },
+  headerOverlay: { position: "absolute", left: 16, right: 16, zIndex: 10, flexDirection: "row", justifyContent: "space-between" },
   backButtonCircle: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: 'rgba(0,0,0,0.5)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.2)',
+    width: 42, height: 42, borderRadius: 21, backgroundColor: C.surface, justifyContent: "center", alignItems: "center",
+    shadowColor: "#000", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.15, shadowRadius: 6, elevation: 4,
   },
 
-  // --- CONTENT SHEET ---
-  contentSheet: {
-    marginTop: -30, // Pull up over image
-    backgroundColor: '#F2F2F7',
-    borderTopLeftRadius: 30,
-    borderTopRightRadius: 30,
-    paddingHorizontal: 20,
-    paddingTop: 25,
-    minHeight: height * 0.65,
-  },
-  mainInfoContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-  },
-  productName: {
-    fontSize: 24,
-    color: '#1C1C1E',
-    fontFamily: 'Montserrat_700Bold',
-    marginBottom: 8,
-    lineHeight: 28,
-  },
-  nameRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-  },
-  description: {
-    color: '#aaa',
-    fontSize: 14,
-    fontFamily: 'Montserrat_400Regular',
-    lineHeight: 20,
-  },
-  priceTag: {
-    backgroundColor: 'rgba(250, 98, 5, 0.12)',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: 'rgba(250, 98, 5, 0.3)',
-    marginLeft: 10,
-    alignItems: 'flex-end',
-  },
-  priceTagOriginal: {
-    color: '#999',
-    fontFamily: 'Montserrat_400Regular',
-    fontSize: 13,
-    textDecorationLine: 'line-through',
-  },
-  priceTagText: {
-    color: '#fa6205',
-    fontFamily: 'Montserrat_700Bold',
-    fontSize: 16,
-  },
-  discountBadge: {
-    backgroundColor: '#FFF8E1',
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 6,
-    marginTop: 2,
-  },
-  discountBadgeText: {
-    color: '#1C1C1E',
-    fontFamily: 'Montserrat_800ExtraBold',
-    fontSize: 11,
-  },
-  divider: {
-    height: 1,
-    backgroundColor: '#333',
-    marginVertical: 20,
-  },
+  contentSheet: { marginTop: -36, paddingHorizontal: 20 },
+  tagsRow: { flexDirection: "row", flexWrap: "wrap", gap: 6, marginBottom: 10 },
+  tag: { flexDirection: "row", alignItems: "center", gap: 4, backgroundColor: C.iconBg, borderRadius: 999, paddingHorizontal: 10, paddingVertical: 5, maxWidth: "70%" },
+  tagText: { color: C.brand, fontSize: 11.5, fontFamily: "Montserrat_700Bold" },
+  productName: { fontSize: 25, color: C.ink, fontFamily: "Montserrat_800ExtraBold", lineHeight: 30 },
+  priceRow: { flexDirection: "row", alignItems: "baseline", gap: 8, marginTop: 6 },
+  priceText: { color: C.brand, fontFamily: "Montserrat_800ExtraBold", fontSize: 23 },
+  priceOriginal: { color: C.placeholder, fontFamily: "Montserrat_400Regular", fontSize: 14, textDecorationLine: "line-through" },
+  description: { color: C.muted, fontSize: 14, fontFamily: "Montserrat_400Regular", lineHeight: 20, marginTop: 10 },
 
-  // --- CANTIDAD PRINCIPAL ---
-  mainQuantityRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 20,
-  },
-  sectionTitle: {
-    fontSize: 18,
-    color: '#1C1C1E',
-    fontFamily: 'Montserrat_700Bold',
-  },
-  sectionSubtitle: {
-    fontSize: 12,
-    color: '#888',
-    fontFamily: 'Montserrat_400Regular',
-    marginBottom: 15,
-  },
-  quantityPill: {
-    flexDirection: 'row',
-    backgroundColor: '#F0F0F0',
-    borderRadius: 25,
-    alignItems: 'center',
-    paddingHorizontal: 5,
-    paddingVertical: 5,
-    width: 140,
-    justifyContent: 'space-between',
-  },
-  qtyBtn: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: '#FFF',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  qtyText: {
-    color: '#1C1C1E',
-    fontFamily: 'Montserrat_700Bold',
-    fontSize: 18,
-  },
-
-  // --- ADICIONALES ---
-  adicionalesSection: {
-    marginTop: 10,
-  },
-  adicionalCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    backgroundColor: '#F0F0F0',
-    marginBottom: 10,
-    borderRadius: 12,
-    padding: 12,
-    borderWidth: 1,
-    borderColor: '#333',
-  },
-  adicionalCardSelected: {
-    borderColor: '#fa6205',
-    backgroundColor: 'rgba(250, 98, 5, 0.06)',
-  },
-  adicionalLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flex: 1,
-  },
+  adicionalesSection: { marginTop: 22 },
+  sectionHeader: { marginBottom: 12 },
+  sectionTitle: { fontSize: 17, color: C.ink, fontFamily: "Montserrat_800ExtraBold" },
+  sectionSubtitle: { fontSize: 13, color: C.muted, fontFamily: "Montserrat_400Regular", marginTop: 2 },
+  adicionalesRow: { gap: 10, paddingRight: 20 },
+  adicionalCard: { width: 148, backgroundColor: C.surface, borderRadius: 20, padding: 8, borderWidth: 1.5, borderColor: C.edge },
+  adicionalCardSelected: { borderColor: C.brand, backgroundColor: C.tint },
+  adicionalImage: { width: "100%", height: 104, borderRadius: 14, backgroundColor: C.bg, marginBottom: 8 },
+  adicionalImageEmpty: { alignItems: "center", justifyContent: "center", backgroundColor: C.iconBg },
   checkbox: {
-    width: 22,
-    height: 22,
-    borderRadius: 11,
-    borderWidth: 2,
-    borderColor: '#666',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 10,
+    position: "absolute", top: 14, right: 14, width: 28, height: 28, borderRadius: 14, backgroundColor: C.surface,
+    justifyContent: "center", alignItems: "center", shadowColor: "#000", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.15, shadowRadius: 4, elevation: 3,
   },
-  checkboxSelected: {
-    backgroundColor: '#fa6205',
-    borderColor: '#fa6205',
-  },
-  adicionalImage: {
-    width: 40,
-    height: 40,
-    borderRadius: 8,
-    marginRight: 10,
-    backgroundColor: '#333',
-  },
-  adicionalName: {
-    color: '#1C1C1E',
-    fontFamily: 'Montserrat_600SemiBold',
-    fontSize: 14,
-  },
-  adicionalPrice: {
-    color: '#fa6205',
-    fontFamily: 'Montserrat_400Regular',
-    fontSize: 12,
-  },
-  adicionalQtyWrapper: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#fa6205',
-    borderRadius: 15,
-    paddingHorizontal: 2,
-    paddingVertical: 2,
-    marginLeft: 10,
-  },
-  miniQtyBtn: {
-    width: 24,
-    height: 24,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  miniQtyText: {
-    color: '#000',
-    fontFamily: 'Montserrat_700Bold',
-    fontSize: 13,
-    marginHorizontal: 5,
-  },
+  checkboxSelected: { backgroundColor: C.brand },
+  adicionalName: { color: C.ink, fontFamily: "Montserrat_700Bold", fontSize: 12.5, lineHeight: 16, paddingHorizontal: 2 },
+  adicionalDesc: { color: C.muted, fontFamily: "Montserrat_400Regular", fontSize: 11.5, lineHeight: 15, marginTop: 2, paddingHorizontal: 2 },
+  adicionalPrice: { color: C.brand, fontFamily: "Montserrat_800ExtraBold", fontSize: 12.5, marginTop: 3, paddingHorizontal: 2 },
+  adicionalQtyWrapper: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", backgroundColor: C.brand, borderRadius: 999, padding: 2, marginTop: 8 },
+  miniQtyBtn: { width: 28, height: 28, justifyContent: "center", alignItems: "center" },
+  miniQtyText: { color: C.surface, fontFamily: "Montserrat_800ExtraBold", fontSize: 13 },
 
-  // --- FOOTER ---
+  modalOverlay: { flex: 1, backgroundColor: "rgba(0,0,0,0.5)", justifyContent: "center", alignItems: "center" },
+  modalContainer: { width: "84%", backgroundColor: C.surface, borderRadius: 28, padding: 24, alignItems: "center" },
+  successIconCircle: { width: 68, height: 68, borderRadius: 34, backgroundColor: C.brand, justifyContent: "center", alignItems: "center", marginBottom: 14 },
+  modalTitle: { color: C.ink, fontFamily: "Montserrat_800ExtraBold", fontSize: 20, marginBottom: 6 },
+  modalText: { color: C.muted, fontFamily: "Montserrat_400Regular", textAlign: "center", marginBottom: 20 },
+  modalActions: { width: "100%", gap: 10 },
+  btnPrimary: { backgroundColor: C.brand, height: 52, borderRadius: 999, alignItems: "center", justifyContent: "center", ...BOTON_ELEVADO },
+  btnPrimaryText: { fontFamily: "Montserrat_700Bold", color: C.surface, fontSize: 15 },
+  btnSecondary: { height: 50, borderRadius: 999, backgroundColor: C.bg, alignItems: "center", justifyContent: "center" },
+  btnSecondaryText: { fontFamily: "Montserrat_700Bold", color: C.ink, fontSize: 15 },
+
   footerContainer: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    backgroundColor: '#F0F0F0',
-    paddingHorizontal: 20,
-    paddingTop: 15,
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: -3 },
-    shadowOpacity: 0.3,
-    shadowRadius: 5,
-    elevation: 20,
+    position: "absolute", bottom: 0, left: 0, right: 0, backgroundColor: C.surface, paddingHorizontal: 16, paddingTop: 12,
+    borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: C.edge,
   },
-  footerContent: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  footerLabel: {
-    color: '#aaa',
-    fontSize: 12,
-    fontFamily: 'Montserrat_400Regular',
-  },
-  footerTotal: {
-    color: '#1C1C1E',
-    fontSize: 24,
-    fontFamily: 'Montserrat_700Bold',
-  },
-  footerSubtext: {
-    color: '#fa6205',
-    fontSize: 11,
-    fontFamily: 'Montserrat_400Regular',
-  },
+  footerContent: { flexDirection: "row", alignItems: "center", gap: 10 },
+  quantityPill: { flexDirection: "row", backgroundColor: C.bg, borderRadius: 999, alignItems: "center", padding: 4 },
+  qtyBtn: { width: 42, height: 42, borderRadius: 21, backgroundColor: C.surface, justifyContent: "center", alignItems: "center" },
+  qtyText: { color: C.ink, fontFamily: "Montserrat_800ExtraBold", fontSize: 16, width: 30, textAlign: "center" },
   addToCartBtn: {
-    backgroundColor: '#fa6205',
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 12,
-    paddingHorizontal: 25,
-    borderRadius: 30,
-    shadowColor: "#fa6205",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
+    flex: 1, height: 54, backgroundColor: C.brand, borderRadius: 999, flexDirection: "row", alignItems: "center",
+    justifyContent: "space-between", paddingHorizontal: 20, ...BOTON_ELEVADO,
   },
-  addToCartText: {
-    color: '#FFF',
-    fontSize: 16,
-    fontFamily: 'Montserrat_700Bold',
-    marginRight: 10,
-  },
-  cartIconCircle: {
-    backgroundColor: '#FFF',
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-
-  // --- MODAL ---
-  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.8)', justifyContent: 'center', alignItems: 'center' },
-  modalContainer: { width: '80%', backgroundColor: '#FFF', borderRadius: 20, padding: 25, alignItems: 'center' },
-  successIconCircle: { width: 70, height: 70, borderRadius: 35, backgroundColor: '#fa6205', justifyContent: 'center', alignItems: 'center', marginBottom: 15 },
-  modalTitle: { color: '#1C1C1E', fontFamily: 'Montserrat_700Bold', fontSize: 20, marginBottom: 10 },
-  modalText: { color: '#666', fontFamily: 'Montserrat_400Regular', textAlign: 'center', marginBottom: 20 },
-  modalActions: { width: '100%' },
-  btnPrimary: { backgroundColor: '#fa6205', padding: 15, borderRadius: 30, alignItems: 'center', marginBottom: 10 },
-  btnPrimaryText: { fontFamily: 'Montserrat_700Bold', color: '#FFF' },
-  btnSecondary: { padding: 10, alignItems: 'center', marginBottom: 5 },
-  btnSecondaryText: { fontFamily: 'Montserrat_600SemiBold', color: '#666' },
+  addToCartText: { color: C.surface, fontSize: 16, fontFamily: "Montserrat_700Bold" },
+  addToCartTotal: { color: C.surface, fontSize: 16, fontFamily: "Montserrat_700Bold" },
 });
 
 export default Producto;

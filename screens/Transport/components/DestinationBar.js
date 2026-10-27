@@ -2,79 +2,133 @@ import React from "react";
 import { TouchableOpacity, View, Text, StyleSheet } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 
-export default function DestinationBar({ address, onPress, onMapPress }) {
+export default function DestinationBar({ origin, address, onPress, onMapPress, onOriginPress, footer }) {
   const displayText = address || "¿A donde vamos?";
   const isEmpty = !address;
 
   return (
-    <TouchableOpacity style={styles.bar} onPress={onPress} activeOpacity={0.85}>
-      <View style={styles.iconCircle}>
-        <Ionicons name="location" size={20} color="#FF5500" />
+    <TouchableOpacity style={styles.card} onPress={onPress} activeOpacity={0.9}>
+      <View style={styles.paradas}>
+        <View style={styles.routeLine} />
+
+        <TouchableOpacity style={styles.row} onPress={onOriginPress} disabled={!onOriginPress} activeOpacity={0.7}>
+          <View style={styles.dotOrigin} />
+          <Text style={styles.origin} numberOfLines={2}>
+            {origin || "Mi ubicacion actual"}
+          </Text>
+          {!!onOriginPress && <Ionicons name="pencil" size={13} color="#A1A1AA" style={styles.originEdit} />}
+        </TouchableOpacity>
+
+        <View style={styles.sep} />
+
+        <View style={styles.row}>
+          <View style={styles.dotDest} />
+          <Text style={[styles.text, isEmpty && styles.textMuted]} numberOfLines={2}>
+            {displayText}
+          </Text>
+          <TouchableOpacity style={styles.mapBtn} onPress={onMapPress} activeOpacity={0.8} hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}>
+            <Ionicons name="map-outline" size={17} color="#fa6205" />
+          </TouchableOpacity>
+        </View>
       </View>
-      <Text style={[styles.text, isEmpty && styles.textMuted]} numberOfLines={1}>
-        {displayText}
-      </Text>
-      <TouchableOpacity style={styles.mapBtn} onPress={onMapPress} activeOpacity={0.7}>
-        <Ionicons name="map-outline" size={15} color="#FF5500" />
-        <Text style={styles.mapBtnText}>Mapa</Text>
-      </TouchableOpacity>
+
+      {footer ? (
+        <>
+          <View style={styles.footerSep} />
+          {footer}
+        </>
+      ) : null}
     </TouchableOpacity>
   );
 }
 
 const styles = StyleSheet.create({
-  bar: {
+  card: {
+    flex: 1,
+    backgroundColor: "#FFF",
+    borderRadius: 22,
+    paddingLeft: 16,
+    paddingRight: 6,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.12,
+    shadowRadius: 14,
+    elevation: 6,
+  },
+  paradas: {
+    paddingVertical: 2,
+  },
+  footerSep: {
+    height: StyleSheet.hairlineWidth,
+    backgroundColor: "#E4E4E7",
+    marginRight: 10,
+  },
+  routeLine: {
+    position: "absolute",
+    left: 20.5,
+    top: 24,
+    bottom: 26,
+    width: 2,
+    borderRadius: 1,
+    backgroundColor: "#E4E4E7",
+  },
+  row: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "rgba(255,255,255,0.95)",
-    borderRadius: 9999,
-    paddingLeft: 10,
-    paddingRight: 10,
-    paddingVertical: 7,
     gap: 12,
-    borderWidth: 1.5,
-    borderColor: "rgba(228,228,231,0.85)",
-    shadowColor: "#0F172A",
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.08,
-    shadowRadius: 28,
-    elevation: 8,
+    minHeight: 44,
   },
-  iconCircle: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: "rgba(255,85,0,0.08)",
-    borderWidth: 1,
-    borderColor: "rgba(255,85,0,0.2)",
-    justifyContent: "center",
-    alignItems: "center",
+  sep: {
+    height: StyleSheet.hairlineWidth,
+    backgroundColor: "#E4E4E7",
+    marginLeft: 23,
+    marginRight: 10,
+  },
+  dotOrigin: {
+    width: 11,
+    height: 11,
+    borderRadius: 6,
+    backgroundColor: "#10B981",
+    borderWidth: 2,
+    borderColor: "#FFF",
+  },
+  dotDest: {
+    width: 11,
+    height: 11,
+    borderRadius: 3,
+    backgroundColor: "#fa6205",
+    borderWidth: 2,
+    borderColor: "#FFF",
+  },
+  originEdit: {
+    marginRight: 12,
+  },
+  origin: {
+    flex: 1,
+    fontSize: 13,
+    lineHeight: 17,
+    fontFamily: "Montserrat_600SemiBold",
+    color: "#71717A",
+    paddingRight: 10,
+    paddingVertical: 6,
   },
   text: {
     flex: 1,
-    fontSize: 15,
-    fontFamily: "MontserratBold",
-    fontWeight: "bold",
-    color: "#0F172A",
+    fontSize: 14,
+    lineHeight: 18,
+    fontFamily: "Montserrat_700Bold",
+    color: "#1C1C1E",
+    paddingVertical: 6,
   },
   textMuted: {
-    color: "#94A3B8",
+    color: "#A1A1AA",
   },
   mapBtn: {
-    flexDirection: "row",
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    backgroundColor: "#FFF0E5",
     alignItems: "center",
-    gap: 6,
-    backgroundColor: "rgba(255,85,0,0.08)",
-    borderWidth: 1.5,
-    borderColor: "rgba(255,85,0,0.2)",
-    borderRadius: 9999,
-    paddingHorizontal: 13,
-    paddingVertical: 7,
-  },
-  mapBtnText: {
-    fontSize: 12,
-    fontFamily: "MontserratBold",
-    fontWeight: "bold",
-    color: "#FF5500",
+    justifyContent: "center",
   },
 });

@@ -77,7 +77,7 @@ const styles = StyleSheet.create({
   },
   label: {
     fontSize: 10,
-    fontFamily: "MontserratBold",
+    fontFamily: "Montserrat_700Bold",
     fontWeight: "bold",
     color: "#94A3B8",
     textTransform: "uppercase",
@@ -85,7 +85,7 @@ const styles = StyleSheet.create({
   },
   address: {
     fontSize: 13,
-    fontFamily: "Montserrat",
+    fontFamily: "Montserrat_400Regular",
     color: "#0F172A",
     lineHeight: 18,
     marginTop: 2,
@@ -110,13 +110,13 @@ const styles = StyleSheet.create({
   },
   badgeText: {
     fontSize: 12,
-    fontFamily: "MontserratBold",
+    fontFamily: "Montserrat_700Bold",
     fontWeight: "bold",
     color: "#0F172A",
   },
   badgeSub: {
     fontSize: 10,
-    fontFamily: "Montserrat",
+    fontFamily: "Montserrat_400Regular",
     color: "#64748B",
     marginTop: 2,
   },

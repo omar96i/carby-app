@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useCallback } from "react";
+import React, { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import {
   View,
   Text,
@@ -13,6 +13,7 @@ import {
   Platform
 } from "react-native";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
+import FocusAwareStatusBar from "../../components/FocusAwareStatusBar";
 import { AntDesign, Feather, Ionicons } from "@expo/vector-icons";
 import {
   Montserrat_400Regular,
@@ -36,6 +37,8 @@ const Cart = () => {
   const [restaurantName, setRestaurantName] = useState("");
   const [establishmentId, setEstablishmentId] = useState(null);
   const [isModalVisible, setIsModalVisible] = useState(false);
+  const [storePhoto, setStorePhoto] = useState(null);
+  const storeLoaded = useRef(false);
   const [isUserDemo, setIsUserDemo] = useState(false);
   const [alertVisible, setAlertVisible] = useState(false);
   const [alertData, setAlertData] = useState({ message: "", type: "info", onPrimary: null, primaryLabel: "" });
@@ -71,10 +74,10 @@ const Cart = () => {
           if (parsedCart.length > 0) {
             const firstItem = parsedCart[0];
             let estId = null;
-            let estName = "Restaurante";
+            let estName = firstItem.product.establishmentName || "Restaurante";
 
             if (firstItem.product.user) {
-              estName = firstItem.product.user.establecimiento_nombre || "Restaurante";
+              estName = firstItem.product.user.establecimiento_nombre || firstItem.product.establishmentName || "Restaurante";
               estId = firstItem.product.user.id || firstItem.product.user.establecimiento_id;
             }
             if (!estId) {
@@ -107,6 +110,31 @@ const Cart = () => {
     };
     loadUserData();
   }, []);
+
+  useEffect(() => {
+    if (!establishmentId || storeLoaded.current) return;
+    storeLoaded.current = true;
+    const loadStore = async () => {
+      try {
+        const token = await AsyncStorage.getItem("userToken");
+        if (!token) return;
+        const response = await fetch(`${BASE_URL}usuario/${establishmentId}`, {
+          method: "GET",
+          headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        });
+        if (!response.ok) return;
+        const data = await response.json();
+        const u = data?.data;
+        if (!u) return;
+        if (u.foto_documento_file) {
+          const path = u.foto_documento_file;
+          setStorePhoto(path.startsWith("http") ? path : `${BASE_URL.toString().replace("/api", "")}/storage/${path}`);
+        }
+        if (u.establecimiento_nombre) setRestaurantName(u.establecimiento_nombre);
+      } catch (error) {}
+    };
+    loadStore();
+  }, [establishmentId]);
 
   useFocusEffect(
     useCallback(() => {
@@ -164,6 +192,47 @@ const Cart = () => {
     } catch (error) {}
   }, [cartItems]);
 
+  const irAPagar = async () => {
+    if (isUserDemo) { setIsModalVisible(true); return; }
+    const establecimiento_id_aux = cartItems[0].product.establishmentId;
+    const products = cartItems.map((item) => ({
+      productId: item.product.id,
+      quantity: item.quantity,
+      itemTotal: item.totalPrice,
+      productName: item.product.nombre,
+      productImage: item.product.imageUrl || null,
+      basePrice: parseFloat(item.product.precio),
+      adicionales: item.adicionales || [],
+      adicionalesTotal: item.adicionales ? item.adicionales.reduce((t, a) => t + parseFloat(a.precio) * a.quantity, 0) : 0,
+    }));
+
+    try {
+      await AsyncStorage.setItem("tempCart", JSON.stringify({
+        products,
+        totalAmount: totalPrice,
+        totalQuantity,
+        establishmentId: establecimiento_id_aux,
+        establishmentName: restaurantName,
+      }));
+      navigation.navigate("PaymentScreen", {
+        products,
+        totalAmount: totalPrice,
+        totalQuantity,
+        establishmentId: establecimiento_id_aux,
+        establishmentName: restaurantName,
+        onPaymentComplete: clearCart,
+      });
+    } catch (error) { showAlert("No se pudo procesar", "error"); }
+  };
+
+  const agregarMas = () => {
+    const estId = cartItems[0]?.product?.establishmentId || establishmentId;
+    if (!estId) return navigation.goBack();
+    navigation.navigate("Shop", { establishmentId: estId, userId: estId, establishmentName: restaurantName });
+  };
+
+  const tabBarSpace = Math.max(insets.bottom, 8) + 8 + 76;
+
   // --- ITEM COMPONENT (Rediseñado) ---
   const CartItem = React.memo(({ item, onIncrease, onDecrease, onRemove }) => (
     <View style={styles.itemCard}>
@@ -179,7 +248,7 @@ const Cart = () => {
         <View style={styles.itemHeaderRow}>
             <Text style={styles.itemName} numberOfLines={1}>{item.product.nombre}</Text>
             <TouchableOpacity onPress={() => onRemove(item.product.id)} style={styles.trashBtn}>
-                <Ionicons name="trash-outline" size={18} color="#ff5a52" />
+                <Ionicons name="trash-outline" size={16} color={C.danger} />
             </TouchableOpacity>
         </View>
         
@@ -202,11 +271,11 @@ const Cart = () => {
         <View style={styles.itemFooter}>
             <View style={styles.quantityPill}>
                 <TouchableOpacity onPress={() => onDecrease(item.product.id)} style={styles.qtyBtn}>
-                    <AntDesign name="minus" size={14} color="#1C1C1E" />
+                    <AntDesign name="minus" size={13} color={C.ink} />
                 </TouchableOpacity>
                 <Text style={styles.qtyText}>{item.quantity}</Text>
                 <TouchableOpacity onPress={() => onIncrease(item.product.id)} style={styles.qtyBtn}>
-                    <AntDesign name="plus" size={14} color="#000" />
+                    <AntDesign name="plus" size={13} color={C.ink} />
                 </TouchableOpacity>
             </View>
             <Text style={styles.itemTotalPrice}>
@@ -220,7 +289,7 @@ const Cart = () => {
   if (loading || !fontsLoaded) {
     return (
       <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#fa6205" />
+        <ActivityIndicator size="large" color={C.brand} />
       </View>
     );
   }
@@ -228,9 +297,8 @@ const Cart = () => {
   // --- RENDERIZADO UI PRINCIPAL ---
   return (
     <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
-      <StatusBar barStyle="light-content" backgroundColor="#1C1C1E" />
+      <FocusAwareStatusBar barStyle="dark-content" />
 
-      {/* Header */}
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Tu Pedido</Text>
         {restaurantName ? (
@@ -241,7 +309,28 @@ const Cart = () => {
       {/* Contenido */}
       {cartItems.length > 0 ? (
         <>
-          <ScrollView contentContainerStyle={[styles.scrollContent, { paddingBottom: 104 + insets.bottom }]} showsVerticalScrollIndicator={false}>
+          <ScrollView contentContainerStyle={[styles.scrollContent, { paddingBottom: tabBarSpace + 100 }]} showsVerticalScrollIndicator={false}>
+            {restaurantName ? (
+              <View style={styles.storeCard}>
+                {storePhoto ? (
+                  <Image source={{ uri: storePhoto }} style={styles.storeAvatar} />
+                ) : (
+                  <View style={styles.storeAvatar}>
+                    <Text style={styles.storeAvatarText}>{restaurantName.trim().charAt(0).toUpperCase()}</Text>
+                  </View>
+                )}
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.storeName} numberOfLines={1}>{restaurantName}</Text>
+                  <Text style={styles.storeMeta} numberOfLines={1}>
+                    {totalQuantity} {totalQuantity === 1 ? "artículo" : "artículos"} · {new Date().toLocaleDateString("es-CO", { day: "2-digit", month: "short", year: "numeric" })}
+                  </Text>
+                </View>
+                <TouchableOpacity onPress={agregarMas} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+                  <Text style={styles.storeAdd}>+ Agregar más</Text>
+                </TouchableOpacity>
+              </View>
+            ) : null}
+
             {/* Lista de Items */}
             <View style={styles.itemsList}>
               {cartItems.map((item) => (
@@ -258,15 +347,9 @@ const Cart = () => {
             {/* Resumen tipo tiquete */}
             <View style={styles.summaryContainer}>
                 <View style={styles.ticketHeader}>
-                    <Ionicons name="receipt-outline" size={22} color="#fa6205" />
+                    <Ionicons name="receipt-outline" size={18} color={C.brand} />
                     <Text style={styles.summaryTitle}>Resumen</Text>
                 </View>
-                {restaurantName ? (
-                  <Text style={styles.ticketSub} numberOfLines={1}>{restaurantName}</Text>
-                ) : null}
-                <Text style={styles.ticketDate}>
-                  {new Date().toLocaleDateString("es-CO", { day: "2-digit", month: "short", year: "numeric" })} · {totalQuantity} {totalQuantity === 1 ? "artículo" : "artículos"}
-                </Text>
                 <View style={styles.dashedDivider} />
                 <View style={styles.summaryRow}>
                     <Text style={styles.summaryLabel}>Subtotal</Text>
@@ -287,66 +370,33 @@ const Cart = () => {
                 </View>
             </View>
 
-            <TouchableOpacity
-              style={styles.payButton}
-              activeOpacity={0.8}
-              onPress={async () => {
-                if (isUserDemo) { setIsModalVisible(true); return; }
-                const establecimiento_id_aux = cartItems[0].product.establishmentId;
-                const products = cartItems.map((item) => ({
-                  productId: item.product.id,
-                  quantity: item.quantity,
-                  itemTotal: item.totalPrice,
-                  productName: item.product.nombre,
-                  basePrice: parseFloat(item.product.precio),
-                  adicionales: item.adicionales || [],
-                  adicionalesTotal: item.adicionales ? item.adicionales.reduce((t, a) => t + parseFloat(a.precio) * a.quantity, 0) : 0,
-                }));
+          </ScrollView>
 
-                try {
-                  await AsyncStorage.setItem("tempCart", JSON.stringify({
-                    products,
-                    totalAmount: totalPrice,
-                    totalQuantity,
-                    establishmentId: establecimiento_id_aux,
-                    establishmentName: restaurantName,
-                  }));
-                  navigation.navigate("PaymentScreen", {
-                    products,
-                    totalAmount: totalPrice,
-                    totalQuantity,
-                    establishmentId: establecimiento_id_aux,
-                    establishmentName: restaurantName,
-                    onPaymentComplete: clearCart,
-                  });
-                } catch (error) { showAlert("No se pudo procesar", "error"); }
-              }}
-            >
-              <View style={{flexDirection:'row', alignItems:'center'}}>
-                  <View style={styles.payButtonIconCircle}>
-                    <Text style={styles.payButtonCount}>{totalQuantity}</Text>
-                  </View>
-                  <Text style={styles.payButtonText}>Ir a pagar</Text>
+          <View style={[styles.payBar, { bottom: tabBarSpace + 22 }]} pointerEvents="box-none">
+            <TouchableOpacity style={styles.payButton} activeOpacity={0.85} onPress={irAPagar}>
+              <View style={{ flexDirection: "row", alignItems: "center" }}>
+                <View style={styles.payButtonIconCircle}>
+                  <Text style={styles.payButtonCount}>{totalQuantity}</Text>
+                </View>
+                <Text style={styles.payButtonText}>Ir a pagar</Text>
               </View>
               <Text style={styles.payButtonTotal}>
                 {"$"}{totalPrice.toLocaleString()}
               </Text>
             </TouchableOpacity>
-
-            <View style={{height: 20}} />
-          </ScrollView>
+          </View>
         </>
       ) : (
         /* Empty State */
         <View style={[styles.emptyCartContainer, { paddingBottom: 104 + insets.bottom }]}>
           <View style={styles.emptyIconCircle}>
-            <Feather name="shopping-cart" size={50} color="#666" />
+            <Feather name="shopping-cart" size={44} color={C.brand} />
           </View>
           <Text style={styles.emptyCartTitle}>Tu carrito está vacío</Text>
           <Text style={styles.emptyCartSubtitle}>¡Agrega deliciosos platillos para comenzar!</Text>
           <TouchableOpacity
             style={styles.continueShoppingButton}
-            onPress={() => navigation.navigate("HomeScreen")}
+            onPress={() => navigation.navigate("Home", { screen: "CategoriaVertical", params: { tipo: "productos" } })}
           >
             <Text style={styles.continueShoppingText}>Explorar Restaurantes</Text>
           </TouchableOpacity>
@@ -357,7 +407,7 @@ const Cart = () => {
       <Modal animationType="fade" transparent={true} visible={isModalVisible} onRequestClose={() => setIsModalVisible(false)}>
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
-            <Ionicons name="person-add-outline" size={40} color="#fa6205" style={{marginBottom: 10}} />
+            <Ionicons name="person-add-outline" size={36} color={C.brand} style={{marginBottom: 10}} />
             <Text style={styles.modalTitle}>Registro requerido</Text>
             <Text style={styles.modalText}>Regístrate para completar tu pedido.</Text>
             <View style={styles.modalButtons}>
@@ -383,384 +433,95 @@ const Cart = () => {
   );
 };
 
+const C = { brand: "#fa6205", brandEdge: "#C94E00", ink: "#1C1C1E", surface: "#FFF", muted: "#71717A", bg: "#F4F4F5", edge: "#E4E4E7", iconBg: "#FFF0E5", danger: "#EF4444", dangerBg: "#FEECEC", placeholder: "#A1A1AA" };
+
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#FFF",
-  },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: "#F2F2F7",
-  },
-  
-  // --- HEADER ---
+  container: { flex: 1, backgroundColor: C.bg },
+  payBar: { position: "absolute", left: 16, right: 16 },
+  loadingContainer: { flex: 1, justifyContent: "center", alignItems: "center", backgroundColor: C.bg },
+
   header: {
-    alignItems: "center",
-    justifyContent: "center",
-    paddingHorizontal: 20,
-    paddingTop: Platform.OS === 'android' ? 50 : 50,
-    paddingBottom: 22,
-    backgroundColor: "#1C1C1E",
-    borderBottomLeftRadius: 40,
-    borderBottomRightRadius: 40,
+    alignItems: "center", justifyContent: "center", paddingHorizontal: 20, paddingTop: 14, paddingBottom: 18,
+    backgroundColor: C.ink, borderBottomLeftRadius: 28, borderBottomRightRadius: 28,
   },
-  headerTitle: {
-    color: "#FFF",
-    fontSize: 20,
-    fontFamily: "MontserratBold",
-  },
-  headerSubtitle: {
-    color: "rgba(255,255,255,0.7)",
-    fontSize: 12,
-    fontFamily: "MontserratRegular",
-    marginTop: 2,
-  },
+  headerTitle: { color: C.surface, fontSize: 19, fontFamily: "Montserrat_800ExtraBold" },
+  storeCard: { flexDirection: "row", alignItems: "center", gap: 10, marginBottom: 10, backgroundColor: C.surface, borderRadius: 22, padding: 10 },
+  storeAvatar: { width: 42, height: 42, borderRadius: 13, backgroundColor: C.brand, alignItems: "center", justifyContent: "center", overflow: "hidden" },
+  storeAvatarText: { color: C.surface, fontSize: 18, fontFamily: "Montserrat_800ExtraBold" },
+  storeName: { color: C.ink, fontSize: 14, fontFamily: "Montserrat_700Bold" },
+  storeMeta: { color: C.muted, fontSize: 11.5, fontFamily: "Montserrat_400Regular", marginTop: 1 },
+  storeAdd: { color: C.brand, fontSize: 12.5, fontFamily: "Montserrat_800ExtraBold" },
+  headerSubtitle: { color: "rgba(255,255,255,0.7)", fontSize: 12, fontFamily: "Montserrat_400Regular", marginTop: 2 },
 
   // --- CONTENIDO ---
-  scrollContent: {
-    paddingHorizontal: 20,
-    paddingTop: 20,
-  },
-  itemsList: {
-    marginBottom: 20,
-  },
-  
+  scrollContent: { paddingHorizontal: 16, paddingTop: 16 },
+  itemsList: { marginBottom: 4 },
+
   // --- CARD ITEM ---
-  itemCard: {
-    flexDirection: "row",
-    backgroundColor: "#ECECEC",
-    borderRadius: 16,
-    padding: 12,
-    marginBottom: 15,
-    borderWidth: 1,
-    borderColor: "#D1D1D6",
-    borderStyle: "dashed",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06,
-    shadowRadius: 6,
-    elevation: 2,
-  },
-  itemImage: {
-    width: 80,
-    height: 80,
-    borderRadius: 12,
-    backgroundColor: "#ECECEC",
-  },
-  itemInfo: {
-    flex: 1,
-    marginLeft: 12,
-    justifyContent: 'space-between'
-  },
-  itemHeaderRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-  },
-  itemName: {
-    color: "#1C1C1E",
-    fontSize: 15,
-    fontFamily: "MontserratBold",
-    flex: 1,
-    marginRight: 5,
-  },
-  trashBtn: {
-    padding: 2,
-  },
-  itemBasePrice: {
-    color: "#888",
-    fontSize: 12,
-    fontFamily: "MontserratRegular",
-    marginTop: 2,
-  },
-  
+  itemCard: { flexDirection: "row", backgroundColor: C.surface, borderRadius: 22, padding: 10, marginBottom: 10 },
+  itemImage: { width: 84, height: 84, borderRadius: 16, backgroundColor: C.bg },
+  itemInfo: { flex: 1, marginLeft: 12, justifyContent: "space-between" },
+  itemHeaderRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start", gap: 8 },
+  itemName: { color: C.ink, fontSize: 15, fontFamily: "Montserrat_700Bold", flex: 1 },
+  trashBtn: { width: 30, height: 30, borderRadius: 15, backgroundColor: C.dangerBg, alignItems: "center", justifyContent: "center" },
+  itemBasePrice: { color: C.muted, fontSize: 12, fontFamily: "Montserrat_400Regular", marginTop: 1 },
+
   // Adicionales
-  adicionalesContainer: {
-    marginTop: 6,
-    paddingLeft: 4,
-    borderLeftWidth: 2,
-    borderLeftColor: "#DDD",
-  },
-  adicionalText: {
-    color: "#666",
-    fontSize: 11,
-    fontFamily: "MontserratRegular",
-    marginBottom: 2,
-  },
+  adicionalesContainer: { marginTop: 6, paddingLeft: 8, borderLeftWidth: 2, borderLeftColor: C.iconBg },
+  adicionalText: { color: C.muted, fontSize: 11.5, fontFamily: "Montserrat_400Regular", marginBottom: 2 },
 
   // Item Footer
-  itemFooter: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginTop: 10,
-  },
-  quantityPill: {
-    flexDirection: 'row',
-    backgroundColor: '#D8D8D8',
-    borderRadius: 20,
-    alignItems: 'center',
-    paddingHorizontal: 4,
-    paddingVertical: 4,
-  },
-  qtyBtn: {
-    width: 24,
-    height: 24,
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderRadius: 12,
-    backgroundColor: '#CCCCCC',
-  },
-  qtyBtnAdd: {
-    backgroundColor: '#fa6205',
-  },
-  qtyText: {
-    color: '#1C1C1E',
-    fontFamily: 'MontserratBold',
-    fontSize: 14,
-    marginHorizontal: 10,
-  },
-  itemTotalPrice: {
-    color: "#fa6205",
-    fontSize: 16,
-    fontFamily: "MontserratBold",
-  },
+  itemFooter: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginTop: 10 },
+  quantityPill: { flexDirection: "row", backgroundColor: C.bg, borderRadius: 999, alignItems: "center", padding: 3 },
+  qtyBtn: { width: 28, height: 28, justifyContent: "center", alignItems: "center", borderRadius: 14, backgroundColor: C.surface },
+  qtyBtnAdd: { backgroundColor: C.brand },
+  qtyText: { color: C.ink, fontFamily: "Montserrat_800ExtraBold", fontSize: 14, marginHorizontal: 12 },
+  itemTotalPrice: { color: C.brand, fontSize: 16, fontFamily: "Montserrat_800ExtraBold" },
 
-  // --- SUMMARY SECTION (tiqueete) ---
-  summaryContainer: {
-    backgroundColor: "#ECECEC",
-    borderRadius: 16,
-    padding: 22,
-    marginBottom: 20,
-    borderWidth: 1,
-    borderColor: "#D1D1D6",
-    borderStyle: "dashed",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06,
-    shadowRadius: 6,
-    elevation: 2,
-  },
-  ticketHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-    justifyContent: "center",
-  },
-  summaryTitle: {
-    color: "#1C1C1E",
-    fontSize: 19,
-    fontFamily: "MontserratBold",
-    letterSpacing: 1,
-    textTransform: "uppercase",
-  },
-  ticketSub: {
-    color: "#666",
-    fontSize: 13,
-    fontFamily: "MontserratSemiBold",
-    textAlign: "center",
-    marginTop: 6,
-  },
-  ticketDate: {
-    color: "#999",
-    fontSize: 12,
-    fontFamily: "MontserratRegular",
-    textAlign: "center",
-    marginTop: 4,
-  },
-  dashedDivider: {
-    borderTopWidth: 1,
-    borderTopColor: "#D1D1D6",
-    borderStyle: "dashed",
-    marginVertical: 14,
-  },
-  summaryRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 12,
-  },
-  summaryLabel: {
-    color: "#666",
-    fontFamily: "MontserratRegular",
-    fontSize: 15,
-  },
-  summaryValue: {
-    color: "#1C1C1E",
-    fontFamily: "MontserratSemiBold",
-    fontSize: 15,
-  },
-  divider: {
-    height: 1,
-    backgroundColor: "#DDD",
-    marginVertical: 10,
-  },
-  totalLabel: {
-    color: "#1C1C1E",
-    fontFamily: "MontserratBold",
-    fontSize: 20,
-    letterSpacing: 1,
-    textTransform: "uppercase",
-  },
-  totalValue: {
-    color: "#fa6205",
-    fontFamily: "MontserratBold",
-    fontSize: 22,
-  },
+  summaryContainer: { backgroundColor: C.surface, borderRadius: 22, padding: 18, marginTop: 4, marginBottom: 16 },
+  ticketHeader: { flexDirection: "row", alignItems: "center", gap: 8 },
+  summaryTitle: { color: C.ink, fontSize: 16, fontFamily: "Montserrat_800ExtraBold" },
+  ticketSub: { color: C.ink, fontSize: 13, fontFamily: "Montserrat_600SemiBold", marginTop: 8 },
+  ticketDate: { color: C.muted, fontSize: 12, fontFamily: "Montserrat_400Regular", marginTop: 2 },
+  dashedDivider: { height: StyleSheet.hairlineWidth, backgroundColor: C.edge, marginVertical: 14 },
+  summaryRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 10 },
+  summaryLabel: { color: C.muted, fontFamily: "Montserrat_400Regular", fontSize: 14 },
+  summaryValue: { color: C.ink, fontFamily: "Montserrat_600SemiBold", fontSize: 14 },
+  divider: { height: StyleSheet.hairlineWidth, backgroundColor: C.edge, marginVertical: 10 },
+  totalLabel: { color: C.ink, fontFamily: "Montserrat_800ExtraBold", fontSize: 17 },
+  totalValue: { color: C.brand, fontFamily: "Montserrat_800ExtraBold", fontSize: 20 },
 
-  // --- FOOTER FLOTANTE (sin uso, se deja por compatibilidad) ---
-  footerContainer: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    backgroundColor: '#FFFFFF',
-    paddingHorizontal: 20,
-    paddingTop: 15,
-    paddingBottom: Platform.OS === 'ios' ? 30 : 30,
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: -3 },
-    shadowOpacity: 0.3,
-    shadowRadius: 5,
-    elevation: 20,
-  },
+  footerContainer: { position: "absolute", bottom: 0, left: 0, right: 0 },
   payButton: {
-    backgroundColor: "#fa6205",
-    borderRadius: 30,
-    paddingVertical: 16,
-    paddingHorizontal: 25,
-    marginBottom: 4,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    shadowColor: "#fa6205",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 5,
+    backgroundColor: C.brand, borderRadius: 999, height: 58, paddingHorizontal: 20, marginBottom: 4,
+    flexDirection: "row", justifyContent: "space-between", alignItems: "center",
+    shadowColor: C.brand, shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.3, shadowRadius: 14, elevation: 6,
   },
-  payButtonIconCircle: {
-    backgroundColor: '#FFF',
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 10,
-  },
-  payButtonCount: {
-    color: '#fa6205',
-    fontSize: 12,
-    fontFamily: 'MontserratBold',
-  },
-  payButtonText: {
-    color: "#FFF",
-    fontSize: 16,
-    fontFamily: "MontserratBold",
-  },
-  payButtonTotal: {
-    color: "#FFF",
-    fontSize: 16,
-    fontFamily: "MontserratBold",
-  },
+  payButtonIconCircle: { backgroundColor: C.surface, width: 26, height: 26, borderRadius: 13, justifyContent: "center", alignItems: "center", marginRight: 10 },
+  payButtonCount: { color: C.brand, fontSize: 12, fontFamily: "Montserrat_800ExtraBold" },
+  payButtonText: { color: C.surface, fontSize: 16, fontFamily: "Montserrat_700Bold" },
+  payButtonTotal: { color: C.surface, fontSize: 16, fontFamily: "Montserrat_700Bold" },
 
   // --- EMPTY STATE ---
-  emptyCartContainer: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    padding: 30,
-  },
-  emptyIconCircle: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    backgroundColor: '#ECECEC',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 20,
-  },
-  emptyCartTitle: {
-    color: "#1C1C1E",
-    fontSize: 22,
-    fontFamily: "MontserratBold",
-    marginBottom: 10,
-  },
-  emptyCartSubtitle: {
-    color: "#888",
-    fontSize: 14,
-    fontFamily: "MontserratRegular",
-    textAlign: 'center',
-    marginBottom: 30,
-  },
+  emptyCartContainer: { flex: 1, justifyContent: "center", alignItems: "center", padding: 30 },
+  emptyIconCircle: { width: 96, height: 96, borderRadius: 48, backgroundColor: C.iconBg, justifyContent: "center", alignItems: "center", marginBottom: 18 },
+  emptyCartTitle: { color: C.ink, fontSize: 20, fontFamily: "Montserrat_800ExtraBold", marginBottom: 8 },
+  emptyCartSubtitle: { color: C.muted, fontSize: 14, fontFamily: "Montserrat_400Regular", textAlign: "center", marginBottom: 26 },
   continueShoppingButton: {
-    backgroundColor: "#fa6205",
-    paddingHorizontal: 30,
-    paddingVertical: 15,
-    borderRadius: 30,
-  },
-  continueShoppingText: {
-    color: "black",
-    fontSize: 16,
-    fontFamily: "MontserratBold",
-  },
+    backgroundColor: C.brand, paddingHorizontal: 28, height: 54, justifyContent: "center", borderRadius: 999, shadowColor: "#fa6205", shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.35, shadowRadius: 16, elevation: 8 },
+  continueShoppingText: { color: C.surface, fontSize: 15, fontFamily: "Montserrat_700Bold" },
 
   // --- MODAL ---
-  modalOverlay: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: "rgba(0,0,0,0.8)",
-  },
-  modalContent: {
-    backgroundColor: "#ECECEC",
-    borderRadius: 20,
-    padding: 30,
-    alignItems: "center",
-    width: "85%",
-  },
-  modalTitle: {
-    color: "#1C1C1E",
-    fontSize: 20,
-    fontFamily: "MontserratBold",
-    marginBottom: 10,
-  },
-  modalText: {
-    color: "#666",
-    fontSize: 14,
-    fontFamily: "MontserratRegular",
-    textAlign: "center",
-    marginBottom: 20,
-  },
-  modalButtons: {
-    flexDirection: "row",
-    width: "100%",
-    justifyContent: 'space-between'
-  },
-  modalButton: {
-    paddingVertical: 12,
-    paddingHorizontal: 20,
-    borderRadius: 25,
-    flex: 1,
-    alignItems: "center",
-    marginHorizontal: 5,
-  },
-  cancelButton: {
-    backgroundColor: "#D8D8D8",
-  },
-  registerButton: {
-    backgroundColor: "#fa6205",
-  },
-  cancelButtonText: {
-    color: "#1C1C1E",
-    fontFamily: "MontserratSemiBold",
-  },
-  registerButtonText: {
-    color: "#000",
-    fontFamily: "MontserratBold",
-  },
+  modalOverlay: { flex: 1, justifyContent: "center", alignItems: "center", backgroundColor: "rgba(0,0,0,0.5)" },
+  modalContent: { backgroundColor: C.surface, borderRadius: 28, padding: 24, alignItems: "center", width: "85%" },
+  modalTitle: { color: C.ink, fontSize: 20, fontFamily: "Montserrat_800ExtraBold", marginBottom: 6 },
+  modalText: { color: C.muted, fontSize: 14, fontFamily: "Montserrat_400Regular", textAlign: "center", marginBottom: 20 },
+  modalButtons: { flexDirection: "row", width: "100%", gap: 10 },
+  modalButton: { height: 50, borderRadius: 999, flex: 1, alignItems: "center", justifyContent: "center" },
+  cancelButton: { backgroundColor: C.bg },
+  registerButton: { backgroundColor: C.brand, shadowColor: "#fa6205", shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.35, shadowRadius: 16, elevation: 8 },
+  cancelButtonText: { color: C.ink, fontFamily: "Montserrat_700Bold" },
+  registerButtonText: { color: C.surface, fontFamily: "Montserrat_700Bold" },
 });
 
 export default Cart;

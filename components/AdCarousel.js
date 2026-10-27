@@ -6,6 +6,14 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { BASE_URL } from "../constants/url";
 
 const { width } = Dimensions.get('window');
+const SLIDE_W = width - 72;
+const GAP = 12;
+const SLIDE_H = 168;
+
+const animacionAsomada = (value) => {
+  'worklet';
+  return { transform: [{ translateX: value * (SLIDE_W + GAP) }] };
+};
 
 // Improved banner component with carousel
 const AdCarousel = () => {
@@ -200,11 +208,13 @@ const AdCarousel = () => {
         data={ads || []}
         renderItem={renderItem}
         width={width - 32}
-        height={150}
+        height={SLIDE_H}
+        customAnimation={animacionAsomada}
         onSnapToItem={(index) => setActiveSlide(index)}
         autoPlay={ads && ads.length > 1}
         autoPlayInterval={30000}
-        style={{ width: '100%' }}
+        style={{ width: width - 32 }}
+        containerStyle={{ width: width - 32 }}
         mode="default"
         loop={ads && ads.length > 1}
       />
@@ -229,20 +239,20 @@ const AdCarousel = () => {
 
 const styles = StyleSheet.create({
   container: {
-    marginBottom: 20,
+    marginBottom: 24,
     width: '100%',
   },  slide: {
-    height: 150,
-    width: width - 32,
+    height: SLIDE_H,
+    width: SLIDE_W,
     justifyContent: 'center',
     alignItems: 'center',
-    borderRadius: 24,
+    borderRadius: 26,
     overflow: 'hidden',
-    alignSelf: 'center',
+    backgroundColor: '#E4E4E7',
   },
   adImage: {
-    width: width - 32,
-    height: 150,
+    width: SLIDE_W,
+    height: SLIDE_H,
   },  loadingContainer: {
     position: 'absolute',
     top: 0,
@@ -257,7 +267,7 @@ const styles = StyleSheet.create({
   },
   emptyBanner: {
     width: '100%',
-    height: 150,
+    height: SLIDE_H,
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: '#F0F0F0',
@@ -278,19 +288,19 @@ const styles = StyleSheet.create({
     marginTop: 12,
   },  paginationContainer: {
     flexDirection: 'row',
-    justifyContent: 'center',
     alignItems: 'center',
-    paddingVertical: 10,
-    gap: 8
+    paddingTop: 12,
+    gap: 6
   },
   paginationDot: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
-    backgroundColor: '#fa6205'
+    width: 22,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: '#1C1C1E'
   },
   paginationInactiveDot: {
-    backgroundColor: '#777'
+    width: 6,
+    backgroundColor: '#D4D4D8'
   }
 });
 

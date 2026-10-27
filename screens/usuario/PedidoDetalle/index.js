@@ -82,6 +82,7 @@ export default function PedidoDetalle() {
       peerName: comercio.establecimiento_nombre || comercio.nombre || "Comercio",
       peerRole: "Soporte del pedido",
       peerAvatar: getImageUrl(fotoRaw),
+      peerComercioId: comercio.id || pedido?.comercio_id,
       statusTitle: status.title,
       statusSub: status.sub,
       statusTone: status.tone,
@@ -163,7 +164,7 @@ export default function PedidoDetalle() {
   if (isDelivered) {
     return (
       <SafeAreaView style={styles.safe}>
-        <StatusBar barStyle="dark-content" backgroundColor="#F1F5F9" />
+        <StatusBar barStyle="dark-content" backgroundColor="#F4F4F5" />
         <View style={styles.finishedWrap}>
           <View style={styles.finishedIconCircle}>
             <Feather name="check" size={36} color="#10B981" />
@@ -186,9 +187,9 @@ export default function PedidoDetalle() {
   if (loading) {
     return (
       <SafeAreaView style={styles.safe}>
-        <StatusBar barStyle="dark-content" backgroundColor="#F1F5F9" />
+        <StatusBar barStyle="dark-content" backgroundColor="#F4F4F5" />
         <View style={styles.center}>
-          <ActivityIndicator size="large" color="#FF5500" />
+          <ActivityIndicator size="large" color="#fa6205" />
           <Text style={styles.loadingText}>Cargando pedido...</Text>
         </View>
       </SafeAreaView>
@@ -198,7 +199,7 @@ export default function PedidoDetalle() {
   if (error || !pedido?.id) {
     return (
       <SafeAreaView style={styles.safe}>
-        <StatusBar barStyle="dark-content" backgroundColor="#F1F5F9" />
+        <StatusBar barStyle="dark-content" backgroundColor="#F4F4F5" />
         <View style={styles.center}>
           <Feather name="alert-triangle" size={48} color="#FF4757" style={{ marginBottom: 16 }} />
           <Text style={styles.errorText}>{error || "No se encontró información del pedido"}</Text>
@@ -212,7 +213,7 @@ export default function PedidoDetalle() {
 
   return (
     <SafeAreaView style={styles.safe} edges={['top', 'left', 'right']}>
-      <StatusBar barStyle="dark-content" backgroundColor="#F1F5F9" />
+      <StatusBar barStyle="dark-content" backgroundColor="#F4F4F5" />
       <View style={styles.container}>
         <OrderMap
           mapRef={mapRef}
@@ -223,10 +224,10 @@ export default function PedidoDetalle() {
           route={routeCoords}
         />
 
-        <TopBar state={currentKey} top={insets.top} onBack={() => navigation.goBack()} />
+        <TopBar state={currentKey} top={0} onBack={() => navigation.goBack()} />
 
         {permissionDenied && (
-          <View style={[styles.locationBanner, { top: insets.top + 96 }]}>
+          <View style={[styles.locationBanner, { top: 72 }]}>
             <Feather name="map-pin" size={14} color="#B45309" />
             <Text style={styles.locationBannerText}>Activa ubicación para un mejor seguimiento</Text>
           </View>
@@ -245,7 +246,7 @@ export default function PedidoDetalle() {
 
         {!locationReady && (
           <View style={styles.loadingOverlay}>
-            <ActivityIndicator size="large" color="#FF5500" />
+            <ActivityIndicator size="large" color="#fa6205" />
             <Text style={styles.loadingOverlayText}>Ubicando pedido...</Text>
           </View>
         )}
@@ -275,7 +276,7 @@ export default function PedidoDetalle() {
 }
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: "#F1F5F9" },
+  safe: { flex: 1, backgroundColor: "#F4F4F5" },
   container: { flex: 1 },
   center: {
     flex: 1,
@@ -286,18 +287,18 @@ const styles = StyleSheet.create({
   loadingText: {
     marginTop: 16,
     fontSize: 14,
-    fontFamily: "Montserrat",
-    color: "#64748B",
+    fontFamily: "Montserrat_400Regular",
+    color: "#71717A",
   },
   errorText: {
     fontSize: 14,
-    fontFamily: "Montserrat",
-    color: "#0F172A",
+    fontFamily: "Montserrat_400Regular",
+    color: "#1C1C1E",
     textAlign: "center",
     marginBottom: 20,
   },
   retryBtn: {
-    backgroundColor: "#FF5500",
+    backgroundColor: "#fa6205",
     paddingHorizontal: 24,
     paddingVertical: 12,
     borderRadius: 18,
@@ -305,8 +306,7 @@ const styles = StyleSheet.create({
   retryText: {
     color: "#FFFFFF",
     fontSize: 14,
-    fontFamily: "MontserratBold",
-    fontWeight: "bold",
+    fontFamily: "Montserrat_700Bold",
   },
   locationBanner: {
     position: "absolute",
@@ -326,8 +326,7 @@ const styles = StyleSheet.create({
   },
   locationBannerText: {
     fontSize: 12,
-    fontFamily: "MontserratBold",
-    fontWeight: "bold",
+    fontFamily: "Montserrat_700Bold",
     color: "#B45309",
   },
   loadingOverlay: {
@@ -340,8 +339,8 @@ const styles = StyleSheet.create({
   loadingOverlayText: {
     marginTop: 16,
     fontSize: 14,
-    fontFamily: "Montserrat",
-    color: "#64748B",
+    fontFamily: "Montserrat_400Regular",
+    color: "#71717A",
   },
   finishedWrap: {
     flex: 1,
@@ -365,15 +364,14 @@ const styles = StyleSheet.create({
   },
   finishedTitle: {
     fontSize: 22,
-    fontFamily: "MontserratBold",
-    fontWeight: "bold",
-    color: "#0F172A",
+    fontFamily: "Montserrat_700Bold",
+    color: "#1C1C1E",
     textAlign: "center",
   },
   finishedSub: {
     fontSize: 13,
-    fontFamily: "Montserrat",
-    color: "#64748B",
+    fontFamily: "Montserrat_400Regular",
+    color: "#71717A",
     textAlign: "center",
     marginTop: 8,
     paddingHorizontal: 20,
@@ -381,11 +379,11 @@ const styles = StyleSheet.create({
   finishedPrimary: {
     width: "100%",
     marginTop: 24,
-    backgroundColor: "#FF5500",
+    backgroundColor: "#fa6205",
     borderRadius: 18,
     paddingVertical: 15,
     alignItems: "center",
-    shadowColor: "#FF5500",
+    shadowColor: "#fa6205",
     shadowOffset: { width: 0, height: 5 },
     shadowOpacity: 0.25,
     shadowRadius: 12,
@@ -393,8 +391,7 @@ const styles = StyleSheet.create({
   },
   finishedPrimaryText: {
     fontSize: 15,
-    fontFamily: "MontserratBold",
-    fontWeight: "bold",
+    fontFamily: "Montserrat_700Bold",
     color: "#FFFFFF",
   },
   finishedSecondary: {
@@ -403,14 +400,13 @@ const styles = StyleSheet.create({
     backgroundColor: "#FFFFFF",
     borderRadius: 18,
     borderWidth: 1,
-    borderColor: "#E2E8F0",
+    borderColor: "#E4E4E7",
     paddingVertical: 15,
     alignItems: "center",
   },
   finishedSecondaryText: {
     fontSize: 15,
-    fontFamily: "MontserratBold",
-    fontWeight: "bold",
-    color: "#0F172A",
+    fontFamily: "Montserrat_700Bold",
+    color: "#1C1C1E",
   },
 });
