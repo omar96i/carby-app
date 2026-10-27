@@ -807,18 +807,43 @@ export default function HomeDelivery() {
             </View>
 
             {ratingsLoading ? (
-              <ActivityIndicator size="large" color="#FF5500" style={{ marginVertical: 40 }} />
+              <ActivityIndicator size="large" color="#fa6205" style={{ marginVertical: 40 }} />
             ) : (
               <>
-                <View style={styles.ratingsAverageBox}>
-                  <Text style={styles.ratingsAverageValue}>{ratingsData?.promedio ? parseFloat(ratingsData.promedio).toFixed(1) : "0.0"}</Text>
-                  <View style={styles.ratingsAverageStars}>
-                    {[1, 2, 3, 4, 5].map((n) => (
-                      <Ionicons key={n} name={n <= Math.round(ratingsData?.promedio || 0) ? "star" : "star-outline"} size={18} color="#FFD700" />
-                    ))}
-                  </View>
-                  <Text style={styles.ratingsAverageTotal}>{ratingsData?.total || 0} calificaciones</Text>
-                </View>
+                {(() => {
+                  const lista = ratingsData?.data || [];
+                  const total = ratingsData?.total || 0;
+                  const conteo = [5, 4, 3, 2, 1].map((n) => ({ n, c: lista.filter((r) => Math.round(r.puntuacion || 0) === n).length }));
+                  const mostrarBarras = lista.length > 0 && lista.length === total;
+                  return (
+                    <View style={styles.ratingsPremium}>
+                      <View style={styles.ratingsPremiumLeft}>
+                        <Text style={styles.ratingsPremiumLabel}>Tu calificación</Text>
+                        <Text style={styles.ratingsAverageValue}>{ratingsData?.promedio ? parseFloat(ratingsData.promedio).toFixed(1) : "0.0"}</Text>
+                        <View style={styles.ratingsAverageStars}>
+                          {[1, 2, 3, 4, 5].map((n) => (
+                            <Ionicons key={n} name={n <= Math.round(ratingsData?.promedio || 0) ? "star" : "star-outline"} size={15} color="#F5B301" />
+                          ))}
+                        </View>
+                        <Text style={styles.ratingsAverageTotal}>{total} {total === 1 ? "calificación" : "calificaciones"}</Text>
+                      </View>
+                      {mostrarBarras && (
+                        <View style={styles.ratingsBars}>
+                          {conteo.map(({ n, c }) => (
+                            <View key={n} style={styles.ratingsBarRow}>
+                              <Text style={styles.ratingsBarNum}>{n}</Text>
+                              <Ionicons name="star" size={10} color="#F5B301" />
+                              <View style={styles.ratingsBarTrack}>
+                                <View style={[styles.ratingsBarFill, { width: `${(c / total) * 100}%` }]} />
+                              </View>
+                              <Text style={styles.ratingsBarCount}>{c}</Text>
+                            </View>
+                          ))}
+                        </View>
+                      )}
+                    </View>
+                  );
+                })()}
 
                 <ScrollView style={styles.ratingsScroll} showsVerticalScrollIndicator={false}>
                   {(ratingsData?.data || []).length === 0 ? (
@@ -840,7 +865,7 @@ export default function HomeDelivery() {
                               <Text style={styles.ratingItemName} numberOfLines={1}>{item.usuario?.nombre_completo || "Usuario"}</Text>
                               <View style={styles.ratingItemStars}>
                                 {[1, 2, 3, 4, 5].map((n) => (
-                                  <Ionicons key={n} name={n <= (item.puntuacion || 0) ? "star" : "star-outline"} size={12} color="#FFD700" />
+                                  <Ionicons key={n} name={n <= (item.puntuacion || 0) ? "star" : "star-outline"} size={12} color="#F5B301" />
                                 ))}
                               </View>
                             </View>
@@ -869,13 +894,13 @@ const styles = StyleSheet.create({
 
   topContainer: { position: "absolute", left: 20, right: 20, zIndex: 10, gap: 8 },
   topRow: { flexDirection: "row", justifyContent: "space-between" },
-  headerPill: { flexDirection: "row", backgroundColor: "rgba(255, 255, 255, 0.95)", padding: 8, paddingRight: 20, borderRadius: 40, alignSelf: "flex-start", alignItems: "center", borderWidth: 1, borderColor: "#DDD", elevation: 5 },
+  headerPill: { flexDirection: "row", backgroundColor: "#FFFFFF", padding: 8, paddingRight: 20, borderRadius: 40, alignSelf: "flex-start", alignItems: "center", borderWidth: 1, borderColor: "#DDD", elevation: 5 },
   avatarContainer: { width: 36, height: 36, borderRadius: 18, backgroundColor: "#FFFFFF", justifyContent: "center", alignItems: "center", marginRight: 10, borderWidth: 1, borderColor: "#fa6205" },
   avatarImage: { width: 36, height: 36, borderRadius: 18, marginRight: 10, borderWidth: 1, borderColor: "#fa6205", backgroundColor: "#F0F0F0" },
   avatarInitial: { color: "#fa6205", fontFamily: "Montserrat_700Bold", fontSize: 16 },
   welcomeText: { color: "#1C1C1E", fontFamily: "Montserrat_600SemiBold", fontSize: 14 },
   ratingRow: { flexDirection: "row", alignItems: "center" },
-  ratingText: { color: "#FFD700", fontSize: 12, marginLeft: 4, fontFamily: "Montserrat_500Medium" },
+  ratingText: { color: "#1C1C1E", fontSize: 12, marginLeft: 4, fontFamily: "Montserrat_700Bold" },
 
   rejectedListBtn: { backgroundColor: "rgba(255, 255, 255, 0.95)", paddingHorizontal: 15, height: 54, borderRadius: 27, alignItems: "center", justifyContent: "center", borderWidth: 1, borderColor: "#DDD", flexDirection: "row" },
   rejectedBadge: { position: "absolute", top: -5, right: -5, backgroundColor: "#DC2626", width: 20, height: 20, borderRadius: 10, justifyContent: "center", alignItems: "center", zIndex: 2 },
@@ -900,33 +925,34 @@ const styles = StyleSheet.create({
   ratingsSpacer: { width: 36 },
   ratingsHandle: { width: 44, height: 5, borderRadius: 3, backgroundColor: "#E2E8F0" },
   ratingsCloseBtn: { width: 36, height: 36, borderRadius: 18, backgroundColor: "#F1F5F9", justifyContent: "center", alignItems: "center" },
-  ratingsAverageBox: { alignItems: "center", paddingVertical: 10, marginBottom: 8 },
-  ratingsAverageValue: { fontSize: 48, fontFamily: "Montserrat_800ExtraBold", color: "#0F172A" },
-  ratingsAverageStars: { flexDirection: "row", gap: 4, marginTop: 6 },
-  ratingsAverageTotal: { fontSize: 13, fontFamily: "Montserrat_600SemiBold", color: "#64748B", marginTop: 6 },
+  ratingsPremium: { flexDirection: "row", alignItems: "center", gap: 18, backgroundColor: "#1C1C1E", borderRadius: 26, padding: 20, marginBottom: 14 },
+  ratingsPremiumLeft: { alignItems: "flex-start" },
+  ratingsPremiumLabel: { fontSize: 12, fontFamily: "Montserrat_600SemiBold", color: "rgba(255,255,255,0.55)" },
+  ratingsAverageValue: { fontSize: 46, lineHeight: 52, fontFamily: "Montserrat_800ExtraBold", color: "#FFFFFF", marginTop: 2 },
+  ratingsAverageStars: { flexDirection: "row", gap: 3, marginTop: 2 },
+  ratingsAverageTotal: { fontSize: 12, fontFamily: "Montserrat_600SemiBold", color: "rgba(255,255,255,0.55)", marginTop: 6 },
+  ratingsBars: { flex: 1, gap: 6 },
+  ratingsBarRow: { flexDirection: "row", alignItems: "center", gap: 4 },
+  ratingsBarNum: { width: 10, fontSize: 11, fontFamily: "Montserrat_700Bold", color: "rgba(255,255,255,0.7)", textAlign: "right" },
+  ratingsBarTrack: { flex: 1, height: 6, borderRadius: 3, backgroundColor: "rgba(255,255,255,0.12)", overflow: "hidden", marginLeft: 4 },
+  ratingsBarFill: { height: "100%", borderRadius: 3, backgroundColor: "#F5B301" },
+  ratingsBarCount: { width: 18, fontSize: 11, fontFamily: "Montserrat_600SemiBold", color: "rgba(255,255,255,0.55)", textAlign: "right" },
   ratingsScroll: { maxHeight: 400 },
-  ratingsEmpty: { textAlign: "center", fontSize: 14, fontFamily: "Montserrat", color: "#94A3B8", marginTop: 20 },
+  ratingsEmpty: { textAlign: "center", fontSize: 14, fontFamily: "Montserrat_400Regular", color: "#71717A", marginTop: 20 },
   ratingItem: {
-    backgroundColor: "#F8FAFC",
-    borderRadius: 18,
-    borderWidth: 1,
-    borderColor: "#E2E8F0",
+    backgroundColor: "#F4F4F5",
+    borderRadius: 20,
     padding: 14,
     marginBottom: 10,
-    shadowColor: "#0F172A",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.04,
-    shadowRadius: 8,
-    elevation: 2,
   },
   ratingItemHeader: { flexDirection: "row", alignItems: "center", gap: 12 },
   ratingItemAvatar: { width: 44, height: 44, borderRadius: 22, backgroundColor: "#E2E8F0" },
   ratingItemAvatarFallback: { width: 44, height: 44, borderRadius: 22, backgroundColor: "#fa6205", justifyContent: "center", alignItems: "center" },
   ratingItemInitial: { color: "#FFF", fontFamily: "Montserrat_700Bold", fontSize: 16 },
   ratingItemInfo: { flex: 1 },
-  ratingItemName: { fontSize: 14, fontFamily: "Montserrat_700Bold", color: "#0F172A" },
+  ratingItemName: { fontSize: 14, fontFamily: "Montserrat_700Bold", color: "#1C1C1E" },
   ratingItemStars: { flexDirection: "row", gap: 2, marginTop: 3 },
-  ratingItemDate: { fontSize: 11, fontFamily: "Montserrat_500Medium", color: "#94A3B8" },
-  ratingItemMessage: { fontSize: 13, fontFamily: "Montserrat", color: "#64748B", marginTop: 10, lineHeight: 18 },
+  ratingItemDate: { fontSize: 11, fontFamily: "Montserrat_600SemiBold", color: "#A1A1AA" },
+  ratingItemMessage: { fontSize: 13, fontFamily: "Montserrat_400Regular", color: "#52525B", marginTop: 10, lineHeight: 18, backgroundColor: "#FFFFFF", borderRadius: 14, paddingHorizontal: 12, paddingVertical: 8, overflow: "hidden" },
 });
 

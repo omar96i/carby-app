@@ -20,6 +20,7 @@ export default function useProductos() {
       else if (data && data.productos && Array.isArray(data.productos)) arr = data.productos;
       else if (data && Array.isArray(data.data)) arr = data.data;
       setProductos(arr);
+      return arr;
     } catch (e) {
       logger.error("PRODUCTOS", "fetch", e);
     } finally {
@@ -60,8 +61,43 @@ export default function useProductos() {
       } catch {}
       throw new Error(msg);
     }
-    await fetchProductos();
+    let nuevoId = null;
+    try {
+      const j = JSON.parse(text);
+      nuevoId = j?.data?.id ?? j?.producto?.id ?? j?.id ?? null;
+    } catch {}
+    const lista = await fetchProductos();
+    if (!nuevoId && Array.isArray(lista)) {
+      const mismos = lista.filter((p) => String(p.nombre).trim() === form.nombre.trim());
+      nuevoId = mismos.sort((a, b) => b.id - a.id)[0]?.id ?? null;
+    }
+    return nuevoId;
   }, [fetchProductos]);
+
+  const createAdicional = useCallback(async (productoId, adicional) => {
+    const token = await AsyncStorage.getItem("userToken");
+    const fd = new FormData();
+    fd.append("producto_id", String(productoId));
+    fd.append("nombre", adicional.nombre);
+    fd.append("descripcion", adicional.descripcion);
+    fd.append("precio", String(adicional.precio));
+    if (adicional.foto) {
+      const ext = adicional.foto.split(".").pop();
+      fd.append("file", { uri: adicional.foto, name: `adicional_${Date.now()}.${ext}`, type: `image/${ext}` });
+    }
+    logger.request("POST", `${BASE_URL}producto-adicionales`, { producto_id: productoId, nombre: adicional.nombre, precio: adicional.precio });
+    const res = await fetch(`${BASE_URL}producto-adicionales`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token}`, Accept: "application/json" },
+      body: fd,
+    });
+    if (!res.ok) {
+      const text = await res.text().catch(() => "");
+      let msg = `Error ${res.status}`;
+      try { msg = JSON.parse(text).message || msg; } catch {}
+      throw new Error(msg);
+    }
+  }, []);
 
   const toggleProducto = useCallback(async (producto) => {
     const token = await AsyncStorage.getItem("userToken");
@@ -98,5 +134,5 @@ export default function useProductos() {
     await fetchProductos();
   }, [fetchProductos]);
 
-  return { productos, loading, fetchProductos, createProducto, toggleProducto, deleteProducto };
+  return { productos, loading, fetchProductos, createProducto, createAdicional, toggleProducto, deleteProducto };
 }

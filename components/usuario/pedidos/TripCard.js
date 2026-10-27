@@ -1,12 +1,16 @@
 import React, { useEffect, useRef } from "react";
 import { View, Text, TouchableOpacity, StyleSheet, Animated, Image, Linking } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import IconoVehiculo, { nombreCategoriaViaje } from "../../IconoVehiculo";
+import useTiposVehiculo from "../../../hooks/useTiposVehiculo";
+import { useNavigation } from "@react-navigation/native";
 import { COLORS, formatCOP, formatDate, metodoPagoLabel, RADIUS, SHADOWS, VEHICULOS, calcOrderCosts } from "./helpers";
 import StatusBadge from "./StatusBadge";
 import RouteStops from "./RouteStops";
 import DriverRow from "./DriverRow";
 import PaymentBadge from "./PaymentBadge";
 import ProductList from "./ProductList";
+import LogoComercio from "../../LogoComercio";
 import { BASE_URL } from "../../../constants/url";
 
 function getImageUrl(path) {
@@ -15,7 +19,8 @@ function getImageUrl(path) {
   return `${BASE_URL.toString().replace("/api", "")}/storage/${path}`;
 }
 
-export default function TripCard({ item, onOpenDetail, onNavigate, onCancel, onCalificar, isHistorial }) {
+function TripCard({ item, onOpenDetail, onNavigate, onCancel, onCalificar, isHistorial, irAlComercio = false, onOcultar, onMostrar }) {
+  const navigation = useNavigation();
   const colorAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
@@ -62,6 +67,18 @@ export default function TripCard({ item, onOpenDetail, onNavigate, onCancel, onC
   const tieneProductos = !esCarrera && item.pedido_lists?.length > 0;
   const driver = item.conductor || null;
 
+  const comercioId = item.comercio?.id || item.comercio_id;
+  const tiposVehiculo = useTiposVehiculo();
+  const categoriaViaje = nombreCategoriaViaje(item, tiposVehiculo);
+  const puedeIrAlComercio = irAlComercio && !esCarrera && !!comercioId;
+  const abrirComercio = () => {
+    navigation.navigate("Shop", { establishmentId: comercioId, userId: comercioId, establishmentName: item.comercio?.establecimiento_nombre });
+  };
+  const origenCrudo = item.start_lugar || item.origen || "";
+  const origenTexto = !esCarrera && origenCrudo.trim().toLowerCase() === "establecimiento"
+    ? (item.comercio?.establecimiento_nombre || origenCrudo)
+    : origenCrudo;
+
   const originLabel = "Recogida";
   const destLabel = "Destino";
 
@@ -79,13 +96,21 @@ export default function TripCard({ item, onOpenDetail, onNavigate, onCancel, onC
     <View style={[s.card, SHADOWS.card]}>
       {/* Header */}
       <View style={s.header}>
-        <View style={s.iconBox}>
-          <Ionicons name={esCarrera ? "car" : "cube"} size={20} color={COLORS.ink} />
-        </View>
+        <TouchableOpacity style={s.headerTap} onPress={abrirComercio} disabled={!puedeIrAlComercio} activeOpacity={0.7}>
+        {esCarrera ? (
+          <View style={s.iconBox}>
+            <IconoVehiculo item={item} size={22} color={COLORS.brand} fallback="car" />
+          </View>
+        ) : (
+          <LogoComercio comercio={item.comercio} comercioId={comercioId} size={48} radius={16} />
+        )}
         <View style={s.headerInfo}>
-          <Text style={s.headerTitle} numberOfLines={1}>
-            {esCarrera ? (item.tipo_viaje || "Estándar") : (item.comercio?.establecimiento_nombre || "Pedido")}
-          </Text>
+          <View style={s.tituloFila}>
+            <Text style={s.headerTitle} numberOfLines={1}>
+              {esCarrera ? (categoriaViaje || item.tipo_viaje || "Estándar") : (item.comercio?.establecimiento_nombre || "Pedido")}
+            </Text>
+            {puedeIrAlComercio && <Ionicons name="chevron-forward" size={15} color={COLORS.muted} />}
+          </View>
           <Text style={s.headerSub}>
             #{item.id} · {formatDate(item.created_at || item.fecha)}
           </Text>
@@ -96,6 +121,7 @@ export default function TripCard({ item, onOpenDetail, onNavigate, onCancel, onC
             </View>
           ) : null}
         </View>
+        </TouchableOpacity>
         <View style={s.statusWrap}>
           {item.estado === "pendiente" ? (
             <Animated.View style={[s.statusChipAnimated, { backgroundColor: colorAnim.interpolate({ inputRange: [0, 1], outputRange: ["#FFE5C4", "#FFD0A0"] }) }]}>
@@ -110,7 +136,7 @@ export default function TripCard({ item, onOpenDetail, onNavigate, onCancel, onC
       {/* Route */}
       <View style={s.routeSection}>
         <RouteStops
-          origin={{ label: originLabel, address: item.start_lugar || item.origen || "" }}
+          origin={{ label: originLabel, address: origenTexto }}
           destination={{ label: destLabel, address: item.end_lugar || item.destino || "" }}
         />
       </View>
@@ -118,16 +144,19 @@ export default function TripCard({ item, onOpenDetail, onNavigate, onCancel, onC
       {/* Product preview for pedidos */}
       {!esCarrera && tieneProductos && (
         <View style={s.productPreview}>
-          {item.pedido_lists[0]?.producto?.foto ? (
-            <Image
-              source={{ uri: getImageUrl(item.pedido_lists[0].producto.foto) }}
-              style={s.productImg}
-            />
-          ) : (
-            <View style={s.productImgPlaceholder}>
-              <Ionicons name="cube" size={14} color={COLORS.brand} />
-            </View>
-          )}
+          <View style={s.fotosApiladas}>
+            {item.pedido_lists.slice(0, 3).map((p, i) => (
+              <View key={i} style={[s.fotoApilada, { marginLeft: i === 0 ? 0 : -12, zIndex: 3 - i }]}>
+                {p.producto?.foto ? (
+                  <Image source={{ uri: getImageUrl(p.producto.foto) }} style={s.productImg} />
+                ) : (
+                  <View style={s.productImgPlaceholder}>
+                    <Ionicons name="fast-food-outline" size={16} color={COLORS.brand} />
+                  </View>
+                )}
+              </View>
+            ))}
+          </View>
           <Text style={s.productText} numberOfLines={2}>
             {item.pedido_lists.map((p) => `${p.cantidad}x ${p.producto?.nombre || "Producto"}`).join(", ")}
           </Text>
@@ -196,14 +225,35 @@ export default function TripCard({ item, onOpenDetail, onNavigate, onCancel, onC
           <PaymentBadge metodo={metodo} />
         </View>
         <View style={s.footerActions}>
+          {isHistorial && !!onMostrar && (
+            <TouchableOpacity
+              style={s.ocultarBtn}
+              onPress={() => onMostrar(item)}
+              activeOpacity={0.7}
+              accessibilityLabel="Mostrar de nuevo en el historial"
+            >
+              <Ionicons name="eye-outline" size={18} color={COLORS.brand} />
+            </TouchableOpacity>
+          )}
+          {isHistorial && !!onOcultar && (
+            <TouchableOpacity
+              style={s.ocultarBtn}
+              onPress={() => onOcultar(item)}
+              activeOpacity={0.7}
+              accessibilityLabel="Ocultar del historial"
+            >
+              <Ionicons name="eye-off-outline" size={18} color={COLORS.muted} />
+            </TouchableOpacity>
+          )}
           <TouchableOpacity
             style={s.detailBtn}
-            onPress={() => onNavigate?.(item)}
+            onPress={() => (isHistorial ? onOpenDetail?.(item) : onNavigate?.(item))}
             activeOpacity={0.7}
           >
-            <Ionicons name="receipt-outline" size={20} color={COLORS.surface} />
+            <Ionicons name={isHistorial ? "document-text-outline" : "receipt-outline"} size={17} color={COLORS.surface} />
+            <Text style={s.detailBtnText}>{isHistorial ? "Ver detalle" : esCarrera ? "Ver viaje" : "Ver pedido"}</Text>
           </TouchableOpacity>
-          {isClickable && (
+          {isClickable && !isHistorial && (
             <TouchableOpacity
               style={s.moreBtn}
               onPress={() => onOpenDetail?.(item)}
@@ -232,6 +282,14 @@ export default function TripCard({ item, onOpenDetail, onNavigate, onCancel, onC
     </View>
   );
 
+  if (isHistorial) {
+    return (
+      <TouchableOpacity onPress={() => onOpenDetail?.(item)} activeOpacity={0.95}>
+        {content}
+      </TouchableOpacity>
+    );
+  }
+
   if (isClickable) {
     return (
       <TouchableOpacity onPress={() => onNavigate?.(item)} activeOpacity={0.95}>
@@ -242,6 +300,8 @@ export default function TripCard({ item, onOpenDetail, onNavigate, onCancel, onC
 
   return content;
 }
+
+export default React.memo(TripCard);
 
 const s = StyleSheet.create({
   card: {
@@ -261,16 +321,17 @@ const s = StyleSheet.create({
     width: 48,
     height: 48,
     borderRadius: 16,
-    backgroundColor: COLORS.zinc50,
+    backgroundColor: COLORS.brandSoft,
     justifyContent: "center",
     alignItems: "center",
-    borderWidth: 1,
-    borderColor: COLORS.zinc200,
   },
   headerInfo: {
     flex: 1,
   },
+  headerTap: { flex: 1, flexDirection: "row", alignItems: "center", gap: 12 },
+  tituloFila: { flexDirection: "row", alignItems: "center", gap: 4 },
   headerTitle: {
+    flexShrink: 1,
     fontSize: 16,
     fontFamily: "Montserrat_800ExtraBold",
     color: COLORS.ink,
@@ -377,32 +438,34 @@ const s = StyleSheet.create({
     marginTop: 12,
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "rgba(253,238,226,0.5)",
-    borderRadius: 12,
+    backgroundColor: COLORS.zinc100,
+    borderRadius: 18,
     paddingHorizontal: 10,
-    paddingVertical: 8,
-    gap: 8,
+    paddingVertical: 10,
+    gap: 10,
   },
+  fotosApiladas: { flexDirection: "row", alignItems: "center" },
+  fotoApilada: { borderRadius: 14, borderWidth: 2, borderColor: COLORS.surface, backgroundColor: COLORS.surface },
   productImg: {
-    width: 40,
-    height: 40,
-    borderRadius: 8,
+    width: 44,
+    height: 44,
+    borderRadius: 12,
     backgroundColor: COLORS.zinc100,
   },
   productImgPlaceholder: {
-    width: 40,
-    height: 40,
-    borderRadius: 8,
-    backgroundColor: COLORS.zinc100,
+    width: 44,
+    height: 44,
+    borderRadius: 12,
+    backgroundColor: COLORS.brandSoft,
     justifyContent: "center",
     alignItems: "center",
   },
   productText: {
     flex: 1,
-    fontSize: 12,
+    fontSize: 12.5,
     fontFamily: "Montserrat_700Bold",
     color: COLORS.ink,
-    lineHeight: 16,
+    lineHeight: 17,
   },
   productCount: {
     fontSize: 10,
@@ -449,11 +512,9 @@ const s = StyleSheet.create({
     overflow: "hidden",
   },
   footerLeft: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 10,
+    alignItems: "flex-start",
+    gap: 8,
     flex: 1,
-    overflow: "hidden",
   },
   costsColumn: {
     gap: 2,
@@ -514,10 +575,21 @@ const s = StyleSheet.create({
     flexShrink: 0,
   },
   detailBtn: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    height: 40,
+    paddingHorizontal: 14,
+    borderRadius: 20,
     backgroundColor: COLORS.ink,
+    justifyContent: "center",
+    flexShrink: 0,
+  },
+  ocultarBtn: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: COLORS.zinc100,
     justifyContent: "center",
     alignItems: "center",
     flexShrink: 0,
@@ -528,11 +600,10 @@ const s = StyleSheet.create({
     color: COLORS.surface,
   },
   moreBtn: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    borderWidth: 1,
-    borderColor: COLORS.zinc200,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: COLORS.brandSoft,
     justifyContent: "center",
     alignItems: "center",
     flexShrink: 0,

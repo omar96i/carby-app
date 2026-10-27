@@ -46,14 +46,14 @@ function ChatInput({
       <View style={s.inputRow}>
         {onPickImage ? (
           <TouchableOpacity style={s.iconButton} onPress={onPickImage} activeOpacity={0.8}>
-            <Feather name="camera" size={22} color="#64748B" />
+            <Feather name="camera" size={21} color="#1C1C1E" />
           </TouchableOpacity>
         ) : null}
         <TextInput
           ref={inputRef}
           style={s.input}
           placeholder={placeholder}
-          placeholderTextColor="#94A3B8"
+          placeholderTextColor="#A1A1AA"
           value={value}
           onChangeText={(t) => {
             chatLog(tag, "change", { len: t.length });
@@ -109,12 +109,17 @@ export function blurChatInput() { }
 
 const s = StyleSheet.create({
   inputContainer: {
-    borderTopWidth: 1,
-    borderTopColor: "#E2E8F0",
     backgroundColor: "#FFFFFF",
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
     paddingHorizontal: 14,
     paddingVertical: 10,
     paddingBottom: Platform.OS === "ios" ? 24 : 16,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: -4 },
+    shadowOpacity: 0.05,
+    shadowRadius: 12,
+    elevation: 6,
   },
   inputRow: {
     flexDirection: "row",
@@ -127,7 +132,7 @@ const s = StyleSheet.create({
     borderRadius: 22,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "#F1F5F9",
+    backgroundColor: "#F4F4F5",
     marginBottom: Platform.OS === "ios" ? 0 : -2,
   },
   input: {
@@ -135,24 +140,23 @@ const s = StyleSheet.create({
     minHeight: 42,
     maxHeight: 110,
     borderRadius: 22,
-    borderWidth: 1,
-    borderColor: "#E2E8F0",
-    backgroundColor: "#F8FAFC",
+    backgroundColor: "#F4F4F5",
     paddingHorizontal: 16,
     paddingVertical: 10,
     fontSize: 14,
-    color: "#0F172A",
+    fontFamily: "Montserrat_400Regular",
+    color: "#1C1C1E",
   },
   sendButton: {
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: "#FF5500",
+    backgroundColor: "#fa6205",
     justifyContent: "center",
     alignItems: "center",
     marginBottom: Platform.OS === "ios" ? 0 : -2,
   },
   sendButtonDisabled: {
-    backgroundColor: "#CBD5E1",
+    backgroundColor: "#D4D4D8",
   },
 });

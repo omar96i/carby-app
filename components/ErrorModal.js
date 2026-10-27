@@ -102,14 +102,14 @@ const styles = StyleSheet.create({
     },
     titulo: {
         fontSize: 18,
-        fontFamily: 'MontserratBold',
+        fontFamily: 'Montserrat_700Bold',
         color: '#1C1C1E',
         marginBottom: 10,
         textAlign: 'center',
     },
     mensaje: {
         fontSize: 13,
-        fontFamily: 'MontserratRegular',
+        fontFamily: 'Montserrat_400Regular',
         color: '#555555',
         textAlign: 'center',
         lineHeight: 20,
@@ -135,7 +135,7 @@ const styles = StyleSheet.create({
     },
     botonPrimarioTexto: {
         fontSize: 15,
-        fontFamily: 'MontserratBold',
+        fontFamily: 'Montserrat_700Bold',
         color: '#FFFFFF',
     },
     botonSecundario: {
@@ -147,7 +147,7 @@ const styles = StyleSheet.create({
     },
     botonSecundarioTexto: {
         fontSize: 15,
-        fontFamily: 'MontserratBold',
+        fontFamily: 'Montserrat_700Bold',
         color: '#1C1C1E',
     },
     botonUnico: {

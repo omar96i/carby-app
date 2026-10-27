@@ -16,8 +16,11 @@ import {
   ActivityIndicator,
   Modal
 } from "react-native";
-import { FontAwesome, MaterialCommunityIcons, FontAwesome5 } from "@expo/vector-icons";
+import { FontAwesome, MaterialCommunityIcons, FontAwesome5, Ionicons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
+import { StatusBar } from "expo-status-bar";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useAlturaTecladoAndroid } from "../../hooks/useAlturaTecladoAndroid";
 import * as Font from 'expo-font';
 import AsyncStorage from "@react-native-async-storage/async-storage";
 // Mantenemos BASE_URL para referencias por defecto, pero usaremos URLS dinámicas
@@ -32,10 +35,13 @@ const API_URL = "https://back.carbycol.com/api/";
 
 export default function LoginScreen() {
   const navigation = useNavigation();
+  const insets = useSafeAreaInsets();
+  const tecladoAndroid = useAlturaTecladoAndroid();
   const { expoPushToken } = useNotification();
   const { showAlert } = useAlert();
 
   // --- ESTADOS DE UI ---
+  const [focusedField, setFocusedField] = useState(null);
   const [passwordVisible, setPasswordVisible] = useState(false);
   const [keyboardVisible, setKeyboardVisible] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -482,48 +488,63 @@ export default function LoginScreen() {
 
   // --- RENDER ---
 
-  if (!fontsLoaded) return <View style={{ flex: 1, backgroundColor: '#F2F2F7', justifyContent: 'center' }}><ActivityIndicator color="#fa6205" size="large" /></View>;
+  if (!fontsLoaded) return <View style={{ flex: 1, backgroundColor: C.brand, justifyContent: 'center' }}><ActivityIndicator color="#FFF" size="large" /></View>;
 
   return (
-    <KeyboardAvoidingView style={styles.keyboardAvoidingContainer} behavior={Platform.OS === "ios" ? "padding" : "height"}>
+    <View style={styles.screen}>
+    <KeyboardAvoidingView style={[styles.keyboardAvoidingContainer, { marginBottom: tecladoAndroid }]} behavior="padding" enabled={Platform.OS === "ios"}>
+      <StatusBar style="light" />
       <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
         <ScrollView ref={scrollViewRef} contentContainerStyle={styles.scrollContainer} showsVerticalScrollIndicator={false}>
-          <View style={styles.container}>
-            <Image source={require("../../assets/images/nuevo-icono.jpeg")} style={styles.logo} />
+          <View style={[styles.hero, keyboardVisible ? styles.heroTeclado : { paddingTop: insets.top + 32 }, keyboardVisible && { paddingTop: insets.top + 12 }]}>
+            {!keyboardVisible && <Image source={require("../../assets/images/carby-logo-blanco.png")} style={[styles.heroMarca, { top: insets.top - 30 }]} />}
+            {!keyboardVisible && <Image source={require("../../assets/images/carby-logo-blanco.png")} style={styles.logo} />}
+          </View>
+
+          <View style={[styles.container, { paddingBottom: insets.bottom + 24 }]}>
             <Text style={styles.subtitle}>Inicia sesión en tu cuenta</Text>
 
             <Text style={styles.inputLabel}>Email</Text>
-            <View style={styles.inputContainer}>
-              <FontAwesome name="user-o" size={20} color="#333" style={styles.icon} />
-              <TextInput style={styles.input} placeholder="Email" placeholderTextColor="#999" value={email} onChangeText={setEmail} autoCapitalize="none" keyboardType="email-address" />
+            <View style={[styles.inputContainer, focusedField === "email" && styles.inputFocused]}>
+              <View style={[styles.iconTile, focusedField === "email" && styles.iconTileFocused]}>
+                <Ionicons name="mail" size={18} color={focusedField === "email" ? C.surface : C.brand} />
+              </View>
+              <TextInput style={styles.input} placeholder="Email" placeholderTextColor="#A1A1AA" value={email} onChangeText={setEmail} autoCapitalize="none" keyboardType="email-address"
+                onFocus={() => setFocusedField("email")} onBlur={() => setFocusedField(null)} />
             </View>
 
-            <Text style={styles.inputLabel}>Contraseña</Text>
-            <View style={styles.inputContainer}>
-              <FontAwesome name="lock" size={20} color="#333" style={styles.icon} />
+            <View style={styles.labelRow}>
+              <Text style={styles.inputLabel}>Contraseña</Text>
+              {focusedField === "password" && <Text style={styles.labelHint}>Mínimo 9 caracteres</Text>}
+            </View>
+            <View style={[styles.inputContainer, focusedField === "password" && styles.inputFocused]}>
+              <View style={[styles.iconTile, focusedField === "password" && styles.iconTileFocused]}>
+                <Ionicons name="lock-closed" size={18} color={focusedField === "password" ? C.surface : C.brand} />
+              </View>
               <TextInput
-                ref={passwordRef} style={styles.input} placeholder="Contraseña" placeholderTextColor="#999" secureTextEntry={!passwordVisible}
+                ref={passwordRef} style={styles.input} placeholder="Contraseña" placeholderTextColor="#A1A1AA" secureTextEntry={!passwordVisible}
                 value={password} onChangeText={setPassword} onSubmitEditing={handleLogin}
+                onFocus={() => setFocusedField("password")} onBlur={() => setFocusedField(null)}
               />
-              <TouchableOpacity onPress={() => setPasswordVisible(!passwordVisible)}>
-                <FontAwesome name={passwordVisible ? "eye-slash" : "eye"} size={20} color="#666" />
+              <TouchableOpacity onPress={() => setPasswordVisible(!passwordVisible)} hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}>
+                <Ionicons name={passwordVisible ? "eye-off-outline" : "eye-outline"} size={20} color={C.muted} />
               </TouchableOpacity>
             </View>
-
-            <TouchableOpacity style={[styles.button, isLoading && styles.disabledButton]} onPress={handleLogin} disabled={isLoading}>
-              {isLoading ? <ActivityIndicator color="#000" size="small" /> : <Text style={styles.buttonText}>INGRESAR</Text>}
-            </TouchableOpacity>
 
             <View style={styles.forgotPasswordContainer}>
-              <TouchableOpacity onPress={() => setForgotModalVisible(true)}>
-                <Text style={{ color: "#fa6205", fontFamily: "Montserrat-Bold" }}>¿Olvidaste tu contraseña?</Text>
+              <TouchableOpacity onPress={() => setForgotModalVisible(true)} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+                <Text style={styles.forgotText}>¿Olvidaste tu contraseña?</Text>
               </TouchableOpacity>
             </View>
 
-            <View style={{ alignItems: "center", marginTop: 12 }}>
+            <TouchableOpacity style={[styles.button, isLoading && styles.disabledButton]} activeOpacity={0.8} onPress={handleLogin} disabled={isLoading}>
+              {isLoading ? <ActivityIndicator color="#FFF" size="small" /> : <Text style={styles.buttonText}>INGRESAR</Text>}
+            </TouchableOpacity>
+
+            <View style={styles.registerContainer}>
               <TouchableOpacity onPress={() => navigation.navigate("Register")}>
-                <Text style={{ color: "#1C1C1E", fontFamily: "Montserrat_600SemiBold", fontSize: 14 }}>
-                  ¿No tienes cuenta? <Text style={{ color: "#fa6205", fontFamily: "Montserrat_800ExtraBold" }}>Regístrate</Text>
+                <Text style={styles.registerText}>
+                  ¿No tienes cuenta? <Text style={styles.registerLink}>Regístrate</Text>
                 </Text>
               </TouchableOpacity>
             </View>
@@ -702,76 +723,95 @@ export default function LoginScreen() {
         </ScrollView>
       </TouchableWithoutFeedback>
     </KeyboardAvoidingView>
+    </View>
   );
 }
 
+const C = { brand: "#fa6205", brandEdge: "#C94E00", ink: "#1C1C1E", surface: "#FFF", muted: "#71717A", bg: "#F4F4F5", edge: "#E4E4E7", iconBg: "#FFF0E5" };
+
 const styles = StyleSheet.create({
-  keyboardAvoidingContainer: { flex: 1, backgroundColor: "#F2F2F7" },
-  scrollContainer: { flexGrow: 1, justifyContent: "center", paddingVertical: 20 },
-  container: { flex: 1, backgroundColor: "#F2F2F7", justifyContent: "center", alignItems: "center", paddingHorizontal: 20, minHeight: 550 },
-  logo: { width: 100, height: 100, resizeMode: "contain", borderRadius: 20, marginBottom: 10 },
+  screen: { flex: 1, backgroundColor: C.surface },
+  keyboardAvoidingContainer: { flex: 1, backgroundColor: C.surface },
+  scrollContainer: { flexGrow: 1, backgroundColor: C.surface },
+  hero: { alignItems: "center", justifyContent: "center", paddingBottom: 76, backgroundColor: C.brand, overflow: "hidden" },
+  heroTeclado: { paddingBottom: 48 },
+  heroMarca: { position: "absolute", right: -110, width: 340, height: 340, opacity: 0.14, resizeMode: "contain" },
+  container: { flex: 1, backgroundColor: C.surface, borderTopLeftRadius: 36, borderTopRightRadius: 36, marginTop: -36, paddingHorizontal: 24, paddingTop: 36 },
+  logo: { width: 148, height: 148, resizeMode: "contain" },
 
   // --- INPUTS LOGIN PRINCIPAL ---
-  inputLabel: { alignSelf: "flex-start", fontSize: 14, fontFamily: "Montserrat-Regular", color: "#444", marginBottom: 8, marginLeft: 4 },
+  inputLabel: { fontSize: 14, fontFamily: "Montserrat_700Bold", color: C.ink, marginBottom: 8, marginLeft: 4 },
+  labelRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "baseline" },
+  labelHint: { fontSize: 12, fontFamily: "Montserrat_400Regular", color: C.muted, marginBottom: 8, marginRight: 4 },
   inputContainer: {
     flexDirection: "row",
     alignItems: "center",
-    borderWidth: 1,
-    borderColor: "#DDD",
-    borderRadius: 12,
-    paddingHorizontal: 15,
+    borderWidth: 1.5,
+    borderColor: C.edge,
+    borderRadius: 999,
+    paddingLeft: 9,
+    paddingRight: 20,
     marginBottom: 20,
     width: "100%",
-    height: 55,
-    backgroundColor: "#FFFFFF" // Fondo oscuro para inputs principales
+    height: 60,
+    backgroundColor: C.surface
   },
+  inputFocused: { borderColor: C.brand },
+  iconTile: { width: 40, height: 40, borderRadius: 999, backgroundColor: C.iconBg, alignItems: "center", justifyContent: "center", marginRight: 12 },
+  iconTileFocused: { backgroundColor: C.brand },
   input: {
     flex: 1,
-    height: 50,
-    fontSize: 16,
-    color: '#1C1C1E',
-    fontFamily: "Montserrat-Regular"
+    height: 52,
+    fontSize: 15,
+    color: C.ink,
+    fontFamily: "Montserrat_400Regular"
   },
-  icon: { marginRight: 15, color: "#999" }, // Iconos gris claro
+  icon: { marginRight: 12 },
 
   // --- BOTONES ---
-  button: { backgroundColor: "#fa6205", paddingVertical: 12, borderRadius: 12, marginTop: 10, width: "100%", alignItems: "center", height: 55, justifyContent: "center" },
+  button: {
+    backgroundColor: C.brand, borderRadius: 999, width: "100%", alignItems: "center", height: 62, justifyContent: "center",
+    shadowColor: C.brand, shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.35, shadowRadius: 14, elevation: 8,
+  },
   disabledButton: { opacity: 0.6 },
-  buttonText: { color: "#F2F2F7", fontFamily: "Montserrat-Bold", fontSize: 16 },
-  forgotPasswordContainer: { flexDirection: "row", justifyContent: "center", marginTop: 20 },
+  buttonText: { color: C.surface, fontFamily: "Montserrat_700Bold", fontSize: 17, letterSpacing: 1 },
+  forgotPasswordContainer: { alignItems: "flex-end", marginTop: -8, marginBottom: 24 },
+  forgotText: { color: C.brand, fontFamily: "Montserrat_700Bold", fontSize: 13 },
+  registerContainer: { alignItems: "center", marginTop: "auto", paddingTop: 32 },
+  registerText: { color: C.muted, fontFamily: "Montserrat_400Regular", fontSize: 14 },
+  registerLink: { color: C.brand, fontFamily: "Montserrat_800ExtraBold" },
 
   // --- HEADER ---
-  subtitle: { textAlign: "center", marginBottom: 25, fontSize: 16, marginTop: 5, color: "#555", fontFamily: "Montserrat-Regular" },
+  subtitle: { marginBottom: 28, fontSize: 30, lineHeight: 36, color: C.ink, fontFamily: "Montserrat_800ExtraBold" },
   backButton: { position: 'absolute', top: 60, left: 20, flexDirection: 'row', alignItems: 'center', zIndex: 10 },
   backButtonText: { color: '#1C1C1E', fontSize: 16, marginLeft: 8, fontFamily: "Montserrat-Bold" },
 
   // --- MODALES (ESTILOS MEJORADOS) ---
-  modalOverlay: { flex: 1, backgroundColor: "rgba(0,0,0,0.85)", justifyContent: "center", alignItems: "center", padding: 20 },
-  modalContainer: { backgroundColor: "#FFFFFF", borderRadius: 20, padding: 25, width: "100%", maxWidth: 380, alignItems: "center", borderWidth: 1, borderColor: "#DDD" },
-  modalIconContainer: { marginBottom: 15, backgroundColor: 'rgba(250, 98, 5, 0.1)', padding: 15, borderRadius: 50 },
-  modalTitle: { fontSize: 20, fontFamily: "Montserrat-Bold", color: '#1C1C1E', marginBottom: 10, textAlign: "center" },
-  modalText: { fontSize: 14, fontFamily: "Montserrat-Regular", color: "#CCC", marginBottom: 20, textAlign: "center", lineHeight: 20 },
+  modalOverlay: { flex: 1, backgroundColor: "rgba(0,0,0,0.5)", justifyContent: "center", alignItems: "center", padding: 20 },
+  modalContainer: { backgroundColor: C.surface, borderRadius: 28, padding: 24, width: "100%", maxWidth: 380, alignItems: "center" },
+  modalIconContainer: { marginBottom: 16, backgroundColor: "#FFF0E5", padding: 16, borderRadius: 20 },
+  modalTitle: { fontSize: 20, fontFamily: "Montserrat_800ExtraBold", color: C.ink, marginBottom: 8, textAlign: "center" },
+  modalText: { fontSize: 14, fontFamily: "Montserrat_400Regular", color: C.muted, marginBottom: 20, textAlign: "center", lineHeight: 20 },
 
-  // ESTILO DE INPUT DENTRO DEL MODAL
   modalInput: {
-    backgroundColor: "#F2F2F7", // Fondo más oscuro que el modal
-    borderWidth: 1,
-    borderColor: "#555",
-    borderRadius: 12,
-    color: '#1C1C1E', // Texto Blanco
+    backgroundColor: C.bg,
+    borderWidth: 1.5,
+    borderColor: C.bg,
+    borderRadius: 16,
+    color: C.ink,
     width: "100%",
-    height: 50,
-    paddingHorizontal: 15,
-    marginBottom: 15,
-    fontSize: 16,
-    fontFamily: "Montserrat-Regular"
+    height: 56,
+    paddingHorizontal: 16,
+    marginBottom: 12,
+    fontSize: 15,
+    fontFamily: "Montserrat_400Regular"
   },
 
-  modalButtonsContainer: { flexDirection: "row", justifyContent: "space-between", width: "100%", marginTop: 10, gap: 12 },
-  cancelButton: { backgroundColor: "#DDD", paddingVertical: 14, borderRadius: 12, flex: 1, alignItems: "center" },
-  cancelButtonText: { color: '#1C1C1E', fontFamily: "Montserrat-Bold", fontSize: 15 },
-  confirmButton: { backgroundColor: "#fa6205", paddingVertical: 14, borderRadius: 12, flex: 1, alignItems: "center" },
-  confirmButtonText: { color: "#F2F2F7", fontFamily: "Montserrat-Bold", fontSize: 15 },
+  modalButtonsContainer: { flexDirection: "row", justifyContent: "space-between", width: "100%", marginTop: 8, gap: 12 },
+  cancelButton: { backgroundColor: C.bg, borderRadius: 16, height: 54, justifyContent: "center", flex: 1, alignItems: "center" },
+  cancelButtonText: { color: C.ink, fontFamily: "Montserrat_700Bold", fontSize: 15 },
+  confirmButton: { backgroundColor: C.brand, borderRadius: 16, height: 54, justifyContent: "center", flex: 1, alignItems: "center", shadowColor: "#fa6205", shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.35, shadowRadius: 16, elevation: 8 },
+  confirmButtonText: { color: C.surface, fontFamily: "Montserrat_700Bold", fontSize: 15 },
 
   extraSpace: { height: 30 },
 });

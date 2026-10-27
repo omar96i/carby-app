@@ -1,23 +1,19 @@
-import React, { useEffect, useRef, useState } from "react";
+import React from "react";
 import {
   View,
   Text,
   TextInput,
   TouchableOpacity,
-  ScrollView,
+  FlatList,
   ActivityIndicator,
   StyleSheet,
   Modal,
   KeyboardAvoidingView,
-  Keyboard,
-  Dimensions,
-  useWindowDimensions,
   Platform,
-  Animated,
-  Easing,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
+import { useAlturaTecladoAndroid } from "../../../hooks/useAlturaTecladoAndroid";
 
 export default function SearchModal({
   visible,
@@ -35,360 +31,268 @@ export default function SearchModal({
     ? suggestions
     : (recentLocations || []).map((r) => ({ ...r, recent: true }));
 
-  const pulseAnim = useRef(new Animated.Value(0)).current;
   const insets = useSafeAreaInsets();
-  const windowHeight = useWindowDimensions().height;
-  const [keyboardHeight, setKeyboardHeight] = useState(0);
+  const tecladoAndroid = useAlturaTecladoAndroid();
 
-  useEffect(() => {
-    const show = Keyboard.addListener("keyboardDidShow", (e) => setKeyboardHeight(e.endCoordinates?.height || 0));
-    const hide = Keyboard.addListener("keyboardDidHide", () => setKeyboardHeight(0));
-    return () => { show.remove(); hide.remove(); };
-  }, []);
-
-  // Offset manual solo en Android sin resize (Expo Go). En iOS lo maneja el KAV interno.
-  const windowShrunk = Dimensions.get("screen").height - windowHeight > 50;
-  const manualOffset = Platform.OS === "android" && !windowShrunk ? keyboardHeight : 0;
-
-  useEffect(() => {
-    if (!visible) {
-      pulseAnim.setValue(0);
-      return;
-    }
-    const animation = Animated.loop(
-      Animated.sequence([
-        Animated.timing(pulseAnim, { toValue: 1, duration: 700, easing: Easing.out(Easing.ease), useNativeDriver: false }),
-        Animated.timing(pulseAnim, { toValue: 1, duration: 300, useNativeDriver: false }),
-        Animated.timing(pulseAnim, { toValue: 0, duration: 1400, easing: Easing.in(Easing.ease), useNativeDriver: false }),
-        Animated.timing(pulseAnim, { toValue: 0, duration: 2500, useNativeDriver: false }),
-      ])
-    );
-    animation.start();
-    return () => animation.stop();
-  }, [visible, pulseAnim]);
-
-  const orangeOpacity = pulseAnim.interpolate({
-    inputRange: [0, 0.5, 1],
-    outputRange: [0, 1, 0],
-  });
+  const renderItem = ({ item }) => (
+    <TouchableOpacity style={styles.sugItem} onPress={() => onSelectSuggestion(item)} activeOpacity={0.7}>
+      <View style={styles.sugIconBox}>
+        <Ionicons name={item.recent ? "time-outline" : "location-outline"} size={18} color="#1C1C1E" />
+      </View>
+      <View style={styles.sugText}>
+        <Text style={styles.sugName} numberOfLines={1}>
+          {item.description || item.title || "Ubicacion"}
+        </Text>
+        {item.structured_formatting?.secondary_text ? (
+          <Text style={styles.sugSub} numberOfLines={1}>
+            {item.structured_formatting.secondary_text}
+          </Text>
+        ) : null}
+      </View>
+      <Ionicons name="arrow-forward" size={16} color="#D4D4D8" />
+    </TouchableOpacity>
+  );
 
   return (
-    <Modal visible={visible} animationType="slide" transparent>
-      <View style={styles.overlay}>
-        <View style={[styles.sheet, { marginBottom: manualOffset, maxHeight: windowHeight * 0.9 - manualOffset, paddingBottom: 24 + insets.bottom }]}>
-        <KeyboardAvoidingView
-          behavior={Platform.OS === "ios" ? "padding" : undefined}
-        >
-          <View style={styles.handle} />
-
+    <Modal visible={visible} animationType="slide" statusBarTranslucent navigationBarTranslucent onRequestClose={onClose}>
+      <KeyboardAvoidingView style={styles.flex} behavior="padding" enabled={Platform.OS === "ios"}>
+        <View style={[styles.screen, { paddingTop: insets.top + 8, paddingBottom: tecladoAndroid || insets.bottom }]}>
           <View style={styles.header}>
-            <View style={styles.headerLeft}>
-              <View style={styles.headerIcon}>
-                <View style={[styles.iconLayer, styles.grayLayer]}>
-                  <Ionicons name="location" size={20} color="#0F172A" />
-                </View>
-                <Animated.View style={[styles.iconLayer, styles.orangeLayer, { opacity: orangeOpacity }]}>
-                  <Ionicons name="location" size={20} color="#FFFFFF" />
-                </Animated.View>
-              </View>
-              <View>
-                <Text style={styles.headerTitle}>¿A donde vamos?</Text>
-                <Text style={styles.headerSub}>Selecciona o escribe tu destino</Text>
-              </View>
-            </View>
-            <TouchableOpacity style={styles.closeBtn} onPress={onClose}>
-              <Ionicons name="close" size={18} color="#475569" />
+            <TouchableOpacity style={styles.closeBtn} onPress={onClose} activeOpacity={0.8}>
+              <Ionicons name="arrow-back" size={20} color="#1C1C1E" />
             </TouchableOpacity>
+            <View style={styles.headerText}>
+              <Text style={styles.headerTitle}>¿A donde vamos?</Text>
+              <Text style={styles.headerSub}>Selecciona o escribe tu destino</Text>
+            </View>
           </View>
 
-          <View style={styles.stopsBox}>
+          <View style={styles.route}>
+            <View style={styles.routeLine} />
             <View style={styles.stop}>
-              <View style={[styles.dot, { backgroundColor: "#10B981" }]} />
-              <Text style={styles.stopInput} numberOfLines={1}>
+              <View style={styles.dotOrigin} />
+              <Text style={styles.stopText} numberOfLines={1}>
                 {origin || "Mi ubicacion actual"}
               </Text>
             </View>
-            <View style={[styles.stop, styles.stopActive]}>
-              <View style={[styles.dot, { backgroundColor: "#FF5500" }]} />
+            <View style={styles.routeSep} />
+            <View style={styles.stop}>
+              <View style={styles.dotDest} />
               <TextInput
-                style={styles.stopInputEditable}
+                style={styles.stopInput}
                 placeholder="Buscar direccion, lugar o barrio..."
-                placeholderTextColor="#94A3B8"
+                placeholderTextColor="#A1A1AA"
                 value={destination}
                 onChangeText={onDestinationChange}
                 autoFocus
               />
               {destination ? (
-                <TouchableOpacity onPress={() => onDestinationChange("")} style={styles.clearBtn}>
-                  <Ionicons name="close" size={12} color="#64748B" />
+                <TouchableOpacity onPress={() => onDestinationChange("")} style={styles.clearBtn} activeOpacity={0.8}>
+                  <Ionicons name="close" size={13} color="#71717A" />
                 </TouchableOpacity>
               ) : null}
             </View>
           </View>
 
-          <View style={styles.actionsBar}>
-            <TouchableOpacity style={styles.actionPillPrimary} onPress={onSelectMapPin}>
-              <Ionicons name="map-outline" size={14} color="#FFFFFF" />
-              <Text style={styles.actionPillPrimaryText}>Fijar en el mapa</Text>
-            </TouchableOpacity>
-          </View>
+          <TouchableOpacity style={styles.mapRow} onPress={onSelectMapPin} activeOpacity={0.7}>
+            <View style={styles.mapIcon}>
+              <Ionicons name="map" size={17} color="#fa6205" />
+            </View>
+            <Text style={styles.mapText}>Fijar en el mapa</Text>
+            <Ionicons name="chevron-forward" size={16} color="#A1A1AA" />
+          </TouchableOpacity>
 
           <Text style={styles.sectionLabel}>
             {suggestions && suggestions.length > 0 ? "Resultados" : "Destinos recientes"}
           </Text>
 
           {isSearching ? (
-            <ActivityIndicator size="small" color="#FF5500" style={{ marginTop: 20 }} />
+            <ActivityIndicator size="small" color="#fa6205" style={styles.loading} />
           ) : (
-            <ScrollView style={styles.sugsList} showsVerticalScrollIndicator={false}>
-              {displayList.map((item, idx) => (
-                <TouchableOpacity
-                  key={item.place_id || idx}
-                  style={styles.sugItem}
-                  onPress={() => onSelectSuggestion(item)}
-                  activeOpacity={0.7}
-                >
-                  <View style={styles.sugIconBox}>
-                    <Ionicons name="location-outline" size={16} color="#334155" />
-                  </View>
-                  <View style={{ flex: 1 }}>
-                    <Text style={styles.sugName} numberOfLines={1}>
-                      {item.description || item.title || "Ubicacion"}
-                    </Text>
-                    {item.structured_formatting?.secondary_text ? (
-                      <Text style={styles.sugSub} numberOfLines={1}>
-                        {item.structured_formatting.secondary_text}
-                      </Text>
-                    ) : null}
-                  </View>
-                  {item.recent && (
-                    <Ionicons name="time-outline" size={14} color="#94A3B8" />
-                  )}
-                </TouchableOpacity>
-              ))}
-              {displayList.length === 0 && !isSearching && (
-                <Text style={styles.emptyText}>Sin resultados</Text>
-              )}
-            </ScrollView>
+            <FlatList
+              style={styles.flex}
+              data={displayList}
+              keyExtractor={(item, idx) => String(item.place_id || idx)}
+              renderItem={renderItem}
+              ItemSeparatorComponent={() => <View style={styles.separator} />}
+              keyboardShouldPersistTaps="handled"
+              showsVerticalScrollIndicator={false}
+              ListEmptyComponent={<Text style={styles.emptyText}>Sin resultados</Text>}
+            />
           )}
-        </KeyboardAvoidingView>
         </View>
-      </View>
+      </KeyboardAvoidingView>
     </Modal>
   );
 }
 
+const C = { brand: "#fa6205", ink: "#1C1C1E", surface: "#FFF", muted: "#71717A", bg: "#F4F4F5", edge: "#E4E4E7", iconBg: "#FFF0E5", green: "#10B981", placeholder: "#A1A1AA" };
+
 const styles = StyleSheet.create({
-  overlay: {
+  flex: { flex: 1 },
+  screen: {
     flex: 1,
-    backgroundColor: "rgba(15,23,42,0.45)",
-    justifyContent: "flex-end",
+    backgroundColor: C.surface,
+    paddingHorizontal: 16,
   },
-  sheet: {
-    backgroundColor: "#FFFFFF",
-    borderTopLeftRadius: 28,
-    borderTopRightRadius: 28,
-    paddingHorizontal: 20,
-    paddingTop: 8,
-    paddingBottom: 24,
-    maxHeight: "90%",
-  },
-  handle: {
-    width: 44,
-    height: 5,
-    borderRadius: 3,
-    backgroundColor: "#FF5500",
-    alignSelf: "center",
-    marginBottom: 14,
-  },
+
   header: {
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "space-between",
+    gap: 12,
     marginBottom: 16,
   },
-  headerLeft: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 12,
-  },
-  headerIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: 12,
+  closeBtn: {
+    width: 42,
+    height: 42,
+    borderRadius: 21,
+    backgroundColor: C.bg,
     justifyContent: "center",
     alignItems: "center",
   },
-  iconLayer: {
-    ...StyleSheet.absoluteFillObject,
-    borderRadius: 12,
-    justifyContent: "center",
-    alignItems: "center",
-    borderWidth: 1,
-  },
-  grayLayer: {
-    backgroundColor: "#F1F5F9",
-    borderColor: "#E2E8F0",
-  },
-  orangeLayer: {
-    backgroundColor: "#FF5500",
-    borderColor: "#FF5500",
-  },
+  headerText: { flex: 1 },
   headerTitle: {
     fontSize: 19,
-    fontFamily: "MontserratBold",
-    fontWeight: "bold",
-    color: "#0F172A",
+    fontFamily: "Montserrat_800ExtraBold",
+    color: C.ink,
   },
   headerSub: {
-    fontSize: 12,
-    fontFamily: "MontserratBold",
-    fontWeight: "bold",
-    color: "#64748B",
+    fontSize: 12.5,
+    fontFamily: "Montserrat_400Regular",
+    color: C.muted,
     marginTop: 1,
   },
-  closeBtn: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: "#F1F5F9",
-    borderWidth: 1,
-    borderColor: "#E2E8F0",
-    justifyContent: "center",
-    alignItems: "center",
+
+  route: {
+    backgroundColor: C.bg,
+    borderRadius: 22,
+    paddingHorizontal: 16,
+    paddingVertical: 4,
+    marginBottom: 6,
   },
-  stopsBox: {
-    backgroundColor: "#F8FAFC",
-    borderWidth: 1.5,
-    borderColor: "#E2E8F0",
-    borderRadius: 20,
-    padding: 12,
-    gap: 10,
-    marginBottom: 14,
+  routeLine: {
+    position: "absolute",
+    left: 20.5,
+    top: 30,
+    bottom: 30,
+    width: 2,
+    borderRadius: 1,
+    backgroundColor: "#D4D4D8",
   },
   stop: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#FFFFFF",
-    borderWidth: 1.5,
-    borderColor: "#E2E8F0",
-    borderRadius: 14,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    gap: 12,
+    gap: 14,
+    minHeight: 50,
   },
-  stopActive: {
-    borderColor: "#FF5500",
-    shadowColor: "#FF5500",
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.08,
-    shadowRadius: 10,
-    elevation: 2,
+  routeSep: {
+    height: StyleSheet.hairlineWidth,
+    backgroundColor: "#D4D4D8",
+    marginLeft: 25,
   },
-  dot: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
+  dotOrigin: {
+    width: 11,
+    height: 11,
+    borderRadius: 6,
+    backgroundColor: C.green,
+    borderWidth: 2,
+    borderColor: C.surface,
+  },
+  dotDest: {
+    width: 11,
+    height: 11,
+    borderRadius: 3,
+    backgroundColor: C.brand,
+    borderWidth: 2,
+    borderColor: C.surface,
+  },
+  stopText: {
+    flex: 1,
+    fontSize: 14,
+    fontFamily: "Montserrat_600SemiBold",
+    color: C.muted,
   },
   stopInput: {
     flex: 1,
-    fontSize: 14,
-    fontFamily: "MontserratBold",
-    fontWeight: "bold",
-    color: "#0F172A",
-  },
-  stopInputEditable: {
-    flex: 1,
-    fontSize: 14,
-    fontFamily: "MontserratBold",
-    fontWeight: "bold",
-    color: "#0F172A",
-    padding: 0,
+    fontSize: 15,
+    fontFamily: "Montserrat_700Bold",
+    color: C.ink,
+    paddingVertical: 12,
   },
   clearBtn: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    backgroundColor: "#F1F5F9",
-    borderWidth: 1,
-    borderColor: "#E2E8F0",
+    width: 26,
+    height: 26,
+    borderRadius: 13,
+    backgroundColor: C.surface,
     justifyContent: "center",
     alignItems: "center",
   },
-  actionsBar: {
+
+  mapRow: {
     flexDirection: "row",
-    gap: 10,
-    marginBottom: 16,
+    alignItems: "center",
+    gap: 12,
+    paddingVertical: 12,
   },
-  actionPillPrimary: {
+  mapIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: C.iconBg,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  mapText: {
     flex: 1,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 8,
-    backgroundColor: "#0F172A",
-    borderRadius: 14,
-    paddingVertical: 10,
-    paddingHorizontal: 12,
+    fontSize: 15,
+    fontFamily: "Montserrat_700Bold",
+    color: C.ink,
   },
-  actionPillPrimaryText: {
-    fontSize: 13,
-    fontFamily: "MontserratBold",
-    fontWeight: "bold",
-    color: "#FFFFFF",
-  },
+
   sectionLabel: {
-    fontSize: 11,
-    fontFamily: "MontserratBold",
-    fontWeight: "bold",
-    color: "#94A3B8",
-    letterSpacing: 1.2,
-    textTransform: "uppercase",
-    marginBottom: 10,
+    fontSize: 13,
+    fontFamily: "Montserrat_700Bold",
+    color: C.muted,
+    marginTop: 6,
+    marginBottom: 2,
   },
-  sugsList: {
-    maxHeight: 280,
-  },
+  loading: { marginTop: 24 },
   sugItem: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 14,
+    gap: 12,
     paddingVertical: 12,
-    paddingHorizontal: 14,
-    backgroundColor: "#FFFFFF",
-    borderWidth: 1.5,
-    borderColor: "#E2E8F0",
-    borderRadius: 16,
-    marginBottom: 8,
   },
   sugIconBox: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
-    backgroundColor: "#F1F5F9",
-    borderWidth: 1.5,
-    borderColor: "#E2E8F0",
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: C.bg,
     justifyContent: "center",
     alignItems: "center",
   },
+  sugText: { flex: 1 },
   sugName: {
-    fontSize: 14,
-    fontFamily: "MontserratBold",
-    fontWeight: "bold",
-    color: "#0F172A",
+    fontSize: 14.5,
+    fontFamily: "Montserrat_700Bold",
+    color: C.ink,
   },
   sugSub: {
-    fontSize: 12,
-    fontFamily: "MontserratBold",
-    fontWeight: "bold",
-    color: "#64748B",
+    fontSize: 12.5,
+    fontFamily: "Montserrat_400Regular",
+    color: C.muted,
     marginTop: 2,
   },
+  separator: {
+    height: StyleSheet.hairlineWidth,
+    backgroundColor: C.edge,
+    marginLeft: 52,
+  },
   emptyText: {
-    fontSize: 13,
-    fontFamily: "MontserratRegular",
-    color: "#94A3B8",
+    fontSize: 13.5,
+    fontFamily: "Montserrat_600SemiBold",
+    color: C.placeholder,
     textAlign: "center",
-    paddingVertical: 20,
+    paddingVertical: 24,
   },
 });

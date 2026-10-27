@@ -1,13 +1,23 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { View, Text, Image, TouchableOpacity, StyleSheet, ActivityIndicator, ScrollView } from "react-native";
 import { useNavigation } from "@react-navigation/native";
-import FontAwesome6 from 'react-native-vector-icons/FontAwesome6';
+import { StatusBar } from "expo-status-bar";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import { Montserrat_400Regular, Montserrat_700Bold } from '@expo-google-fonts/montserrat';
 import { useFonts } from 'expo-font';
+import { C } from "../../components/registro/RegistroUI";
+
+const OPCIONES = [
+  { ruta: "RegisterUser", titulo: "CLIENTE", descripcion: "Pide lo que necesitas y recíbelo en minutos.", icono: "account" },
+  { ruta: "RegisterDomiciliary", titulo: "DELIVERY O PARTICULAR", descripcion: "Genera ingresos con envíos o transporte.", icono: "steering" },
+  { ruta: "Comercio", titulo: "COMERCIO ALIADO", descripcion: "Vende tus productos y recibe pagos directos.", icono: "storefront" },
+];
 
 export default function RegisterScreen() {
   const navigation = useNavigation();
+  const insets = useSafeAreaInsets();
+  const [elegida, setElegida] = useState(null);
   const [fontsLoaded] = useFonts({
     Montserrat_400Regular,
     Montserrat_700Bold,
@@ -16,81 +26,69 @@ export default function RegisterScreen() {
   if (!fontsLoaded) {
     return (
       <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#fa6205" />
+        <ActivityIndicator size="large" color={C.brand} />
       </View>
     );
   }
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { paddingTop: insets.top + 8 }]}>
+      <StatusBar style="dark" />
+      <Image source={require("../../assets/images/carby-logo-blanco.png")} style={[styles.marca, { top: insets.top - 20 }]} />
+
       {/* Botón Atrás */}
-      <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
-        <MaterialCommunityIcons name="arrow-left" color="#1C1C1E" size={24} />
+      <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+        <MaterialCommunityIcons name="arrow-left" color={C.ink} size={22} />
       </TouchableOpacity>
 
       <ScrollView
         contentContainerStyle={styles.scrollViewContent}
         showsVerticalScrollIndicator={false}
       >
-        <Image source={require("../../assets/images/nuevo-icono.jpeg")} style={styles.logo} />
+        <View style={styles.logo}>
+          <Image source={require("../../assets/images/carby-logo-blanco.png")} style={styles.logoImage} />
+        </View>
 
         <Text style={styles.title}>¿Cómo te quieres registrar?</Text>
         <Text style={styles.subtitle}>Elige la opción que mejor se adapte a ti.</Text>
 
-        {/* --- OPCIÓN 1: CLIENTE --- */}
-        <TouchableOpacity 
-          style={styles.cardButton} 
-          onPress={() => navigation.navigate("RegisterUser")}
-          activeOpacity={0.7}
-        >
-          {/* Icono a la izquierda para coincidir con tu otra pantalla */}
-          <FontAwesome6 name="user-large" size={28} color="#fa6205" style={styles.iconLeft} />
-          
-          <View style={styles.textContainer}>
-            <Text style={styles.cardTitle}>CLIENTE</Text>
-            <Text style={styles.cardDescription}>
-              Pide lo que necesitas y recíbelo en minutos.
-            </Text>
-          </View>
-        </TouchableOpacity>
+        {OPCIONES.map((op) => {
+          const on = elegida === op.ruta;
+          return (
+            <TouchableOpacity
+              key={op.ruta}
+              style={[styles.cardButton, on && styles.cardButtonOn]}
+              onPress={() => setElegida(op.ruta)}
+              activeOpacity={0.8}
+            >
+              <View style={[styles.iconBox, on && styles.iconBoxOn]}>
+                <MaterialCommunityIcons name={op.icono} size={26} color={on ? C.surface : C.brand} />
+              </View>
 
-        {/* --- OPCIÓN 2: DELIVERY / PARTICULAR --- */}
-        <TouchableOpacity 
-          style={styles.cardButton} 
-          onPress={() => navigation.navigate("RegisterDomiciliary")}
-          activeOpacity={0.7}
-        >
-          <Image
-            source={require('../../assets/images/llanta.png')}
-            style={styles.iconImage}
-            resizeMode="contain"
-          />
-          
-          <View style={styles.textContainer}>
-            <Text style={styles.cardTitle}>DELIVERY O PARTICULAR</Text>
-            <Text style={styles.cardDescription}>
-              Genera ingresos con envíos o transporte.
-            </Text>
-          </View>
-        </TouchableOpacity>
+              <View style={styles.textContainer}>
+                <Text style={styles.cardTitle}>{op.titulo}</Text>
+                <Text style={styles.cardDescription}>{op.descripcion}</Text>
+              </View>
 
-        {/* --- OPCIÓN 3: COMERCIO --- */}
-        <TouchableOpacity 
-          style={styles.cardButton} 
-          onPress={() => navigation.navigate("Comercio")}
-          activeOpacity={0.7}
-        >
-          <FontAwesome6 name="shop" size={26} color="#fa6205" style={styles.iconLeft} />
-          
-          <View style={styles.textContainer}>
-            <Text style={styles.cardTitle}>COMERCIO ALIADO</Text>
-            <Text style={styles.cardDescription}>
-              Vende tus productos y recibe pagos directos.
-            </Text>
-          </View>
-        </TouchableOpacity>
-
+              <View style={[styles.radio, on && styles.radioOn]}>
+                {on && <MaterialCommunityIcons name="check" size={15} color={C.surface} />}
+              </View>
+            </TouchableOpacity>
+          );
+        })}
       </ScrollView>
+
+      <View style={[styles.footer, { paddingBottom: insets.bottom + 16 }]}>
+        <TouchableOpacity
+          style={[styles.button, !elegida && styles.buttonOff]}
+          disabled={!elegida}
+          activeOpacity={0.8}
+          onPress={() => navigation.navigate(elegida)}
+        >
+          <Text style={styles.buttonText}>Continuar</Text>
+          <MaterialCommunityIcons name="arrow-right" size={20} color={C.surface} style={{ marginLeft: 8 }} />
+        </TouchableOpacity>
+      </View>
     </View>
   );
 }
@@ -100,87 +98,156 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: "#F2F2F7", // Color de fondo actualizado
+    backgroundColor: C.bg,
   },
   container: {
     flex: 1,
-    backgroundColor: "#F2F2F7", // Color de fondo actualizado
+    backgroundColor: C.bg,
   },
   scrollViewContent: {
     flexGrow: 1,
+    justifyContent: "center",
     alignItems: "center",
-    paddingHorizontal: 20,
-    paddingTop: 80,
-    paddingBottom: 40,
+    paddingHorizontal: 18,
+    paddingTop: 8,
+    paddingBottom: 16,
+  },
+  marca: {
+    position: "absolute",
+    right: -80,
+    width: 260,
+    height: 260,
+    resizeMode: "contain",
+    tintColor: "#E9E9EC",
   },
   backButton: {
-    position: "absolute",
-    top: 50,
-    left: 20,
-    padding: 8,
-    borderRadius: 20,
-    zIndex: 10,
-    backgroundColor: 'rgba(255,255,255,0.1)',
+    marginLeft: 20,
+    width: 40,
+    height: 40,
+    borderRadius: 999,
+    backgroundColor: C.surface,
+    alignItems: "center",
+    justifyContent: "center",
   },
   logo: {
-    width: 100,
-    height: 100,
+    width: 76,
+    height: 76,
+    borderRadius: 24,
+    backgroundColor: C.brand,
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 18,
+    shadowColor: C.brand,
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.3,
+    shadowRadius: 16,
+    elevation: 8,
+  },
+  logoImage: {
+    width: 52,
+    height: 52,
     resizeMode: "contain",
-    marginBottom: 20,
-    borderRadius: 20,
   },
   title: {
-    fontSize: 22,
-    fontFamily: "Montserrat_700Bold",
+    fontSize: 24,
+    lineHeight: 30,
+    fontFamily: "Montserrat_800ExtraBold",
     textAlign: "center",
-    color: "#1C1C1E",
-    marginBottom: 5,
+    color: C.ink,
+    marginBottom: 6,
   },
   subtitle: {
-    fontSize: 15,
+    fontSize: 14,
     fontFamily: "Montserrat_400Regular",
     textAlign: "center",
-    color: "#A0A0A0", // Gris de tu paleta
-    marginBottom: 40,
+    color: C.muted,
+    marginBottom: 24,
   },
-  
   cardButton: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#FFFFFF", // Fondo de tarjeta gris oscuro
-    borderWidth: 1.5,
-    borderColor: "#DDDDDD", // Borde gris medio
-    borderRadius: 12,
+    backgroundColor: C.surface,
+    borderWidth: 2,
+    borderColor: C.surface,
+    borderRadius: 24,
     width: "100%",
-    padding: 20,
-    marginBottom: 20,
+    padding: 16,
+    marginBottom: 12,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 6,
+    elevation: 2,
+  },
+  cardButtonOn: {
+    borderColor: C.brand,
+    backgroundColor: "#FFF8F3",
+  },
+  iconBox: {
+    width: 50,
+    height: 50,
+    borderRadius: 16,
+    backgroundColor: C.iconBg,
+    alignItems: "center",
+    justifyContent: "center",
+    marginRight: 14,
+  },
+  iconBoxOn: {
+    backgroundColor: C.brand,
   },
   textContainer: {
     flex: 1,
   },
-  iconLeft: {
-    marginRight: 20,
-    width: 32, // Ancho fijo para alinear textos verticalmente
-    textAlign: 'center',
-  },
-  iconImage: {
-    width: 30,
-    height: 30,
-    marginRight: 20,
-    tintColor: "#fa6205", // TRUCO: Pintamos la imagen de la llanta del color verde neón
-  },
   cardTitle: {
-    color: "#1C1C1E",
-    fontFamily: "Montserrat_700Bold", // Usando tu fuente Montserrat
-    fontSize: 16,
-    letterSpacing: 0.5,
-    marginBottom: 4,
-    textTransform: 'uppercase', // Para que se vea como "CLIENTE"
+    color: C.ink,
+    fontFamily: "Montserrat_800ExtraBold",
+    fontSize: 14,
+    letterSpacing: 0.3,
+    marginBottom: 3,
   },
   cardDescription: {
-    color: "#A0A0A0",
+    color: C.muted,
     fontFamily: "Montserrat_400Regular",
-    fontSize: 13,
-    lineHeight: 18,
+    fontSize: 12.5,
+    lineHeight: 17,
+  },
+  radio: {
+    width: 24,
+    height: 24,
+    borderRadius: 999,
+    borderWidth: 2,
+    borderColor: C.edge,
+    alignItems: "center",
+    justifyContent: "center",
+    marginLeft: 10,
+  },
+  radioOn: {
+    borderColor: C.brand,
+    backgroundColor: C.brand,
+  },
+  footer: {
+    paddingHorizontal: 18,
+    paddingTop: 8,
+  },
+  button: {
+    height: 58,
+    borderRadius: 999,
+    backgroundColor: C.brand,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    shadowColor: C.brand,
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.3,
+    shadowRadius: 14,
+    elevation: 6,
+  },
+  buttonOff: {
+    opacity: 0.45,
+  },
+  buttonText: {
+    color: C.surface,
+    fontFamily: "Montserrat_700Bold",
+    fontSize: 16,
   },
 });

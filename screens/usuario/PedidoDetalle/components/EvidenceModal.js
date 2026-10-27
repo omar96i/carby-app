@@ -83,7 +83,7 @@ export const EvidenceModal = ({ visible, pedidoId, qrUrl, onClose, onUploaded })
             <View style={styles.spacer} />
             <View style={styles.handle} />
             <TouchableOpacity onPress={onClose} style={styles.closeBtn} activeOpacity={0.8}>
-              <Feather name="x" size={20} color="#64748B" />
+              <Feather name="x" size={20} color="#71717A" />
             </TouchableOpacity>
           </View>
 
@@ -96,13 +96,13 @@ export const EvidenceModal = ({ visible, pedidoId, qrUrl, onClose, onUploaded })
             </View>
           ) : (
             <View style={[styles.qrBox, styles.qrEmpty]}>
-              <Feather name="image" size={32} color="#CBD5E1" />
+              <Feather name="image" size={32} color="#D4D4D8" />
               <Text style={styles.qrEmptyText}>QR no disponible</Text>
             </View>
           )}
 
           <TouchableOpacity style={styles.pickBtn} onPress={pickImage} activeOpacity={0.8}>
-            <Feather name="image" size={18} color="#FF5500" />
+            <Feather name="image" size={18} color="#fa6205" />
             <Text style={styles.pickBtnText}>{image ? "Cambiar imagen" : "Adjuntar captura"}</Text>
           </TouchableOpacity>
 
@@ -136,7 +136,7 @@ export const EvidenceModal = ({ visible, pedidoId, qrUrl, onClose, onUploaded })
 const styles = StyleSheet.create({
   backdrop: {
     flex: 1,
-    backgroundColor: "rgba(15,23,42,0.4)",
+    backgroundColor: "rgba(28,28,30,0.4)",
     justifyContent: "flex-end",
   },
   sheet: {
@@ -160,27 +160,26 @@ const styles = StyleSheet.create({
     width: 44,
     height: 5,
     borderRadius: 3,
-    backgroundColor: "#E2E8F0",
+    backgroundColor: "#E4E4E7",
   },
   closeBtn: {
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: "#F1F5F9",
+    backgroundColor: "#F4F4F5",
     justifyContent: "center",
     alignItems: "center",
   },
   title: {
     fontSize: 18,
-    fontFamily: "MontserratBold",
-    fontWeight: "bold",
-    color: "#0F172A",
+    fontFamily: "Montserrat_700Bold",
+    color: "#1C1C1E",
     marginTop: 8,
   },
   sub: {
     fontSize: 13,
-    fontFamily: "Montserrat",
-    color: "#64748B",
+    fontFamily: "Montserrat_400Regular",
+    color: "#71717A",
     marginTop: 4,
     marginBottom: 16,
   },
@@ -188,8 +187,8 @@ const styles = StyleSheet.create({
     height: 220,
     borderRadius: 20,
     borderWidth: 1,
-    borderColor: "#E2E8F0",
-    backgroundColor: "#F8FAFC",
+    borderColor: "#E4E4E7",
+    backgroundColor: "#F4F4F5",
     justifyContent: "center",
     alignItems: "center",
     overflow: "hidden",
@@ -203,8 +202,8 @@ const styles = StyleSheet.create({
   },
   qrEmptyText: {
     fontSize: 13,
-    fontFamily: "Montserrat",
-    color: "#94A3B8",
+    fontFamily: "Montserrat_400Regular",
+    color: "#A1A1AA",
   },
   pickBtn: {
     flexDirection: "row",
@@ -215,14 +214,13 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     borderRadius: 18,
     borderWidth: 1,
-    borderColor: "#FF5500",
+    borderColor: "#fa6205",
     backgroundColor: "#FFFFFF",
   },
   pickBtnText: {
     fontSize: 14,
-    fontFamily: "MontserratBold",
-    fontWeight: "bold",
-    color: "#FF5500",
+    fontFamily: "Montserrat_700Bold",
+    color: "#fa6205",
   },
   previewBox: {
     marginTop: 12,
@@ -230,7 +228,7 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     overflow: "hidden",
     borderWidth: 1,
-    borderColor: "#E2E8F0",
+    borderColor: "#E4E4E7",
   },
   previewImage: {
     width: "100%",
@@ -244,15 +242,14 @@ const styles = StyleSheet.create({
     marginTop: 16,
     paddingVertical: 15,
     borderRadius: 18,
-    backgroundColor: "#FF5500",
+    backgroundColor: "#fa6205",
   },
   uploadBtnDisabled: {
     backgroundColor: "#FDBA74",
   },
   uploadBtnText: {
     fontSize: 15,
-    fontFamily: "MontserratBold",
-    fontWeight: "bold",
+    fontFamily: "Montserrat_700Bold",
     color: "#FFFFFF",
   },
 });

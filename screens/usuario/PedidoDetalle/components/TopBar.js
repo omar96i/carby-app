@@ -7,14 +7,16 @@ export const TopBar = ({ state, top = 0, onBack }) => {
   const config = HEADER_TEXT[state] || HEADER_TEXT.pendiente;
 
   return (
-    <View style={[styles.container, { top: top + 8 }]}>
+    <View style={[styles.container, { top: top + 10 }]}>
       <TouchableOpacity style={styles.backBtn} onPress={onBack} activeOpacity={0.8}>
-        <Feather name="arrow-left" size={22} color="#0F172A" />
+        <Feather name="arrow-left" size={21} color="#1C1C1E" />
       </TouchableOpacity>
       <View style={styles.content}>
-        <View style={[styles.dot, { backgroundColor: config.tone }]} />
+        <View style={[styles.halo, { backgroundColor: config.tone + "26" }]}>
+          <View style={[styles.dot, { backgroundColor: config.tone }]} />
+        </View>
         <View style={styles.textBox}>
-          <Text style={styles.title}>{config.title}</Text>
+          <Text style={styles.title} numberOfLines={1}>{config.title}</Text>
           <Text style={styles.subtitle} numberOfLines={1}>{config.sub}</Text>
         </View>
       </View>
@@ -22,66 +24,69 @@ export const TopBar = ({ state, top = 0, onBack }) => {
   );
 };
 
+const SOMBRA = {
+  shadowColor: "#000",
+  shadowOffset: { width: 0, height: 6 },
+  shadowOpacity: 0.12,
+  shadowRadius: 14,
+  elevation: 6,
+};
+
 const styles = StyleSheet.create({
   container: {
     position: "absolute",
-    left: 16,
-    right: 16,
+    left: 14,
+    right: 14,
     zIndex: 100,
     flexDirection: "row",
     alignItems: "center",
     gap: 10,
   },
   backBtn: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: "rgba(255,255,255,0.95)",
+    width: 46,
+    height: 46,
+    borderRadius: 23,
+    backgroundColor: "#FFF",
     justifyContent: "center",
     alignItems: "center",
-    borderWidth: 1,
-    borderColor: "#E2E8F0",
-    shadowColor: "#0F172A",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 12,
-    elevation: 5,
+    ...SOMBRA,
   },
   content: {
     flex: 1,
     flexDirection: "row",
     alignItems: "center",
     gap: 10,
-    backgroundColor: "rgba(255,255,255,0.95)",
-    borderRadius: 24,
-    borderWidth: 1,
-    borderColor: "#E2E8F0",
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    shadowColor: "#0F172A",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 12,
-    elevation: 5,
+    backgroundColor: "#FFF",
+    borderRadius: 999,
+    height: 52,
+    paddingLeft: 8,
+    paddingRight: 16,
+    ...SOMBRA,
+  },
+  halo: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    justifyContent: "center",
+    alignItems: "center",
   },
   dot: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
+    width: 12,
+    height: 12,
+    borderRadius: 6,
   },
   textBox: {
     flex: 1,
   },
   title: {
-    fontSize: 14,
-    fontFamily: "MontserratBold",
-    fontWeight: "bold",
-    color: "#0F172A",
+    fontSize: 14.5,
+    fontFamily: "Montserrat_800ExtraBold",
+    color: "#1C1C1E",
   },
   subtitle: {
-    fontSize: 11,
-    fontFamily: "Montserrat",
-    color: "#64748B",
-    marginTop: 2,
+    fontSize: 11.5,
+    fontFamily: "Montserrat_400Regular",
+    color: "#71717A",
+    marginTop: 1,
   },
 });

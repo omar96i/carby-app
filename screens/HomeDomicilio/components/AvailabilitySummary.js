@@ -90,12 +90,10 @@ export default function AvailabilitySummary({ availability, loading, onRefresh }
 
 const styles = StyleSheet.create({
   availabilityCard: {
-    backgroundColor: "#F8FAFC",
-    borderRadius: 20,
+    backgroundColor: "#F4F4F5",
+    borderRadius: 24,
     padding: 18,
-    borderWidth: 1,
-    borderColor: "#E2E8F0",
-    marginBottom: 16,
+    marginBottom: 14,
   },
   availabilityHeader: {
     flexDirection: "row",
@@ -114,8 +112,6 @@ const styles = StyleSheet.create({
     height: 32,
     borderRadius: 16,
     backgroundColor: "#FFFFFF",
-    borderWidth: 1,
-    borderColor: "#E2E8F0",
     justifyContent: "center",
     alignItems: "center",
   },
@@ -130,13 +126,13 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   bigNumber: {
-    fontFamily: "Montserrat_700Bold",
+    fontFamily: "Montserrat_800ExtraBold",
     fontSize: 30,
   },
   numberLabel: {
-    fontFamily: "Montserrat_500Medium",
+    fontFamily: "Montserrat_600SemiBold",
     fontSize: 11,
-    color: "#64748B",
+    color: "#71717A",
     marginTop: 4,
   },
   numberDivider: {
@@ -145,8 +141,8 @@ const styles = StyleSheet.create({
     backgroundColor: "#E2E8F0",
   },
   progressTrack: {
-    height: 10,
-    backgroundColor: "#E2E8F0",
+    height: 8,
+    backgroundColor: "#E4E4E7",
     borderRadius: 5,
     overflow: "hidden",
     marginBottom: 12,
@@ -160,8 +156,8 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
   },
   miniStat: {
-    fontFamily: "Montserrat_500Medium",
+    fontFamily: "Montserrat_600SemiBold",
     fontSize: 12,
-    color: "#64748B",
+    color: "#71717A",
   },
 });

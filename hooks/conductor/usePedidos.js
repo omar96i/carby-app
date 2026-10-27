@@ -24,6 +24,8 @@ function normalizeCarrera(c) {
     costo_total: parseFloat(c.costo || 0),
     distancia: parseFloat(c.distancia || 0),
     pin: c.pin || null,
+    vehicle_type_id: info.vehicle_type_id ?? null,
+    categoria_nombre: c.service?.nombre || c.vehicle_type?.nombre || null,
     created_at: c.created_at,
     metodo_pago: c.metodo_pago || info.metododepago || "efectivo",
     // Pickup/dest addresses

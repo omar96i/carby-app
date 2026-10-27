@@ -1,13 +1,9 @@
-import React, { useRef, useState } from "react";
-import { View, Text, TouchableOpacity, ScrollView, StyleSheet } from "react-native";
-import { Ionicons } from "@expo/vector-icons";
+import React from "react";
+import { View, Text, ScrollView, StyleSheet } from "react-native";
 import { BASE_URL } from "../../../constants/url";
-import VehicleCard from "./VehicleCard";
+import VehicleCard, { VEHICLE_CARD_W } from "./VehicleCard";
 
 export default function VehicleCarousel({ services, selectedId, onSelect, distanceKm, surgePct = 0 }) {
-  const scrollRef = useRef(null);
-  const [scrollX, setScrollX] = useState(0);
-
   const getEffectivePricing = (service) => {
     const tarifa = service.tarifa_vigente || null;
     return {
@@ -33,37 +29,16 @@ export default function VehicleCarousel({ services, selectedId, onSelect, distan
       : `${BASE_URL.toString().replace("/api", "")}storage/${service.icono}`;
   };
 
-  const scroll = (dir) => {
-    const nextX = Math.max(0, scrollX + dir);
-    scrollRef.current?.scrollTo({ x: nextX, animated: true });
-    setScrollX(nextX);
-  };
-
-  const handleScroll = (event) => {
-    setScrollX(event.nativeEvent.contentOffset.x);
-  };
-
   return (
     <View style={styles.wrapper}>
-      <View style={styles.header}>
-        <Text style={styles.title}>Elige tu servicio</Text>
-        <View style={styles.navBtns}>
-          <TouchableOpacity style={styles.navBtn} onPress={() => scroll(-140)}>
-            <Ionicons name="chevron-back" size={14} color="#475569" />
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.navBtn} onPress={() => scroll(140)}>
-            <Ionicons name="chevron-forward" size={14} color="#475569" />
-          </TouchableOpacity>
-        </View>
-      </View>
+      <Text style={styles.title}>Elige tu servicio</Text>
       <ScrollView
-        ref={scrollRef}
         horizontal
         showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.scrollContent}
+        contentContainerStyle={styles.list}
         decelerationRate="fast"
-        onScroll={handleScroll}
-        scrollEventThrottle={16}
+        snapToInterval={VEHICLE_CARD_W + GAP}
+        snapToAlignment="start"
       >
         {services.map((service) => (
           <VehicleCard
@@ -80,40 +55,22 @@ export default function VehicleCarousel({ services, selectedId, onSelect, distan
   );
 }
 
+const GAP = 10;
+
 const styles = StyleSheet.create({
   wrapper: {
-    marginTop: 16,
-  },
-  header: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 6,
+    marginTop: 12,
   },
   title: {
-    fontSize: 15,
-    fontFamily: "MontserratBold",
-    fontWeight: "bold",
-    color: "#0F172A",
-    flexDirection: "row",
-    alignItems: "center",
+    fontSize: 16,
+    fontFamily: "Montserrat_800ExtraBold",
+    color: "#1C1C1E",
+    marginBottom: 8,
+    marginLeft: 2,
   },
-  navBtns: {
-    flexDirection: "row",
-    gap: 6,
-  },
-  navBtn: {
-    width: 30,
-    height: 30,
-    borderRadius: 10,
-    backgroundColor: "#F8FAFC",
-    borderWidth: 1,
-    borderColor: "#E2E8F0",
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  scrollContent: {
-    paddingHorizontal: 10,
-    paddingVertical: 15,
+  list: {
+    gap: GAP,
+    paddingHorizontal: 2,
+    paddingBottom: 2,
   },
 });

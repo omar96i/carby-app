@@ -115,13 +115,13 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 13,
-    fontFamily: "MontserratBold",
+    fontFamily: "Montserrat_700Bold",
     fontWeight: "bold",
     lineHeight: 18,
   },
   sub: {
     fontSize: 11,
-    fontFamily: "Montserrat",
+    fontFamily: "Montserrat_400Regular",
     color: "#64748B",
   },
   stepper: {
@@ -149,7 +149,7 @@ const styles = StyleSheet.create({
   },
   stepText: {
     fontSize: 10,
-    fontFamily: "MontserratBold",
+    fontFamily: "Montserrat_700Bold",
     fontWeight: "bold",
     color: "#64748B",
   },

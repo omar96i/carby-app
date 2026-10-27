@@ -59,7 +59,7 @@ const styles = StyleSheet.create({
   },
   initial: {
     fontSize: 15,
-    fontFamily: "MontserratBold",
+    fontFamily: "Montserrat_700Bold",
     color: "#FFFFFF",
   },
   badge: {
@@ -79,7 +79,7 @@ const styles = StyleSheet.create({
   },
   badgeText: {
     fontSize: 9,
-    fontFamily: "MontserratBold",
+    fontFamily: "Montserrat_700Bold",
     color: "#D97706",
   },
 });

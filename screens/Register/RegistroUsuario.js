@@ -14,11 +14,13 @@ import {
   ActivityIndicator
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import MaterialCommunityIcons from "react-native-vector-icons/MaterialCommunityIcons";
 import { Picker } from "@react-native-picker/picker";
 import { useFonts, Montserrat_400Regular, Montserrat_700Bold } from "@expo-google-fonts/montserrat";
 // import { BASE_URL } from "../../constants/url"; // <--- YA NO LA USAREMOS DIRECTAMENTE AQUÍ
 import { useAlert } from '../../context/AlertContext';
+import { RegistroScreen, RegistroHeader, RegistroCard, CampoTexto, CampoSelector, registroStyles, C } from "../../components/registro/RegistroUI";
 
 // 1. CONFIGURACIÓN POR PAÍS (solo info visual, misma API)
 const API_URL = "https://back.carbycol.com/api/";
@@ -29,9 +31,10 @@ const COUNTRY_INFO = {
 
 export default function RegisterFormScreen() {
   const navigation = useNavigation();
+  const insets = useSafeAreaInsets();
   const { showAlert } = useAlert();
   const scrollRef = useRef(null);
-  
+
   // --- ESTADOS DEL FORMULARIO ---
   const [step, setStep] = useState(1);
   
@@ -196,118 +199,80 @@ export default function RegisterFormScreen() {
     setShowPickerModal(true);
   };
 
+  const DOCUMENTOS = { CC: "Cédula de Ciudadanía (CC)", TI: "Tarjeta de Identidad (TI)", DNI: "DNI", PAS: "Pasaporte", CE: "Carnet de Extranjería (CE)" };
+
   // --- RENDER ---
   return (
-    <KeyboardAvoidingView
-      style={{ flex: 1, backgroundColor: "#F2F2F7" }}
-      behavior={Platform.OS === "ios" ? "padding" : "height"}
-    >
-      <View style={styles.container}>
-        
-        {/* HEADER */}
-        <View style={styles.headerArea}>
-          <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButtonHeader}>
-            <MaterialCommunityIcons name="arrow-left" size={24} color="#1C1C1E" />
-          </TouchableOpacity>
+    <RegistroScreen>
+      <RegistroHeader
+        step={step}
+        totalSteps={2}
+        stepLabels={["Datos", "Cuenta"]}
+        onBack={() => navigation.goBack()}
+        title={step === 1 ? "Información Personal" : "Configura tu Cuenta"}
+        subtitle={step === 1 ? "Ingresa tus datos personales." : "Establece tus credenciales de acceso."}
+      />
 
-          <Image source={require("../../assets/images/nuevo-icono.jpeg")} style={styles.logoSmall} />
+      <RegistroCard>
+        <ScrollView ref={scrollRef} showsVerticalScrollIndicator={false} contentContainerStyle={registroStyles.scrollContent}>
 
-          <View style={styles.progressBarContainer}>
-            <View style={[styles.progressBarFill, { width: getProgressWidth() }]} />
-          </View>
-          <Text style={styles.stepText}>Paso {step} de 2</Text>
-        </View>
-
-        <ScrollView ref={scrollRef} showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
-          
-          <Text style={styles.title}>{step === 1 ? "Información Personal" : "Configura tu Cuenta"}</Text>
-          <Text style={styles.subtitle}>
-            {step === 1 ? "Ingresa tus datos personales." : "Establece tus credenciales de acceso."}
-          </Text>
 
            {/* PASO 1 */}
            {step === 1 && (
-             <View>
+             <View style={styles.paso}>
                {/* País siempre Colombia */}
 
-               
-               <Text style={styles.label}>Nombre completo</Text>
-              <TextInput
-                style={styles.inputDark}
+               <Text style={registroStyles.label}>Nombre completo</Text>
+              <CampoTexto
+                icon="account"
                 placeholder="Ej. Juan Pérez"
-                placeholderTextColor="#777"
                 value={nombreCompleto}
                 onChangeText={setNombreCompleto}
                 maxLength={50}
               />
 
-              <Text style={styles.label}>Tipo de documento</Text>
-              {Platform.OS === 'ios' ? (
-                <TouchableOpacity
-                  style={styles.inputDark}
-                  onPress={() => openIosPicker('documento')}
-                >
-                  <Text style={[styles.inputText, !tipoDocumento && { color: "#777" }]}>
-                    {tipoDocumento || "Selecciona una opción"}
-                  </Text>
-                  <MaterialCommunityIcons name="chevron-down" size={20} color="#fa6205" />
-                </TouchableOpacity>
-              ) : (
-                <View style={styles.pickerContainerDark}>
-                  <Picker
-                    selectedValue={tipoDocumento}
-                    onValueChange={setTipoDocumento}
-                    style={{ color: '#1C1C1E' }}
-                    dropdownIconColor="#fa6205"
-                  >
-                    <Picker.Item label="Selecciona..." value="" color="#777"/>
-                    {/* Nota: Podrías filtrar documentos según el país aquí si quisieras */}
-                    <Picker.Item label="Cédula (CC)" value="CC" />
-                    <Picker.Item label="Tarjeta Identidad (TI)" value="TI" />
-                    <Picker.Item label="DNI" value="DNI" />
-                    <Picker.Item label="Pasaporte" value="PAS" />
-                    <Picker.Item label="Carnet Extranjería" value="CE" />
-                  </Picker>
-                </View>
-              )}
+              <Text style={registroStyles.label}>Tipo de documento</Text>
+              <CampoSelector
+                icon="card-account-details"
+                value={DOCUMENTOS[tipoDocumento]}
+                placeholder="Selecciona una opción"
+                active={showPickerModal}
+                onPress={() => openIosPicker('documento')}
+              />
 
-              <Text style={styles.label}>Número de documento</Text>
-              <TextInput
-                style={styles.inputDark}
+              <Text style={registroStyles.label}>Número de documento</Text>
+              <CampoTexto
+                icon="numeric"
                 placeholder="Ej. 123456789"
-                placeholderTextColor="#777"
                 keyboardType="numeric"
                 value={numeroDocumento}
                 onChangeText={setNumeroDocumento}
                 maxLength={10}
               />
 
-              <Text style={styles.label}>Número de teléfono</Text>
-              <TextInput
-                style={styles.inputDark}
+              <Text style={registroStyles.label}>Número de teléfono</Text>
+              <CampoTexto
+                icon="phone"
                 placeholder={pais === 'PE' ? "Ej. 912 345 678" : "Ej. 300 123 4567"}
-                placeholderTextColor="#777"
                 keyboardType="phone-pad"
                 value={numeroTelefono}
                 onChangeText={setNumeroTelefono}
                 maxLength={10}
               />
 
-              <TouchableOpacity style={styles.buttonPrimary} onPress={handleNextStep}>
-                <Text style={styles.buttonTextPrimary}>Siguiente</Text>
-                <MaterialCommunityIcons name="arrow-right" size={20} color="#F2F2F7" style={{ marginLeft: 8 }} />
+              <TouchableOpacity style={[registroStyles.buttonPrimary, styles.alFondo]} activeOpacity={0.8} onPress={handleNextStep}>
+                <Text style={registroStyles.buttonTextPrimary}>Siguiente</Text>
+                <MaterialCommunityIcons name="arrow-right" size={20} color={C.surface} style={{ marginLeft: 8 }} />
               </TouchableOpacity>
             </View>
           )}
 
-          {/* PASO 2 (SIN CAMBIOS VISUALES) */}
           {step === 2 && (
-            <View>
-              <Text style={styles.label}>Correo electrónico</Text>
-              <TextInput
-                style={styles.inputDark}
+            <View style={styles.paso}>
+              <Text style={registroStyles.label}>Correo electrónico</Text>
+              <CampoTexto
+                icon="email"
                 placeholder="nombre@ejemplo.com"
-                placeholderTextColor="#777"
                 keyboardType="email-address"
                 autoCapitalize="none"
                 value={email}
@@ -315,11 +280,10 @@ export default function RegisterFormScreen() {
                 maxLength={50}
               />
 
-              <Text style={styles.label}>Contraseña</Text>
-              <TextInput
-                style={styles.inputDark}
+              <Text style={registroStyles.label}>Contraseña</Text>
+              <CampoTexto
+                icon="lock"
                 placeholder="Mínimo 9 caracteres"
-                placeholderTextColor="#777"
                 secureTextEntry
                 value={password}
                 onChangeText={setPassword}
@@ -327,151 +291,87 @@ export default function RegisterFormScreen() {
               />
               <Text style={styles.helperText}>La contraseña debe ser segura.</Text>
 
-              <Text style={styles.label}>Repetir contraseña</Text>
-              <TextInput
-                style={styles.inputDark}
+              <Text style={registroStyles.label}>Repetir contraseña</Text>
+              <CampoTexto
+                icon="lock-check"
                 placeholder="Confirma tu contraseña"
-                placeholderTextColor="#777"
                 secureTextEntry
                 value={repeatPassword}
                 onChangeText={setRepeatPassword}
                 maxLength={30}
               />
 
-              <TouchableOpacity style={styles.buttonPrimary} onPress={handleSubmitFormulario}>
-                <Text style={styles.buttonTextPrimary}>Completar Registro</Text>
+              <TouchableOpacity style={[registroStyles.buttonPrimary, styles.alFondo]} activeOpacity={0.8} onPress={handleSubmitFormulario}>
+                <Text style={registroStyles.buttonTextPrimary}>Completar Registro</Text>
               </TouchableOpacity>
 
               <TouchableOpacity style={styles.buttonSecondary} onPress={handlePrevStep}>
+                <MaterialCommunityIcons name="arrow-left" size={18} color={C.muted} style={{ marginRight: 6 }} />
                 <Text style={styles.buttonTextSecondary}>Volver atrás</Text>
               </TouchableOpacity>
             </View>
           )}
         </ScrollView>
+      </RegistroCard>
 
         {/* MODALES */}
         <Modal transparent={true} visible={isLoading} animationType="fade">
-            <View style={styles.loadingOverlay}>
-                <View style={styles.loadingContainer}>
-                    <ActivityIndicator size="large" color="#fa6205" />
-                    <Text style={styles.loadingText}>Creando cuenta...</Text>
-                    <Text style={styles.loadingSubText}>Conectando con el servidor...</Text>
+            <View style={registroStyles.loadingOverlay}>
+                <View style={registroStyles.loadingContainer}>
+                    <ActivityIndicator size="large" color={C.brand} />
+                    <Text style={registroStyles.loadingText}>Creando cuenta...</Text>
+                    <Text style={registroStyles.loadingSubText}>Conectando con el servidor...</Text>
                 </View>
             </View>
         </Modal>
 
-        {/* Modal REUTILIZABLE para Picker iOS */}
-        {Platform.OS === 'ios' && (
-          <Modal animationType="slide" transparent visible={showPickerModal} onRequestClose={() => setShowPickerModal(false)}>
-            <View style={styles.modalOverlay}>
-              <View style={styles.modalContent}>
-                <View style={styles.modalHeader}>
-                  <Text style={styles.modalTitle}>Selecciona una opción</Text>
-                  <TouchableOpacity onPress={() => setShowPickerModal(false)}>
-                    <Text style={styles.modalCloseText}>Cerrar</Text>
-                  </TouchableOpacity>
-                </View>
-                <FlatList
-                  data={pickerOptions}
-                  keyExtractor={(item) => item.value}
-                  renderItem={({ item }) => (
+        <Modal animationType="slide" transparent visible={showPickerModal} onRequestClose={() => setShowPickerModal(false)}>
+          <TouchableOpacity style={registroStyles.modalOverlay} activeOpacity={1} onPress={() => setShowPickerModal(false)}>
+            <TouchableOpacity activeOpacity={1} style={[registroStyles.modalContent, { paddingBottom: insets.bottom + 16 }]}>
+              <View style={registroStyles.grabber} />
+              <View style={registroStyles.modalHeader}>
+                <Text style={registroStyles.modalTitle}>Selecciona una opción</Text>
+                <TouchableOpacity onPress={() => setShowPickerModal(false)} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+                  <Text style={registroStyles.modalCloseText}>Cerrar</Text>
+                </TouchableOpacity>
+              </View>
+              <FlatList
+                data={pickerOptions}
+                keyExtractor={(item) => item.value}
+                renderItem={({ item }) => {
+                  const selected = (pickerTarget === 'pais' && pais === item.value) ||
+                    (pickerTarget === 'documento' && tipoDocumento === item.value);
+                  return (
                     <TouchableOpacity
-                      style={styles.modalItem}
+                      style={[registroStyles.modalItem, selected && registroStyles.modalItemSelected]}
+                      activeOpacity={0.8}
                       onPress={() => {
                         // Lógica condicional según qué estemos seleccionando
                         if (pickerTarget === 'pais') setPais(item.value);
                         if (pickerTarget === 'documento') setTipoDocumento(item.value);
-                        
+
                         setShowPickerModal(false);
                       }}
                     >
-                      <Text style={styles.modalItemText}>{item.label}</Text>
+                      <Text style={[registroStyles.modalItemText, selected && registroStyles.modalItemTextSelected]}>{item.label}</Text>
                       {/* Mostrar check si está seleccionado */}
-                      {((pickerTarget === 'pais' && pais === item.value) || 
-                        (pickerTarget === 'documento' && tipoDocumento === item.value)) && 
-                        <MaterialCommunityIcons name="check" size={20} color="#fa6205" />
-                      }
+                      {selected && <MaterialCommunityIcons name="check-circle" size={22} color={C.brand} />}
                     </TouchableOpacity>
-                  )}
-                />
-              </View>
-            </View>
-          </Modal>
-        )}
+                  );
+                }}
+              />
+            </TouchableOpacity>
+          </TouchableOpacity>
+        </Modal>
 
-      </View>
-    </KeyboardAvoidingView>
+    </RegistroScreen>
   );
 }
 
-// ... TUS MISMOS ESTILOS AQUÍ ...
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#F2F2F7" },
-  scrollContent: { paddingHorizontal: 24, paddingBottom: 50 },
-  headerArea: { paddingTop: 60, paddingHorizontal: 24, marginBottom: 20 },
-  backButtonHeader: { marginBottom: 15, alignSelf: 'flex-start' },
-  logoSmall: { width: 80, height: 80, resizeMode: "contain", alignSelf: "center", marginBottom: 20, borderRadius: 16 },
-  
-  // Progreso
-  progressBarContainer: { height: 4, backgroundColor: "#333", borderRadius: 2, marginBottom: 8, width: '100%' },
-  progressBarFill: { height: "100%", backgroundColor: "#fa6205", borderRadius: 2 },
-  stepText: { color: "#777", fontSize: 12, fontFamily: "Montserrat_400Regular", textAlign: "right" },
-
-  // Textos
-  title: { fontSize: 26, fontFamily: "Montserrat_700Bold", color: '#1C1C1E', marginBottom: 8 },
-  subtitle: { fontSize: 15, fontFamily: "Montserrat_400Regular", color: "#A0A0A0", marginBottom: 30 },
-  label: { fontSize: 14, fontFamily: "Montserrat_700Bold", color: "#DDD", marginBottom: 8, marginLeft: 4 },
-  helperText: { fontSize: 12, color: "#777", marginBottom: 15, marginLeft: 4, marginTop: -10 },
-
-  // Inputs Dark
-  inputDark: {
-    backgroundColor: "#FFFFFF",
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: "#DDD",
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    fontSize: 16,
-    fontFamily: "Montserrat_400Regular",
-    color: '#1C1C1E',
-    marginBottom: 20,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center'
-  },
-  inputText: { fontSize: 16, fontFamily: "Montserrat_400Regular", color: '#1C1C1E' },
-  pickerContainerDark: {
-    backgroundColor: "#FFFFFF",
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: "#DDD",
-    marginBottom: 20,
-    overflow: 'hidden'
-  },
-  buttonPrimary: {
-    backgroundColor: "#fa6205",
-    borderRadius: 12,
-    paddingVertical: 16,
-    alignItems: "center",
-    justifyContent: 'center',
-    flexDirection: 'row',
-    marginTop: 10,
-    marginBottom: 15,
-  },
-  buttonTextPrimary: { color: "#F2F2F7", fontFamily: "Montserrat_700Bold", fontSize: 16 },
-  buttonSecondary: { paddingVertical: 15, alignItems: "center", marginBottom: 20 },
-  buttonTextSecondary: { color: '#1C1C1E', fontFamily: "Montserrat_700Bold", fontSize: 15, textDecorationLine: 'underline' },
-  modalOverlay: { flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(0,0,0,0.5)' },
-  modalContent: { backgroundColor: '#FFFFFF', borderTopLeftRadius: 20, borderTopRightRadius: 20, maxHeight: '50%' },
-  modalHeader: { flexDirection: 'row', justifyContent: 'space-between', padding: 16, borderBottomWidth: 1, borderBottomColor: '#444' },
-  modalTitle: { color: '#1C1C1E', fontSize: 18, fontFamily: "Montserrat_700Bold" },
-  modalCloseText: { color: '#fa6205', fontSize: 16, fontFamily: "Montserrat_700Bold" },
-  modalItem: { padding: 16, borderBottomWidth: 1, borderBottomColor: '#333', flexDirection: 'row', justifyContent: 'space-between' },
-  modalItemText: { color: '#1C1C1E', fontSize: 16, fontFamily: "Montserrat_400Regular" },
-
-  // ESTILOS LOADING
-  loadingOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.85)', justifyContent: 'center', alignItems: 'center' },
-  loadingContainer: { backgroundColor: '#FFFFFF', padding: 25, borderRadius: 20, alignItems: 'center', width: '80%' },
-  loadingText: { color: '#1C1C1E', fontSize: 18, fontFamily: "Montserrat_700Bold", marginTop: 20, marginBottom: 5 },
-  loadingSubText: { color: '#AAA', fontSize: 14, fontFamily: "Montserrat_400Regular" }
+  paso: { flexGrow: 1 },
+  alFondo: { marginTop: "auto" },
+  helperText: { fontSize: 12, fontFamily: "Montserrat_400Regular", color: C.muted, marginBottom: 16, marginLeft: 18, marginTop: -10 },
+  buttonSecondary: { paddingVertical: 16, alignItems: "center", justifyContent: "center", flexDirection: "row" },
+  buttonTextSecondary: { color: C.muted, fontFamily: "Montserrat_700Bold", fontSize: 15 },
 });

@@ -392,10 +392,12 @@ export default function DetalleCarreraConductor() {
 
           <TopBar state={state} isDelivery={isDelivery} onBack={() => navigation.replace("BottomTabNavigatorDelivery")} />
 
-          <TouchableOpacity style={styles.mapsBtnTop} onPress={openMaps} activeOpacity={0.8}>
-            <MaterialCommunityIcons name="directions" size={20} color="#FFFFFF" />
-            <Text style={styles.mapsBtnText}>Cómo llegar</Text>
-          </TouchableOpacity>
+          {!isFinished && (
+            <TouchableOpacity style={styles.mapsBtnTop} onPress={openMaps} activeOpacity={0.8}>
+              <MaterialCommunityIcons name="directions" size={20} color="#FFFFFF" />
+              <Text style={styles.mapsBtnText}>Cómo llegar</Text>
+            </TouchableOpacity>
+          )}
 
           {isFinished ? (
             <FinishedSheet
@@ -404,6 +406,8 @@ export default function DetalleCarreraConductor() {
               onDone={handleDone}
               loading={ratingLoading}
               showRating={!isDelivery}
+              pickupAddress={parsedInfo.origen}
+              destinationAddress={parsedInfo.destino}
             />
           ) : (
             <ClientSheet
@@ -487,12 +491,12 @@ const styles = StyleSheet.create({
   loadingText: {
     marginTop: 16,
     fontSize: 14,
-    fontFamily: "Montserrat",
+    fontFamily: "Montserrat_400Regular",
     color: "#64748B",
   },
   errorText: {
     fontSize: 14,
-    fontFamily: "Montserrat",
+    fontFamily: "Montserrat_400Regular",
     color: "#0F172A",
     textAlign: "center",
     marginBottom: 20,
@@ -506,7 +510,7 @@ const styles = StyleSheet.create({
   retryText: {
     color: "#FFFFFF",
     fontSize: 14,
-    fontFamily: "MontserratBold",
+    fontFamily: "Montserrat_700Bold",
     fontWeight: "bold",
   },
   mapsBtnTop: {
@@ -530,7 +534,7 @@ const styles = StyleSheet.create({
   mapsBtnText: {
     color: "#FFFFFF",
     fontSize: 13,
-    fontFamily: "MontserratBold",
+    fontFamily: "Montserrat_700Bold",
     fontWeight: "bold",
   },
 });

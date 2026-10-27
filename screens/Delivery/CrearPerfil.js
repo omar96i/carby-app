@@ -28,6 +28,7 @@ import { BASE_URL } from "../../constants/url";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import AlertaModal from "../../components/ErrorModal";
 import ScreenHeader from "../../components/ScreenHeader";
+import { useAlturaTecladoAndroid } from "../../hooks/useAlturaTecladoAndroid";
 
 const PERFIL_INFO_TITULO = "¿Qué es un perfil?";
 const PERFIL_INFO_TEXTO =
@@ -79,9 +80,35 @@ function resumenHorarios(horarios) {
   return `${dias.join(" ")} · ${porDia[Object.keys(porDia)[0]][0]}`;
 }
 
+const ed = StyleSheet.create({
+  bg: { flex: 1, justifyContent: "flex-end", backgroundColor: "rgba(0,0,0,0.45)" },
+  sheet: { backgroundColor: "#FFF", borderTopLeftRadius: 28, borderTopRightRadius: 28, paddingHorizontal: 20, paddingTop: 10, maxHeight: "88%" },
+  grabber: { width: 40, height: 5, borderRadius: 3, backgroundColor: "#E4E4E7", alignSelf: "center", marginBottom: 12 },
+  head: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 16 },
+  title: { fontSize: 18, fontFamily: "Montserrat_800ExtraBold", color: "#1C1C1E" },
+  close: { width: 36, height: 36, borderRadius: 18, backgroundColor: "#F4F4F5", alignItems: "center", justifyContent: "center" },
+  fotoRow: { flexDirection: "row", alignItems: "center", gap: 14, backgroundColor: "#F4F4F5", borderRadius: 20, padding: 12 },
+  foto: { width: 84, height: 84 },
+  fotoImg: { width: 84, height: 84, borderRadius: 42, backgroundColor: "#E4E4E7" },
+  fotoVacia: { width: 84, height: 84, borderRadius: 42, backgroundColor: "#FFF0E5", alignItems: "center", justifyContent: "center" },
+  fotoLapiz: { position: "absolute", right: 0, bottom: 0, width: 28, height: 28, borderRadius: 14, backgroundColor: "#fa6205", borderWidth: 2.5, borderColor: "#F4F4F5", alignItems: "center", justifyContent: "center" },
+  fotoTitulo: { fontSize: 14, fontFamily: "Montserrat_700Bold", color: "#1C1C1E" },
+  fotoSub: { fontSize: 12, fontFamily: "Montserrat_400Regular", color: "#71717A", marginTop: 2 },
+  label: { fontSize: 13, fontFamily: "Montserrat_700Bold", color: "#1C1C1E", marginTop: 16, marginBottom: 8 },
+  opcional: { fontFamily: "Montserrat_400Regular", color: "#71717A" },
+  input: { backgroundColor: "#F4F4F5", height: 50, borderRadius: 16, paddingHorizontal: 16, fontSize: 14, fontFamily: "Montserrat_600SemiBold", color: "#1C1C1E" },
+  inputMulti: { height: 96, paddingTop: 14, paddingBottom: 14, textAlignVertical: "top" },
+  btns: { flexDirection: "row", gap: 10, marginTop: 20 },
+  cancel: { flex: 1, height: 52, borderRadius: 26, backgroundColor: "#F4F4F5", alignItems: "center", justifyContent: "center" },
+  cancelText: { fontSize: 14.5, fontFamily: "Montserrat_700Bold", color: "#1C1C1E" },
+  save: { flex: 1, height: 52, borderRadius: 26, backgroundColor: "#fa6205", alignItems: "center", justifyContent: "center", shadowColor: "#fa6205", shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.35, shadowRadius: 16, elevation: 8 },
+  saveText: { fontSize: 14.5, fontFamily: "Montserrat_700Bold", color: "#FFF" },
+});
+
 export default function CrearPerfil() {
   const navigation = useNavigation();
   const insets = useSafeAreaInsets();
+  const alturaTeclado = useAlturaTecladoAndroid();
   const [fontsLoaded] = useFonts({
     Montserrat_400Regular,
     Montserrat_700Bold,
@@ -581,34 +608,54 @@ export default function CrearPerfil() {
         </View>
       </Modal>
 
-      <Modal visible={editVisible} transparent animationType="slide" onRequestClose={() => setEditVisible(false)}>
-        <View style={s.modalBg}>
-          <View style={s.modalCard}>
-            <Text style={s.modalTitle}>Editar perfil</Text>
-            <TouchableOpacity style={s.fotoBox} onPress={() => pickImage(setEditFoto)}>
-              {editFoto ? (
-                <Image source={{ uri: editFoto.uri }} style={s.fotoImg} />
-              ) : editFotoOriginal ? (
-                <Image source={{ uri: editFotoOriginal }} style={s.fotoImg} />
-              ) : (
-                <View style={s.fotoEmpty}>
-                  <Ionicons name="camera-outline" size={26} color="#CCC" />
-                  <Text style={s.fotoHint}>Toca para añadir foto</Text>
-                </View>
-              )}
-            </TouchableOpacity>
-            <Text style={s.label}>Nombre *</Text>
-            <TextInput style={s.input} value={editNombre} onChangeText={setEditNombre} maxLength={60} />
-            <Text style={s.label}>Descripción (opcional)</Text>
-            <TextInput style={[s.input, { minHeight: 60, textAlignVertical: "top" }]} value={editDescripcion} onChangeText={setEditDescripcion} multiline maxLength={500} />
-            <View style={{ flexDirection: "row", gap: 10 }}>
-              <TouchableOpacity style={[s.primaryBtn, { flex: 1, backgroundColor: "#F4F4F5" }]} onPress={() => setEditVisible(false)}>
-                <Text style={[s.primaryText, { color: "#71717A" }]}>Cancelar</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={[s.primaryBtn, { flex: 1 }]} onPress={saveEdit} disabled={editSaving}>
-                {editSaving ? <ActivityIndicator size="small" color="#FFF" /> : <Text style={s.primaryText}>Guardar</Text>}
+      <Modal visible={editVisible} transparent animationType="slide" onRequestClose={() => setEditVisible(false)} statusBarTranslucent>
+        <View style={ed.bg}>
+          <View style={{ flex: 1 }} />
+          <View style={[ed.sheet, { marginBottom: alturaTeclado, paddingBottom: (alturaTeclado ? 0 : insets.bottom) + 16 }]}>
+            <View style={ed.grabber} />
+            <View style={ed.head}>
+              <Text style={ed.title}>Editar perfil</Text>
+              <TouchableOpacity style={ed.close} onPress={() => setEditVisible(false)}>
+                <Ionicons name="close" size={20} color="#1C1C1E" />
               </TouchableOpacity>
             </View>
+
+            <ScrollView keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
+              <View style={ed.fotoRow}>
+                <TouchableOpacity style={ed.foto} onPress={() => pickImage(setEditFoto)} activeOpacity={0.85}>
+                  {editFoto ? (
+                    <Image source={{ uri: editFoto.uri }} style={ed.fotoImg} />
+                  ) : editFotoOriginal ? (
+                    <Image source={{ uri: editFotoOriginal }} style={ed.fotoImg} />
+                  ) : (
+                    <View style={ed.fotoVacia}>
+                      <Ionicons name="camera" size={24} color="#fa6205" />
+                    </View>
+                  )}
+                  <View style={ed.fotoLapiz}>
+                    <Ionicons name="camera" size={13} color="#FFF" />
+                  </View>
+                </TouchableOpacity>
+                <View style={{ flex: 1 }}>
+                  <Text style={ed.fotoTitulo}>Foto del perfil</Text>
+                  <Text style={ed.fotoSub}>{editFoto || editFotoOriginal ? "Toca la foto para cambiarla" : "Toca para añadir foto"}</Text>
+                </View>
+              </View>
+
+              <Text style={ed.label}>Nombre <Text style={{ color: "#fa6205" }}>*</Text></Text>
+              <TextInput style={ed.input} value={editNombre} onChangeText={setEditNombre} maxLength={60} />
+              <Text style={ed.label}>Descripción <Text style={ed.opcional}>(opcional)</Text></Text>
+              <TextInput style={[ed.input, ed.inputMulti]} value={editDescripcion} onChangeText={setEditDescripcion} multiline maxLength={500} />
+
+              <View style={ed.btns}>
+                <TouchableOpacity style={ed.cancel} onPress={() => setEditVisible(false)} activeOpacity={0.8}>
+                  <Text style={ed.cancelText}>Cancelar</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={ed.save} onPress={saveEdit} disabled={editSaving} activeOpacity={0.85}>
+                  {editSaving ? <ActivityIndicator size="small" color="#FFF" /> : <Text style={ed.saveText}>Guardar</Text>}
+                </TouchableOpacity>
+              </View>
+            </ScrollView>
           </View>
         </View>
       </Modal>

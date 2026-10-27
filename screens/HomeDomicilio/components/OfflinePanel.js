@@ -6,7 +6,8 @@ import {
   ActivityIndicator,
   StyleSheet,
 } from "react-native";
-import { Ionicons } from "@expo/vector-icons";
+import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
+import { iconoDeCategoria } from "../../../components/IconoVehiculo";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import AvailabilitySummary from "./AvailabilitySummary";
 
@@ -30,10 +31,16 @@ export default function OfflinePanel({ availability, checkingSubscription, vehic
       {/* Vehicle types (sutil) */}
       {vehicleTypeNames.length > 0 && (
         <View style={styles.vehicleRow}>
-          <Ionicons name="car-outline" size={14} color="#94A3B8" />
-          <Text style={styles.vehicleText} numberOfLines={1}>
-            {vehicleTypeNames.join("  ·  ")}
-          </Text>
+          <View style={styles.vehiclePill}>
+            {iconoDeCategoria(vehicleTypeNames[0]) ? (
+              <MaterialCommunityIcons name={iconoDeCategoria(vehicleTypeNames[0])} size={16} color="#1C1C1E" />
+            ) : (
+              <Ionicons name="car-outline" size={14} color="#1C1C1E" />
+            )}
+            <Text style={styles.vehicleText} numberOfLines={1}>
+              {vehicleTypeNames.join("  ·  ")}
+            </Text>
+          </View>
         </View>
       )}
 
@@ -97,9 +104,9 @@ const styles = StyleSheet.create({
     color: "#1C1C1E",
   },
   panelSub: {
-    fontFamily: "Montserrat_500Medium",
-    fontSize: 12,
-    color: "#64748B",
+    fontFamily: "Montserrat_400Regular",
+    fontSize: 12.5,
+    color: "#71717A",
     marginTop: 4,
     textAlign: "center",
   },
@@ -109,13 +116,13 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     gap: 10,
     backgroundColor: "#fa6205",
-    paddingVertical: 16,
-    borderRadius: 18,
+    height: 56,
+    borderRadius: 28,
     shadowColor: "#fa6205",
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.3,
-    shadowRadius: 14,
-    elevation: 6,
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.35,
+    shadowRadius: 16,
+    elevation: 8,
   },
   connectButtonDisabled: {
     backgroundColor: "#94A3B8",
@@ -127,24 +134,29 @@ const styles = StyleSheet.create({
     color: "#FFFFFF",
   },
   vehicleRow: {
+    alignItems: "center",
+    marginBottom: 14,
+  },
+  vehiclePill: {
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "center",
     gap: 6,
-    marginBottom: 14,
-    paddingHorizontal: 8,
+    height: 30,
+    paddingHorizontal: 14,
+    borderRadius: 15,
+    backgroundColor: "#F4F4F5",
+    maxWidth: "100%",
   },
   vehicleText: {
-    fontFamily: "Montserrat_500Medium",
-    fontSize: 11,
-    color: "#94A3B8",
-    textAlign: "center",
+    fontFamily: "Montserrat_700Bold",
+    fontSize: 12,
+    color: "#1C1C1E",
     flexShrink: 1,
   },
   emptyHint: {
-    fontFamily: "Montserrat_500Medium",
+    fontFamily: "Montserrat_400Regular",
     fontSize: 12,
-    color: "#64748B",
+    color: "#71717A",
     textAlign: "center",
     marginTop: 12,
   },

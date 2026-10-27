@@ -99,7 +99,7 @@ export const RideMap = ({
                   textAnchor="middle"
                   fill="#FFFFFF"
                   fontSize="12"
-                  fontFamily="MontserratBold"
+                  fontFamily="Montserrat_700Bold"
                 >B</SvgText>
               </Svg>
             </Animated.View>

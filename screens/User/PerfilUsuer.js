@@ -17,6 +17,7 @@ import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context"
 import { useNavigation, useFocusEffect } from "@react-navigation/native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { BASE_URL } from "../../constants/url"; // Ajusta la ruta si es necesario
+import nombreRol from "../../utils/nombreRol";
 import RoleSwitcher from "../../components/RoleSwitcher";
 import { useFonts } from "expo-font";
 import {
@@ -351,99 +352,94 @@ export default function PerfilUsuario() {
   if (!fontsLoaded) return <View style={styles.loadingContainer}><Text style={{color:'#fa6205'}}>Cargando...</Text></View>;
 
   // --- RENDERIZADO CON NUEVO DISEÑO (DARK MODE MODERNO) ---
+  const nombrePerfil = userInfo?.data?.nombre_completo || "Usuario";
+  const inicialesPerfil = nombrePerfil.split(" ").filter(Boolean).slice(0, 2).map((w) => w[0]).join("").toUpperCase();
+
+  const filaMenu = (icono, texto, onPress, opciones = {}) => (
+    <TouchableOpacity style={pf.fila} onPress={onPress} activeOpacity={0.7}>
+      <View style={[pf.filaIcono, opciones.marca && pf.filaIconoMarca, opciones.peligro && pf.filaIconoPeligro]}>
+        <Icon3 name={icono} size={18} color={opciones.peligro ? "#EF4444" : opciones.marca ? "#fa6205" : "#1C1C1E"} />
+      </View>
+      <View style={pf.filaTexto}>
+        <Text style={[pf.filaTitulo, opciones.peligro && pf.filaTituloPeligro]}>{texto}</Text>
+        {!!opciones.sub && <Text style={pf.filaSub}>{opciones.sub}</Text>}
+      </View>
+      <Icon3 name="chevron-right" size={18} color="#A1A1AA" />
+    </TouchableOpacity>
+  );
+
   return (
-    <SafeAreaView style={styles.safeContainer} edges={['top', 'left', 'right']}>
+    <SafeAreaView style={pf.screen} edges={['left', 'right']}>
       <StatusBar barStyle="light-content" backgroundColor="#1C1C1E" />
-      <ScreenHeader title="Perfil" />
-      <ScrollView contentContainerStyle={[styles.scrollContent, { paddingBottom: 104 + insets.bottom }]} showsVerticalScrollIndicator={false}>
-        
-        {/* 2. Compact Profile Row */}
-        <View style={styles.profileRow}>
-          <TouchableOpacity onPress={pickImage} style={styles.avatarSmall}>
+
+      <View style={[pf.header, { paddingTop: insets.top + 10 }]}>
+        <Text style={pf.headerTitle}>Perfil</Text>
+        <View style={pf.identity}>
+          <TouchableOpacity onPress={pickImage} style={pf.avatarWrap} activeOpacity={0.8}>
             {imageUrl && !imageError ? (
-              <Image source={{ uri: imageUrl }} style={styles.avatarSmallImg} />
+              <Image source={{ uri: imageUrl }} style={pf.avatar} />
             ) : (
-              <View style={styles.avatarSmallPlaceholder}>
-                <Icon3 name="user" size={22} color="#FFF" />
+              <View style={[pf.avatar, pf.avatarVacio]}>
+                <Text style={pf.avatarText}>{inicialesPerfil || "?"}</Text>
               </View>
             )}
-            <View style={styles.editBadge}>
-              <Icon4 name="pencil" size={10} color="#FFF" />
+            <View style={pf.avatarEdit}>
+              <Icon4 name="pencil" size={12} color="#FFF" />
             </View>
           </TouchableOpacity>
-          <View style={styles.profileInfo}>
-            <Text style={styles.userName}>{userInfo?.data?.nombre_completo || "Usuario"}</Text>
-            <Text style={styles.locationText}>{userInfo?.data?.ciudad || "Ciudad"}</Text>
+          <View style={pf.identityText}>
+            <Text style={pf.name} numberOfLines={1}>{nombrePerfil}</Text>
+            <View style={pf.cityRow}>
+              <Icon3 name="map-pin" size={12} color="#A1A1AA" />
+              <Text style={pf.city} numberOfLines={1}>{userInfo?.data?.ciudad || "Ciudad"}</Text>
+            </View>
+            {!!userInfo?.data?.tipo_usuario && (
+              <View style={pf.rolBadge}>
+                <Text style={pf.rolBadgeText}>{nombreRol(userInfo.data.tipo_usuario)}</Text>
+              </View>
+            )}
           </View>
         </View>
+      </View>
 
-        <RoleSwitcher userData={userInfo?.data || {}} onSwitchSuccess={(role) => {
-          const navMap = { usuario: "BottomTabNavigatorUsuario", comercio: "BottomTabNavigatorAliado", "rider.moto": "BottomTabNavigatorDelivery", "rider.taxi": "BottomTabNavigatorDelivery" };
-          navigation.reset({ index: 0, routes: [{ name: navMap[role] || "BottomTabNavigatorUsuario" }] });
-        }} />
-
-        {/* 4. Menu List Moderno (Reemplaza card1) */}
-        <View style={styles.menuContainer}>
-            <Text style={styles.menuHeader}>CUENTA</Text>
-            
-            <TouchableOpacity style={styles.menuItem} onPress={() => navigation.navigate("StepDiecisiete")}>
-                <View style={styles.menuItemLeft}>
-                    <Icon3 name="user" size={20} color="#888" />
-                    <Text style={styles.menuItemText}>Datos Personales</Text>
-                </View>
-                <Icon3 name="chevron-right" size={20} color="#888" />
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.menuItem} onPress={() => setPreferenciaModalVisible(true)}>
-                <View style={styles.menuItemLeft}>
-                    <Icon3 name="shuffle" size={20} color="#888" />
-                    <View style={{marginLeft: 12, flex: 1}}>
-                        <Text style={styles.menuItemText}>Preferencia de ingreso</Text>
-                        <Text style={styles.menuItemSubText}>Para iniciar sesión con un rol debes tener acceso previamente</Text>
-                    </View>
-                </View>
-                <Icon3 name="chevron-right" size={20} color="#888" />
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.menuItem} onPress={() => navigation.navigate("ConfigurarPalabraSeguridad")}>
-                <View style={styles.menuItemLeft}><Icon3 name="shield" size={20} color="#888" /><Text style={styles.menuItemText}>Configurar palabra de seguridad</Text></View>
-                <Icon3 name="chevron-right" size={20} color="#888" />
-            </TouchableOpacity>
+      <ScrollView contentContainerStyle={[pf.scroll, { paddingBottom: 104 + insets.bottom }]} showsVerticalScrollIndicator={false}>
+        <View style={pf.roleWrap}>
+          <RoleSwitcher userData={userInfo?.data || {}} onSwitchSuccess={(role) => {
+            const navMap = { usuario: "BottomTabNavigatorUsuario", comercio: "BottomTabNavigatorAliado", "rider.moto": "BottomTabNavigatorDelivery", "rider.taxi": "BottomTabNavigatorDelivery" };
+            navigation.reset({ index: 0, routes: [{ name: navMap[role] || "BottomTabNavigatorUsuario" }] });
+          }} />
         </View>
 
-        <View style={styles.menuContainer}>
-            <Text style={styles.menuHeader}>AJUSTES & SOPORTE</Text>
-
-            <TouchableOpacity style={styles.menuItem} onPress={() => setSupportModalVisible(true)}>
-                <View style={styles.menuItemLeft}>
-                    <Icon3 name="help-circle" size={20} color="#888" />
-                    <Text style={styles.menuItemText}>Soporte</Text>
-                </View>
-                <Icon3 name="chevron-right" size={20} color="#888" />
-            </TouchableOpacity>
-
-            <TouchableOpacity style={[styles.menuItem, {borderBottomWidth: 0}]} onPress={() => setModalVisible(true)}>
-                <View style={styles.menuItemLeft}>
-                    <Icon3 name="settings" size={20} color="#888" />
-                    <Text style={styles.menuItemText}>Desactivar Cuenta</Text>
-                </View>
-                <Icon3 name="chevron-right" size={20} color="#888" />
-            </TouchableOpacity>
+        <Text style={pf.grupoTitulo}>Cuenta</Text>
+        <View style={pf.grupo}>
+          {filaMenu("user", "Datos Personales", () => navigation.navigate("StepDiecisiete"))}
+          <View style={pf.sep} />
+          {filaMenu("shuffle", "Preferencia de ingreso", () => setPreferenciaModalVisible(true), { sub: "Para iniciar sesión con un rol debes tener acceso previamente" })}
+          <View style={pf.sep} />
+          {filaMenu("shield", "Configurar palabra de seguridad", () => navigation.navigate("ConfigurarPalabraSeguridad"))}
         </View>
 
-        {/* 5. Legal & Logout */}
-        <View style={styles.legalContainer}>
-            <TouchableOpacity onPress={() => Linking.openURL("https://carbycol.com/terminos-y-condiciones/")}>
-                <Text style={styles.linkText}>Términos y Condiciones</Text>
-            </TouchableOpacity>
-            <TouchableOpacity onPress={() => Linking.openURL("https://carbycol.com/politica-de-privacidad/")}>
-                <Text style={styles.linkText}>Privacidad de Datos</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity style={styles.logoutButton} onPress={cerrarSesion}>
-                <Icon3 name="log-out" size={18} color="#FF4757" style={{marginRight: 8}} />
-                <Text style={styles.logoutText}>Cerrar sesión</Text>
-            </TouchableOpacity>
+        <Text style={pf.grupoTitulo}>Ajustes & soporte</Text>
+        <View style={pf.grupo}>
+          {filaMenu("help-circle", "Soporte", () => setSupportModalVisible(true))}
+          <View style={pf.sep} />
+          {filaMenu("user-x", "Desactivar Cuenta", () => setModalVisible(true), { peligro: true })}
         </View>
 
+        <TouchableOpacity style={pf.logout} onPress={cerrarSesion} activeOpacity={0.8}>
+          <Icon3 name="log-out" size={18} color="#EF4444" />
+          <Text style={pf.logoutText}>Cerrar sesión</Text>
+        </TouchableOpacity>
+
+        <View style={pf.legal}>
+          <TouchableOpacity onPress={() => Linking.openURL("https://carbycol.com/terminos-y-condiciones/")}>
+            <Text style={pf.legalText}>Términos y Condiciones</Text>
+          </TouchableOpacity>
+          <Text style={pf.legalDot}>·</Text>
+          <TouchableOpacity onPress={() => Linking.openURL("https://carbycol.com/politica-de-privacidad/")}>
+            <Text style={pf.legalText}>Privacidad de Datos</Text>
+          </TouchableOpacity>
+        </View>
       </ScrollView>
 
       {/* --- MODALES CON NUEVO DISEÑO --- */}
@@ -471,23 +467,32 @@ export default function PerfilUsuario() {
       {/* Modal Preferencia de Ingreso */}
       <Modal animationType="slide" transparent={true} visible={preferenciaModalVisible} onRequestClose={() => setPreferenciaModalVisible(false)}>
         <View style={ps.sheetBg}>
-          <View style={ps.sheet}>
+          <TouchableOpacity style={ps.backdrop} activeOpacity={1} onPress={() => setPreferenciaModalVisible(false)} />
+          <View style={[ps.sheet, { paddingBottom: insets.bottom + 16 }]}>
             <View style={ps.grabber} />
             <Text style={ps.title}>Preferencia de ingreso</Text>
             <Text style={ps.sub}>Elige con qué rol iniciarás sesión la próxima vez</Text>
-            {["usuario", "comercio", "rider.moto", "rider.taxi"].map((r) => {
-              const labels = { usuario: "Usuario", comercio: "Comercio", "rider.moto": "Delivery", "rider.taxi": "Particular" };
-              const icons = { usuario: "user", comercio: "shopping-bag", "rider.moto": "truck", "rider.taxi": "navigation" };
-              const selected = preferenciaRol === r || (!preferenciaRol && r === "usuario");
-              return (
-                <TouchableOpacity key={r} style={[ps.option, selected && ps.optionSelected]} onPress={() => setPreferencia(r)}>
-                  <Icon3 name={icons[r]} size={20} color={selected ? "#fa6205" : "#999"} />
-                  <Text style={[ps.optionText, selected && ps.optionTextSelected]}>{labels[r]}</Text>
-                  {selected && <Icon3 name="check-circle" size={18} color="#fa6205" />}
-                </TouchableOpacity>
-              );
-            })}
-            <TouchableOpacity style={ps.cancelBtn} onPress={() => setPreferenciaModalVisible(false)}>
+            <View style={ps.grid}>
+              {["usuario", "comercio", "rider.moto", "rider.taxi"].map((r) => {
+                const labels = { usuario: "Usuario", comercio: "Comercio", "rider.moto": "Delivery", "rider.taxi": "Particular" };
+                const icons = { usuario: "person", comercio: "storefront", "rider.moto": "bicycle", "rider.taxi": "car" };
+                const selected = preferenciaRol === r || (!preferenciaRol && r === "usuario");
+                return (
+                  <TouchableOpacity key={r} style={[ps.option, selected && ps.optionSelected]} onPress={() => setPreferencia(r)} activeOpacity={0.8}>
+                    <View style={[ps.optionIcon, selected && ps.optionIconSelected]}>
+                      <Ionicons name={icons[r]} size={20} color={selected ? "#FFF" : "#52525B"} />
+                    </View>
+                    <Text style={[ps.optionText, selected && ps.optionTextSelected]}>{labels[r]}</Text>
+                    {selected && (
+                      <View style={ps.optionCheck}>
+                        <Ionicons name="checkmark-circle" size={20} color="#fa6205" />
+                      </View>
+                    )}
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+            <TouchableOpacity style={ps.cancelBtn} onPress={() => setPreferenciaModalVisible(false)} activeOpacity={0.8}>
               <Text style={ps.cancelText}>Cerrar</Text>
             </TouchableOpacity>
           </View>
@@ -721,15 +726,61 @@ const styles = StyleSheet.create({
 });
 
 const ps = StyleSheet.create({
-  sheetBg: { flex: 1, justifyContent: "flex-end" },
-  sheet: { backgroundColor: "#FFF", borderTopLeftRadius: 28, borderTopRightRadius: 28, padding: 20, paddingTop: 8 },
-  grabber: { width: 40, height: 5, borderRadius: 3, backgroundColor: "#E0E0E0", alignSelf: "center", marginBottom: 16 },
-  title: { fontSize: 18, fontFamily: "Montserrat_800ExtraBold", color: "#1C1C1E", marginBottom: 4 },
-  sub: { fontSize: 13, fontFamily: "Montserrat_400Regular", color: "#999", marginBottom: 16 },
-  option: { flexDirection: "row", alignItems: "center", backgroundColor: "#F4F4F5", borderRadius: 14, padding: 14, marginBottom: 8, gap: 12 },
-  optionSelected: { backgroundColor: "#FDEEE2", borderWidth: 1, borderColor: "#fa6205" },
-  optionText: { flex: 1, fontSize: 15, fontFamily: "Montserrat_600SemiBold", color: "#71717A" },
-  optionTextSelected: { color: "#fa6205", fontFamily: "Montserrat_700Bold" },
-  cancelBtn: { backgroundColor: "#F4F4F5", paddingVertical: 14, borderRadius: 14, alignItems: "center", marginTop: 8 },
-  cancelText: { fontSize: 15, fontFamily: "Montserrat_700Bold", color: "#71717A" },
+  sheetBg: { flex: 1, justifyContent: "flex-end", backgroundColor: "rgba(0,0,0,0.45)" },
+  backdrop: { flex: 1 },
+  sheet: { backgroundColor: "#FFF", borderTopLeftRadius: 28, borderTopRightRadius: 28, paddingHorizontal: 20, paddingTop: 10 },
+  grabber: { width: 40, height: 5, borderRadius: 999, backgroundColor: "#E4E4E7", alignSelf: "center", marginBottom: 16 },
+  title: { fontSize: 19, fontFamily: "Montserrat_800ExtraBold", color: "#1C1C1E" },
+  sub: { fontSize: 13, lineHeight: 18, fontFamily: "Montserrat_400Regular", color: "#71717A", marginTop: 4, marginBottom: 16 },
+  grid: { flexDirection: "row", flexWrap: "wrap", justifyContent: "space-between", rowGap: 10 },
+  option: { width: "48.5%", backgroundColor: "#F4F4F5", borderRadius: 20, paddingVertical: 14, paddingHorizontal: 14, gap: 10, position: "relative" },
+  optionSelected: { backgroundColor: "#FFF0E5" },
+  optionIcon: { width: 40, height: 40, borderRadius: 20, backgroundColor: "#FFF", alignItems: "center", justifyContent: "center" },
+  optionIconSelected: { backgroundColor: "#fa6205" },
+  optionText: { fontSize: 15, fontFamily: "Montserrat_700Bold", color: "#1C1C1E" },
+  optionTextSelected: { color: "#fa6205", fontFamily: "Montserrat_800ExtraBold" },
+  optionCheck: { position: "absolute", top: 12, right: 12 },
+  cancelBtn: { height: 54, backgroundColor: "#F4F4F5", borderRadius: 999, alignItems: "center", justifyContent: "center", marginTop: 16 },
+  cancelText: { fontSize: 15, fontFamily: "Montserrat_700Bold", color: "#1C1C1E" },
+});
+
+const pf = StyleSheet.create({
+  screen: { flex: 1, backgroundColor: "#F4F4F5" },
+  header: { backgroundColor: "#1C1C1E", paddingHorizontal: 18, paddingBottom: 20, borderBottomLeftRadius: 28, borderBottomRightRadius: 28 },
+  headerTitle: { fontSize: 17, fontFamily: "Montserrat_800ExtraBold", color: "#FFF", textAlign: "center" },
+  identity: { flexDirection: "row", alignItems: "center", gap: 14, marginTop: 16 },
+  avatarWrap: { width: 68, height: 68 },
+  avatar: { width: 68, height: 68, borderRadius: 34, backgroundColor: "#2C2C2E" },
+  avatarVacio: { backgroundColor: "#fa6205", alignItems: "center", justifyContent: "center" },
+  avatarText: { fontSize: 24, fontFamily: "Montserrat_800ExtraBold", color: "#FFF" },
+  avatarEdit: {
+    position: "absolute", right: -2, bottom: -2, width: 26, height: 26, borderRadius: 13, backgroundColor: "#fa6205",
+    borderWidth: 2.5, borderColor: "#1C1C1E", alignItems: "center", justifyContent: "center",
+  },
+  identityText: { flex: 1 },
+  name: { fontSize: 19, fontFamily: "Montserrat_800ExtraBold", color: "#FFF" },
+  cityRow: { flexDirection: "row", alignItems: "center", gap: 5, marginTop: 4 },
+  city: { fontSize: 13, fontFamily: "Montserrat_400Regular", color: "#A1A1AA" },
+
+  scroll: { paddingHorizontal: 16, paddingTop: 4 },
+  roleWrap: { marginHorizontal: -16 },
+  grupoTitulo: { fontSize: 13, fontFamily: "Montserrat_700Bold", color: "#71717A", marginTop: 18, marginBottom: 8, marginLeft: 4 },
+  grupo: { backgroundColor: "#FFF", borderRadius: 20, paddingHorizontal: 14 },
+  sep: { height: StyleSheet.hairlineWidth, backgroundColor: "#E4E4E7", marginLeft: 50 },
+  fila: { flexDirection: "row", alignItems: "center", gap: 12, paddingVertical: 13 },
+  filaIcono: { width: 38, height: 38, borderRadius: 12, backgroundColor: "#F4F4F5", alignItems: "center", justifyContent: "center" },
+  filaIconoPeligro: { backgroundColor: "#FEF2F2" },
+  filaIconoMarca: { backgroundColor: "#FFF0E5" },
+  rolBadge: { alignSelf: "flex-start", backgroundColor: "rgba(250,98,5,0.2)", borderRadius: 999, paddingHorizontal: 10, paddingVertical: 3, marginTop: 8 },
+  rolBadgeText: { fontSize: 11.5, fontFamily: "Montserrat_700Bold", color: "#fa6205", textTransform: "capitalize" },
+  filaTexto: { flex: 1 },
+  filaTitulo: { fontSize: 15, fontFamily: "Montserrat_600SemiBold", color: "#1C1C1E" },
+  filaTituloPeligro: { color: "#EF4444" },
+  filaSub: { fontSize: 12, lineHeight: 16, fontFamily: "Montserrat_400Regular", color: "#71717A", marginTop: 2 },
+
+  logout: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, height: 54, borderRadius: 27, backgroundColor: "#FEF2F2", marginTop: 22 },
+  logoutText: { fontSize: 15, fontFamily: "Montserrat_700Bold", color: "#EF4444" },
+  legal: { flexDirection: "row", justifyContent: "center", alignItems: "center", gap: 8, marginTop: 16 },
+  legalText: { fontSize: 12.5, fontFamily: "Montserrat_600SemiBold", color: "#71717A" },
+  legalDot: { fontSize: 12.5, color: "#A1A1AA" },
 });

@@ -57,14 +57,14 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 18,
-    fontFamily: "MontserratBold",
+    fontFamily: "Montserrat_700Bold",
     fontWeight: "bold",
     color: "#0F172A",
     marginBottom: 6,
   },
   subtitle: {
     fontSize: 13,
-    fontFamily: "Montserrat",
+    fontFamily: "Montserrat_400Regular",
     color: "#64748B",
     marginBottom: 18,
   },
@@ -88,7 +88,7 @@ const styles = StyleSheet.create({
     color: "#FF4757",
     fontSize: 12,
     marginBottom: 12,
-    fontFamily: "Montserrat",
+    fontFamily: "Montserrat_400Regular",
   },
   row: {
     flexDirection: "row",
@@ -104,7 +104,7 @@ const styles = StyleSheet.create({
   },
   cancelText: {
     color: "#0F172A",
-    fontFamily: "MontserratBold",
+    fontFamily: "Montserrat_700Bold",
     fontWeight: "bold",
   },
   verifyBtn: {
@@ -116,7 +116,7 @@ const styles = StyleSheet.create({
   },
   verifyText: {
     color: "#FFFFFF",
-    fontFamily: "MontserratBold",
+    fontFamily: "Montserrat_700Bold",
     fontWeight: "bold",
   },
   successBox: {

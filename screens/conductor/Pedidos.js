@@ -9,6 +9,7 @@ import { useNavigation, useFocusEffect } from "@react-navigation/native";
 import { useFonts, Montserrat_400Regular, Montserrat_700Bold, Montserrat_300Light, Montserrat_600SemiBold, Montserrat_800ExtraBold } from "@expo-google-fonts/montserrat";
 import { Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import IconoVehiculo from "../../components/IconoVehiculo";
 import { useNotification } from "../../context/NotificationContext";
 import AlertaModal from "../../components/ErrorModal";
 
@@ -16,6 +17,7 @@ import PedidosHeader from "../../components/usuario/pedidos/PedidosHeader";
 import PedidosTabs from "../../components/usuario/pedidos/PedidosTabs";
 import StatusBadge from "../../components/usuario/pedidos/StatusBadge";
 import RouteStops from "../../components/usuario/pedidos/RouteStops";
+import LogoComercio from "../../components/LogoComercio";
 import DriverRow from "../../components/usuario/pedidos/DriverRow";
 import PaymentBadge from "../../components/usuario/pedidos/PaymentBadge";
 import EmptyState from "../../components/usuario/pedidos/EmptyState";
@@ -104,6 +106,16 @@ export default function PedidosConductor({ route }) {
     });
   };
 
+  const [tipoConductor, setTipoConductor] = useState(null);
+  useEffect(() => {
+    (async () => {
+      try {
+        const ud = JSON.parse((await AsyncStorage.getItem("userData")) || "{}");
+        setTipoConductor(ud?.tipo_usuario || (await AsyncStorage.getItem("tipoUsuario")) || null);
+      } catch {}
+    })();
+  }, []);
+
   const renderItem = ({ item }) => {
     const tienePedido = !!item.pedido;
     const esActivo = ["pendiente", "aceptado", "activo"].includes(item.estado);
@@ -113,7 +125,7 @@ export default function PedidosConductor({ route }) {
         {/* Header */}
         <View style={ds.header}>
           <View style={ds.iconBox}>
-            <Ionicons name="car" size={20} color={COLORS.ink} />
+            <IconoVehiculo item={item} tipoConductor={tipoConductor} size={20} color={COLORS.ink} fallback="car" />
           </View>
           <View style={ds.headerInfo}>
             <Text style={ds.title} numberOfLines={1}>
@@ -136,7 +148,7 @@ export default function PedidosConductor({ route }) {
         {tienePedido && (
           <View style={ds.pedidoSection}>
             <View style={ds.pedidoHeader}>
-              <Ionicons name="cube" size={14} color={COLORS.brand} />
+              <LogoComercio comercio={item.pedido.comercio} comercioId={item.pedido.comercio?.id || item.pedido.comercio_id} size={22} />
               <Text style={ds.pedidoTitle}>{item.pedido.comercio?.establecimiento_nombre || "Comercio"}</Text>
               <StatusBadge status={item.pedido.estado} type="pedido" />
             </View>
@@ -223,7 +235,7 @@ export default function PedidosConductor({ route }) {
         )}
       </View>
 
-      <DetailSheet item={selectedItem} onClose={() => setSelectedItem(null)} onNavigate={navigateToDetails} />
+      <DetailSheet item={selectedItem} onClose={() => setSelectedItem(null)} onNavigate={navigateToDetails} tipoConductor={tipoConductor} />
 
       <AlertaModal
         visible={alertVisible} mensaje={alertData.message} tipo={alertData.type}
@@ -246,11 +258,13 @@ export default function PedidosConductor({ route }) {
             <View style={ds.chatPanel}>
               <View style={ds.chatHeader}>
               <View style={ds.chatAvatar}>
-                {chatItem.comercioImage ? (
-                  <Image source={{ uri: getCommerceImageUrl(chatItem.comercioImage) }} style={ds.chatAvatarImage} resizeMode="cover" />
-                ) : (
-                  <Ionicons name="storefront" size={20} color="#FFFFFF" />
-                )}
+                <LogoComercio
+                  comercio={chatItem.comercioImage ? { foto: getCommerceImageUrl(chatItem.comercioImage) } : null}
+                  comercioId={chatItem.comercioId}
+                  size={44}
+                  iconColor="#FFFFFF"
+                  fallbackBg="transparent"
+                />
               </View>
                 <View style={ds.chatHeaderText}>
                   <Text style={ds.chatTitle} numberOfLines={1}>

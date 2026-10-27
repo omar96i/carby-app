@@ -566,7 +566,7 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     fontSize: 15,
-    fontFamily: "MontserratBold",
+    fontFamily: "Montserrat_700Bold",
     fontWeight: "bold",
     color: "#0F172A",
   },
@@ -578,7 +578,7 @@ const styles = StyleSheet.create({
   },
   headerSub: {
     fontSize: 12,
-    fontFamily: "Montserrat",
+    fontFamily: "Montserrat_400Regular",
     color: "#64748B",
   },
   orderBadge: {
@@ -591,7 +591,7 @@ const styles = StyleSheet.create({
   },
   orderBadgeText: {
     fontSize: 10,
-    fontFamily: "MontserratBold",
+    fontFamily: "Montserrat_700Bold",
     fontWeight: "bold",
     color: "#FF5500",
   },
@@ -611,7 +611,7 @@ const styles = StyleSheet.create({
   },
   dayLabel: {
     fontSize: 11,
-    fontFamily: "Montserrat",
+    fontFamily: "Montserrat_400Regular",
     color: "#94A3B8",
     backgroundColor: "#E2E8F0",
     paddingHorizontal: 12,
@@ -663,7 +663,7 @@ const styles = StyleSheet.create({
   loadingText: {
     marginTop: 10,
     color: '#64748B',
-    fontFamily: "Montserrat",
+    fontFamily: "Montserrat_400Regular",
     fontSize: 13,
   },
   emptyChat: {
@@ -673,7 +673,7 @@ const styles = StyleSheet.create({
   emptyChatText: {
     color: "#94A3B8",
     fontSize: 14,
-    fontFamily: "Montserrat",
+    fontFamily: "Montserrat_400Regular",
   },
   messageWrapper: {
     maxWidth: '78%',
@@ -700,8 +700,7 @@ const styles = StyleSheet.create({
   },
   otherAvatarText: {
     fontSize: 10,
-    fontFamily: "Montserrat",
-    fontWeight: "bold",
+    fontFamily: "Montserrat_700Bold",
     color: "#64748B",
   },
   otherCol: {
@@ -709,7 +708,7 @@ const styles = StyleSheet.create({
   },
   otherName: {
     fontSize: 10,
-    fontFamily: "Montserrat",
+    fontFamily: "Montserrat_400Regular",
     color: "#94A3B8",
     marginLeft: 4,
     marginBottom: 2,
@@ -742,7 +741,7 @@ const styles = StyleSheet.create({
   messageText: {
     fontSize: 14,
     lineHeight: 19,
-    fontFamily: "Montserrat",
+    fontFamily: "Montserrat_400Regular",
   },
   myMessageText: {
     color: "#FFFFFF",
@@ -764,7 +763,7 @@ const styles = StyleSheet.create({
   },
   time: {
     fontSize: 10,
-    fontFamily: "Montserrat",
+    fontFamily: "Montserrat_400Regular",
   },
   myTime: {
     color: "rgba(255,255,255,0.75)",
@@ -775,12 +774,12 @@ const styles = StyleSheet.create({
   statusSending: {
     fontSize: 10,
     color: "#94A3B8",
-    fontFamily: "Montserrat",
+    fontFamily: "Montserrat_400Regular",
   },
   statusError: {
     fontSize: 10,
     color: "#FF4757",
-    fontFamily: "Montserrat",
+    fontFamily: "Montserrat_400Regular",
   },
   quickReplies: {
     flexDirection: "row",
@@ -803,7 +802,7 @@ const styles = StyleSheet.create({
   },
   quickReplyText: {
     fontSize: 12,
-    fontFamily: "Montserrat",
+    fontFamily: "Montserrat_400Regular",
     color: "#334155",
   },
 });

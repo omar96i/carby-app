@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, KeyboardAvoidingView, Platform, Image, StyleSheet, TouchableOpacity, ScrollView, TextInput, ActivityIndicator, Modal, Alert } from 'react-native';
+import { View, Text, KeyboardAvoidingView, Platform, Image, StyleSheet, TouchableOpacity, ScrollView, TextInput, ActivityIndicator, Modal, Alert, Switch } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import ScreenHeader from "../../components/ScreenHeader";
@@ -9,6 +9,7 @@ import * as ImagePicker from 'expo-image-picker';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { BASE_URL } from '../../constants/url';
 import AlertaModal from "../../components/ErrorModal";
+import { useAlturaTecladoAndroid } from "../../hooks/useAlturaTecladoAndroid";
 
 const EditarServicio = () => {
   const navigation = useNavigation();
@@ -56,6 +57,7 @@ const EditarServicio = () => {
     setAlertData({ message, type, onPrimary, primaryLabel });
     setAlertVisible(true);
   };
+  const alturaTeclado = useAlturaTecladoAndroid();
 
   useEffect(() => {
     (async () => {
@@ -202,13 +204,18 @@ const EditarServicio = () => {
   };
 
   const pickAdicionalImage = async () => {
-    let result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsEditing: false,
-      aspect: [4, 3],
-      quality: 1,
-    });
-    if (!result.canceled) setAdicionalFoto(result.assets[0]);
+    try {
+      let result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ["images"],
+        allowsEditing: false,
+        aspect: [4, 3],
+        quality: 1,
+      });
+      if (!result.canceled && result.assets?.[0]) setAdicionalFoto(result.assets[0]);
+    } catch (e) {
+      console.error("Error al elegir la foto del adicional:", e);
+      showAlert('No se pudo abrir la galería. Intenta de nuevo.', 'error');
+    }
   };
 
   const handleSubmit = async () => {
@@ -351,128 +358,208 @@ const EditarServicio = () => {
     }, 'Eliminar');
   };
 
+  const precioNum = parseFloat(String(precio || "").replace(/[^\d.]/g, "")) || 0;
+  const descuentoNum = parseFloat(String(descuento || "").replace(/[^\d.]/g, "")) || 0;
+  const precioFinal = Math.max(0, precioNum - descuentoNum);
+
   return (
-    <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
-      <KeyboardAvoidingView
-        style={{ flex: 1 }}
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        keyboardVerticalOffset={Platform.OS === 'ios' ? 80 : 0}
-      >
-        <ScrollView contentContainerStyle={{ flexGrow: 1, paddingBottom: Math.max(insets.bottom, 12) }} keyboardShouldPersistTaps="handled">
-          <ScreenHeader title="Editar Servicio" showBackButton />
-          <TouchableOpacity onPress={pickImage} style={styles.imagePicker}>
+    <SafeAreaView style={ep.screen} edges={['top', 'left', 'right']}>
+      <View style={[ep.root, { marginBottom: alturaTeclado }]}>
+        <View style={ep.topBar}>
+          <TouchableOpacity style={ep.backBtn} onPress={() => navigation.goBack()} activeOpacity={0.8}>
+            <Ionicons name="arrow-back" size={20} color="#1C1C1E" />
+          </TouchableOpacity>
+          <Text style={ep.topTitle}>Editar servicio</Text>
+          <View style={ep.backBtnEspacio} />
+        </View>
+
+        <ScrollView contentContainerStyle={ep.scroll} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
+          <TouchableOpacity onPress={pickImage} style={ep.foto} activeOpacity={0.85}>
             {foto ? (
-              <Image source={{ uri: foto.uri }} style={styles.imagePreview} />
+              <>
+                <Image source={{ uri: foto.uri }} style={ep.fotoImg} />
+                <View style={ep.fotoChip}>
+                  <Ionicons name="camera" size={14} color="#FFF" />
+                  <Text style={ep.fotoChipText}>Cambiar foto</Text>
+                </View>
+              </>
             ) : (
-              <View style={styles.imagePlaceholder}>
-                <Ionicons name="camera-outline" size={40} color="#CCC" />
-                <Text style={styles.imagePlaceholderText}>Toca para cambiar imagen</Text>
+              <View style={ep.fotoVacia}>
+                <View style={ep.fotoIcon}>
+                  <Ionicons name="camera" size={24} color="#fa6205" />
+                </View>
+                <Text style={ep.fotoVaciaText}>Toca para cambiar imagen</Text>
               </View>
             )}
           </TouchableOpacity>
-          <View style={styles.formContainer}>
-            <Text style={styles.inputLabel}>Nombre del servicio</Text>
-            <TextInput style={styles.input} placeholder="Ingresa el nombre" placeholderTextColor="#999" value={nombre} onChangeText={setNombre} />
-            <Text style={styles.inputLabel}>Precio</Text>
-            <TextInput style={styles.input} placeholder="Ingresa el precio" placeholderTextColor="#999" keyboardType="numeric" value={precio} onChangeText={setPrecio} />
-            {rangoPrecios?.min != null && rangoPrecios?.max != null ? (
-              <Text style={styles.rangeText}>
-                Rango permitido: $ {Number(rangoPrecios.min).toLocaleString("es-CO")} – $ {Number(rangoPrecios.max).toLocaleString("es-CO")}
-              </Text>
-            ) : null}
-            <Text style={styles.inputLabel}>Tiempo estimado</Text>
-            <TextInput style={styles.input} placeholder="Ej: 30 min" placeholderTextColor="#999" value={tiempo} onChangeText={setTiempo} />
-            <Text style={styles.inputLabel}>Descripción (opcional)</Text>
-            <TextInput style={[styles.input, { minHeight: 80, textAlignVertical: 'top' }]} placeholder="Ingresa la descripción (opcional)" placeholderTextColor="#999" multiline numberOfLines={4} value={descripcion} onChangeText={setDescripcion} />
 
-            <View style={{ flexDirection: "row", gap: 10, marginTop: 14 }}>
-              <View style={{ flex: 1 }}>
-                <Text style={styles.inputLabel}>Descuento ($)</Text>
-                <TextInput style={styles.input} placeholder="0" placeholderTextColor="#999" keyboardType="numeric" value={descuento} onChangeText={setDescuento} />
+          <View style={ep.card}>
+            <Text style={ep.cardTitulo}>Información</Text>
+            <Text style={ep.label}>Nombre del servicio</Text>
+            <TextInput style={ep.input} placeholder="Ingresa el nombre" placeholderTextColor="#A1A1AA" value={nombre} onChangeText={setNombre} />
+
+            <View style={{ flexDirection: "row", gap: 10 }}>
+              <View style={{ flex: 3 }}>
+                <Text style={ep.label}>Precio</Text>
+                <View style={ep.precioBox}>
+                  <Text style={ep.precioSigno}>$</Text>
+                  <TextInput style={ep.precioInput} placeholder="Ingresa el precio" placeholderTextColor="#A1A1AA" keyboardType="numeric" value={precio} onChangeText={setPrecio} />
+                </View>
               </View>
-              <View style={{ flex: 1, justifyContent: "flex-end", paddingBottom: 14 }}>
-                <TouchableOpacity style={[edToggle.toggleBtn, activoDescuento && { backgroundColor: "#fa6205" }]} onPress={() => setActivoDescuento(!activoDescuento)}>
-                  <Text style={[edToggle.toggleText, activoDescuento && { color: "#FFF", fontFamily: "Montserrat_700Bold" }]}>
-                    {activoDescuento ? "DTO Activo" : "Activar DTO"}
-                  </Text>
-                </TouchableOpacity>
+              <View style={{ flex: 2 }}>
+                <Text style={ep.label}>Tiempo estimado</Text>
+                <View style={ep.precioBox}>
+                  <Ionicons name="time-outline" size={17} color="#71717A" style={{ marginRight: 6 }} />
+                  <TextInput style={ep.precioInput} placeholder="Ej: 30 min" placeholderTextColor="#A1A1AA" value={tiempo} onChangeText={setTiempo} />
+                </View>
               </View>
             </View>
+            {rangoPrecios?.min != null && rangoPrecios?.max != null ? (
+              <View style={ep.rangeRow}>
+                <Ionicons name="pricetag-outline" size={13} color="#71717A" />
+                <Text style={ep.rangeText}>
+                  Rango permitido: $ {Number(rangoPrecios.min).toLocaleString("es-CO")} – $ {Number(rangoPrecios.max).toLocaleString("es-CO")}
+                </Text>
+              </View>
+            ) : null}
+
+            <Text style={ep.label}>Descripción <Text style={ep.opcional}>(opcional)</Text></Text>
+            <TextInput style={[ep.input, ep.inputMulti]} placeholder="Ingresa la descripción (opcional)" placeholderTextColor="#A1A1AA" multiline numberOfLines={4} value={descripcion} onChangeText={setDescripcion} />
           </View>
-          <TouchableOpacity style={styles.myButton} onPress={handleSubmit} disabled={loading}>
-            {loading ? <ActivityIndicator size="small" color="#FFF" /> : <Text style={styles.buttonText}>Guardar Cambios</Text>}
-          </TouchableOpacity>
-          <View style={styles.adicionalesContainer}>
-            <View style={styles.adicionalesHeader}>
-              <Text style={styles.adicionalesTitle}>Adicionales</Text>
-              <TouchableOpacity style={styles.addAdicionalButton} onPress={() => openAdicionalModal()}>
-                <Ionicons name="add" size={18} color="#FFF" />
-                <Text style={styles.addAdicionalText}>Agregar</Text>
+
+          <View style={ep.card}>
+            <View style={ep.descTop}>
+              <View style={[ep.descIcon, activoDescuento && ep.descIconOn]}>
+                <Ionicons name="pricetags" size={17} color={activoDescuento ? "#FFF" : "#fa6205"} />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={ep.cardTitulo}>Descuento</Text>
+                <Text style={ep.descSub}>{activoDescuento ? "DTO Activo" : "Activar DTO"}</Text>
+              </View>
+              <Switch value={activoDescuento} onValueChange={setActivoDescuento} trackColor={{ false: "#E4E4E7", true: "#fa6205" }} thumbColor="#FFF" />
+            </View>
+            <Text style={ep.label}>Descuento ($)</Text>
+            <View style={ep.precioBox}>
+              <Text style={ep.precioSigno}>− $</Text>
+              <TextInput style={ep.precioInput} placeholder="0" placeholderTextColor="#A1A1AA" keyboardType="numeric" value={descuento} onChangeText={setDescuento} />
+            </View>
+            {activoDescuento && precioNum > 0 && descuentoNum > 0 && (
+              <Text style={ep.descResultado}>
+                El cliente paga <Text style={ep.descFinal}>$ {Math.round(precioFinal).toLocaleString("es-CO")}</Text> en vez de $ {Math.round(precioNum).toLocaleString("es-CO")}
+              </Text>
+            )}
+          </View>
+
+          <View style={ep.card}>
+            <View style={ep.adHead}>
+              <View style={{ flex: 1 }}>
+                <Text style={ep.cardTitulo}>Adicionales</Text>
+                <Text style={ep.descSub}>Adicional o para elegir</Text>
+              </View>
+              <TouchableOpacity style={ep.adAgregar} onPress={() => openAdicionalModal()} activeOpacity={0.85}>
+                <Ionicons name="add" size={17} color="#FFF" />
+                <Text style={ep.adAgregarText}>Agregar</Text>
               </TouchableOpacity>
             </View>
-            <Text style={styles.adicionalHelperText}>Adicional o para elegir</Text>
             {adicionales.length > 0 ? (
               adicionales.map((ad) => (
-                <View key={ad.id} style={styles.adicionalItem}>
+                <View key={ad.id} style={ep.adRow}>
                   {ad.file && typeof ad.file === 'string' && ad.file.trim() !== '' ? (
-                    <Image source={{ uri: ad.file.startsWith('http') ? ad.file : `${BASE_URL.toString().replace('/api', '')}/storage/${ad.file}` }} style={styles.adicionalImage} />
+                    <Image source={{ uri: ad.file.startsWith('http') ? ad.file : `${BASE_URL.toString().replace('/api', '')}/storage/${ad.file}` }} style={ep.adThumb} />
                   ) : (
-                    <View style={styles.adicionalImagePlaceholder}>
-                      <Ionicons name="image-outline" size={20} color="#CCC" />
+                    <View style={[ep.adThumb, ep.adThumbVacia]}>
+                      <Ionicons name="image-outline" size={18} color="#A1A1AA" />
                     </View>
                   )}
-                  <View style={styles.adicionalInfo}>
-                    <Text style={styles.adicionalNombre}>{ad.nombre}</Text>
-                    <Text style={styles.adicionalDescripcion}>{ad.descripcion}</Text>
-                    <Text style={styles.adicionalPrecio}>$ {Number(ad.precio).toLocaleString("es-CO")}</Text>
-                    <Text style={styles.adicionalTiempo}>Tiempo: {ad.tiempo} min</Text>
+                  <View style={{ flex: 1 }}>
+                    <Text style={ep.adNombre} numberOfLines={1}>{ad.nombre}</Text>
+                    {!!ad.descripcion && <Text style={ep.adDesc} numberOfLines={2}>{ad.descripcion}</Text>}
+                    <Text style={ep.adPrecio}>
+                      +$ {Number(ad.precio).toLocaleString("es-CO")}  <Text style={ep.adMeta}>· Tiempo: {ad.tiempo} min</Text>
+                    </Text>
                   </View>
-                  <TouchableOpacity onPress={() => openAdicionalModal(ad)} style={styles.adicionalEditBtn}>
-                    <Ionicons name="pencil" size={14} color="#999" />
+                  <TouchableOpacity onPress={() => openAdicionalModal(ad)} style={ep.adBtn} activeOpacity={0.7}>
+                    <Ionicons name="create-outline" size={17} color="#1C1C1E" />
                   </TouchableOpacity>
-                  <TouchableOpacity onPress={() => handleDeleteAdicional(ad.id)} style={styles.adicionalDeleteBtn}>
-                    <Ionicons name="trash-outline" size={14} color="#EF4444" />
+                  <TouchableOpacity onPress={() => handleDeleteAdicional(ad.id)} style={[ep.adBtn, ep.adBtnRojo]} activeOpacity={0.7}>
+                    <Ionicons name="trash-outline" size={16} color="#EF4444" />
                   </TouchableOpacity>
                 </View>
               ))
             ) : (
-              <Text style={styles.noAdicionalesText}>No hay adicionales para este servicio</Text>
+              <TouchableOpacity style={ep.adVacio} onPress={() => openAdicionalModal()} activeOpacity={0.8}>
+                <Ionicons name="add-circle-outline" size={24} color="#fa6205" />
+                <Text style={ep.adVacioText}>No hay adicionales para este servicio</Text>
+              </TouchableOpacity>
             )}
           </View>
         </ScrollView>
-      </KeyboardAvoidingView>
+
+        <View style={[ep.footer, { paddingBottom: (alturaTeclado ? 0 : insets.bottom) + 12 }]}>
+          <TouchableOpacity style={[ep.guardar, loading && { opacity: 0.7 }]} onPress={handleSubmit} disabled={loading} activeOpacity={0.85}>
+            {loading ? (
+              <ActivityIndicator size="small" color="#FFF" />
+            ) : (
+              <>
+                <Ionicons name="checkmark-circle" size={20} color="#FFF" />
+                <Text style={ep.guardarText}>Guardar Cambios</Text>
+              </>
+            )}
+          </TouchableOpacity>
+        </View>
+      </View>
 
       {/* Modal para crear/editar adicional */}
-      <Modal transparent visible={modalVisible} animationType="slide" onRequestClose={closeAdicionalModal}>
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContainer}>
-            <Text style={styles.modalTitle}>{adicionalEdit ? 'Editar' : 'Agregar'} Adicional</Text>
-            <TouchableOpacity onPress={pickAdicionalImage} style={{ alignSelf: 'center', marginBottom: 16 }}>
-              {adicionalFoto ? (
-                <Image source={{ uri: adicionalFoto.uri }} style={{ width: 100, height: 100, borderRadius: 14 }} />
-              ) : (
-                <View style={{ width: 100, height: 100, backgroundColor: '#F5F0E8', borderRadius: 14, justifyContent: 'center', alignItems: 'center', borderWidth: 1.5, borderStyle: 'dashed', borderColor: '#E8E2D8' }}>
-                  <Ionicons name="camera" size={32} color="#fa6205" />
+      <Modal transparent visible={modalVisible} animationType="slide" onRequestClose={closeAdicionalModal} statusBarTranslucent>
+        <View style={ep.sheetBg}>
+          <View style={{ flex: 1 }} />
+          <View style={[ep.sheet, { marginBottom: alturaTeclado, paddingBottom: (alturaTeclado ? 0 : insets.bottom) + 16 }]}>
+            <View style={ep.grabber} />
+            <View style={ep.sheetHead}>
+              <Text style={ep.sheetTitle}>{adicionalEdit ? 'Editar' : 'Agregar'} Adicional</Text>
+              <TouchableOpacity style={ep.sheetClose} onPress={closeAdicionalModal}>
+                <Ionicons name="close" size={20} color="#1C1C1E" />
+              </TouchableOpacity>
+            </View>
+
+            <ScrollView keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
+              <View style={ep.sheetTop}>
+                <TouchableOpacity onPress={pickAdicionalImage} style={[ep.sheetFoto, adicionalFoto && ep.sheetFotoLlena]} activeOpacity={0.8}>
+                  {adicionalFoto ? (
+                    <Image source={{ uri: adicionalFoto.uri }} style={ep.fotoImg} />
+                  ) : (
+                    <>
+                      <Ionicons name="camera" size={22} color="#fa6205" />
+                      <Text style={ep.sheetFotoText}>Foto</Text>
+                    </>
+                  )}
+                </TouchableOpacity>
+                <View style={{ flex: 1, gap: 8 }}>
+                  <TextInput style={ep.input} placeholder="Nombre" placeholderTextColor="#A1A1AA" value={adicionalNombre} onChangeText={setAdicionalNombre} />
+                  <TextInput style={ep.input} placeholder="Descripción" placeholderTextColor="#A1A1AA" value={adicionalDescripcion} onChangeText={setAdicionalDescripcion} />
                 </View>
-              )}
-            </TouchableOpacity>
-            <TextInput style={styles.input} placeholder="Nombre" placeholderTextColor="#999" value={adicionalNombre} onChangeText={setAdicionalNombre} />
-            <TextInput style={[styles.input, { marginTop: 12 }]} placeholder="Descripción" placeholderTextColor="#999" value={adicionalDescripcion} onChangeText={setAdicionalDescripcion} />
-            <View style={{ flexDirection: 'row', gap: 12, marginTop: 12 }}>
-              <TextInput style={[styles.input, { flex: 1 }]} placeholder="Precio" placeholderTextColor="#999" value={adicionalPrecio} onChangeText={setAdicionalPrecio} keyboardType="numeric" />
-              <TextInput style={[styles.input, { flex: 1 }]} placeholder="Tiempo (min)" placeholderTextColor="#999" value={adicionalTiempo} onChangeText={setAdicionalTiempo} keyboardType="numeric" />
-            </View>
-            <Text style={styles.modalHelperText}>
-              Si deseas que el adicional sea gratis, asigna el valor 0.
-            </Text>
-            <View style={{ flexDirection: 'row', gap: 12 }}>
-              <TouchableOpacity onPress={closeAdicionalModal} style={styles.modalCancelBtn}>
-                <Text style={styles.modalCancelBtnText}>Cancelar</Text>
-              </TouchableOpacity>
-              <TouchableOpacity onPress={handleAdicionalSubmit} style={styles.modalPrimaryBtn} disabled={adicionalLoading}>
-                {adicionalLoading ? <ActivityIndicator size="small" color="#FFF" /> : <Text style={styles.modalPrimaryBtnText}>{adicionalEdit ? 'Guardar' : 'Crear'}</Text>}
-              </TouchableOpacity>
-            </View>
+              </View>
+              <View style={{ flexDirection: 'row', gap: 10, marginTop: 10 }}>
+                <View style={[ep.precioBox, { flex: 1 }]}>
+                  <Text style={ep.precioSigno}>+ $</Text>
+                  <TextInput style={ep.precioInput} placeholder="Precio" placeholderTextColor="#A1A1AA" value={adicionalPrecio} onChangeText={setAdicionalPrecio} keyboardType="numeric" />
+                </View>
+                <View style={[ep.precioBox, { flex: 1 }]}>
+                  <Ionicons name="time-outline" size={17} color="#71717A" style={{ marginRight: 6 }} />
+                  <TextInput style={ep.precioInput} placeholder="Tiempo (min)" placeholderTextColor="#A1A1AA" value={adicionalTiempo} onChangeText={setAdicionalTiempo} keyboardType="numeric" />
+                </View>
+              </View>
+              <Text style={ep.sheetHelper}>Si deseas que el adicional sea gratis, asigna el valor 0.</Text>
+
+              <View style={ep.sheetBtns}>
+                <TouchableOpacity onPress={closeAdicionalModal} style={ep.sheetCancel} activeOpacity={0.8}>
+                  <Text style={ep.sheetCancelText}>Cancelar</Text>
+                </TouchableOpacity>
+                <TouchableOpacity onPress={handleAdicionalSubmit} style={ep.sheetOk} disabled={adicionalLoading} activeOpacity={0.85}>
+                  {adicionalLoading ? <ActivityIndicator size="small" color="#FFF" /> : <Text style={ep.sheetOkText}>{adicionalEdit ? 'Guardar' : 'Crear'}</Text>}
+                </TouchableOpacity>
+              </View>
+            </ScrollView>
           </View>
         </View>
       </Modal>
@@ -481,7 +568,7 @@ const EditarServicio = () => {
         mensaje={alertData.message}
         tipo={alertData.type}
         onCerrar={() => setAlertVisible(false)}
-        onPrimary={alertData.onPrimary}
+        onPrimary={alertData.onPrimary ? () => { setAlertVisible(false); alertData.onPrimary(); } : undefined}
         primaryLabel={alertData.primaryLabel}
       />
     </SafeAreaView>
@@ -535,6 +622,83 @@ const styles = StyleSheet.create({
 const edToggle = StyleSheet.create({
   toggleBtn: { paddingVertical: 10, paddingHorizontal: 16, borderRadius: 12, backgroundColor: "#F4F4F5", alignItems: "center" },
   toggleText: { fontSize: 13, fontFamily: "Montserrat_600SemiBold", color: "#71717A" },
+});
+
+
+const ep = StyleSheet.create({
+  screen: { flex: 1, backgroundColor: "#F4F4F5" },
+  root: { flex: 1 },
+  topBar: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingHorizontal: 16, paddingVertical: 10 },
+  backBtn: { width: 40, height: 40, borderRadius: 20, backgroundColor: "#FFF", alignItems: "center", justifyContent: "center" },
+  backBtnEspacio: { width: 40 },
+  topTitle: { fontSize: 17, fontFamily: "Montserrat_800ExtraBold", color: "#1C1C1E" },
+  scroll: { paddingHorizontal: 16, paddingBottom: 24 },
+
+  foto: { height: 210, borderRadius: 24, overflow: "hidden", backgroundColor: "#FFF", marginTop: 4 },
+  fotoImg: { width: "100%", height: "100%" },
+  fotoVacia: { flex: 1, alignItems: "center", justifyContent: "center", borderWidth: 1.5, borderColor: "#E4E4E7", borderStyle: "dashed", borderRadius: 24 },
+  fotoIcon: { width: 52, height: 52, borderRadius: 26, backgroundColor: "#FFF0E5", alignItems: "center", justifyContent: "center", marginBottom: 10 },
+  fotoVaciaText: { fontSize: 14, fontFamily: "Montserrat_700Bold", color: "#1C1C1E" },
+  fotoChip: { position: "absolute", left: 12, bottom: 12, flexDirection: "row", alignItems: "center", gap: 6, height: 32, paddingHorizontal: 14, borderRadius: 16, backgroundColor: "rgba(0,0,0,0.6)" },
+  fotoChipText: { fontSize: 12, fontFamily: "Montserrat_700Bold", color: "#FFF" },
+
+  card: { backgroundColor: "#FFF", borderRadius: 24, padding: 16, marginTop: 14 },
+  cardTitulo: { fontSize: 15.5, fontFamily: "Montserrat_800ExtraBold", color: "#1C1C1E" },
+  label: { fontSize: 13, fontFamily: "Montserrat_700Bold", color: "#1C1C1E", marginTop: 14, marginBottom: 8 },
+  opcional: { fontFamily: "Montserrat_400Regular", color: "#71717A" },
+  input: { backgroundColor: "#F4F4F5", height: 50, borderRadius: 16, paddingHorizontal: 16, fontSize: 14, fontFamily: "Montserrat_600SemiBold", color: "#1C1C1E" },
+  inputMulti: { height: 100, paddingTop: 14, paddingBottom: 14, textAlignVertical: "top" },
+  precioBox: { flexDirection: "row", alignItems: "center", backgroundColor: "#F4F4F5", height: 50, borderRadius: 16, paddingHorizontal: 16 },
+  precioSigno: { fontSize: 16, fontFamily: "Montserrat_800ExtraBold", color: "#71717A", marginRight: 6 },
+  precioInput: { flex: 1, height: "100%", fontSize: 16, fontFamily: "Montserrat_800ExtraBold", color: "#1C1C1E", padding: 0 },
+  rangeRow: { flexDirection: "row", alignItems: "center", gap: 5, marginTop: 8, marginLeft: 2 },
+  rangeText: { fontSize: 11.5, fontFamily: "Montserrat_600SemiBold", color: "#71717A" },
+
+  descTop: { flexDirection: "row", alignItems: "center", gap: 12 },
+  descIcon: { width: 40, height: 40, borderRadius: 20, backgroundColor: "#FFF0E5", alignItems: "center", justifyContent: "center" },
+  descIconOn: { backgroundColor: "#fa6205" },
+  descSub: { fontSize: 11.5, fontFamily: "Montserrat_400Regular", color: "#71717A", marginTop: 2 },
+  descResultado: { fontSize: 12, fontFamily: "Montserrat_400Regular", color: "#71717A", marginTop: 10, marginLeft: 2 },
+  descFinal: { fontFamily: "Montserrat_800ExtraBold", color: "#10B981" },
+
+  adHead: { flexDirection: "row", alignItems: "center", gap: 10 },
+  adAgregar: { flexDirection: "row", alignItems: "center", gap: 4, height: 36, paddingHorizontal: 14, borderRadius: 18, backgroundColor: "#fa6205" },
+  adAgregarText: { fontSize: 12.5, fontFamily: "Montserrat_700Bold", color: "#FFF" },
+  adRow: { flexDirection: "row", alignItems: "center", gap: 10, backgroundColor: "#F4F4F5", borderRadius: 18, padding: 10, marginTop: 10 },
+  adThumb: { width: 52, height: 52, borderRadius: 14, backgroundColor: "#FFF" },
+  adThumbVacia: { alignItems: "center", justifyContent: "center" },
+  adNombre: { fontSize: 13.5, fontFamily: "Montserrat_700Bold", color: "#1C1C1E" },
+  adDesc: { fontSize: 11.5, fontFamily: "Montserrat_400Regular", color: "#71717A", marginTop: 1 },
+  adPrecio: { fontSize: 13, fontFamily: "Montserrat_800ExtraBold", color: "#fa6205", marginTop: 3 },
+  adMeta: { fontSize: 11, fontFamily: "Montserrat_600SemiBold", color: "#71717A" },
+  adBtn: { width: 34, height: 34, borderRadius: 17, backgroundColor: "#FFF", alignItems: "center", justifyContent: "center" },
+  adBtnRojo: { backgroundColor: "#FEF2F2" },
+  adVacio: { alignItems: "center", paddingVertical: 18, marginTop: 10, borderRadius: 18, borderWidth: 1.5, borderColor: "#FDD0A5", borderStyle: "dashed" },
+  adVacioText: { fontSize: 12.5, fontFamily: "Montserrat_600SemiBold", color: "#71717A", marginTop: 6, textAlign: "center", paddingHorizontal: 16 },
+
+  footer: { paddingHorizontal: 16, paddingTop: 10, backgroundColor: "#F4F4F5" },
+  guardar: {
+    flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, height: 54, borderRadius: 27, backgroundColor: "#fa6205",
+    shadowColor: "#fa6205", shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.35, shadowRadius: 16, elevation: 8,
+  },
+  guardarText: { fontSize: 15, fontFamily: "Montserrat_700Bold", color: "#FFF" },
+
+  sheetBg: { flex: 1, justifyContent: "flex-end", backgroundColor: "rgba(0,0,0,0.45)" },
+  sheet: { backgroundColor: "#FFF", borderTopLeftRadius: 28, borderTopRightRadius: 28, paddingHorizontal: 20, paddingTop: 10, maxHeight: "88%" },
+  grabber: { width: 40, height: 5, borderRadius: 3, backgroundColor: "#E4E4E7", alignSelf: "center", marginBottom: 12 },
+  sheetHead: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 14 },
+  sheetTitle: { fontSize: 18, fontFamily: "Montserrat_800ExtraBold", color: "#1C1C1E" },
+  sheetClose: { width: 36, height: 36, borderRadius: 18, backgroundColor: "#F4F4F5", alignItems: "center", justifyContent: "center" },
+  sheetTop: { flexDirection: "row", gap: 10 },
+  sheetFoto: { width: 108, height: 108, borderRadius: 18, backgroundColor: "#FFFAF5", borderWidth: 1.5, borderColor: "#FDD0A5", borderStyle: "dashed", alignItems: "center", justifyContent: "center", overflow: "hidden" },
+  sheetFotoLlena: { borderWidth: 0 },
+  sheetFotoText: { fontSize: 11.5, fontFamily: "Montserrat_700Bold", color: "#fa6205", marginTop: 4, textAlign: "center", paddingHorizontal: 8 },
+  sheetHelper: { fontSize: 12, fontFamily: "Montserrat_400Regular", color: "#71717A", marginTop: 10 },
+  sheetBtns: { flexDirection: "row", gap: 10, marginTop: 18 },
+  sheetCancel: { flex: 1, height: 50, borderRadius: 25, backgroundColor: "#F4F4F5", alignItems: "center", justifyContent: "center" },
+  sheetCancelText: { fontSize: 14.5, fontFamily: "Montserrat_700Bold", color: "#1C1C1E" },
+  sheetOk: { flex: 1, height: 50, borderRadius: 25, backgroundColor: "#fa6205", alignItems: "center", justifyContent: "center" },
+  sheetOkText: { fontSize: 14.5, fontFamily: "Montserrat_700Bold", color: "#FFF" },
 });
 
 export default EditarServicio;

@@ -2,36 +2,31 @@ import React from "react";
 import { View, Text, StyleSheet } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 
-export default function RouteInfoBar({ distance, eta, trafficLevel }) {
+export default function RouteInfoBar({ distance, eta, trafficLevel, embedded = false }) {
   if (!distance) return null;
 
   const trafficColors = {
-    ok: { bg: "#ECFDF5", text: "#059669", border: "#A7F3D0", label: "Trafico normal" },
-    mid: { bg: "#FFFBEB", text: "#D97706", border: "#FDE68A", label: "Trafico moderado" },
-    bad: { bg: "#FEF2F2", text: "#DC2626", border: "#FECACA", label: "Trafico pesado" },
+    ok: { dot: "#10B981", text: "#059669", label: "Trafico normal" },
+    mid: { dot: "#F59E0B", text: "#B45309", label: "Trafico moderado" },
+    bad: { dot: "#EF4444", text: "#DC2626", label: "Trafico pesado" },
   };
   const traffic = trafficColors[trafficLevel] || trafficColors.ok;
 
   return (
-    <View style={styles.container}>
+    <View style={embedded ? styles.embedded : styles.container}>
       <View style={styles.stat}>
-        <View style={styles.iconBox}>
-          <Ionicons name="location" size={14} color="#FF5500" />
-        </View>
-        <Text style={styles.valOrange}>{distance} km</Text>
+        <Ionicons name="navigate" size={13} color="#fa6205" />
+        <Text style={styles.val}>{distance} km</Text>
       </View>
-      <View style={styles.divider} />
+      <View style={styles.sep} />
       <View style={styles.stat}>
-        <View style={styles.iconBox}>
-          <Ionicons name="time-outline" size={14} color="#0F172A" />
-        </View>
-        <Text style={styles.valDark}>{eta} min</Text>
+        <Ionicons name="time" size={13} color="#1C1C1E" />
+        <Text style={styles.val}>{eta} min</Text>
       </View>
-      <View style={styles.divider} />
-      <View style={[styles.trafficBadge, { backgroundColor: traffic.bg, borderColor: traffic.border }]}>
-        <Text style={[styles.trafficText, { color: traffic.text }]}>
-          {traffic.label}
-        </Text>
+      <View style={styles.sep} />
+      <View style={styles.stat}>
+        <View style={[styles.dot, { backgroundColor: traffic.dot }]} />
+        <Text style={[styles.traffic, { color: traffic.text }]}>{traffic.label}</Text>
       </View>
     </View>
   );
@@ -42,61 +37,47 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     alignSelf: "center",
-    backgroundColor: "#FFFFFF",
-    borderWidth: 1.5,
-    borderColor: "#E2E8F0",
-    borderRadius: 20,
+    backgroundColor: "#FFF",
+    borderRadius: 999,
     paddingHorizontal: 14,
-    paddingVertical: 6,
-    gap: 12,
-    shadowColor: "#0F172A",
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.12,
-    shadowRadius: 24,
-    elevation: 8,
-    marginTop: 8,
+    height: 36,
+    gap: 10,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 10,
+    elevation: 5,
+  },
+  embedded: {
+    flexDirection: "row",
+    alignItems: "center",
+    height: 38,
+    gap: 10,
+    paddingLeft: 1,
   },
   stat: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 7,
+    gap: 5,
   },
-  iconBox: {
-    width: 28,
-    height: 28,
-    borderRadius: 8,
-    backgroundColor: "#F1F5F9",
-    borderWidth: 1,
-    borderColor: "#E2E8F0",
-    justifyContent: "center",
-    alignItems: "center",
+  val: {
+    fontSize: 13,
+    fontFamily: "Montserrat_800ExtraBold",
+    color: "#1C1C1E",
   },
-  valOrange: {
-    fontSize: 15,
-    fontFamily: "MontserratBold",
-    fontWeight: "bold",
-    color: "#FF5500",
+  sep: {
+    width: 4,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: "#D4D4D8",
   },
-  valDark: {
-    fontSize: 14,
-    fontFamily: "MontserratBold",
-    fontWeight: "bold",
-    color: "#0F172A",
+  dot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
   },
-  divider: {
-    width: 1,
-    height: 20,
-    backgroundColor: "#E2E8F0",
-  },
-  trafficBadge: {
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderRadius: 10,
-    borderWidth: 1,
-  },
-  trafficText: {
-    fontSize: 11,
-    fontFamily: "MontserratBold",
-    fontWeight: "bold",
+  traffic: {
+    fontSize: 12,
+    fontFamily: "Montserrat_700Bold",
   },
 });

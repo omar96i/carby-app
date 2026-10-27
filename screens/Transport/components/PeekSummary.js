@@ -12,14 +12,14 @@ export default function PeekSummary({ service, price, onGo, onExpand, demandaTex
           {service.iconUrl ? (
             <Image source={{ uri: service.iconUrl }} style={styles.carImg} resizeMode="contain" />
           ) : (
-            <MaterialCommunityIcons name="package-variant-closed" size={24} color="#FF5500" />
+            <MaterialCommunityIcons name="package-variant-closed" size={24} color="#fa6205" />
           )}
         </View>
-        <View>
-          <Text style={styles.carName}>{service.name}</Text>
+        <View style={{ flexShrink: 1 }}>
+          <Text style={styles.carName} numberOfLines={1}>{service.name}</Text>
           {demandaText ? (
             <View style={styles.demandaRow}>
-              <Ionicons name="information-circle" size={11} color="#64748B" />
+              <Ionicons name="flame" size={11} color="#fa6205" />
               <Text style={styles.demandaText}>{demandaText}</Text>
             </View>
           ) : null}
@@ -32,11 +32,11 @@ export default function PeekSummary({ service, price, onGo, onExpand, demandaTex
         <TouchableOpacity
           style={[styles.goBtn, tachado && styles.goBtnNublado]}
           onPress={onGo}
-          activeOpacity={0.7}
+          activeOpacity={0.8}
           disabled={tachado}
         >
           <Text style={styles.goText}>Pedir</Text>
-          <Ionicons name="arrow-forward" size={14} color="#FFF" />
+          <Ionicons name="arrow-forward" size={15} color="#FFF" />
         </TouchableOpacity>
       </View>
     </TouchableOpacity>
@@ -48,34 +48,34 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
+    gap: 10,
     paddingHorizontal: 16,
-    paddingVertical: 14,
+    paddingTop: 4,
+    paddingBottom: 12,
   },
   left: {
+    flex: 1,
     flexDirection: "row",
     alignItems: "center",
     gap: 12,
   },
   carVisual: {
-    width: 42,
+    width: 56,
     height: 42,
-    backgroundColor: "#F8FAFC",
-    borderWidth: 1,
-    borderColor: "#E2E8F0",
-    borderRadius: 12,
+    backgroundColor: "#F4F4F5",
+    borderRadius: 14,
     justifyContent: "center",
     alignItems: "center",
     overflow: "hidden",
   },
   carImg: {
-    width: 34,
-    height: 24,
+    width: 50,
+    height: 34,
   },
   carName: {
-    fontSize: 14,
-    fontFamily: "MontserratBold",
-    fontWeight: "bold",
-    color: "#0F172A",
+    fontSize: 15,
+    fontFamily: "Montserrat_700Bold",
+    color: "#1C1C1E",
   },
   right: {
     flexDirection: "row",
@@ -84,9 +84,8 @@ const styles = StyleSheet.create({
   },
   price: {
     fontSize: 18,
-    fontFamily: "MontserratBold",
-    fontWeight: "bold",
-    color: "#FF5500",
+    fontFamily: "Montserrat_800ExtraBold",
+    color: "#1C1C1E",
   },
   goBtnNublado: {
     opacity: 0.45,
@@ -95,20 +94,19 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 6,
-    height: 38,
-    paddingHorizontal: 16,
-    borderRadius: 12,
-    backgroundColor: "#FF5500",
-    shadowColor: "#FF5500",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 14,
-    elevation: 4,
+    height: 44,
+    paddingHorizontal: 18,
+    borderRadius: 999,
+    backgroundColor: "#fa6205",
+    shadowColor: "#fa6205",
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.35,
+    shadowRadius: 12,
+    elevation: 6,
   },
   goText: {
-    fontSize: 13,
-    fontFamily: "MontserratBold",
-    fontWeight: "bold",
+    fontSize: 14,
+    fontFamily: "Montserrat_700Bold",
     color: "#FFFFFF",
   },
   demandaRow: {
@@ -118,8 +116,8 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   demandaText: {
-    fontSize: 11,
-    fontWeight: "600",
-    color: "#475569",
+    fontSize: 11.5,
+    fontFamily: "Montserrat_600SemiBold",
+    color: "#71717A",
   },
 });

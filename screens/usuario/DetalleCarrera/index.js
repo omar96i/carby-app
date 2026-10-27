@@ -386,12 +386,12 @@ const styles = StyleSheet.create({
   loadingText: {
     marginTop: 16,
     fontSize: 14,
-    fontFamily: "Montserrat",
+    fontFamily: "Montserrat_400Regular",
     color: "#64748B",
   },
   errorText: {
     fontSize: 14,
-    fontFamily: "Montserrat",
+    fontFamily: "Montserrat_400Regular",
     color: "#0F172A",
     textAlign: "center",
     marginBottom: 20,
@@ -405,7 +405,7 @@ const styles = StyleSheet.create({
   retryText: {
     color: "#FFFFFF",
     fontSize: 14,
-    fontFamily: "MontserratBold",
+    fontFamily: "Montserrat_700Bold",
     fontWeight: "bold",
   },
   arrivedBanner: {
@@ -441,13 +441,13 @@ const styles = StyleSheet.create({
   },
   arrivedTitle: {
     fontSize: 15,
-    fontFamily: "MontserratBold",
+    fontFamily: "Montserrat_700Bold",
     fontWeight: "bold",
     color: "#0F172A",
   },
   arrivedSub: {
     fontSize: 12,
-    fontFamily: "Montserrat",
+    fontFamily: "Montserrat_400Regular",
     color: "#64748B",
     marginTop: 2,
   },
@@ -474,14 +474,14 @@ const styles = StyleSheet.create({
   },
   canceledTitle: {
     fontSize: 18,
-    fontFamily: "MontserratBold",
+    fontFamily: "Montserrat_700Bold",
     fontWeight: "bold",
     color: "#0F172A",
     marginTop: 16,
   },
   canceledSub: {
     fontSize: 13,
-    fontFamily: "Montserrat",
+    fontFamily: "Montserrat_400Regular",
     color: "#64748B",
     textAlign: "center",
     marginTop: 6,
@@ -496,7 +496,7 @@ const styles = StyleSheet.create({
   },
   canceledBtnText: {
     fontSize: 15,
-    fontFamily: "MontserratBold",
+    fontFamily: "Montserrat_700Bold",
     fontWeight: "bold",
     color: "#FFFFFF",
   },

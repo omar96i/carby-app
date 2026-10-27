@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { View, Text, TouchableOpacity, StyleSheet, Modal } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 
 const C = { brand: "#fa6205", ink: "#1C1C1E", surface: "#FFF", muted: "#71717A", bg: "#F4F4F5" };
@@ -67,6 +68,7 @@ function buildSteps(isServicios) {
 }
 
 export default function OnboardingGuide({ visible, isServicios, onClose, onAction, doneMap = {}, startAt = null }) {
+  const insets = useSafeAreaInsets();
   const steps = buildSteps(isServicios);
   const [index, setIndex] = useState(0);
   const userNav = useRef(false);
@@ -110,7 +112,7 @@ export default function OnboardingGuide({ visible, isServicios, onClose, onActio
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
       <View style={s.bg}>
-        <View style={s.card}>
+        <View style={[s.card, { paddingBottom: 30 + insets.bottom }]}>
           <View style={s.grabber} />
           <View style={s.topRow}>
             <View style={s.progressRow}>

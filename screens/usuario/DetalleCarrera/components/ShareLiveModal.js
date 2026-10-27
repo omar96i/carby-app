@@ -45,14 +45,14 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 18,
-    fontFamily: "MontserratBold",
+    fontFamily: "Montserrat_700Bold",
     fontWeight: "bold",
     color: "#0F172A",
     textAlign: "center",
   },
   subtitle: {
     fontSize: 13,
-    fontFamily: "Montserrat",
+    fontFamily: "Montserrat_400Regular",
     color: "#64748B",
     textAlign: "center",
     marginTop: 8,
@@ -60,7 +60,7 @@ const styles = StyleSheet.create({
   },
   note: {
     fontSize: 12,
-    fontFamily: "Montserrat",
+    fontFamily: "Montserrat_400Regular",
     color: "#94A3B8",
     textAlign: "center",
     marginTop: 12,
@@ -75,7 +75,7 @@ const styles = StyleSheet.create({
   },
   btnText: {
     fontSize: 14,
-    fontFamily: "MontserratBold",
+    fontFamily: "Montserrat_700Bold",
     fontWeight: "bold",
     color: "#FFFFFF",
   },

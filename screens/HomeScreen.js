@@ -35,8 +35,18 @@ import NearbyCheapest from "../components/NearbyCheapest";
 import NearbyBestSellers from "../components/NearbyBestSellers";
 import FloatingActionMenu from '../components/FloatingActionMenu';
 import AlertaModal from "../components/ErrorModal";
+import FocusAwareStatusBar from "../components/FocusAwareStatusBar";
 
-const hamburguesaImg = require("../assets/images/hamburguesa-icono.png");
+const hamburguesaImg = require("../assets/images/hamburguesa-restaurantes.jpg");
+const serviciosImg = require("../assets/images/servicios-herramientas.jpg");
+const viajeImg = require("../assets/images/carro-pedir-viaje.jpg");
+
+const saludoPorHora = () => {
+  const h = new Date().getHours();
+  if (h >= 5 && h < 12) return "Buenos días";
+  if (h >= 12 && h < 19) return "Buenas tardes";
+  return "Buenas noches";
+};
 
 const { width, height } = Dimensions.get("window");
 const ASPECT_RATIO = width / height;
@@ -59,6 +69,7 @@ const QUICK_CATEGORIES = [
     title: "Servicios",
     subtitle: "Citas y reservas",
     icon: "cut-outline",
+    image: serviciosImg,
     color: "#EDF2FF",
     iconColor: "#4361EE",
     route: "CategoriaVertical",
@@ -82,21 +93,40 @@ const StarRating = memo(({ rating, size = 12, color = "#FFD700" }) => {
   );
 });
 
-const QuickCategory = memo(({ item, onPress }) => (
-  <TouchableOpacity
-    style={[styles.quickCatCard, { backgroundColor: item.color }]}
-    onPress={onPress}
-    activeOpacity={0.85}
-  >
-    <View style={styles.quickCatIconWrap}>
-      {item.image ? (
-        <Image source={item.image} style={styles.quickCatImg} />
-      ) : (
-        <Ionicons name={item.icon} size={32} color={item.iconColor} />
-      )}
-    </View>
-    <Text style={styles.quickCatTitle}>{item.title}</Text>
-    <Text style={styles.quickCatSubtitle}>{item.subtitle}</Text>
+const QuickCategory = memo(({ item, onPress, grande = false }) => (
+  <TouchableOpacity style={grande ? styles.accesoGrande : styles.accesoChico} onPress={onPress} activeOpacity={0.85}>
+    {grande ? (
+      <>
+        <View style={styles.accesoGrandeCirculo}>
+          {item.image ? (
+            <Image source={item.image} style={styles.accesoGrandeImg} />
+          ) : (
+            <Ionicons name={item.icon} size={56} color="#FFF" />
+          )}
+        </View>
+        <View style={styles.accesoGrandeTexto}>
+          <Text style={styles.accesoTitulo}>{item.title}</Text>
+          <Text style={styles.accesoSub}>{item.subtitle}</Text>
+        </View>
+        <View style={styles.accesoFlecha}>
+          <Ionicons name="arrow-forward" size={18} color="#FFF" />
+        </View>
+      </>
+    ) : (
+      <>
+        {item.image ? (
+          <View style={styles.accesoChicoCirculo}>
+            <Image source={item.image} style={styles.accesoChicoImg} />
+          </View>
+        ) : (
+          <Ionicons name={item.icon} size={22} color="#9DB4FF" />
+        )}
+        <View>
+          <Text style={styles.accesoTitulo}>{item.title}</Text>
+          <Text style={styles.accesoSub}>{item.subtitle}</Text>
+        </View>
+      </>
+    )}
   </TouchableOpacity>
 ));
 
@@ -134,14 +164,14 @@ const FavoritosRow = memo(({ onPress }) => {
   return (
     <TouchableOpacity style={styles.favRow} onPress={onPress} activeOpacity={0.8}>
       <View style={styles.favRowIcon}>
-        <Ionicons name="heart" size={16} color="#E11D48" />
+        <Ionicons name="heart" size={16} color="#FB7185" />
       </View>
       <View style={styles.favRowText}>
         <Text style={styles.favRowTitle}>Mis favoritos</Text>
         <Text style={styles.favRowSub}>Tus frecuentes</Text>
       </View>
-      {cats.map((c) => (
-        <View key={c.id} style={styles.favCat}>
+      {cats.map((c, i) => (
+        <View key={c.id} style={[styles.favCat, i > 0 && { marginLeft: -12 }]}>
           {catImg(c.icono) ? (
             <Image source={{ uri: catImg(c.icono) }} style={styles.favCatImg} />
           ) : (
@@ -151,7 +181,9 @@ const FavoritosRow = memo(({ onPress }) => {
           )}
         </View>
       ))}
-      <Ionicons name="chevron-forward" size={18} color="#94A3B8" />
+      <View style={styles.favFlecha}>
+        <Ionicons name="chevron-forward" size={15} color="#FFF" />
+      </View>
     </TouchableOpacity>
   );
 });
@@ -240,8 +272,15 @@ export default function HomeScreen() {
       if (geoCodeResult && geoCodeResult.length > 0) {
         const address = geoCodeResult[0];
         const parts = [];
-        if (address.name) parts.push(address.name);
-        if (address.street) parts.push(address.street);
+        const nombre = (address.name || "").trim();
+        const calle = (address.street || "").trim();
+        const esNumero = /^#|^\d/.test(nombre) || (!!address.streetNumber && nombre === address.streetNumber);
+        if (calle && nombre && esNumero) {
+          parts.push(`${calle} # ${nombre.replace(/^#\s*/, "")}`);
+        } else {
+          if (nombre) parts.push(nombre);
+          if (calle && !nombre.includes(calle)) parts.push(calle);
+        }
         if (address.district) parts.push(address.district);
         if (address.city) parts.push(address.city);
         if (address.region) parts.push(address.region);
@@ -580,6 +619,7 @@ export default function HomeScreen() {
       if (!isMountedRef.current) return;
 
       setLoadingCoordinates(true);
+      setLocationModalVisible(true);
       const coords = await captureAndSaveLocation(false);
 
       if (coords && isMountedRef.current) {
@@ -593,6 +633,8 @@ export default function HomeScreen() {
           longitudeDelta: LONGITUDE_DELTA,
         });
 
+        setLoadingCoordinates(false);
+
         const address = await getAddressFromCoordinates(
           coords.latitude,
           coords.longitude
@@ -601,13 +643,10 @@ export default function HomeScreen() {
           setLocationAddress(address);
         }
       }
-
-      if (isMountedRef.current) {
-        setLocationModalVisible(true);
-      }
     } catch (error) {
       console.error("Error al obtener ubicación:", error);
       if (isMountedRef.current) {
+        setLocationModalVisible(false);
         showAlert(
           "No pudimos obtener tu ubicación. Intenta de nuevo más tarde.",
           "error"
@@ -730,6 +769,8 @@ export default function HomeScreen() {
 
   // INICIALIZACIÓN PRINCIPAL
   useEffect(() => {
+    isMountedRef.current = true;
+
     const initialize = async () => {
       try {
         if (!isMountedRef.current) return;
@@ -868,14 +909,14 @@ export default function HomeScreen() {
   // Renderizado principal
   return (
     <SafeAreaView style={styles.safeContainer} edges={['top', 'left', 'right']}>
+      <FocusAwareStatusBar barStyle="dark-content" />
 
       {!fontsLoaded || loading ? (
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color="#FF5A00" />
         </View>
       ) : (
-        <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 130 + insets.bottom }}>
-          {/* Header */}
+        <ScrollView style={styles.scroll} showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 130 + insets.bottom }}>
           <View style={styles.headerBar}>
             <View style={styles.headerBarTop}>
               <TouchableOpacity
@@ -885,7 +926,7 @@ export default function HomeScreen() {
                 activeOpacity={0.8}
               >
                 <View style={styles.locationPin}>
-                  <Ionicons name="location" size={16} color="#FF5A00" />
+                  <Ionicons name="location" size={17} color="#FFF" />
                 </View>
                 <View style={styles.locationTextWrap}>
                   <Text style={styles.locationLabel}>Tu ubicación</Text>
@@ -893,6 +934,7 @@ export default function HomeScreen() {
                     {locationAddress}
                   </Text>
                 </View>
+                <Ionicons name="chevron-down" size={14} color="rgba(255,255,255,0.6)" />
               </TouchableOpacity>
 
               <TouchableOpacity
@@ -900,26 +942,70 @@ export default function HomeScreen() {
                 onPress={() => navigation.navigate("Perfil")}
                 activeOpacity={0.8}
               >
-                <View style={styles.headerAvatar}>
-                  {profileImageUrl ? (
-                    <Image
-                      source={{ uri: profileImageUrl }}
-                      style={styles.headerAvatarImg}
-                    />
-                  ) : (
-                    <Text style={styles.headerAvatarText}>
-                      {userData?.nombre_completo
-                        ?.split(" ")
-                        .slice(0, 2)
-                        .map((w) => w[0])
-                        .join("")
-                        .toUpperCase() || "U"}
-                    </Text>
-                  )}
+                <View style={styles.headerAvatarRing}>
+                  <View style={styles.headerAvatar}>
+                    {profileImageUrl ? (
+                      <Image
+                        source={{ uri: profileImageUrl }}
+                        style={styles.headerAvatarImg}
+                      />
+                    ) : (
+                      <Text style={styles.headerAvatarText}>
+                        {userData?.nombre_completo
+                          ?.split(" ")
+                          .slice(0, 2)
+                          .map((w) => w[0])
+                          .join("")
+                          .toUpperCase() || "U"}
+                      </Text>
+                    )}
+                  </View>
                 </View>
-                <StarRating rating={userRating} size={10} color="#FFD700" />
+                <StarRating rating={userRating} size={9} color="#FFD700" />
               </TouchableOpacity>
             </View>
+
+            <View style={styles.saludoWrap}>
+              {userData?.nombre_completo ? (
+                <>
+                  <Text style={styles.saludo}>{saludoPorHora()},</Text>
+                  <Text style={styles.saludoNombre} numberOfLines={1}>
+                    {userData.nombre_completo.split(" ")[0]}
+                  </Text>
+                </>
+              ) : (
+                <Text style={styles.saludoNombre}>{saludoPorHora()}</Text>
+              )}
+            </View>
+
+            <View style={styles.accesos}>
+              <QuickCategory
+                item={QUICK_CATEGORIES[0]}
+                grande
+                onPress={() => navigation.navigate(QUICK_CATEGORIES[0].route, QUICK_CATEGORIES[0].params)}
+              />
+              <View style={styles.accesosCol}>
+                <QuickCategory
+                  item={QUICK_CATEGORIES[1]}
+                  onPress={() => navigation.navigate(QUICK_CATEGORIES[1].route, QUICK_CATEGORIES[1].params)}
+                />
+                <TouchableOpacity
+                  style={[styles.accesoChico, styles.accesoViaje]}
+                  onPress={() => navigation.navigate("Transporte")}
+                  activeOpacity={0.85}
+                >
+                  <View style={[styles.accesoChicoCirculo, styles.accesoViajeCirculo]}>
+                    <Image source={viajeImg} style={styles.accesoChicoImg} />
+                  </View>
+                  <View style={styles.accesoViajeFila}>
+                    <Text style={styles.accesoTitulo}>Pedir viaje</Text>
+                    <Ionicons name="arrow-forward" size={16} color="rgba(255,255,255,0.85)" />
+                  </View>
+                </TouchableOpacity>
+              </View>
+            </View>
+
+            <FavoritosRow onPress={() => navigation.navigate("Favoritos", {})} />
           </View>
 
           <View style={styles.container}>
@@ -927,31 +1013,16 @@ export default function HomeScreen() {
             {/* Carrusel de promociones */}
             <AdCarousel />
 
-            {/* Grid de categorías rápidas */}
-            <View style={styles.quickCatGrid}>
-              {QUICK_CATEGORIES.map((item) => (
-                <QuickCategory
-                  key={item.id}
-                  item={item}
-                  onPress={() => navigation.navigate(item.route, item.params)}
-                />
-              ))}
-            </View>
-
-            {/* Acceso discreto a favoritos */}
-            <FavoritosRow onPress={() => navigation.navigate("Favoritos", {})} />
-
-            {/* Banners de tiendas cercanas */}
             <NearbyBanners location={location} />
 
             {/* Descuentos cercanos */}
             <NearbyDiscounts location={location} />
 
-            {/* Los mas baratos */}
-            <NearbyCheapest location={location} />
-
             {/* Los mas vendidos */}
             <NearbyBestSellers location={location} />
+
+            {/* Los mas baratos */}
+            <NearbyCheapest location={location} />
 
           </View>
         </ScrollView>
@@ -967,17 +1038,18 @@ export default function HomeScreen() {
         }}
       >
         <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
+          <View style={[styles.modalContent, { paddingBottom: insets.bottom + 16 }]}>
+            <View style={styles.modalGrabber} />
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>Selecciona tu ubicación</Text>
-              <TouchableOpacity onPress={() => setLocationModalVisible(false)} style={styles.modalCloseBtn}>
-                <Ionicons name="close" size={22} color="#999" />
+              <TouchableOpacity onPress={() => setLocationModalVisible(false)} style={styles.modalCloseBtn} activeOpacity={0.8}>
+                <Ionicons name="close" size={20} color="#1C1C1E" />
               </TouchableOpacity>
             </View>
 
             {loadingCoordinates ? (
-              <View style={styles.loadingContainer}>
-                <ActivityIndicator size="large" color="#FF5A00" />
+              <View style={styles.modalLoading}>
+                <ActivityIndicator size="large" color="#fa6205" />
                 <Text style={styles.loadingText}>Obteniendo ubicación...</Text>
               </View>
             ) : (
@@ -991,6 +1063,7 @@ export default function HomeScreen() {
                       provider={PROVIDER_GOOGLE}
                       initialRegion={mapRegion}
                       showsUserLocation={true}
+                      showsMyLocationButton={false}
                     >
                       {markerCoordinates && (
                         <Marker
@@ -1007,19 +1080,22 @@ export default function HomeScreen() {
                       style={styles.centerMapButton}
                       onPress={centerMapOnCurrentLocation}
                       disabled={loadingCoordinates}
+                      activeOpacity={0.8}
                     >
                       {loadingCoordinates ? (
-                        <ActivityIndicator size="small" color="#333333" />
+                        <ActivityIndicator size="small" color="#fa6205" />
                       ) : (
-                        <Ionicons name="locate" size={24} color="#333333" />
+                        <Ionicons name="locate" size={22} color="#fa6205" />
                       )}
                     </TouchableOpacity>
                   </View>
                 )}
 
                 <View style={styles.locationInfoContainer}>
-                  <Ionicons name="location" size={24} color="#FF5A00" />
-                  <Text style={styles.locationAddressModal}>
+                  <View style={styles.locationInfoIcon}>
+                    <Ionicons name="location" size={18} color="#fa6205" />
+                  </View>
+                  <Text style={styles.locationAddressModal} numberOfLines={2}>
                     {locationAddress}
                   </Text>
                 </View>
@@ -1028,6 +1104,7 @@ export default function HomeScreen() {
                   <TouchableOpacity
                     style={styles.cancelButton}
                     onPress={() => setLocationModalVisible(false)}
+                    activeOpacity={0.8}
                   >
                     <Text style={styles.cancelButtonText}>Cancelar</Text>
                   </TouchableOpacity>
@@ -1036,11 +1113,12 @@ export default function HomeScreen() {
                     style={styles.saveButton}
                     onPress={confirmAndSaveLocation}
                     disabled={updatingLocation}
+                    activeOpacity={0.8}
                   >
                     {updatingLocation ? (
-                      <ActivityIndicator size="small" color="#333333" />
+                      <ActivityIndicator size="small" color="#FFF" />
                     ) : (
-                      <Text style={styles.saveButtonText}>
+                      <Text style={styles.saveButtonText} numberOfLines={1}>
                         Guardar ubicación
                       </Text>
                     )}
@@ -1113,73 +1191,103 @@ const styles = StyleSheet.create({
     marginTop: 10,
   },
 
-  // Header
+  scroll: {
+    flex: 1,
+    backgroundColor: "#F4F4F5",
+  },
   headerBar: {
-    backgroundColor: "#111111",
+    backgroundColor: "#1C1C1E",
     paddingHorizontal: 20,
-    paddingVertical: 24,
-    borderBottomLeftRadius: 28,
-    borderBottomRightRadius: 28,
-    justifyContent: "center",
+    paddingTop: 16,
+    paddingBottom: 20,
+    borderBottomLeftRadius: 36,
+    borderBottomRightRadius: 36,
   },
   headerBarTop: {
     flexDirection: "row",
-    justifyContent: "space-between",
     alignItems: "center",
-    gap: 16,
+    gap: 10,
   },
   headerLocationWrap: {
     flex: 1,
+    minWidth: 0,
+    height: 50,
+    borderRadius: 25,
+    backgroundColor: "#2C2C2E",
     flexDirection: "row",
     alignItems: "center",
     gap: 10,
+    paddingLeft: 6,
+    paddingRight: 14,
   },
   locationPin: {
     width: 38,
     height: 38,
     borderRadius: 19,
-    backgroundColor: "rgba(255,90,0,0.15)",
+    backgroundColor: "#fa6205",
     justifyContent: "center",
     alignItems: "center",
   },
   locationTextWrap: {
     flex: 1,
+    minWidth: 0,
   },
   locationLabel: {
-    fontSize: 11,
+    fontSize: 10.5,
     fontFamily: "Montserrat_600SemiBold",
-    color: "#999",
-    marginBottom: 1,
+    color: "rgba(255,255,255,0.55)",
   },
   locationAddress: {
     fontSize: 13,
-    fontFamily: "Montserrat_600SemiBold",
+    fontFamily: "Montserrat_700Bold",
     color: "#FFF",
   },
   headerProfileWrap: {
     alignItems: "center",
-    gap: 6,
+    gap: 4,
   },
-  headerAvatar: {
+  headerAvatarRing: {
     width: 50,
     height: 50,
     borderRadius: 25,
-    backgroundColor: "#333",
+    borderWidth: 2,
+    borderColor: "#fa6205",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  headerAvatar: {
+    width: 42,
+    height: 42,
+    borderRadius: 21,
+    backgroundColor: "#2C2C2E",
     justifyContent: "center",
     alignItems: "center",
     overflow: "hidden",
-    borderWidth: 2,
-    borderColor: "#FF5A00",
   },
   headerAvatarImg: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
+    width: 42,
+    height: 42,
+    borderRadius: 21,
   },
   headerAvatarText: {
     color: "#FFF",
-    fontSize: 16,
-    fontFamily: "Montserrat_700Bold",
+    fontSize: 14,
+    fontFamily: "Montserrat_800ExtraBold",
+  },
+  saludoWrap: {
+    marginTop: 20,
+  },
+  saludo: {
+    fontSize: 15,
+    fontFamily: "Montserrat_600SemiBold",
+    color: "rgba(255,255,255,0.6)",
+  },
+  saludoNombre: {
+    fontSize: 25,
+    lineHeight: 30,
+    fontFamily: "Montserrat_800ExtraBold",
+    color: "#FFF",
+    letterSpacing: -0.5,
   },
 
   container: {
@@ -1189,163 +1297,220 @@ const styles = StyleSheet.create({
     paddingBottom: 30,
   },
 
-  // Grid de categorías rápidas
-  quickCatGrid: {
+  accesos: {
     flexDirection: "row",
-    flexWrap: "wrap",
-    justifyContent: "space-between",
-    marginBottom: 18,
+    gap: 10,
+    marginTop: 18,
   },
-  quickCatCard: {
-    width: (width - 52) / 2,
+  accesosCol: {
+    flex: 1,
+    gap: 10,
+  },
+  accesoGrande: {
+    flex: 1,
+    height: 214,
+    borderRadius: 26,
+    backgroundColor: "#2C2C2E",
+    overflow: "hidden",
+  },
+  accesoGrandeCirculo: {
+    position: "absolute",
+    right: -26,
+    bottom: -26,
+    width: 168,
+    height: 168,
+    borderRadius: 84,
+    borderWidth: 4,
+    borderColor: "#3A3A3C",
+    backgroundColor: "#3A3A3C",
+    overflow: "hidden",
+  },
+  accesoGrandeImg: {
+    width: "100%",
+    height: "100%",
+    resizeMode: "cover",
+  },
+  accesoGrandeTexto: {
+    position: "absolute",
+    left: 16,
+    top: 16,
+    right: 16,
+  },
+  accesoFlecha: {
+    position: "absolute",
+    left: 16,
+    bottom: 16,
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    backgroundColor: "#fa6205",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  accesoChico: {
+    height: 102,
     borderRadius: 24,
-    padding: 16,
-    paddingTop: 20,
-    marginBottom: 12,
-    minHeight: 160,
+    backgroundColor: "#2C2C2E",
+    padding: 14,
+    justifyContent: "flex-end",
+    overflow: "hidden",
+  },
+  accesoViaje: {
+    backgroundColor: "#fa6205",
+  },
+  accesoChicoCirculo: {
+    position: "absolute",
+    right: -10,
+    top: -10,
+    width: 78,
+    height: 78,
+    borderRadius: 39,
+    borderWidth: 3,
+    borderColor: "#3A3A3C",
+    backgroundColor: "#3A3A3C",
+    overflow: "hidden",
+  },
+  accesoViajeCirculo: {
+    borderColor: "rgba(255,255,255,0.28)",
+    backgroundColor: "#fa6205",
+  },
+  accesoChicoImg: {
+    width: "100%",
+    height: "100%",
+    resizeMode: "cover",
+  },
+  accesoViajeFila: {
+    flexDirection: "row",
     alignItems: "center",
-    justifyContent: "center",
+    justifyContent: "space-between",
   },
-  quickCatIconWrap: {
-    width: 72,
-    height: 72,
-    borderRadius: 36,
-    backgroundColor: "rgba(255,255,255,0.85)",
-    justifyContent: "center",
-    alignItems: "center",
-    marginBottom: 14,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06,
-    shadowRadius: 4,
-    elevation: 2,
+  accesoTitulo: {
+    fontSize: 15,
+    fontFamily: "Montserrat_800ExtraBold",
+    color: "#FFF",
   },
-  quickCatImg: {
-    width: 56,
-    height: 56,
-    resizeMode: "contain",
-  },
-  quickCatTitle: {
-    fontSize: 16,
-    fontFamily: "Montserrat_700Bold",
-    color: "#1C1C1E",
-  },
-  quickCatSubtitle: {
+  accesoSub: {
     fontSize: 11,
-    fontFamily: "Montserrat_400Regular",
-    color: "#666",
+    fontFamily: "Montserrat_600SemiBold",
+    color: "rgba(255,255,255,0.6)",
     marginTop: 2,
   },
+
   favRow: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#FFF",
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: "#F1F5F9",
-    paddingVertical: 10,
-    paddingHorizontal: 14,
-    marginBottom: 18,
-    gap: 12,
-    shadowColor: "#0F172A",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.25,
-    shadowRadius: 8,
-    elevation: 8,
+    backgroundColor: "#2C2C2E",
+    borderRadius: 27,
+    height: 54,
+    paddingLeft: 10,
+    paddingRight: 8,
+    marginTop: 10,
+    gap: 10,
   },
   favRowIcon: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: "#FFF1F2",
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    backgroundColor: "rgba(251,113,133,0.15)",
     justifyContent: "center",
     alignItems: "center",
   },
   favRowText: { flex: 1 },
   favRowTitle: {
-    fontSize: 13,
+    fontSize: 13.5,
     fontFamily: "Montserrat_700Bold",
-    color: "#1C1C1E",
+    color: "#FFF",
   },
   favRowSub: {
     fontSize: 11,
     fontFamily: "Montserrat_400Regular",
-    color: "#94A3B8",
+    color: "rgba(255,255,255,0.55)",
   },
   favCat: {
     alignItems: "center",
-    width: 44,
   },
   favCatImg: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 34,
+    height: 34,
+    borderRadius: 17,
     backgroundColor: "#FFFFFF",
-    borderWidth: 1,
-    borderColor: "#F1F5F9",
-    shadowColor: "#0F172A",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.25,
-    shadowRadius: 8,
-    elevation: 8,
+    borderWidth: 2,
+    borderColor: "#2C2C2E",
   },
   favCatFallback: {
     justifyContent: "center",
     alignItems: "center",
   },
   favCatInitial: {
-    fontSize: 15,
+    fontSize: 13,
     fontFamily: "Montserrat_700Bold",
     color: "#FF5500",
+  },
+  favFlecha: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    backgroundColor: "#3A3A3C",
+    alignItems: "center",
+    justifyContent: "center",
   },
 
   // Modal con mapa
   modalOverlay: {
     flex: 1,
-    backgroundColor: "rgba(0, 0, 0, 0.5)",
-    justifyContent: "center",
-    alignItems: "center",
-    paddingHorizontal: 20,
+    backgroundColor: "rgba(0, 0, 0, 0.45)",
+    justifyContent: "flex-end",
   },
   modalContent: {
     backgroundColor: "#FFF",
-    borderRadius: 20,
-    padding: 20,
-    width: "95%",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.15,
-    shadowRadius: 12,
-    elevation: 10,
-    maxHeight: height * 0.85,
+    borderTopLeftRadius: 28,
+    borderTopRightRadius: 28,
+    paddingHorizontal: 20,
+    paddingTop: 10,
+    width: "100%",
+    maxHeight: height * 0.9,
+  },
+  modalGrabber: {
+    width: 40,
+    height: 5,
+    borderRadius: 999,
+    backgroundColor: "#E4E4E7",
+    alignSelf: "center",
+    marginBottom: 14,
+  },
+  modalLoading: {
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: 48,
+    gap: 12,
   },
   modalHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    marginBottom: 15,
+    marginBottom: 14,
   },
   modalCloseBtn: {
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: "#F2F2F7",
+    backgroundColor: "#F4F4F5",
     justifyContent: "center",
     alignItems: "center",
   },
   modalTitle: {
-    fontSize: 20,
-    fontFamily: "Montserrat_700Bold",
+    fontSize: 19,
+    fontFamily: "Montserrat_800ExtraBold",
     color: "#1C1C1E",
-    marginBottom: 0,
   },
   mapContainer: {
     width: "100%",
-    aspectRatio: 1,
-    borderRadius: 15,
+    height: Math.min(width * 0.82, 340),
+    borderRadius: 22,
     overflow: "hidden",
-    marginBottom: 15,
+    marginBottom: 12,
     position: "relative",
+    backgroundColor: "#F4F4F5",
   },
   map: {
     width: "100%",
@@ -1353,12 +1518,12 @@ const styles = StyleSheet.create({
   },
   centerMapButton: {
     position: "absolute",
-    bottom: 15,
-    right: 15,
+    bottom: 12,
+    right: 12,
     backgroundColor: "#FFF",
-    width: 44,
-    height: 44,
-    borderRadius: 22,
+    width: 42,
+    height: 42,
+    borderRadius: 21,
     justifyContent: "center",
     alignItems: "center",
     shadowColor: "#000",
@@ -1370,53 +1535,59 @@ const styles = StyleSheet.create({
   locationInfoContainer: {
     flexDirection: "row",
     alignItems: "center",
-    marginVertical: 10,
+    gap: 12,
     width: "100%",
-    backgroundColor: "#F5F0E8",
-    padding: 14,
-    borderRadius: 12,
+    backgroundColor: "#F4F4F5",
+    paddingVertical: 12,
+    paddingHorizontal: 12,
+    borderRadius: 18,
+  },
+  locationInfoIcon: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: "#FFF",
+    alignItems: "center",
+    justifyContent: "center",
   },
   locationAddressModal: {
-    fontSize: 14,
-    fontFamily: "Montserrat_400Regular",
-    color: "#1C1C1E",
-    marginLeft: 10,
     flex: 1,
+    fontSize: 14,
+    lineHeight: 19,
+    fontFamily: "Montserrat_600SemiBold",
+    color: "#1C1C1E",
   },
   modalButtonsContainer: {
     flexDirection: "row",
-    justifyContent: "space-between",
     width: "100%",
-    marginTop: 10,
+    marginTop: 16,
     gap: 10,
   },
   cancelButton: {
-    backgroundColor: "#FFF",
-    paddingVertical: 14,
-    paddingHorizontal: 20,
-    borderRadius: 25,
-    flex: 1,
+    height: 54,
+    paddingHorizontal: 22,
+    borderRadius: 999,
+    backgroundColor: "#F4F4F5",
     alignItems: "center",
-    borderWidth: 1.5,
-    borderColor: "#E0E0E0",
+    justifyContent: "center",
   },
   cancelButtonText: {
-    color: "#666",
-    fontFamily: "Montserrat_600SemiBold",
+    color: "#1C1C1E",
+    fontFamily: "Montserrat_700Bold",
     fontSize: 15,
   },
   saveButton: {
-    backgroundColor: "#FF5A00",
-    paddingVertical: 14,
-    paddingHorizontal: 20,
-    borderRadius: 25,
     flex: 1,
+    height: 54,
+    borderRadius: 999,
+    backgroundColor: "#fa6205",
     alignItems: "center",
-    shadowColor: "#FF5A00",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 6,
+    justifyContent: "center",
+    shadowColor: "#fa6205",
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.35,
+    shadowRadius: 16,
+    elevation: 8,
   },
   saveButtonText: {
     color: "#FFF",

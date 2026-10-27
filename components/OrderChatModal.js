@@ -4,6 +4,7 @@ import {
   Text,
   TouchableOpacity,
   FlatList,
+  ScrollView,
   StyleSheet,
   ActivityIndicator,
   Image,
@@ -15,6 +16,8 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import ChatInput from "./ChatInput";
+import LogoComercio from "./LogoComercio";
+import { StatusBar } from "expo-status-bar";
 import FullscreenImageViewer from "./usuario/pedidos/FullscreenImageViewer";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as ImagePicker from "expo-image-picker";
@@ -42,7 +45,7 @@ const dayLabel = (iso) => {
   return d.toLocaleDateString("es-CO", { day: "2-digit", month: "short" });
 };
 
-const OrderChatModal = forwardRef(function OrderChatModal({ visible, pedidoId, userInfo, onClose, peerName = "Comercio", peerRole = "Soporte del pedido", peerAvatar = null, senderRole = "usuario", statusTitle = "", statusSub = "", statusTone = "#3B82F6" }, ref) {
+const OrderChatModal = forwardRef(function OrderChatModal({ visible, pedidoId, userInfo, onClose, peerName = "Comercio", peerRole = "Soporte del pedido", peerAvatar = null, senderRole = "usuario", statusTitle = "", statusSub = "", statusTone = "#3B82F6", peerComercioId = null }, ref) {
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState("");
   const [chatImage, setChatImage] = useState(null);
@@ -299,22 +302,20 @@ const OrderChatModal = forwardRef(function OrderChatModal({ visible, pedidoId, u
   return (
     <View style={[styles.full, { paddingBottom: manualOffset + insets.bottom }]}>
       <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : undefined} style={styles.flex}>
-        {/* Header */}
-        <View style={[styles.header, { paddingTop: Math.max(insets.top, 8) }]}>
+        <StatusBar style="light" />
+        <View style={[styles.headerWrap, { paddingTop: Math.max(insets.top, 8) }]}>
+        <View style={styles.header}>
+          <TouchableOpacity style={styles.closeBtn} onPress={onClose} activeOpacity={0.8}>
+            <Feather name="arrow-left" size={20} color="#FFFFFF" />
+          </TouchableOpacity>
           <View style={styles.avatarWrap}>
-            {peerAvatar ? (
-              <Image source={{ uri: peerAvatar }} style={styles.avatarImage} />
-            ) : (
-              <View style={styles.avatarBox}>
-                <Ionicons name="storefront" size={22} color="#FF5500" />
-              </View>
-            )}
+            <LogoComercio comercio={peerAvatar ? { foto: peerAvatar } : null} comercioId={peerComercioId} size={46} />
             <View style={styles.onlineDot} />
           </View>
           <View style={styles.headerText}>
             <View style={styles.nameRow}>
               <Text style={styles.headerTitle} numberOfLines={1}>{peerName}</Text>
-              <Feather name="check-circle" size={12} color="#FF5500" />
+              <Feather name="check-circle" size={12} color="#fa6205" />
             </View>
             <View style={styles.subRow}>
               <Text style={styles.headerSub} numberOfLines={1}>{peerRole}</Text>
@@ -325,17 +326,15 @@ const OrderChatModal = forwardRef(function OrderChatModal({ visible, pedidoId, u
               )}
             </View>
           </View>
-          <TouchableOpacity style={styles.closeBtn} onPress={onClose} activeOpacity={0.8}>
-            <Feather name="x" size={20} color="#0F172A" />
-          </TouchableOpacity>
         </View>
 
-        {/* Franja de estado del pedido (igual que el TopBar) */}
         {!!statusTitle && (
           <View style={styles.statusStrip}>
-            <View style={[styles.statusDot, { backgroundColor: statusTone }]} />
+            <View style={[styles.statusHalo, { backgroundColor: (statusTone || "#fa6205") + "33" }]}>
+              <View style={[styles.statusDot, { backgroundColor: statusTone }]} />
+            </View>
             <View style={styles.statusStripTextBox}>
-              <Text style={[styles.statusStripTitle, { color: statusTone }]} numberOfLines={1}>
+              <Text style={styles.statusStripTitle} numberOfLines={1}>
                 {statusTitle}
               </Text>
               {!!statusSub && (
@@ -347,14 +346,18 @@ const OrderChatModal = forwardRef(function OrderChatModal({ visible, pedidoId, u
             </TouchableOpacity>
           </View>
         )}
+        </View>
 
         {/* Messages */}
         {loading && messages.length === 0 ? (
           <View style={styles.loadingBox}>
-            <ActivityIndicator size="small" color="#FF5500" />
+            <ActivityIndicator size="small" color="#fa6205" />
           </View>
         ) : messages.length === 0 ? (
           <View style={styles.emptyBox}>
+            <View style={styles.emptyIcon}>
+              <Ionicons name="chatbubbles" size={30} color="#fa6205" />
+            </View>
             <Text style={styles.emptyText}>No hay mensajes todavía. Envía el primer mensaje.</Text>
           </View>
         ) : (
@@ -378,14 +381,20 @@ const OrderChatModal = forwardRef(function OrderChatModal({ visible, pedidoId, u
         )}
 
         {/* Quick replies */}
-        <View style={styles.quickReplies}>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+          style={styles.quickRepliesScroll}
+          contentContainerStyle={styles.quickReplies}
+        >
           {quickReplies.map((q) => (
             <TouchableOpacity key={q.text} style={styles.quickReply} onPress={() => sendMessage(q.text)} activeOpacity={0.8}>
-              <Feather name={q.icon} size={12} color="#FF5500" />
+              <Feather name={q.icon} size={12} color="#fa6205" />
               <Text style={styles.quickReplyText}>{q.text}</Text>
             </TouchableOpacity>
           ))}
-        </View>
+        </ScrollView>
 
         {/* Input */}
         <ChatInput
@@ -400,7 +409,7 @@ const OrderChatModal = forwardRef(function OrderChatModal({ visible, pedidoId, u
             <View style={styles.imagePreview}>
               <Image source={{ uri: chatImage }} style={styles.imagePreviewThumb} />
               <TouchableOpacity onPress={() => setChatImage(null)} style={styles.removeImageBtn}>
-                <Feather name="x" size={14} color="#64748B" />
+                <Feather name="x" size={14} color="#71717A" />
               </TouchableOpacity>
             </View>
           )}
@@ -416,42 +425,38 @@ const styles = StyleSheet.create({
   full: {
     ...StyleSheet.absoluteFillObject,
     zIndex: 2000,
-    backgroundColor: "#F8FAFC",
+    backgroundColor: "#F4F4F5",
+  },
+  headerWrap: {
+    backgroundColor: "#1C1C1E",
+    borderBottomLeftRadius: 28,
+    borderBottomRightRadius: 28,
+    paddingBottom: 14,
+    zIndex: 10,
   },
   header: {
     flexDirection: "row",
     alignItems: "center",
     gap: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: "#F1F5F9",
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    backgroundColor: "#FFFFFF",
-    shadowColor: "#0F172A",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 8,
-    elevation: 3,
-    zIndex: 10,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
   },
   avatarWrap: {
     position: "relative",
   },
   avatarBox: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: "#FFF7ED",
-    borderWidth: 1,
-    borderColor: "#FDBA74",
+    width: 46,
+    height: 46,
+    borderRadius: 23,
+    backgroundColor: "#FFF0E5",
     justifyContent: "center",
     alignItems: "center",
   },
   avatarImage: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: "#F1F5F9",
+    width: 46,
+    height: 46,
+    borderRadius: 23,
+    backgroundColor: "#2C2C2E",
   },
   onlineDot: {
     position: "absolute",
@@ -461,8 +466,8 @@ const styles = StyleSheet.create({
     height: 14,
     borderRadius: 7,
     backgroundColor: "#10B981",
-    borderWidth: 2,
-    borderColor: "#FFFFFF",
+    borderWidth: 2.5,
+    borderColor: "#1C1C1E",
   },
   headerText: {
     flex: 1,
@@ -473,10 +478,9 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   headerTitle: {
-    fontSize: 15,
-    fontFamily: "MontserratBold",
-    fontWeight: "bold",
-    color: "#0F172A",
+    fontSize: 16,
+    fontFamily: "Montserrat_800ExtraBold",
+    color: "#FFFFFF",
   },
   subRow: {
     flexDirection: "row",
@@ -486,42 +490,45 @@ const styles = StyleSheet.create({
   },
   headerSub: {
     fontSize: 12,
-    fontFamily: "Montserrat",
-    color: "#64748B",
+    fontFamily: "Montserrat_400Regular",
+    color: "rgba(255,255,255,0.6)",
   },
   orderBadge: {
-    backgroundColor: "#FFF7ED",
-    borderWidth: 1,
-    borderColor: "#FDBA74",
-    borderRadius: 8,
-    paddingHorizontal: 6,
-    paddingVertical: 1,
+    backgroundColor: "rgba(250,98,5,0.2)",
+    borderRadius: 999,
+    paddingHorizontal: 8,
+    paddingVertical: 2,
   },
   orderBadgeText: {
     fontSize: 10,
-    fontFamily: "MontserratBold",
-    fontWeight: "bold",
-    color: "#FF5500",
+    fontFamily: "Montserrat_700Bold",
+    color: "#fa6205",
   },
   closeBtn: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
-    backgroundColor: "#F1F5F9",
-    borderWidth: 1,
-    borderColor: "#E2E8F0",
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: "rgba(255,255,255,0.1)",
     justifyContent: "center",
     alignItems: "center",
   },
   statusStrip: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 8,
-    backgroundColor: "#FFFBEB",
-    borderBottomWidth: 1,
-    borderBottomColor: "#FDE68A",
-    paddingHorizontal: 16,
+    gap: 10,
+    backgroundColor: "rgba(255,255,255,0.08)",
+    marginHorizontal: 12,
+    borderRadius: 20,
+    paddingLeft: 8,
+    paddingRight: 8,
     paddingVertical: 8,
+  },
+  statusHalo: {
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    justifyContent: "center",
+    alignItems: "center",
   },
   statusDot: {
     width: 10,
@@ -533,20 +540,24 @@ const styles = StyleSheet.create({
   },
   statusStripTitle: {
     fontSize: 13,
-    fontFamily: "MontserratBold",
-    fontWeight: "bold",
+    fontFamily: "Montserrat_800ExtraBold",
+    color: "#FFFFFF",
   },
   statusStripText: {
-    fontSize: 11,
-    fontFamily: "Montserrat",
-    color: "#92400E",
+    fontSize: 11.5,
+    fontFamily: "Montserrat_400Regular",
+    color: "rgba(255,255,255,0.6)",
     marginTop: 1,
   },
   statusStripAction: {
-    fontSize: 11,
-    fontFamily: "MontserratBold",
-    fontWeight: "bold",
-    color: "#FF5500",
+    fontSize: 12,
+    fontFamily: "Montserrat_700Bold",
+    color: "#FFFFFF",
+    backgroundColor: "#fa6205",
+    borderRadius: 999,
+    paddingHorizontal: 12,
+    paddingVertical: 7,
+    overflow: "hidden",
   },
   dayRow: {
     alignItems: "center",
@@ -554,12 +565,12 @@ const styles = StyleSheet.create({
   },
   dayLabel: {
     fontSize: 11,
-    fontFamily: "Montserrat",
-    color: "#94A3B8",
-    backgroundColor: "#E2E8F0",
+    fontFamily: "Montserrat_600SemiBold",
+    color: "#71717A",
+    backgroundColor: "#FFFFFF",
     paddingHorizontal: 12,
-    paddingVertical: 3,
-    borderRadius: 10,
+    paddingVertical: 4,
+    borderRadius: 999,
     overflow: "hidden",
   },
   loadingBox: {
@@ -573,11 +584,22 @@ const styles = StyleSheet.create({
     alignItems: "center",
     padding: 24,
   },
+  emptyIcon: {
+    width: 72,
+    height: 72,
+    borderRadius: 36,
+    backgroundColor: "#FFF0E5",
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: 14,
+  },
   emptyText: {
     textAlign: "center",
-    color: "#94A3B8",
+    maxWidth: 240,
+    color: "#A1A1AA",
     fontSize: 14,
-    fontFamily: "Montserrat",
+    lineHeight: 20,
+    fontFamily: "Montserrat_600SemiBold",
   },
   messagesContent: {
     paddingVertical: 12,
@@ -601,67 +623,54 @@ const styles = StyleSheet.create({
     width: 28,
     height: 28,
     borderRadius: 14,
-    backgroundColor: "#E2E8F0",
+    backgroundColor: "#FFF0E5",
     justifyContent: "center",
     alignItems: "center",
     marginBottom: 2,
   },
   otherAvatarText: {
     fontSize: 10,
-    fontFamily: "MontserratBold",
-    fontWeight: "bold",
-    color: "#64748B",
+    fontFamily: "Montserrat_800ExtraBold",
+    color: "#fa6205",
   },
   otherCol: {
     flex: 1,
   },
   otherName: {
     fontSize: 10,
-    fontFamily: "Montserrat",
-    color: "#94A3B8",
+    fontFamily: "Montserrat_400Regular",
+    color: "#A1A1AA",
     marginLeft: 4,
     marginBottom: 2,
   },
   bubble: {
-    borderRadius: 18,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
+    borderRadius: 22,
+    paddingHorizontal: 14,
+    paddingVertical: 9,
   },
   myBubble: {
-    backgroundColor: "#FF5500",
-    borderTopRightRadius: 6,
-    shadowColor: "#FF5500",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.35,
-    shadowRadius: 10,
-    elevation: 6,
+    backgroundColor: "#fa6205",
+    borderBottomRightRadius: 8,
   },
   otherBubble: {
     backgroundColor: "#FFFFFF",
-    borderWidth: 1,
-    borderColor: "#E2E8F0",
-    borderTopLeftRadius: 6,
-    shadowColor: "#0F172A",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06,
-    shadowRadius: 6,
-    elevation: 2,
+    borderBottomLeftRadius: 8,
   },
   messageText: {
     fontSize: 14,
     lineHeight: 19,
-    fontFamily: "Montserrat",
+    fontFamily: "Montserrat_400Regular",
   },
   myMessageText: {
     color: "#FFFFFF",
   },
   otherMessageText: {
-    color: "#0F172A",
+    color: "#1C1C1E",
   },
   messageImage: {
     width: 220,
     height: 160,
-    borderRadius: 12,
+    borderRadius: 16,
   },
   metaRow: {
     flexDirection: "row",
@@ -677,31 +686,33 @@ const styles = StyleSheet.create({
   },
   time: {
     fontSize: 10,
-    fontFamily: "Montserrat",
+    fontFamily: "Montserrat_400Regular",
   },
   myTime: {
     color: "rgba(255,255,255,0.75)",
   },
   otherTime: {
-    color: "#94A3B8",
+    color: "#A1A1AA",
   },
   statusSending: {
     fontSize: 10,
-    color: "#94A3B8",
-    fontFamily: "Montserrat",
+    color: "#A1A1AA",
+    fontFamily: "Montserrat_400Regular",
   },
   statusError: {
     fontSize: 10,
     color: "#FF4757",
-    fontFamily: "Montserrat",
+    fontFamily: "Montserrat_400Regular",
+  },
+  quickRepliesScroll: {
+    flexGrow: 0,
+    backgroundColor: "#F4F4F5",
   },
   quickReplies: {
     flexDirection: "row",
-    flexWrap: "wrap",
     gap: 8,
     paddingHorizontal: 12,
-    paddingVertical: 6,
-    backgroundColor: "#F8FAFC",
+    paddingVertical: 8,
   },
   quickReply: {
     flexDirection: "row",
@@ -709,16 +720,14 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     gap: 6,
     borderRadius: 999,
-    borderWidth: 1,
-    borderColor: "#E2E8F0",
     backgroundColor: "#FFFFFF",
     paddingHorizontal: 14,
     paddingVertical: 10,
   },
   quickReplyText: {
-    fontSize: 12,
-    fontFamily: "Montserrat",
-    color: "#334155",
+    fontSize: 12.5,
+    fontFamily: "Montserrat_600SemiBold",
+    color: "#1C1C1E",
   },
   imagePreview: {
     flexDirection: "row",
@@ -728,14 +737,14 @@ const styles = StyleSheet.create({
   imagePreviewThumb: {
     width: 44,
     height: 44,
-    borderRadius: 8,
+    borderRadius: 14,
   },
   removeImageBtn: {
     marginLeft: 8,
     width: 22,
     height: 22,
     borderRadius: 11,
-    backgroundColor: "#F1F5F9",
+    backgroundColor: "#F4F4F5",
     justifyContent: "center",
     alignItems: "center",
   },

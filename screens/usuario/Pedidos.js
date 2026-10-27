@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from "react";
+import React, { useState, useEffect, useRef, useCallback, useDeferredValue } from "react";
 import {
   View,
   FlatList,
@@ -13,6 +13,7 @@ import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context"
 import { useNavigation, useFocusEffect } from "@react-navigation/native";
 import { useFonts, Montserrat_400Regular, Montserrat_700Bold, Montserrat_300Light, Montserrat_600SemiBold, Montserrat_800ExtraBold } from "@expo-google-fonts/montserrat";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { Ionicons } from "@expo/vector-icons";
 import { useNotification } from "../../context/NotificationContext";
 import AlertaModal from "../../components/ErrorModal";
 import { BASE_URL } from "../../constants/url";
@@ -28,6 +29,7 @@ import CalificationModal from "../../components/usuario/pedidos/CalificationModa
 import { COLORS } from "../../components/usuario/pedidos/helpers";
 
 import usePedidos from "../../hooks/usuario/usePedidos";
+import useHistorialOculto from "../../hooks/usuario/useHistorialOculto";
 import useReservas from "../../hooks/usuario/useReservas";
 import useCalificacion from "../../hooks/usuario/useCalificacion";
 
@@ -51,11 +53,13 @@ export default function Pedidos({ route }) {
   });
 
   const { pedidos, filteredPedidos, isLoading, error, refreshing, fetchPedidos, onRefresh, setFilteredPedidos, countActivas, countHistorial } = usePedidos();
+  const { ocultos, estaOculto, ocultar, mostrar } = useHistorialOculto();
   const { reservas, filteredReservas, isLoadingReservas, fetchReservas, setFilteredReservas, setReservas, filtrarReservas, cancelReserva } = useReservas();
   const calif = useCalificacion();
 
   const [activeTab, setActiveTab] = useState("activas");
   const [historialTipo, setHistorialTipo] = useState("carreras");
+  const [verOcultos, setVerOcultos] = useState(false);
   const [selectedItem, setSelectedItem] = useState(null);
   const [alertVisible, setAlertVisible] = useState(false);
   const [alertData, setAlertData] = useState({ message: "", type: "info", onPrimary: null, primaryLabel: "" });
@@ -68,7 +72,6 @@ export default function Pedidos({ route }) {
 
   // ── Init + re-fetch on tab change ──
   useEffect(() => {
-    setFilteredPedidos([]);
     fetchPedidos(activeTab);
     if (!hasFetchedReservasRef.current) {
       hasFetchedReservasRef.current = true;
@@ -189,15 +192,44 @@ export default function Pedidos({ route }) {
     });
   }, [navigation]);
 
+  const handleOcultar = useCallback((item) => {
+    showAlert(
+      item.es_carrera ? "¿Ocultar este arrendamiento de tu historial?" : "¿Ocultar este pedido de tu historial?",
+      "confirm",
+      async () => {
+        try {
+          await ocultar(item);
+          showAlert("Ocultado de tu historial.", "success");
+        } catch (e) {
+          showAlert(e?.message || "No se pudo ocultar", "error");
+        }
+      },
+      "Sí, ocultar"
+    );
+  }, [ocultar]);
+
+  const handleMostrar = useCallback(async (item) => {
+    try {
+      await mostrar(item);
+      showAlert("Visible de nuevo en tu historial.", "success");
+    } catch (e) {
+      showAlert(e?.message || "No se pudo mostrar", "error");
+    }
+  }, [mostrar]);
+
   // ── Data dispatch ──
+  const historialTipoLista = useDeferredValue(historialTipo);
+  const historialVisible = activeTab === "historial" ? filteredPedidos.filter((i) => !estaOculto(i)) : filteredPedidos;
+  const historialOcultos = activeTab === "historial" ? filteredPedidos.filter((i) => estaOculto(i)) : [];
+  const historialLista = verOcultos ? historialOcultos : historialVisible;
   const listData = activeTab === "reservas"
     ? filteredReservas
     : activeTab === "historial"
-      ? filteredPedidos.filter((i) => historialTipo === "carreras" ? i.es_carrera : !i.es_carrera)
+      ? historialLista.filter((i) => historialTipoLista === "carreras" ? i.es_carrera : !i.es_carrera)
       : filteredPedidos;
 
-  const countHistCarreras = activeTab === "historial" ? filteredPedidos.filter((i) => i.es_carrera).length : 0;
-  const countHistPedidos = activeTab === "historial" ? filteredPedidos.length - countHistCarreras : 0;
+  const countHistCarreras = activeTab === "historial" ? historialLista.filter((i) => i.es_carrera).length : 0;
+  const countHistPedidos = activeTab === "historial" ? historialLista.length - countHistCarreras : 0;
 
   const reservaSections = [
     { title: "Pendientes", data: reservas.filter((r) => r.estado === "pendiente") },
@@ -207,7 +239,7 @@ export default function Pedidos({ route }) {
 
   const counts = {
     activas: countActivas,
-    historial: countHistorial,
+    historial: activeTab === "historial" ? historialVisible.length : Math.max(0, countHistorial - ocultos.size),
     reservas: reservas.length,
   };
 
@@ -244,6 +276,9 @@ export default function Pedidos({ route }) {
         onCancel={handleCancelCarrera}
         onCalificar={calif.abrir}
         isHistorial={activeTab === "historial"}
+        irAlComercio
+        onOcultar={verOcultos ? undefined : handleOcultar}
+        onMostrar={verOcultos ? handleMostrar : undefined}
       />
     );
   };
@@ -333,8 +368,22 @@ export default function Pedidos({ route }) {
                 colors={[COLORS.brand]}
               />
             }
-            ListEmptyComponent={<EmptyState tab={activeTab} />}
+            ListEmptyComponent={<EmptyState tab={activeTab === "historial" && verOcultos ? "ocultos" : activeTab} />}
+            ListFooterComponent={
+              activeTab === "historial" && (verOcultos || historialOcultos.length > 0) ? (
+                <TouchableOpacity style={s.verOcultosBtn} onPress={() => setVerOcultos((v) => !v)} activeOpacity={0.7}>
+                  <Ionicons name={verOcultos ? "arrow-back" : "eye-off-outline"} size={16} color={COLORS.muted} />
+                  <Text style={s.verOcultosText}>
+                    {verOcultos ? "Volver al historial" : `Ver ocultos (${historialOcultos.length})`}
+                  </Text>
+                </TouchableOpacity>
+              ) : null
+            }
             showsVerticalScrollIndicator={false}
+            initialNumToRender={5}
+            maxToRenderPerBatch={5}
+            windowSize={7}
+            removeClippedSubviews
           />
         )}
       </View>
@@ -410,6 +459,24 @@ const s = StyleSheet.create({
   },
   histSubLabelActive: {
     color: COLORS.ink,
+  },
+  verOcultosBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 6,
+    alignSelf: "center",
+    marginTop: 8,
+    marginBottom: 24,
+    paddingHorizontal: 16,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: COLORS.surface,
+  },
+  verOcultosText: {
+    fontSize: 13,
+    fontFamily: "Montserrat_700Bold",
+    color: COLORS.muted,
   },
   histSubLabelInactive: {
     color: COLORS.muted,
