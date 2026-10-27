@@ -36,6 +36,8 @@ import ActiveRideModal from "./components/ActiveRideModal";
 import SubscriptionModal from "./components/SubscriptionModal";
 import RejectedTripsModal from "./components/RejectedTripsModal";
 import AcceptModal from "./components/AcceptModal";
+import VerificacionConductorModal from "./VerificacionConductorModal";
+import { getEstadoVerificacion } from "../../services/verificacionConductor";
 import { parseCoords, calculateDistance, getUserPhotoUrl } from "./utils";
 
 const { width } = Dimensions.get("window");
@@ -63,6 +65,7 @@ export default function HomeDelivery() {
   const [acceptStep, setAcceptStep] = useState("confirm");
   const [acceptErrorMsg, setAcceptErrorMsg] = useState("");
   const [selectedTripId, setSelectedTripId] = useState(null);
+  const [showVerificacionModal, setShowVerificacionModal] = useState(false);
 
   const [hasActiveRide, setHasActiveRide] = useState(false);
   const [checkingSubscription, setCheckingSubscription] = useState(false);
@@ -107,6 +110,38 @@ export default function HomeDelivery() {
     }
   }, []);
 
+  const requireVerificacionVigente = useCallback(async () => {
+    try {
+      const estado = await getEstadoVerificacion();
+      if (estado.requiere_verificacion) {
+        setShowVerificacionModal(true);
+        return false;
+      }
+      return true;
+    } catch (e) {
+      console.log("[HomeDelivery] verificacion error:", e.message);
+      setShowVerificacionModal(true);
+      return false;
+    }
+  }, []);
+
+  const handleVerificacionCompleta = useCallback(async () => {
+    setShowVerificacionModal(false);
+    const ok = await requireVerificacionVigente();
+    if (!ok) return;
+    const storedSwitch = await AsyncStorage.getItem("isEnabled");
+    if (storedSwitch === "true") {
+      const canConnect = await validateCanConnect({ allowActiveRide: true });
+      if (canConnect) {
+        setIsEnabled(true);
+      } else {
+        await disconnect();
+      }
+    } else {
+      await fetchAvailability();
+    }
+  }, [requireVerificacionVigente]);
+
   useFocusEffect(
     useCallback(() => {
       const loadInitial = async () => {
@@ -115,6 +150,11 @@ export default function HomeDelivery() {
           const parsed = JSON.parse(storedUserData);
           setUserData(parsed);
           refreshUserRating();
+        }
+        const verificacionOk = await requireVerificacionVigente();
+        if (!verificacionOk) {
+          await disconnect();
+          return;
         }
         const storedSwitch = await AsyncStorage.getItem("isEnabled");
         if (storedSwitch === "true") {
@@ -129,7 +169,7 @@ export default function HomeDelivery() {
         }
       };
       loadInitial();
-    }, [refreshUserRating])
+    }, [refreshUserRating, requireVerificacionVigente])
   );
 
   useEffect(() => {
@@ -470,6 +510,13 @@ export default function HomeDelivery() {
   const validateCanConnect = async ({ allowActiveRide = false } = {}) => {
     setCheckingSubscription(true);
 
+    const verificacionOk = await requireVerificacionVigente();
+    if (!verificacionOk) {
+      setCheckingSubscription(false);
+      await disconnect();
+      return false;
+    }
+
     const currentAvailability = await fetchAvailability();
     const hasActive = await checkActiveRide();
 
@@ -791,6 +838,7 @@ export default function HomeDelivery() {
 
       <ActiveRideModal visible={showActiveRideModal} onClose={() => setShowActiveRideModal(false)} />
       <SubscriptionModal visible={showSubscriptionModal} onClose={() => setShowSubscriptionModal(false)} onGoToSubscriptions={goToSubscriptions} />
+      <VerificacionConductorModal visible={showVerificacionModal} onVerified={handleVerificacionCompleta} />
       <RejectedTripsModal visible={showRejectedListModal} onClose={() => setShowRejectedListModal(false)} trips={rejectedTrips} onRestore={handleRestore} />
       <AcceptModal visible={showAcceptModal} step={acceptStep} errorMsg={acceptErrorMsg} onClose={closeAcceptModal} onConfirm={confirmAcceptation} />
 
