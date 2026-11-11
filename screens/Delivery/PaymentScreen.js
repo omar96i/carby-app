@@ -84,6 +84,7 @@ const PasoCheckout = ({ icono, tinte, colorIcono, logo, ultimo, children }) => (
   </View>
 );
 import * as Location from "expo-location";
+import { cotizarServicio } from "../../utils/tarifas";
 const PaymentScreen = () => {
   // Estados generales
   const [showSuccessModal, setShowSuccessModal] = useState(false);
@@ -138,6 +139,7 @@ const PaymentScreen = () => {
   const fotoDe = (item) => item?.productImage || fotosCarrito[item?.productId] || null;
   const [deliveryFee, setDeliveryFee] = useState(0);
   const [deliveryService, setDeliveryService] = useState(null);
+  const deliveryDetalleRef = useRef(null);
   const [loadingDeliveryFee, setLoadingDeliveryFee] = useState(false);
   const [calculatedDeliveryFee, setCalculatedDeliveryFee] = useState(false);
   const [timeOfDay, setTimeOfDay] = useState("day"); // 'day', 'night', 'holiday'
@@ -924,22 +926,32 @@ const PaymentScreen = () => {
     };
   };
 
+  // Envío de comercio con algoritmo moto (PICO): modelo moto + redondeo $100 + mínima.
+  // Se mantiene la compuerta de deliveryService (el comercio debe tener servicio configurado).
   const calculateDeliveryFee = (distance) => {
-    const pricing = getEffectiveDeliveryPricing();
-    if (!pricing) {
+    if (!distance || distance <= 0) return 0;
+    if (!deliveryService) {
       console.log("[PaymentScreen] No hay servicio de comercio, usando tarifa por defecto");
       return 0; // Sin servicio no hay envío calculado aún
     }
 
-    const { base: baseFee, perKm: pricePerKm, additional: additionalFee } = pricing;
+    const cot = cotizarServicio({
+      service: { nombre: "Moto" },
+      km: distance,
+      minCon: rutaMin,
+      minSin: null,
+      o: establishmentLocation ? [establishmentLocation.latitude, establishmentLocation.longitude] : null,
+      d: selectedLocation ? [selectedLocation.latitude, selectedLocation.longitude] : null,
+    });
+    if (!cot) return 0;
 
-    // Calcular precio: base + (distancia × precio_km) + adicional
-    let fee = baseFee + (distance * pricePerKm) + additionalFee;
-
-    console.log("[PaymentScreen] DELIVERY FEE -> base:", baseFee, "km:", distance, "pricePerKm:", pricePerKm, "adicional:", additionalFee, "total:", fee);
-
-    // Redondear a 2 decimales
-    return Math.max(0, Math.round(fee));
+    const tarifa = deliveryService.tarifa_vigente || null;
+    const additional =
+      parseFloat(deliveryService.precio_adicional_efectivo ?? tarifa?.precio_adicional ?? deliveryService.precio_adicional) || 0;
+    const precio = Math.max(Math.round((cot.precio + additional) / 100) * 100, cot.precio);
+    deliveryDetalleRef.current = { rama: cot.rama, ...cot.detalle, adicional: additional };
+    console.log("[PaymentScreen] DELIVERY FEE MOTO ->", JSON.stringify(deliveryDetalleRef.current));
+    return precio;
   };
 
   // Calcular distancia por ruta de Google cuando ambas ubicaciones estén listas
@@ -1132,6 +1144,9 @@ const PaymentScreen = () => {
           ...locationData,
           schedule_id: pricing?.scheduleId ?? null,
           tarifa_vigente: pricing?.schedule ?? null,
+          tarifa_formula: deliveryDetalleRef.current?.formula || "BASE",
+          tarifa_rama: deliveryDetalleRef.current?.rama || null,
+          tarifa_detalle: deliveryDetalleRef.current || null,
         }),
         costo_total: totalAmount,
         costo_envio: deliveryFee,

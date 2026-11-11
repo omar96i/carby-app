@@ -1,0 +1,774 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Estudio de tarifas Carby</title>
+<style>
+:root{
+  --naranja:#FF5500; --naranja-osc:#C94300; --tinta:#1b1b1f; --tinta2:#45454d; --suave:#6b6b75;
+  --borde:#e3e3e8; --fondo-t:#FFF3EC; --fondo-n:#f6f6f8; --verde:#2E8B57; --rojo:#C62828; --gris:#9AA0A6;
+}
+@page{ size:A4; margin:18mm 16mm 18mm 16mm;
+  @bottom-right{ content:"Página " counter(page); font:8.5pt "Segoe UI",Arial,sans-serif; color:#888; }
+  @bottom-left{ content:"Estudio de tarifas Carby · uso interno"; font:8.5pt "Segoe UI",Arial,sans-serif; color:#888; } }
+@page portada{ margin:0; @bottom-right{content:none} @bottom-left{content:none} }
+*{ box-sizing:border-box }
+html{ -webkit-print-color-adjust:exact; print-color-adjust:exact }
+body{ margin:0; background:#fff; color:var(--tinta); font:10pt/1.5 "Segoe UI",Arial,sans-serif; }
+.portada{ page:portada; height:296mm; overflow:hidden; padding:30mm 22mm; display:flex; flex-direction:column; justify-content:space-between; border-left:14mm solid var(--naranja); }
+.portada .marca{ font-size:13pt; letter-spacing:.18em; text-transform:uppercase; color:var(--naranja); font-weight:700 }
+.portada h1{ font-size:40pt; line-height:1.05; margin:0 0 6mm; letter-spacing:-.02em }
+.portada .sub{ font-size:14pt; color:var(--tinta2); max-width:150mm }
+.portada .pie{ font-size:10.5pt; color:var(--tinta2); border-top:1px solid var(--borde); padding-top:5mm }
+.portada .pie b{ color:var(--tinta) }
+section.cap{ break-before:page }
+h1.cap{ font-size:21pt; margin:0 0 4mm; padding-bottom:2mm; border-bottom:3px solid var(--naranja); letter-spacing:-.01em }
+h1.cap .num{ color:var(--naranja); margin-right:3mm }
+h2{ font-size:13pt; margin:6mm 0 2mm; color:var(--tinta); break-after:avoid }
+h2 .num{ color:var(--naranja); margin-right:2mm }
+h3{ font-size:11pt; margin:4mm 0 1.5mm; break-after:avoid }
+p{ margin:0 0 2.2mm }
+ul,ol{ margin:0 0 2.5mm; padding-left:5.5mm }
+li{ margin:0 0 1mm }
+b,strong{ font-weight:650 }
+.t{ width:100%; border-collapse:collapse; margin:2mm 0 4mm; font-size:8.8pt; break-inside:auto }
+.t caption{ text-align:left; font-weight:650; font-size:9.5pt; padding:0 0 1.5mm; color:var(--tinta) }
+.t th{ background:var(--fondo-t); text-align:left; font-weight:650; padding:1.4mm 2mm; border-bottom:1.5px solid var(--naranja); vertical-align:bottom }
+.t td{ padding:1.2mm 2mm; border-bottom:1px solid var(--borde); vertical-align:top }
+.t tr{ break-inside:avoid }
+.t td.n,.t th.n{ text-align:right; font-variant-numeric:tabular-nums; white-space:nowrap }
+.t tr.dest td{ background:#fffaf6; font-weight:600 }
+.compacta{ font-size:8pt } .compacta td,.compacta th{ padding:.7mm 1.6mm }
+.h1{ background:#FFF1E8 } .h2{ background:#FFDCC6 } .h3{ background:#FFBE96 }
+.pp{ color:var(--suave); font-size:7.5pt }
+.nota{ border-left:3px solid var(--naranja); background:#fff8f3; padding:2.5mm 3.5mm; margin:3mm 0; break-inside:avoid }
+.nota.gris{ border-left-color:#9aa0a6; background:var(--fondo-n) }
+.nota b:first-child{ color:var(--naranja-osc) }
+.dos{ display:grid; grid-template-columns:1fr 1fr; gap:5mm; align-items:start }
+.kpis{ display:grid; grid-template-columns:repeat(4,1fr); gap:3mm; margin:3mm 0 4mm }
+.kpi{ border:1px solid var(--borde); border-top:3px solid var(--naranja); padding:2.5mm 3mm; break-inside:avoid }
+.kpi .v{ font-size:17pt; font-weight:700; line-height:1.1; font-variant-numeric:tabular-nums }
+.kpi .e{ font-size:8pt; color:var(--tinta2); line-height:1.3; margin-top:1mm }
+.resumen h2{ margin-top:3.5mm }
+.resumen{ font-size:9.6pt }
+.indice ol{ list-style:none; padding:0; font-size:11pt }
+.indice li{ display:flex; gap:3mm; padding:2mm 0; border-bottom:1px solid var(--borde) }
+.indice .n{ color:var(--naranja); font-weight:700; width:9mm }
+.indice .d{ color:var(--suave); font-size:9pt; display:block }
+code{ font-family:Consolas,"Courier New",monospace; font-size:8.6pt; background:var(--fondo-n); padding:0 1mm; border-radius:2px }
+.formula{ font-family:Consolas,"Courier New",monospace; font-size:9pt; background:var(--fondo-n); border:1px solid var(--borde); padding:2.5mm 3.5mm; margin:2mm 0 3mm; white-space:pre-wrap; break-inside:avoid }
+figure{ margin:3mm 0 4mm; break-inside:avoid } figcaption{ font-size:8.5pt; color:var(--tinta2); margin-top:1mm }
+.graf{ width:100%; height:auto; font-family:"Segoe UI",Arial,sans-serif }
+.graf .grid{ stroke:#e6e6ea; stroke-width:1 } .graf .ax{ font-size:10px; fill:#55555e } .graf .ax2{ font-size:9px; fill:#8a8a93 }
+.graf .lbl{ font-size:11px; fill:#1b1b1f; font-weight:600 }
+.graf .lCarro{ stroke:#E04B00; stroke-width:2.2 } .graf .lMoto{ stroke:#1F6FB0; stroke-width:2.2 }
+.graf .pCarro{ fill:#E04B00; stroke:#fff; stroke-width:2 } .graf .pMoto{ fill:#1F6FB0; stroke:#fff; stroke-width:2 }
+.graf .nocheBg{ fill:#f2f3f7 } .graf .bar{ fill:#E04B00 } .graf .barPoca{ fill:#F6BFA0 }
+.graf .sBanda{ fill:#2E8B57 } .graf .sPierde{ fill:#C62828 } .graf .sPasa{ fill:#9AA0A6 }
+.graf .enBarra{ font-size:11px; fill:#fff; font-weight:700 }
+.graf .caja{ fill:#fff; stroke:#c9c9d1; stroke-width:1.2 } .graf .cajaN{ fill:#FFF3EC; stroke:#FF5500; stroke-width:1.5 }
+.graf .ct{ font-size:10.5px; fill:#1b1b1f; font-weight:600 } .graf .cs{ font-size:9px; fill:#55555e }
+.graf .fl{ stroke:#8a8a93; stroke-width:1.4; fill:none; marker-end:url(#fl) }
+.pendiente{ display:inline-block; background:#FFE9DC; color:var(--naranja-osc); font-weight:700; padding:.5mm 2mm; border:1px dashed var(--naranja) }
+.chico{ font-size:8.5pt; color:var(--tinta2) }
+.evitar{ break-inside:avoid }
+</style>
+</head>
+<body>
+
+<!-- ============ PORTADA ============ -->
+<div class="portada">
+  <div class="marca">Carby · Laboratorio de tarifas</div>
+  <div>
+    <h1>Estudio de tarifas Carby</h1>
+    <div class="sub">Todo lo aprendido midiendo los precios de inDrive en Medellín y el Valle de Aburrá: cómo funciona el laboratorio, qué hace inDrive, cómo cobra hoy nuestra fórmula, qué tan cerca estamos y qué sigue.</div>
+  </div>
+  <div class="pie">
+    <b>5 de octubre de 2026</b><br>
+    Documento interno para el fundador. Aquí sí se nombra a inDrive, porque es lo que se mide; nada de esto va a la web pública.<br>
+    Datos: 1.032 lecturas reales (988 confiables, 151 rutas) del sábado 3 de octubre, 5:47 p. m., al lunes 5 de octubre, 7:59 p. m.
+  </div>
+</div>
+
+<!-- ============ ÍNDICE ============ -->
+<section class="cap indice">
+  <h1 class="cap">Índice</h1>
+  <ol>
+    <li><span class="n">1</span><span>Resumen ejecutivo<span class="d">Dónde estamos, qué funciona, qué no y qué sigue, en una página</span></span></li>
+    <li><span class="n">2</span><span>Cómo funciona el laboratorio<span class="d">Celular por USB, colector, cotización a ciegas, orquestador, torneo, vigía, supervisor, reglas de seguridad y cronología</span></span></li>
+    <li><span class="n">3</span><span>Todo lo detectado de inDrive<span class="d">Redondeo, categorías, horas y días, moto contra carro, zonas, alta demanda, largas, tráfico, lluvia, eventos y su variación propia</span></span></li>
+    <li><span class="n">4</span><span>Cómo funciona nuestra fórmula hoy<span class="d">Base, zonas, HN1 y HN3 paso a paso, capas en vivo y un ejemplo con una carrera real</span></span></li>
+    <li><span class="n">5</span><span>La meta y las métricas<span class="d">Banda, pierde, típica; resultados reales a ciegas; el reto "pierde ≤ 10 %" y la frontera honesta</span></span></li>
+    <li><span class="n">6</span><span>La fórmula propia (sin inDrive en vivo)<span class="d">PICO y CURVA, tablas de horas pico, examen congelado y prueba independiente</span></span></li>
+    <li><span class="n">7</span><span>Zonas calientes sin ver a inDrive<span class="d">Diseño concreto para Carby: tabla por hexágono, oferta y demanda propia, topes y transparencia</span></span></li>
+    <li><span class="n">8</span><span>Qué se puede mejorar (priorizado)</span></li>
+    <li><span class="n">9</span><span>Glosario</span></li>
+    <li><span class="n">A</span><span>Anexos<span class="d">Curva de horas pico completa cada 30 minutos; archivos del laboratorio</span></span></li>
+  </ol>
+  <div class="nota gris" style="margin-top:8mm"><b>Cómo leer las cifras.</b> Todas las cifras salen de los archivos del laboratorio (<code>tools/tarifas</code>): la bitácora, los informes de los agentes y cálculos reproducibles sobre <code>datos/mediciones.jsonl</code>. "d" es siempre <b>precio Carby − precio inDrive</b> en la misma carrera: si d es negativo, Carby cobró menos y el conductor pierde plata. Menos de 3 puntos de diferencia entre dos fórmulas se considera ruido.</div>
+</section>
+
+<!-- ============ 1. RESUMEN ============ -->
+<section class="cap resumen">
+  <h1 class="cap"><span class="num">1</span>Resumen ejecutivo</h1>
+  <p>En 50 horas de medición se leyeron <b>1.032 precios reales de inDrive</b> (carro = categoría "Viaje", moto = "Moto") en 151 rutas del Valle de Aburrá, y en <b>349 carreras</b> Carby calculó su precio <b>a ciegas</b>, antes de abrir inDrive. El precio recomendado hoy, comparado con lo que cobró inDrive en esas 349 carreras:</p>
+  <div class="kpis">
+    <div class="kpi"><div class="v">63 %</div><div class="e"><b>Moto de día</b> en banda [−$300, +$500]. Diferencia típica $300. Pierde 21 %.</div></div>
+    <div class="kpi"><div class="v">39 %</div><div class="e"><b>Carro de día</b> en banda. Típica $700. Pierde 36 %.</div></div>
+    <div class="kpi"><div class="v">34 %</div><div class="e"><b>Moto de noche</b> en banda. Típica $900. Pierde 22 %.</div></div>
+    <div class="kpi"><div class="v">23 %</div><div class="e"><b>Carro de noche</b> en banda. Típica $1.200. Pierde 27 %.</div></div>
+  </div>
+  <h2>Qué funciona</h2>
+  <ul>
+    <li><b>El laboratorio es honesto y automático.</b> Carby cotiza antes de ver el precio de inDrive, y el precio se guarda primero. Un programa (el orquestador) mide en tandas de 50 carreras, reentrena la fórmula cada 10 y elige la mejor fórmula con carreras reales. Desde hoy, un <b>supervisor</b> relanza todo solo cuando se pausa.</li>
+    <li><b>Entendemos la estructura de inDrive:</b> redondea a $100. Viaje+ y Confort cuestan ×1,10 y ×1,30 del Viaje. El precio sube de noche (madrugada de fin de semana hasta +53 % en carro) y cambia por zona de recogida. La moto se encarece de noche frente al carro (0,50 → 0,69).</li>
+    <li><b>La moto de día está cerca del límite posible:</b> 63 % en banda. inDrive contra sí mismo, en la misma ruta y menos de una hora después, queda en banda el 77 % de las veces.</li>
+    <li><b>La fórmula PROPIA, que no mira a inDrive en vivo, ya compite.</b> En el lunes completo, sin ver ningún precio de inDrive de ese día, CURVA dejó al carro 29 % en banda con 23 % "pierde", frente a 20 % y 33 % del precio en vivo. En moto empataron (±10 %: 52 % y 52 %).</li>
+  </ul>
+  <h2>Qué no funciona todavía</h2>
+  <ul>
+    <li><b>La noche.</b> El carro queda en 23 % en banda y la moto en 34 %. De noche inDrive varía mucho contra sí mismo (carro de noche: solo 45 % en banda y 35 % "pierde" repitiendo la misma ruta).</li>
+    <li><b>"Pierde ≤ 10 %" sin subir mucho el precio no es posible hoy.</b> Subirle a todas las carreras para lograrlo duplica o triplica la diferencia típica (carro de día: de $500 a $1.550). Lo más fino probado, subir solo las carreras riesgosas, baja "pierde" a 5–12 %, pero sigue costando típica: carro de día $900.</li>
+    <li><b>Solo hay un día laboral medido</b> (lunes 5), y sin las horas de 10 a. m. a 5 p. m. porque la medición estuvo detenida 10 horas. Con un solo lunes no se pueden aprender las horas pico entre semana. La fórmula propia quedó cara en el carro de 5 a 8 p. m. (promedio +$1.600 a +$1.900) y barata en la madrugada de la moto.</li>
+  </ul>
+  <h2>Qué sigue</h2>
+  <ol>
+    <li><b>Medir días laborales completos</b> (martes a viernes, todas las horas). Es la palanca principal. La tabla propia ya se reentrena sola cada día a las 12:05 a. m.</li>
+    <li><b>Medir el festivo del lunes 12 de octubre</b> para comprobar que un festivo cobra como un domingo, como supone la fórmula.</li>
+    <li><b>Tráfico pesado:</b> juntar unas 30 carreras de moto con tráfico ≥ 1,2 (hoy hay 8) y probar la moto con minutos con tráfico.</li>
+    <li><b>Para la app:</b> fórmula propia (tabla de horas pico + zonas por hexágono) y un recargo por zona caliente calculado con <b>nuestra propia oferta y demanda</b>, con tope y aviso al usuario (capítulo 7).</li>
+  </ol>
+</section>
+
+<!-- ============ 2. LABORATORIO ============ -->
+<section class="cap">
+  <h1 class="cap"><span class="num">2</span>Cómo funciona el laboratorio</h1>
+  <p>El laboratorio es un conjunto de programas en el computador (<code>tools/tarifas</code>) conectado a un celular Android por cable USB. El celular tiene inDrive instalado con la cuenta personal del dueño. El objetivo es medir cuánto cobra inDrive en rutas reales y entrenar una fórmula que cobre lo mismo sin dejar al conductor perdiendo plata.</p>
+  <figure>
+  <svg viewBox="0 0 680 250" class="graf" role="img" aria-label="Flujo del laboratorio">
+    <defs><marker id="fl" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#8a8a93"/></marker></defs>
+    <rect x="6" y="20" width="120" height="58" rx="6" class="caja"/><text x="66" y="42" class="ct" text-anchor="middle">1. Ruta de la lista</text><text x="66" y="57" class="cs" text-anchor="middle">144 rutas en lotes/</text><text x="66" y="69" class="cs" text-anchor="middle">nunca la ubicación real</text>
+    <rect x="146" y="20" width="120" height="58" rx="6" class="caja"/><text x="206" y="42" class="ct" text-anchor="middle">2. Google</text><text x="206" y="57" class="cs" text-anchor="middle">km, minutos, tráfico</text><text x="206" y="69" class="cs" text-anchor="middle">y clima del momento</text>
+    <rect x="286" y="20" width="128" height="58" rx="6" class="cajaN"/><text x="350" y="42" class="ct" text-anchor="middle">3. Carby cotiza</text><text x="350" y="57" class="cs" text-anchor="middle">A CIEGAS y lo guarda</text><text x="350" y="69" class="cs" text-anchor="middle">en cotizaciones.jsonl</text>
+    <rect x="434" y="20" width="118" height="58" rx="6" class="caja"/><text x="493" y="42" class="ct" text-anchor="middle">4. Celular (USB)</text><text x="493" y="57" class="cs" text-anchor="middle">inDrive muestra el</text><text x="493" y="69" class="cs" text-anchor="middle">precio sugerido</text>
+    <rect x="572" y="20" width="102" height="58" rx="6" class="caja"/><text x="623" y="42" class="ct" text-anchor="middle">5. Leer y salir</text><text x="623" y="57" class="cs" text-anchor="middle">nunca confirmar</text><text x="623" y="69" class="cs" text-anchor="middle">(tecla atrás)</text>
+    <path d="M126,49 H144" class="fl"/><path d="M266,49 H284" class="fl"/><path d="M414,49 H432" class="fl"/><path d="M552,49 H570" class="fl"/>
+    <rect x="520" y="130" width="154" height="58" rx="6" class="caja"/><text x="597" y="152" class="ct" text-anchor="middle">6. mediciones.jsonl</text><text x="597" y="167" class="cs" text-anchor="middle">precio real + cotización</text><text x="597" y="179" class="cs" text-anchor="middle">Carby de esa carrera</text>
+    <path d="M623,78 V128" class="fl"/>
+    <rect x="290" y="130" width="200" height="58" rx="6" class="caja"/><text x="390" y="150" class="ct" text-anchor="middle">7. Orquestador</text><text x="390" y="165" class="cs" text-anchor="middle">reentreno cada 10 carreras</text><text x="390" y="177" class="cs" text-anchor="middle">torneo y versión cada 50</text>
+    <path d="M520,159 H492" class="fl"/>
+    <rect x="60" y="130" width="200" height="58" rx="6" class="cajaN"/><text x="160" y="150" class="ct" text-anchor="middle">8. modelo-oficial.json</text><text x="160" y="165" class="cs" text-anchor="middle">fórmula ganadora (HN1 / HN3)</text><text x="160" y="177" class="cs" text-anchor="middle">la usa la próxima cotización</text>
+    <path d="M290,159 H262" class="fl"/><path d="M160,130 C160,100 300,100 330,80" class="fl"/>
+    <rect x="60" y="205" width="300" height="38" rx="6" class="caja"/><text x="210" y="222" class="ct" text-anchor="middle">Vigía: revisa cada 15 s las últimas carreras</text><text x="210" y="235" class="cs" text-anchor="middle">si empeora: de día PAUSA · de noche MODO APRENDIZAJE</text>
+    <rect x="380" y="205" width="294" height="38" rx="6" class="caja"/><text x="527" y="222" class="ct" text-anchor="middle">Supervisor (aparte de la sesión de Claude)</text><text x="527" y="235" class="cs" text-anchor="middle">relanza tras pausas; reentrena la fórmula propia 12:05 a. m.</text>
+  </svg>
+  <figcaption>Figura 2.1. Recorrido de cada carrera medida. La cotización de Carby (paso 3) se guarda antes de abrir inDrive (paso 4): nadie puede ajustarla después.</figcaption>
+  </figure>
+
+  <h2><span class="num">2.1</span>El celular y el colector</h2>
+  <ul>
+    <li><b>Conexión:</b> el computador maneja el celular con <code>adb</code> (la herramienta oficial de Android para depuración por USB). El colector (<code>colector/colector.mjs</code>) abre inDrive, borra el campo "De", escribe el origen letra por letra y elige la sugerencia. Luego hace lo mismo con el destino, lee los precios de todas las categorías y sale con la tecla atrás. Nunca toca "Buscar conductores".</li>
+    <li><b>Qué guarda cada lectura:</b> fecha y hora, ruta (origen y destino con coordenadas), km y minutos de Google con tráfico (carro y moto por separado), índice de tráfico, clima (lluvia), evento cercano (partidos y conciertos), el aviso de "alta demanda" de inDrive, conductores visibles en el mapa, minutos de llegada, y los precios de Viaje, Moto, Viaje+ y Confort.</li>
+    <li><b>Rutas:</b> 144 rutas en varias listas (<code>lotes/</code>) que cubren el norte, el centro, el sur, Poblado–Envigado, Centro-Oriente, Bello, Copacabana, Girardota, Caldas y San Antonio de Prado, de 0,5 km a 47,7 km. Primero se miden las zonas con menos lecturas a esa hora. Máximo 2 medidas por ruta en la misma franja y tipo de día. Se saltan 7 rutas cuyo origen pide elegir una entrada de centro comercial.</li>
+    <li><b>Sensor:</b> cada 5 rutas se mide una <b>ruta de control</b> (RC1–RC19, una por zona), para saber cómo está el nivel de precios de la ciudad en ese momento.</li>
+    <li><b>Lugar confirmado:</b> se descartan las lecturas donde inDrive eligió otro lugar con el mismo nombre (por ejemplo, otro "Parque Principal"). Así se apartaron 41 lecturas medidas en otro lugar.</li>
+    <li><b>Ritmo humano:</b> unos 20 segundos de pausa entre consultas y una carrera cada 1–2 minutos. Si hay 5 fallos seguidos, una ventana desconocida o una pantalla de verificación, el colector se detiene (sale con código 2).</li>
+  </ul>
+
+  <h2><span class="num">2.2</span>La cotización a ciegas</h2>
+  <p>Antes de abrir inDrive, <code>colector/cotizar.mjs</code> pide la ruta a Google y calcula el precio de Carby con la fórmula oficial vigente. Ese precio se escribe primero en <code>datos/cotizaciones.jsonl</code>, con su hora. Solo después se lee el precio real. Por eso los resultados del capítulo 5 son <b>carreras nuevas, nunca vistas</b>. Se controló que ninguna cotización tenga hora posterior a su lectura.</p>
+  <p>En cada carrera se graban varias versiones del precio, para comparar alternativas con las mismas carreras:</p>
+  <table class="t">
+    <thead><tr><th>Variante grabada</th><th>Qué es</th><th>¿Usa inDrive reciente?</th></tr></thead>
+    <tbody>
+      <tr><td><code>carro</code> / <code>moto</code></td><td>Fórmula oficial sola (HN1 carro, HN3 moto)</td><td>Sí, en su "nivel" en tiempo continuo</td></tr>
+      <tr><td><code>_nivel</code></td><td>Fórmula × mediana de (inDrive ÷ fórmula) de los últimos 60 min (mínimo 5 carreras)</td><td>Sí</td></tr>
+      <tr><td><code>_vivo</code> (EN VIVO)</td><td>Corrección carrera por carrera con filtro de Kalman + sesgo aprendido (<code>nucleo/vivo.js</code>)</td><td>Sí</td></tr>
+      <tr><td><code>carro_banda</code></td><td>De día, el trío EN4·HN1·RC5. De noche, EN VIVO con la configuración de noche (<code>nucleo/carro.js</code>)</td><td>Sí</td></tr>
+      <tr><td><code>_laboral</code> (PLAN B)</td><td>Capa que solo sube (máximo +25 %), aprendida con la misma jornada (<code>nucleo/laboral.js</code>)</td><td>Sí</td></tr>
+      <tr><td><code>_noche</code>, <code>_noche3</code>, <code>_riesgo</code>, <code>_centro</code>, <code>_apilado</code>, <code>_medio</code></td><td>Propuestas de los agentes; se graban para juzgarlas con carreras reales</td><td>Sí</td></tr>
+      <tr class="dest"><td><code>_pico</code> / <code>_curva</code></td><td>Fórmula PROPIA congelada: tabla de horas pico + zonas (capítulo 6)</td><td><b>No</b></td></tr>
+    </tbody>
+  </table>
+
+  <h2><span class="num">2.3</span>El orquestador, las versiones y el torneo</h2>
+  <ul>
+    <li><b>Un solo programa usa el celular:</b> <code>orquestador/orquestador.mjs</code>. Él lanza el colector y nadie más lo hace. No gasta tokens de Claude: es un programa normal.</li>
+    <li><b>Versiones de 50 carreras</b> (v001 … v018). Cada versión se guarda en <code>datos/versiones/vNNN/</code>, y la fórmula anterior se prueba contra esas 50 carreras nuevas ("hacia adelante").</li>
+    <li><b>Reentreno rápido cada 10 carreras</b> (<code>analisis/reentreno.mjs</code>, ~1,5 s): misma fórmula, coeficientes y tablas recalculados con todas las lecturas.</li>
+    <li><b>Torneo al cerrar cada versión</b> (<code>analisis/torneo.mjs</code>): compiten unas 70 fórmulas del catálogo. Desde el 4 de octubre la ganadora se elige con <b>carreras reales hacia adelante, en pesos</b> (<code>analisis/seleccion-real.mjs</code>). Cada versión se predice con la fórmula entrenada solo con lo anterior, y lo reciente pesa más (vida media de 3 versiones). El orden es: % en banda, luego menos "pierde", luego exacto y ±$100, luego la diferencia típica. La vigente solo cambia si la retadora gana por 3 puntos o más. Las fórmulas que usan datos internos de inDrive (sus minutos, su aviso de alta demanda) o la memoria de la misma ruta no pueden ser oficiales.</li>
+    <li><b>Modo noche</b> (8 p. m.–6 a. m.): se sigue midiendo, pero la fórmula del día queda congelada (el torneo corre "en seco"). El reentreno de noche escribe un modelo aparte (<code>modelo-noche.json</code>), que se usa para cotizar de noche. <b>El aprendizaje nunca se apaga.</b></li>
+    <li><b>Oficiales hoy</b> (torneo del 5 oct, 8:19 a. m.): carro <b>HN1</b> (le ganó a EN4 por 6 puntos menos de "pierde") y moto <b>HN3</b> (le ganó a RC6 por 8 puntos más en banda).</li>
+  </ul>
+
+  <h2><span class="num">2.4</span>El vigía: pausa de día, modo aprendizaje de noche</h2>
+  <p>Cada 15 segundos el orquestador revisa las últimas carreras a ciegas con el <b>precio recomendado</b>. Si empeoran más allá de un umbral, actúa:</p>
+  <table class="t">
+    <thead><tr><th>Franja</th><th class="n">Ventana</th><th>Carro: alerta si…</th><th>Moto: alerta si…</th><th>Qué hace</th></tr></thead>
+    <tbody>
+      <tr><td>Día (6 a. m.–8 p. m.)</td><td class="n">15 carreras</td><td>banda &lt; 25 %, pierde &gt; 45 % o típica &gt; $2.000</td><td>banda &lt; 50 %, pierde &gt; 45 % o típica &gt; $1.200</td><td><b>PAUSA</b>: escribe <code>datos/PARAR</code>; el colector termina la carrera en curso y sale con código 4</td></tr>
+      <tr><td>Noche (8 p. m.–6 a. m.)</td><td class="n">30 carreras</td><td>banda &lt; 8 %, pierde &gt; 50 % o típica &gt; $2.500</td><td>banda &lt; 15 %, pierde &gt; 40 % o típica &gt; $1.800</td><td><b>MODO APRENDIZAJE</b> (<code>datos/APRENDER</code>): solo rutas de control, más despacio; el modelo de noche sigue aprendiendo. Se quita solo a las 6 a. m.</td></tr>
+    </tbody>
+  </table>
+  <p>Los umbrales de noche son la peor ventana de la noche del 3 al 4. Con los umbrales de día, esa noche se habría pausado en el 36 % (carro) y el 24 % (moto) de las ventanas sin que nada empeorara. Tras una alerta, <code>analisis/diagnostico-vigia.mjs</code> explica en ~1 s qué falla: nivel alto o bajo, alta demanda, carreras largas, una zona, el recargo de la hora o puro ruido. También compara todas las variantes grabadas.</p>
+  <p><b>Pausas registradas:</b> 4 oct 10:17 p. m. (carro de noche, banda 27 %), 5 oct 12:54 a. m. (moto de noche, pierde 43 %), 6:35 a. m. (moto de día, banda 33 % y pierde 47 %; se activó el PLAN B), 9:12 a. m. (carro de día, pierde 47 %) y 7:37 p. m. (carro de día, pierde 47 %; desde entonces el carro usa EN VIVO a partir de las 5 p. m.).</p>
+
+  <h2><span class="num">2.5</span>El supervisor nuevo: por qué se detenía el celular</h2>
+  <div class="nota"><b>El problema.</b> Cuando el vigía pausaba, el orquestador terminaba con código 4 y quedaba esperando que un agente de Claude corrigiera y lo relanzara. Si la sesión de Claude se quedaba sin tokens, <b>nadie relanzaba</b>. El 5 de octubre la medición quedó detenida <b>10 horas</b>, de las 9:12 a. m. a las 7:11 p. m. Por eso el lunes no tiene ninguna carrera entre las 10 a. m. y las 5 p. m.</div>
+  <p><b>La solución</b> (<code>orquestador/supervisor.mjs</code>, activo desde las 7:55 p. m. del 5 oct) es un proceso aparte de la sesión de Claude que sigue vivo aunque esta se cierre:</p>
+  <ul>
+    <li>Si no hay un orquestador corriendo, lo lanza. Nunca lanza dos: si no puede confirmar que no hay otro, asume que sí hay y no lanza.</li>
+    <li><b>Tras una pausa del vigía:</b> guarda el aviso, corre el diagnóstico, espera 2 minutos y retoma. El vigía vuelve a contar desde cero (necesita 15 carreras nuevas para volver a juzgar). La corrección de fondo sigue pendiente para un agente, pero la medición ya no se pierde.</li>
+    <li><b>Tras una parada por seguridad</b> (código 2): revisa que el celular aparezca en <code>adb</code>, lo mantiene con la pantalla encendida, lo despierta, comprueba que no esté bloqueado, espera 3 minutos y retoma. Si hay <b>3 paradas por seguridad en menos de 1 hora</b>, se detiene y lo deja escrito: algo raro pasa en el celular.</li>
+    <li><b>Cada día a las 12:05 a. m.</b> reentrena la fórmula propia (<code>analisis/pico.mjs</code> y <code>analisis/curva.mjs</code>) solo con los días anteriores.</li>
+    <li>Para detenerlo a propósito se crea el archivo <code>datos/DETENER</code>.</li>
+  </ul>
+
+  <h2><span class="num">2.6</span>Reglas de seguridad (no se rompen)</h2>
+  <ol>
+    <li><b>Nunca confirmar, publicar ni pagar un viaje.</b> Solo se llega a la pantalla del precio sugerido, se lee y se sale. Si aparece una oferta de conductor, un cobro o una ventana desconocida, se detiene todo.</li>
+    <li><b>Nunca medir desde ni hacia la ubicación real del celular.</b> Origen y destino se escriben a mano desde las listas; si la app pone la ubicación actual, se borra.</li>
+    <li><b>Un solo proceso usa el celular</b> (el orquestador). Ningún agente corre <code>adb</code> ni el colector por su cuenta.</li>
+    <li><b>Ritmo humano y cuenta personal:</b> sin ráfagas. Si la app pide verificación o cierra la sesión, se para y se avisa.</li>
+    <li><b>No inventar datos:</b> cada precio viene de una lectura real. Las dudosas se marcan y se apartan.</li>
+    <li><b>Pendiente de seguridad:</b> restringir la llave de Google del laboratorio (hoy no tiene restricciones) y, al terminar de medir, devolver la pantalla del celular a su apagado normal.</li>
+  </ol>
+
+  <h2><span class="num">2.7</span>Los datos reunidos</h2>
+  <table class="t">
+    <thead><tr><th>Concepto</th><th class="n">Cifra</th></tr></thead>
+    <tbody>
+      <tr><td>Lecturas totales (980 del colector, 51 manuales de una mañana anterior, 1 de prueba)</td><td class="n">1.032</td></tr>
+      <tr><td>Lecturas confiables (lugar confirmado)</td><td class="n">988</td></tr>
+      <tr><td>Rutas distintas</td><td class="n">151</td></tr>
+      <tr><td>Sábado 3 oct / domingo 4 oct / lunes 5 oct (confiables)</td><td class="n">215 / 580 / 193</td></tr>
+      <tr><td>Carreras con cotización a ciegas (desde el 4 oct, 1:05 p. m.)</td><td class="n">349</td></tr>
+      <tr><td>Precio mediano de inDrive: carro / moto</td><td class="n">$13.200 / $8.200</td></tr>
+      <tr><td>Distancia: mediana / mínima / máxima</td><td class="n">4,5 / 0,5 / 47,7 km</td></tr>
+      <tr><td>Lecturas con lluvia / con evento cercano / con conductores visibles en el mapa</td><td class="n">245 / 12 / 245</td></tr>
+    </tbody>
+  </table>
+
+  <h2><span class="num">2.8</span>Cronología resumida</h2>
+  <table class="t compacta">
+    <thead><tr><th>Cuándo</th><th>Qué pasó</th></tr></thead>
+    <tbody>
+      <tr><td>Sáb 3, 5:47 p. m.</td><td>Primeras lecturas: Pascual Bravo → El Volador, carro $10.900 y moto $5.900.</td></tr>
+      <tr><td>Sáb 3, 9:00 p. m.</td><td>Arranca el orquestador (versiones de 50 carreras).</td></tr>
+      <tr><td>Dom 4, 7:00–7:50 a. m.</td><td>Meta ±10 %. Hallazgo clave: el recargo depende de la hora Y la zona a la vez.</td></tr>
+      <tr><td>Dom 4, 12:45 p. m.</td><td>Empieza la cotización a ciegas, carrera por carrera en pesos.</td></tr>
+      <tr><td>Dom 4, tarde</td><td>Criterio en pesos: banda [−$300, +$700]. Corrección EN VIVO (<code>vivo.js</code>). El torneo elige con carreras reales.</td></tr>
+      <tr><td>Dom 4, 9:30 p. m.</td><td><code>carro_banda</code> (trío de día). Medición cercana en la moto.</td></tr>
+      <tr><td>Lun 5, 3:45 a. m.</td><td>PLAN B para la primera mañana laboral (<code>laboral.js</code>).</td></tr>
+      <tr><td>Lun 5, 6:10 a. m.</td><td>Banda más estricta: [−$300, +$500].</td></tr>
+      <tr><td>Lun 5, 8:09 a. m.</td><td>La moto pasa a usar el PLAN B como precio recomendado.</td></tr>
+      <tr><td>Lun 5, 8:35 a. m.</td><td>Reto del dueño: "pierde ≤ 10 %". Cuatro agentes: RIESGO, CENTRO, APILADO y NOCHE 3.</td></tr>
+      <tr><td>Lun 5, 9:12 a. m. → 7:11 p. m.</td><td>Pausa del vigía sin relanzar: 10 horas detenido.</td></tr>
+      <tr><td>Lun 5, 7:45 p. m.</td><td>Giro del dueño: <b>fórmula PROPIA</b> sin inDrive en vivo. Agentes PICO y CURVA.</td></tr>
+      <tr><td>Lun 5, 7:55 p. m.</td><td>Arranca el supervisor.</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<!-- ============ 3. INDRIVE ============ -->
+<section class="cap">
+  <h1 class="cap"><span class="num">3</span>Todo lo detectado de inDrive</h1>
+  <p>Cada hallazgo trae su cifra y de dónde sale. Donde dice "pocas lecturas", la conclusión es provisional.</p>
+
+  <h2><span class="num">3.1</span>Redondeo y categorías</h2>
+  <ul>
+    <li><b>Redondea a $100:</b> el 100 % de los 988 precios de carro y los 956 de moto son múltiplos de $100. No hay terminaciones preferidas: Carby debe redondear al $100 más cercano.</li>
+    <li><b>Viaje+ = ×1,10 y Confort = ×1,30 del Viaje, exactos.</b> El mismo precio "crudo" explica las tres categorías en 636 de 644 lecturas, cada una redondeada a $100. Mediana en 936 lecturas: 1,100 y 1,300.</li>
+    <li><b>La moto NO es una fracción fija del carro:</b> la mediana es 0,608, pero va de 0,50 a las 8 p. m. a 0,69 a la medianoche y a las 11 p. m. (tabla 3.1).</li>
+    <li>El aviso "alta demanda" no aplica un multiplicador distinto por categoría.</li>
+  </ul>
+
+  <h2><span class="num">3.2</span>La tarifa base y la distancia</h2>
+  <p>En horas tranquilas, sin aviso de alta demanda, el precio de inDrive se parece a esta "tarifa base de la ciudad" (agente Precio exacto, 4 oct):</p>
+  <div class="formula">Carro: $5.543 + $680 por km + $174 por minuto (minutos de Google con tráfico)
+Moto:  $3.265 + $505 por km + $71 por minuto (minutos de Google sin tráfico)</div>
+  <ul>
+    <li>El precio por km <b>no baja</b> después de 10 ni de 15 km.</li>
+    <li>El recargo es <b>continuo</b>, sin escalones de ×1,1 o ×1,2.</li>
+    <li>Casi no hay rebajas por debajo de esa base (domingo al mediodía: carro ×1,05, moto ×0,99).</li>
+    <li>Las distancias de OpenStreetMap empeoran todas las fórmulas (carro 4,2 → 5,2 % de error): inDrive mide las rutas de forma más parecida a Google.</li>
+  </ul>
+
+  <h2><span class="num">3.3</span>Cómo cambia por hora y por día</h2>
+  <p>El precio cambia <b>hora a hora</b>, no por franjas: a la 1 a. m. del sábado la fórmula acertaba (×1,02) y a las 2 a. m. inDrive subió otro 15 %. Recargo frente a la tarifa base de día (<code>datos/tarifas-noche.md</code>):</p>
+  <table class="t compacta">
+    <thead><tr><th>Hora</th><th class="n">Carro: noche de fin de semana</th><th class="n">Carro: entre semana</th><th class="n">Moto: noche de fin de semana</th><th class="n">Moto: entre semana</th></tr></thead>
+    <tbody>
+      <tr><td>8 p. m.</td><td class="n">+24 %</td><td class="n">—</td><td class="n">+7 %</td><td class="n">—</td></tr>
+      <tr><td>10 p. m.</td><td class="n">+21 %</td><td class="n">+23 %</td><td class="n">+19 %</td><td class="n">+33 %</td></tr>
+      <tr><td>11 p. m.</td><td class="n">+22 %</td><td class="n">+12 %</td><td class="n">+26 %</td><td class="n">+28 %</td></tr>
+      <tr><td>12 a. m.</td><td class="n">+31 %</td><td class="n">+26 %</td><td class="n">+34 %</td><td class="n">+52 %</td></tr>
+      <tr><td>2 a. m.</td><td class="n">+51 %</td><td class="n">(pocas)</td><td class="n">+46 %</td><td class="n">(pocas)</td></tr>
+      <tr><td>3 a. m.</td><td class="n">+44 %</td><td class="n">+3 %</td><td class="n">+31 %</td><td class="n">+7 %</td></tr>
+      <tr><td>4 a. m.</td><td class="n">+53 %</td><td class="n">+26 %</td><td class="n">+47 %</td><td class="n">+24 %</td></tr>
+      <tr><td>5 a. m.</td><td class="n">+20 %</td><td class="n">+14 %</td><td class="n">+17 %</td><td class="n">+22 %</td></tr>
+    </tbody>
+  </table>
+  <ul>
+    <li><b>Madrugada:</b> es lo más caro. El máximo está entre las 2 y las 4 a. m. Entre la noche de fiesta (sáb → dom) y la noche entre semana (dom → lun) el recargo de las 3 a. m. pasó de +44 % a +3 % en carro: la madrugada laboral salió 10–20 % más barata.</li>
+    <li><b>Mañana:</b> de 5 a 7 a. m. el precio cae rápido (unos −15 % por hora). Desde las 7–8 a. m. casi desaparece la alta demanda y se ve la tarifa base: son las horas más predecibles. El 4 oct, de 8 a 10 a. m., la fórmula acertó el 86 % de las carreras a ±10 %.</li>
+    <li><b>Tarde y noche:</b> el sábado el precio bajó 5–10 % entre las 5 y las 11 p. m. La curva aprendida sube de ×1,03 a las 4 p. m. a ×1,15 hacia las 8–9 p. m. en carro (capítulo 6).</li>
+    <li><b>Lunes contra domingo</b> (misma ruta, misma hora ±1 h): carro −4,9 % ± 5,4 (sin diferencia clara); moto +10,1 % ± 7,4 (a la medianoche +15 %). La mañana del lunes de la moto salió ~6 % más cara que la del domingo.</li>
+    <li><b>Horas nuevas:</b> cualquier hora nunca medida hunde la fórmula, porque el nivel de cada hora nueva se movió entre −11 % y +9 %. Cada hora y cada tipo de día necesitan sus propias lecturas.</li>
+  </ul>
+
+  <h2><span class="num">3.4</span>Alta demanda y moto contra carro, hora por hora</h2>
+  <figure>
+    <svg viewBox="0 0 680 230" class="graf" role="img" aria-label="Porcentaje de lecturas con aviso de alta demanda por hora"><line x1="40" x2="670" y1="190" y2="190" class="grid"/><text x="34" y="194" class="ax" text-anchor="end">0 %</text><line x1="40" x2="670" y1="146" y2="146" class="grid"/><text x="34" y="150" class="ax" text-anchor="end">25 %</text><line x1="40" x2="670" y1="102" y2="102" class="grid"/><text x="34" y="106" class="ax" text-anchor="end">50 %</text><line x1="40" x2="670" y1="58" y2="58" class="grid"/><text x="34" y="62" class="ax" text-anchor="end">75 %</text><line x1="40" x2="670" y1="14" y2="14" class="grid"/><text x="34" y="18" class="ax" text-anchor="end">100 %</text><path d="M42,190 V33.76119402985074 Q42,29.761194029850742 46,29.761194029850742 H60.25 Q64.25,29.761194029850742 64.25,33.76119402985074 V190 Z" class="bar"/><text x="53.125" y="204" class="ax" text-anchor="middle">0</text><text x="53.125" y="216" class="ax2" text-anchor="middle">67</text><path d="M68.25,190 V23.67741935483872 Q68.25,19.67741935483872 72.25,19.67741935483872 H86.5 Q90.5,19.67741935483872 90.5,23.67741935483872 V190 Z" class="bar"/><text x="79.375" y="204" class="ax" text-anchor="middle">1</text><text x="79.375" y="216" class="ax2" text-anchor="middle">31</text><path d="M94.5,190 V18 Q94.5,14 98.5,14 H112.75 Q116.75,14 116.75,18 V190 Z" class="bar"/><text x="105.625" y="204" class="ax" text-anchor="middle">2</text><text x="105.625" y="216" class="ax2" text-anchor="middle">33</text><path d="M120.75,190 V54.903225806451616 Q120.75,50.903225806451616 124.75,50.903225806451616 H139 Q143,50.903225806451616 143,54.903225806451616 V190 Z" class="bar"/><text x="131.875" y="204" class="ax" text-anchor="middle">3</text><text x="131.875" y="216" class="ax2" text-anchor="middle">62</text><path d="M147,190 V36.38805970149252 Q147,32.38805970149252 151,32.38805970149252 H165.25 Q169.25,32.38805970149252 169.25,36.38805970149252 V190 Z" class="bar"/><text x="158.125" y="204" class="ax" text-anchor="middle">4</text><text x="158.125" y="216" class="ax2" text-anchor="middle">67</text><path d="M173.25,190 V40.400000000000006 Q173.25,36.400000000000006 177.25,36.400000000000006 H191.5 Q195.5,36.400000000000006 195.5,40.400000000000006 V190 Z" class="bar"/><text x="184.375" y="204" class="ax" text-anchor="middle">5</text><text x="184.375" y="216" class="ax2" text-anchor="middle">55</text><path d="M199.5,190 V70.14814814814815 Q199.5,66.14814814814815 203.5,66.14814814814815 H217.75 Q221.75,66.14814814814815 221.75,70.14814814814815 V190 Z" class="bar"/><text x="210.625" y="204" class="ax" text-anchor="middle">6</text><text x="210.625" y="216" class="ax2" text-anchor="middle">54</text><path d="M225.75,190 V82.53333333333333 Q225.75,78.53333333333333 229.75,78.53333333333333 H244 Q248,78.53333333333333 248,82.53333333333333 V190 Z" class="bar"/><text x="236.875" y="204" class="ax" text-anchor="middle">7</text><text x="236.875" y="216" class="ax2" text-anchor="middle">30</text><path d="M252,190 V145.31914893617022 Q252,141.31914893617022 256,141.31914893617022 H270.25 Q274.25,141.31914893617022 274.25,145.31914893617022 V190 Z" class="bar"/><text x="263.125" y="204" class="ax" text-anchor="middle">8</text><text x="263.125" y="216" class="ax2" text-anchor="middle">47</text><path d="M278.25,190 V134.16 Q278.25,130.16 282.25,130.16 H296.5 Q300.5,130.16 300.5,134.16 V190 Z" class="bar"/><text x="289.375" y="204" class="ax" text-anchor="middle">9</text><text x="289.375" y="216" class="ax2" text-anchor="middle">50</text><path d="M304.5,190 V111.86666666666667 Q304.5,107.86666666666667 308.5,107.86666666666667 H322.75 Q326.75,107.86666666666667 326.75,111.86666666666667 V190 Z" class="bar"/><text x="315.625" y="204" class="ax" text-anchor="middle">10</text><text x="315.625" y="216" class="ax2" text-anchor="middle">45</text><path d="M330.75,190 V82 Q330.75,78 334.75,78 H349 Q353,78 353,82 V190 Z" class="bar"/><text x="341.875" y="204" class="ax" text-anchor="middle">11</text><text x="341.875" y="216" class="ax2" text-anchor="middle">33</text><path d="M357,190 V100.82352941176471 Q357,96.82352941176471 361,96.82352941176471 H375.25 Q379.25,96.82352941176471 379.25,100.82352941176471 V190 Z" class="bar"/><text x="368.125" y="204" class="ax" text-anchor="middle">12</text><text x="368.125" y="216" class="ax2" text-anchor="middle">34</text><path d="M383.25,190 V46.38709677419354 Q383.25,42.38709677419354 387.25,42.38709677419354 H401.5 Q405.5,42.38709677419354 405.5,46.38709677419354 V190 Z" class="bar"/><text x="394.375" y="204" class="ax" text-anchor="middle">13</text><text x="394.375" y="216" class="ax2" text-anchor="middle">31</text><path d="M409.5,190 V54.413793103448256 Q409.5,50.413793103448256 413.5,50.413793103448256 H427.75 Q431.75,50.413793103448256 431.75,54.413793103448256 V190 Z" class="bar"/><text x="420.625" y="204" class="ax" text-anchor="middle">14</text><text x="420.625" y="216" class="ax2" text-anchor="middle">29</text><path d="M435.75,190 V150 Q435.75,146 439.75,146 H454 Q458,146 458,150 V190 Z" class="bar"/><text x="446.875" y="204" class="ax" text-anchor="middle">15</text><text x="446.875" y="216" class="ax2" text-anchor="middle">36</text><path d="M462,190 V18 Q462,14 466,14 H480.25 Q484.25,14 484.25,18 V190 Z" class="barPoca"/><text x="473.125" y="204" class="ax" text-anchor="middle">16</text><text x="473.125" y="216" class="ax2" text-anchor="middle">4</text><path d="M488.25,190 V18 Q488.25,14 492.25,14 H506.5 Q510.5,14 510.5,18 V190 Z" class="barPoca"/><text x="499.375" y="204" class="ax" text-anchor="middle">17</text><text x="499.375" y="216" class="ax2" text-anchor="middle">7</text><path d="M514.5,190 V18 Q514.5,14 518.5,14 H532.75 Q536.75,14 536.75,18 V190 Z" class="barPoca"/><text x="525.625" y="204" class="ax" text-anchor="middle">18</text><text x="525.625" y="216" class="ax2" text-anchor="middle">5</text><path d="M540.75,190 V46.38709677419354 Q540.75,42.38709677419354 544.75,42.38709677419354 H559 Q563,42.38709677419354 563,46.38709677419354 V190 Z" class="bar"/><text x="551.875" y="204" class="ax" text-anchor="middle">19</text><text x="551.875" y="216" class="ax2" text-anchor="middle">62</text><path d="M567,190 V24.285714285714278 Q567,20.285714285714278 571,20.285714285714278 H585.25 Q589.25,20.285714285714278 589.25,24.285714285714278 V190 Z" class="bar"/><text x="578.125" y="204" class="ax" text-anchor="middle">20</text><text x="578.125" y="216" class="ax2" text-anchor="middle">28</text><path d="M593.25,190 V22.756756756756772 Q593.25,18.756756756756772 597.25,18.756756756756772 H611.5 Q615.5,18.756756756756772 615.5,22.756756756756772 V190 Z" class="bar"/><text x="604.375" y="204" class="ax" text-anchor="middle">21</text><text x="604.375" y="216" class="ax2" text-anchor="middle">37</text><path d="M619.5,190 V31.28301886792451 Q619.5,27.28301886792451 623.5,27.28301886792451 H637.75 Q641.75,27.28301886792451 641.75,31.28301886792451 V190 Z" class="bar"/><text x="630.625" y="204" class="ax" text-anchor="middle">22</text><text x="630.625" y="216" class="ax2" text-anchor="middle">53</text><path d="M645.75,190 V33.71428571428572 Q645.75,29.714285714285722 649.75,29.714285714285722 H664 Q668,29.714285714285722 668,33.71428571428572 V190 Z" class="bar"/><text x="656.875" y="204" class="ax" text-anchor="middle">23</text><text x="656.875" y="216" class="ax2" text-anchor="middle">56</text><text x="34" y="216" class="ax2" text-anchor="end">n</text></svg>
+    <figcaption>Figura 3.1. Porcentaje de lecturas con aviso de "alta demanda" en inDrive, por hora (n = lecturas). Las barras claras tienen menos de 10 lecturas (4 p. m. a 6 p. m.): no son confiables. En total: 91 % de las lecturas de noche y 55 % de las de día traen el aviso.</figcaption>
+  </figure>
+  <table class="t compacta"><thead><tr><th>Hora</th><th class="n">0 h</th><th class="n">1 h</th><th class="n">2 h</th><th class="n">3 h</th><th class="n">4 h</th><th class="n">5 h</th><th class="n">6 h</th><th class="n">7 h</th><th class="n">8 h</th><th class="n">9 h</th><th class="n">10 h</th><th class="n">11 h</th></tr></thead><tbody><tr><td>Moto ÷ carro</td><td class="n">0,69</td><td class="n">0,62</td><td class="n">0,62</td><td class="n">0,63</td><td class="n">0,61</td><td class="n">0,64</td><td class="n">0,58</td><td class="n">0,62</td><td class="n">0,62</td><td class="n">0,63</td><td class="n">0,60</td><td class="n">0,59</td></tr><tr><td>Alta demanda</td><td class="n">91 %</td><td class="n">97 %</td><td class="n">100 %</td><td class="n">79 %</td><td class="n">90 %</td><td class="n">87 %</td><td class="n">70 %</td><td class="n">63 %</td><td class="n">28 %</td><td class="n">34 %</td><td class="n">47 %</td><td class="n">64 %</td></tr><tr><td>Lecturas</td><td class="n">67</td><td class="n">31</td><td class="n">33</td><td class="n">62</td><td class="n">67</td><td class="n">55</td><td class="n">54</td><td class="n">30</td><td class="n">47</td><td class="n">50</td><td class="n">45</td><td class="n">33</td></tr></tbody></table><table class="t compacta"><thead><tr><th>Hora</th><th class="n">12 h</th><th class="n">13 h</th><th class="n">14 h</th><th class="n">15 h</th><th class="n">16 h</th><th class="n">17 h</th><th class="n">18 h</th><th class="n">19 h</th><th class="n">20 h</th><th class="n">21 h</th><th class="n">22 h</th><th class="n">23 h</th></tr></thead><tbody><tr><td>Moto ÷ carro</td><td class="n">0,58</td><td class="n">0,51</td><td class="n">0,55</td><td class="n">0,60</td><td class="n">0,53</td><td class="n">0,52</td><td class="n">0,53</td><td class="n">0,56</td><td class="n">0,50</td><td class="n">0,62</td><td class="n">0,65</td><td class="n">0,69</td></tr><tr><td>Alta demanda</td><td class="n">53 %</td><td class="n">84 %</td><td class="n">79 %</td><td class="n">25 %</td><td class="n">100 %</td><td class="n">100 %</td><td class="n">100 %</td><td class="n">84 %</td><td class="n">96 %</td><td class="n">97 %</td><td class="n">92 %</td><td class="n">91 %</td></tr><tr><td>Lecturas</td><td class="n">34</td><td class="n">31</td><td class="n">29</td><td class="n">36</td><td class="n">4</td><td class="n">7</td><td class="n">5</td><td class="n">62</td><td class="n">28</td><td class="n">37</td><td class="n">53</td><td class="n">56</td></tr></tbody></table>
+  <p class="chico">Tabla 3.1. Precio de la moto dividido por el del carro en la misma lectura (mediana) y porcentaje con aviso de alta demanda, por hora del día.</p>
+  <ul>
+    <li><b>De noche casi todo es "alta demanda"</b> (79–100 % entre las 8 p. m. y las 5 a. m.). Más que un punto caliente aislado, se comporta como un nivel nocturno de toda la ciudad.</li>
+    <li><b>Con y sin alta demanda la fórmula se equivoca al revés.</b> Sin alta demanda, el carro se pasaba de +$700 en el 42 % de las carreras; con alta demanda quedaba por debajo en el 47 %. La fórmula promedia los dos regímenes.</li>
+    <li><b>Se puede prever, pero ayuda poco al precio.</b> La lectura más cercana (≤ 2 km, ≤ 30 min) acierta si la siguiente carrera tendrá alta demanda el 81 % de las veces en carro y el 89 % en moto. Aun así, cobrar según ese estado no sube la banda: ni conociendo el estado real (dato que Carby no tendrá), el carro pasa de 44,4 % a 48,9 %.</li>
+  </ul>
+
+  <h2><span class="num">3.5</span>Recargo por zona de recogida</h2>
+  <ul>
+    <li><b>El recargo depende de la hora Y de la zona a la vez</b> (celdas de 4–8 km, cada hora suavizada con sus vecinas). Fue la mayor mejora del proyecto: el error típico bajó de 6,2 % a 5,1 % en carro y de 7,4 % a 4,8 % en moto.</li>
+    <li>Factor de zona aprendido (PICO, hexágonos de 2,5 km): carro de ×0,83 a ×1,10; moto de ×0,84 a ×1,05.</li>
+    <li><b>De madrugada la zona pesa muchísimo.</b> Sábado, 4 a. m.: centro ×1,8–2,2 sobre la base; sur y norte ×1,25–1,5; Girardota ×0,73–0,95, casi sin alta demanda. En Girardota la fórmula sobrecobró de +$7.000 a +$8.500 a las 3–4 a. m.</li>
+    <li>La <b>zona de destino</b>, la distancia al centro y la "poca rotación" del destino no aportan (0 a +1 punto, ruido).</li>
+  </ul>
+
+  <h2><span class="num">3.6</span>Carreras largas y cortas; tráfico</h2>
+  <ul>
+    <li>Las carreras largas (inDrive &gt; $20.000) quedaban por debajo en el 59 % de los casos con la fórmula de entonces.</li>
+    <li><b>Lunes temprano (6–6:35 a. m.): el faltante de las largas va con el tráfico.</b> Moto de Copacabana a la U. de A. (17,8 km, tráfico 1,38): inDrive +16 % sobre nuestro centro; a EAFIT (24,8 km, 1,46): +16 %; a Mayorca (29,7 km, 1,40): +10 %. El carro, que ya usa minutos con tráfico, quedó cerca: $25.500 contra $27.300 y $34.500 contra $34.400.</li>
+    <li><b>Casi no hay tráfico pesado medido.</b> El índice de tráfico (minutos con tráfico ÷ sin tráfico) tiene mediana 0,87 en carro y 0,79 en moto. Solo 59 lecturas de carro (31 en día laboral) y 8 de moto llegan a 1,2 o más. Las fórmulas casi no han visto hora punta laboral.</li>
+  </ul>
+
+  <h2><span class="num">3.7</span>Lluvia y eventos</h2>
+  <ul>
+    <li>245 lecturas con lluvia (189 el domingo). El efecto aprendido es mínimo: PICO carro ×0,998 y moto ×1,009; CURVA carro ×1,003.</li>
+    <li><b>Lunes 5, 7 p. m., con lluvia y el partido Medellín vs. Santa Fe</b> (12 lecturas con evento cerca): la moto salió +14 % en la mediana y hasta +50 % sobre lo esperado. Nada de lo visto el fin de semana lo anticipaba.</li>
+    <li>El primer sábado, Plaza Botero → Estadio costó $14.500 en carro por 2,9 km (probablemente un evento en el estadio): ninguna fórmula por km y minutos lo explica.</li>
+    <li>Ya existen factores de lluvia, festivo, quincena y evento (<code>datos/eventos.json</code>), pero falta medir más casos para aprender su efecto.</li>
+  </ul>
+
+  <h2><span class="num">3.8</span>El "precio propio" de cada ruta y la variación propia de inDrive</h2>
+  <ul>
+    <li><b>Cada ruta tiene su precio.</b> Del error que queda, el 33 % en carro (~$600) y el 26 % en moto (~$300) es propio de la ruta, y no se explica con km, línea recta, velocidad ni ubicación. Ejemplo: K7 y K8, dos rutas de 0,73 km, difieren ~20 % a todas horas. Lo demás (~66–72 %) es ruido de una lectura a otra.</li>
+    <li><b>inDrive contra sí mismo (el límite físico):</b> si Carby copiara el precio que inDrive dio en la misma ruta hace menos de 60 minutos, el resultado sería este (cálculo sobre las lecturas):</li>
+  </ul>
+  <table class="t">
+    <thead><tr><th>inDrive contra sí mismo</th><th class="n">Pares</th><th class="n">En banda</th><th class="n">Pierde</th><th class="n">Exacto</th><th class="n">±$100</th><th class="n">Típica</th></tr></thead>
+    <tbody>
+      <tr><td>Carro de día</td><td class="n">104</td><td class="n">39 %</td><td class="n">28 %</td><td class="n">7 %</td><td class="n">17 %</td><td class="n">$600</td></tr>
+      <tr><td>Carro de noche</td><td class="n">40</td><td class="n">45 %</td><td class="n">35 %</td><td class="n">5 %</td><td class="n">13 %</td><td class="n">$450</td></tr>
+      <tr><td>Moto de día</td><td class="n">103</td><td class="n">77 %</td><td class="n">8 %</td><td class="n">17 %</td><td class="n">41 %</td><td class="n">$200</td></tr>
+      <tr><td>Moto de noche</td><td class="n">40</td><td class="n">60 %</td><td class="n">33 %</td><td class="n">5 %</td><td class="n">30 %</td><td class="n">$300</td></tr>
+    </tbody>
+  </table>
+  <div class="nota"><b>Qué significa.</b> El precio que sugiere inDrive trae una variación propia de unos ±7–10 % que no depende de nada observable. Repitiendo la misma ruta, el precio de carro sale idéntico apenas el 6 % de las veces. Por eso "0 % de diferencia" no existe como meta. Aun con datos internos de inDrive (sus minutos y su aviso de alta demanda) no se pasaba de ~22 % (carro) y ~36 % (moto) a ±$300. Copiar a inDrive en vivo también se descartó: no da 0 %, no escala y tiene riesgo legal y de bloqueo.</div>
+
+  <h2><span class="num">3.9</span>Ideas probadas que no sirvieron</h2>
+  <table class="t compacta">
+    <thead><tr><th>Idea</th><th>Resultado</th></tr></thead>
+    <tbody>
+      <tr><td>Conductores visibles en el mapa y minutos de llegada</td><td>Sin señal: la correlación con el error es 0,00 (carro) y −0,01 (moto). La llegada casi no cambia (carro 2 min, moto 3 min).</td></tr>
+      <tr><td>Alta demanda propia de cada vehículo</td><td>Empeoró la moto de 44 % a 38 %.</td></tr>
+      <tr><td>Fórmula por tipo de noche (fin de semana / entre semana)</td><td>Entre semana sube "pierde" 9–10 puntos.</td></tr>
+      <tr><td>Combinar variantes (apilado)</td><td>Los errores se parecen demasiado (correlación 0,84–0,98 de día).</td></tr>
+      <tr><td>Memoria de la misma ruta</td><td>+3 puntos a ±10 %, pero no se puede usar: con pasajeros reales casi todas las rutas son nuevas.</td></tr>
+      <tr><td>Distancia de OpenStreetMap, ruta más corta o más rápida</td><td>Igual o peor.</td></tr>
+      <tr><td>Zona y hora de destino, k-medias, árboles de decisión</td><td>Ruido o peor.</td></tr>
+      <tr><td>Promedio entre fórmula sola y EN VIVO (<code>_medio</code>)</td><td>Ganó en una versión y perdió en 612 carreras (53,4 % frente a 57,2 %).</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<!-- ============ 4. NUESTRA FÓRMULA ============ -->
+<section class="cap">
+  <h1 class="cap"><span class="num">4</span>Cómo funciona nuestra fórmula hoy</h1>
+  <p>El precio que se usa hoy en el laboratorio tiene dos pisos. Abajo está la <b>fórmula oficial</b>: una ecuación entrenada con todas las lecturas. Encima van las <b>capas en vivo</b>, que la corrigen con los precios de inDrive de los últimos minutos. Las capas en vivo <b>no existirán en la app real</b>, porque Carby no tendrá el precio de inDrive. Por eso el capítulo 6 trata la fórmula propia.</p>
+
+  <h2><span class="num">4.1</span>La base: kilómetros y minutos</h2>
+  <p>Todo parte de una tarifa lineal con datos de Google en el momento de pedir el viaje: <b>arranque + $ por km + $ por minuto</b>. El ajuste se hace "en %": cada lectura pesa como 1/precio² (con un freno, Huber, para los precios raros), de modo que un error de $300 en un viaje de $7.500 pesa más que en uno de $30.000. El carro usa minutos con tráfico; la moto, minutos sin tráfico.</p>
+
+  <h2><span class="num">4.2</span>Las zonas (celdas y hexágonos)</h2>
+  <p>La ciudad se divide en celdas de recogida (en HN1/HN3, una cuadrícula de ~2 km: 29 celdas en carro y 28 en moto). La app usará <b>hexágonos</b> (<code>hexId</code>: radio de 0,5 a 4 km, sin dependencias, con origen fijo en Medellín). Cada celda tiene un multiplicador aprendido, <b>encogido</b> hacia 1 cuando tiene pocas lecturas (factor n/(n+k)). Así, una zona con 2 lecturas casi no se mueve, y una con 40 sí.</p>
+
+  <h2><span class="num">4.3</span>La oficial: HN1 (carro) y HN3 (moto), paso a paso</h2>
+  <p>Familia "horas nuevas" (<code>nucleo/candidatas/horas.js</code>). En vez de un factor fijo por hora, el recargo es un <b>nivel de la ciudad que se mueve en el tiempo continuo</b>.</p>
+  <div class="formula">precio = base(km, min) × zona de recogida × línea recta × nivel(t) × vecinos (tiempo × lugar)
+redondeado a $100, nunca por debajo de la mínima</div>
+  <table class="t">
+    <thead><tr><th>Paso</th><th>Carro (HN1)</th><th>Moto (HN3)</th></tr></thead>
+    <tbody>
+      <tr><td>1. Base</td><td>$6.058 + $758,46/km + $186,62/min (con tráfico)</td><td>$3.184 + $478,40/km + $102,45/min (sin tráfico)</td></tr>
+      <tr><td>2. Zona de recogida (~2 km)</td><td>29 celdas, de ×0,84 a ×1,16</td><td>28 celdas, de ×0,87 a ×1,13</td></tr>
+      <tr><td>3. Línea recta ÷ km de ruta</td><td>Pequeño ajuste a las rutas con rodeo: exp(0,0228·(z − z̄))</td><td>exp(0,0104·(z − z̄))</td></tr>
+      <tr><td>4. Nivel en el tiempo</td><td>Suavizado exponencial del error de toda la ciudad (vida de 0,5 h) + tendencia amortiguada (×0,7, hasta 1 h). Lejos de los datos se mezcla con la misma hora de otros días y con el último nivel visto (hoy ×1,10).</td><td>Igual, pero <b>sin tendencia</b>: solo el último nivel (hoy ×1,15).</td></tr>
+      <tr><td>5. Vecinos tiempo × lugar</td><td colspan="2">Error medio de las lecturas cercanas en dos niveles: ±30 min × 2 km y luego ±10 min × 0,7 km, encogido.</td></tr>
+      <tr><td>6. Mínima</td><td>$5.600</td><td>$3.800</td></tr>
+    </tbody>
+  </table>
+  <p class="chico">Coeficientes del <code>datos/modelo-oficial.json</code> reentrenado el 5 oct a las 7:54 p. m. con 983 lecturas (carro) y 951 (moto). Los pasos 4 y 5 usan precios de inDrive recientes: sirven en el laboratorio, no en la app.</p>
+
+  <h2><span class="num">4.4</span>Ejemplo con una carrera real</h2>
+  <p><b>Lunes 5 oct, 7:59 p. m., con lluvia ligera y el partido en curso. Parque Principal de Caldas → Estación Metro La Estrella.</b> Google: carro 9,26 km y 14,6 min (tráfico 0,96); moto 9,26 km y 13,7 min (15,6 min sin tráfico); línea recta 6,84 km. inDrive cobró <b>carro $15.000</b> y <b>moto $9.100</b>, sin aviso de alta demanda.</p>
+  <table class="t">
+    <thead><tr><th>Paso</th><th class="n">Carro (HN1)</th><th class="n">Moto (HN3)</th></tr></thead>
+    <tbody>
+      <tr><td>Arranque</td><td class="n">$6.058</td><td class="n">$3.184</td></tr>
+      <tr><td>+ km (9,26 km)</td><td class="n">+ $7.023</td><td class="n">+ $4.430</td></tr>
+      <tr><td>+ minutos (14,6 con tráfico / 15,6 sin tráfico)</td><td class="n">+ $2.725</td><td class="n">+ $1.595</td></tr>
+      <tr><td>= Base</td><td class="n">$15.806</td><td class="n">$9.209</td></tr>
+      <tr><td>× Zona de recogida (Caldas)</td><td class="n">×0,914 → $14.442</td><td class="n">×0,989 → $9.110</td></tr>
+      <tr><td>× Línea recta</td><td class="n">×1,003</td><td class="n">×1,001</td></tr>
+      <tr><td>× Nivel de la ciudad a esa hora</td><td class="n">×1,082</td><td class="n">×1,079</td></tr>
+      <tr><td>× Vecinos (tiempo × lugar)</td><td class="n">×0,956</td><td class="n">×0,914</td></tr>
+      <tr class="dest"><td>Fórmula oficial (redondeada)</td><td class="n">$15.000 (d = $0)</td><td class="n">$9.000 (d = −$100)</td></tr>
+      <tr><td>Precio recomendado grabado a ciegas</td><td class="n">EN VIVO $15.100 (+$100)</td><td class="n">PLAN B $9.200 (+$100)</td></tr>
+      <tr><td>Fórmula PROPIA: PICO / CURVA (cap. 6)</td><td class="n">$16.400 / $16.700</td><td class="n">$9.200 / $9.300</td></tr>
+    </tbody>
+  </table>
+  <p>Aquí todos los precios con inDrive en vivo quedan en banda. La fórmula propia acierta en moto (+$100 / +$200) y se pasa en carro (+$1.400 / +$1.700). Es el defecto que muestra la prueba del capítulo 6: el carro de 5 a 8 p. m. del lunes quedó caro, porque la tabla solo había aprendido noches de fin de semana.</p>
+
+  <h2><span class="num">4.5</span>Las capas en vivo y el precio recomendado</h2>
+  <ul>
+    <li><b>EN VIVO (<code>nucleo/vivo.js</code>):</b> con el error ln(inDrive ÷ fórmula) de las carreras anteriores (nunca la que se cotiza), un <b>filtro de Kalman</b> estima el nivel actual de la ciudad. Encima va un <b>sesgo aprendido</b>: el corrimiento hacia arriba que habría dejado más carreras recientes en la banda. Tope ±25 %. En moto se suma la <b>medición cercana</b> (lecturas a ≤ 1,5 km y ≤ 30 min: +3,3 puntos en banda en 612 carreras) y los errores del carro.</li>
+    <li><b><code>carro_banda</code> (<code>nucleo/carro.js</code>):</b> de 6 a. m. a 8 p. m. es el <b>trío</b>, la media geométrica de tres fórmulas distintas (EN4, HN1 y RC5) reentrenadas antes de cada carrera. Al promediarlas se cancela parte del error de cada una: +3,6 puntos en banda en 613 carreras frente a EN VIVO. De noche es EN VIVO con la configuración de noche (medición cercana de 2,5 km y 120 min); en 176 carreras de noche subió la banda de 20,5 % a 26,1 %.</li>
+    <li><b>PLAN B laboral (<code>nucleo/laboral.js</code>):</b> Kalman que <b>solo sube</b> (máximo +25 %), aprendido con la misma jornada. En 14 pruebas de estrés nunca subió "pierde". Es una válvula de seguridad, no una mejora de banda.</li>
+  </ul>
+  <table class="t">
+    <thead><tr><th>Precio recomendado hoy</th><th>Regla (en <code>recomendada()</code> del orquestador)</th></tr></thead>
+    <tbody>
+      <tr><td>Carro, 12 a. m.–5:59 a. m.</td><td><code>carro_banda</code> (EN VIVO, configuración de noche)</td></tr>
+      <tr><td>Carro, 6 a. m.–4:59 p. m.</td><td><code>carro_banda</code> (trío EN4·HN1·RC5)</td></tr>
+      <tr><td>Carro, 5 p. m.–11:59 p. m.</td><td><code>carro_vivo</code> (desde el 5 oct, 7:40 p. m.: en 15 carreras, "pierde" bajó de 47 % a 27 % con la misma banda)</td></tr>
+      <tr><td>Moto, todo el día</td><td><code>moto_laboral</code> (PLAN B encima de EN VIVO; desde el 5 oct, 8:09 a. m.)</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<!-- ============ 5. META ============ -->
+<section class="cap">
+  <h1 class="cap"><span class="num">5</span>La meta y las métricas</h1>
+  <h2><span class="num">5.1</span>Las reglas del dueño</h2>
+  <ul>
+    <li><b>Banda:</b> la carrera es un acierto si <b>d = Carby − inDrive está entre −$300 y +$500</b>. Es asimétrica a propósito (antes era +$700; desde el 5 oct a las 6 a. m. es +$500).</li>
+    <li><b>Pierde:</b> d &lt; −$300, Carby cobró más de $300 menos que inDrive. <b>Es lo peor</b>, porque el conductor o domiciliario pierde plata.</li>
+    <li><b>Se pasa:</b> d &gt; +$500, el pasajero paga de más y puede irse.</li>
+    <li><b>Típica:</b> la mediana de |d| en pesos: "lo que normalmente nos equivocamos".</li>
+    <li>Además: <b>exacto</b> (d = 0), <b>±$100</b> y <b>±10 %</b> (referencia). Se reporta siempre en este orden: banda, pierde, se pasa, exacto, ±$100, típica.</li>
+    <li><b>Ruido:</b> con ~400 lecturas, el error estándar de un porcentaje es de ~2 puntos. <b>Menos de 3 puntos de diferencia no cuentan.</b></li>
+  </ul>
+
+  <h2><span class="num">5.2</span>Resultados reales a ciegas</h2>
+  <figure><svg viewBox="0 0 680 172" class="graf" role="img" aria-label="Resultados a ciegas del precio recomendado"><rect x="100" y="4" width="12" height="12" class="sBanda"/><text x="116" y="14" class="ax">en banda</text><rect x="190" y="4" width="12" height="12" class="sPierde"/><text x="206" y="14" class="ax">pierde (&lt; −$300)</text><rect x="330" y="4" width="12" height="12" class="sPasa"/><text x="346" y="14" class="ax">se pasa (&gt; +$500)</text><text x="92" y="43" class="lbl" text-anchor="end">Carro · día</text><rect x="101" y="26" width="174.28" height="24" rx="3" class="sBanda"/><text x="188.14" y="42" class="enBarra" text-anchor="middle">39 %</text><rect x="277.28" y="26" width="160.72" height="24" rx="3" class="sPierde"/><text x="357.64" y="42" class="enBarra" text-anchor="middle">36 %</text><rect x="440" y="26" width="111" height="24" rx="3" class="sPasa"/><text x="495.5" y="42" class="enBarra" text-anchor="middle">25 %</text><text x="560" y="42" class="ax">174 carreras · típica $700</text><text x="92" y="77" class="lbl" text-anchor="end">Carro · noche</text><rect x="101" y="60" width="101.96000000000001" height="24" rx="3" class="sBanda"/><text x="151.98000000000002" y="76" class="enBarra" text-anchor="middle">23 %</text><rect x="204.96" y="60" width="120.04" height="24" rx="3" class="sPierde"/><text x="264.98" y="76" class="enBarra" text-anchor="middle">27 %</text><rect x="327" y="60" width="224" height="24" rx="3" class="sPasa"/><text x="439" y="76" class="enBarra" text-anchor="middle">50 %</text><text x="560" y="76" class="ax">175 carreras · típica $1.200</text><text x="92" y="111" class="lbl" text-anchor="end">Moto · día</text><rect x="101" y="94" width="282.76" height="24" rx="3" class="sBanda"/><text x="242.38" y="110" class="enBarra" text-anchor="middle">63 %</text><rect x="385.76" y="94" width="92.92" height="24" rx="3" class="sPierde"/><text x="432.21999999999997" y="110" class="enBarra" text-anchor="middle">21 %</text><rect x="480.68" y="94" width="70.32000000000001" height="24" rx="3" class="sPasa"/><text x="515.84" y="110" class="enBarra" text-anchor="middle">16 %</text><text x="560" y="110" class="ax">174 carreras · típica $300</text><text x="92" y="145" class="lbl" text-anchor="end">Moto · noche</text><rect x="101" y="128" width="151.68" height="24" rx="3" class="sBanda"/><text x="176.84" y="144" class="enBarra" text-anchor="middle">34 %</text><rect x="254.68" y="128" width="97.44" height="24" rx="3" class="sPierde"/><text x="303.4" y="144" class="enBarra" text-anchor="middle">22 %</text><rect x="354.12" y="128" width="196.88" height="24" rx="3" class="sPasa"/><text x="452.56" y="144" class="enBarra" text-anchor="middle">44 %</text><text x="560" y="144" class="ax">175 carreras · típica $900</text></svg><figcaption>Figura 5.1. Las 349 carreras cotizadas a ciegas (4 oct, 1:05 p. m. → 5 oct, 8 p. m.), con el precio recomendado según la regla vigente (en cada carrera, la mejor variante grabada que existía). A la derecha, la diferencia típica.</figcaption></figure>
+  <table class="t">
+    <thead><tr><th>Precio recomendado, a ciegas</th><th class="n">Carreras</th><th class="n">Banda</th><th class="n">Pierde</th><th class="n">Se pasa</th><th class="n">Exacto</th><th class="n">±$100</th><th class="n">Típica</th><th class="n">Promedio d</th></tr></thead>
+    <tbody>
+      <tr><td>Carro · día</td><td class="n">174</td><td class="n">39 %</td><td class="n">36 %</td><td class="n">25 %</td><td class="n">5 %</td><td class="n">17 %</td><td class="n">$700</td><td class="n">−$192</td></tr>
+      <tr><td>Carro · noche</td><td class="n">175</td><td class="n">23 %</td><td class="n">27 %</td><td class="n">50 %</td><td class="n">2 %</td><td class="n">10 %</td><td class="n">$1.200</td><td class="n">+$472</td></tr>
+      <tr><td>Moto · día</td><td class="n">174</td><td class="n">63 %</td><td class="n">21 %</td><td class="n">16 %</td><td class="n">9 %</td><td class="n">26 %</td><td class="n">$300</td><td class="n">−$6</td></tr>
+      <tr><td>Moto · noche</td><td class="n">175</td><td class="n">34 %</td><td class="n">22 %</td><td class="n">44 %</td><td class="n">2 %</td><td class="n">11 %</td><td class="n">$900</td><td class="n">+$390</td></tr>
+      <tr><td>Carro · domingo 4 de día</td><td class="n">100</td><td class="n">37 %</td><td class="n">41 %</td><td class="n">22 %</td><td class="n">4 %</td><td class="n">16 %</td><td class="n">$600</td><td class="n">−$412</td></tr>
+      <tr><td>Carro · lunes 5 de día</td><td class="n">74</td><td class="n">42 %</td><td class="n">30 %</td><td class="n">28 %</td><td class="n">7 %</td><td class="n">19 %</td><td class="n">$750</td><td class="n">+$105</td></tr>
+      <tr><td>Moto · domingo 4 de día</td><td class="n">100</td><td class="n">68 %</td><td class="n">20 %</td><td class="n">12 %</td><td class="n">8 %</td><td class="n">29 %</td><td class="n">$300</td><td class="n">−$4</td></tr>
+      <tr><td>Moto · lunes 5 de día</td><td class="n">74</td><td class="n">57 %</td><td class="n">22 %</td><td class="n">22 %</td><td class="n">11 %</td><td class="n">23 %</td><td class="n">$400</td><td class="n">−$8</td></tr>
+    </tbody>
+  </table>
+  <h3>Cómo le fue a cada variante grabada (mismas carreras donde existe)</h3>
+  <table class="t compacta">
+    <thead><tr><th>Variante</th><th>Franja</th><th class="n">n</th><th class="n">Banda</th><th class="n">Pierde</th><th class="n">Se pasa</th><th class="n">Típica</th></tr></thead>
+    <tbody>
+      <tr><td>Carro, fórmula sola</td><td>día / noche</td><td class="n">174 / 175</td><td class="n">38 / 18 %</td><td class="n">44 / 23 %</td><td class="n">18 / 59 %</td><td class="n">$700 / $1.500</td></tr>
+      <tr><td>Carro EN VIVO</td><td>día / noche</td><td class="n">124 / 175</td><td class="n">39 / 23 %</td><td class="n">22 / 27 %</td><td class="n">40 / 50 %</td><td class="n">$650 / $1.200</td></tr>
+      <tr><td>Carro <code>carro_banda</code></td><td>día / noche</td><td class="n">74 / 174</td><td class="n">46 / 23 %</td><td class="n">32 / 26 %</td><td class="n">22 / 51 %</td><td class="n">$600 / $1.200</td></tr>
+      <tr><td>Carro PLAN B laboral</td><td>día / noche</td><td class="n">74 / 74</td><td class="n">43 / 19 %</td><td class="n">31 / 31 %</td><td class="n">26 / 50 %</td><td class="n">$650 / $1.450</td></tr>
+      <tr><td>Moto, fórmula sola</td><td>día / noche</td><td class="n">174 / 175</td><td class="n">57 / 24 %</td><td class="n">35 / 44 %</td><td class="n">7 / 32 %</td><td class="n">$300 / $1.200</td></tr>
+      <tr><td>Moto EN VIVO</td><td>día / noche</td><td class="n">124 / 175</td><td class="n">63 / 33 %</td><td class="n">17 / 24 %</td><td class="n">20 / 43 %</td><td class="n">$400 / $800</td></tr>
+      <tr><td>Moto PLAN B laboral</td><td>día / noche</td><td class="n">74 / 74</td><td class="n">57 / 36 %</td><td class="n">22 / 15 %</td><td class="n">22 / 49 %</td><td class="n">$400 / $800</td></tr>
+      <tr><td>Moto <code>moto_noche</code></td><td>noche</td><td class="n">74</td><td class="n">28 %</td><td class="n">15 %</td><td class="n">57 %</td><td class="n">$800</td></tr>
+    </tbody>
+  </table>
+  <p class="chico">Las variantes de los agentes del 5 oct por la tarde (RIESGO, CENTRO, APILADO, NOCHE 3, PICO, CURVA) llevan menos de 30 carreras grabadas: todavía no se pueden juzgar en carreras reales. Cálculo: <code>scratchpad/informe/cifras.mjs</code> sobre <code>datos/mediciones.jsonl</code>.</p>
+  <div class="nota gris"><b>Lectura.</b> De día la moto está cerca del límite (63 % contra 77 % de inDrive contra sí mismo). El carro de día está igual o mejor que el límite (39–46 % contra 39 %), pero "pierde" sigue alto. La noche es el gran hueco: el precio se pasa en la mitad de las carreras y la típica se duplica o cuadruplica.</div>
+
+  <h2><span class="num">5.3</span>El reto "pierde ≤ 10 %"</h2>
+  <p>Pedido del dueño (5 oct, 8:35 a. m.): "pierde" de 10 % o menos en cada vehículo y franja, con la diferencia típica mucho más baja. Primero se comprobó que <b>subirle el precio a todos no sirve</b>:</p>
+  <table class="t">
+    <thead><tr><th>Vehículo y franja</th><th>Hoy: banda / pierde / típica</th><th>Subiendo a todos hasta pierde ≈ 10 %</th></tr></thead>
+    <tbody>
+      <tr><td>Carro día (126)</td><td>46 % / 27 % / $500</td><td>19 % / 4 % / $1.550</td></tr>
+      <tr><td>Carro noche (175)</td><td>21 % / 28 % / $1.200</td><td>15 % / 12 % / $1.700</td></tr>
+      <tr><td>Moto día (126)</td><td>67 % / 15 % / $400</td><td>43 % / 6 % / $600</td></tr>
+      <tr><td>Moto noche (175)</td><td>33 % / 21 % / $900</td><td>15 % / 10 % / $1.400</td></tr>
+    </tbody>
+  </table>
+  <p>Cuatro agentes atacaron el problema por caminos distintos. Todos usaron el mismo examen: parámetros elegidos solo con carreras anteriores al 4 oct a las 12:05 p. m. y prueba con las carreras cotizadas a ciegas.</p>
+  <table class="t">
+    <thead><tr><th>Agente</th><th>Idea</th><th>Resultado (banda / pierde / típica)</th><th>Veredicto</th></tr></thead>
+    <tbody>
+      <tr><td><b>RIESGO</b><br><code>nucleo/riesgo.js</code></td><td>Subir solo las carreras con riesgo: regresión de cuantiles (percentil 90) con franja, hora pico, km, tráfico, incertidumbre y memoria de zona</td><td>Carro día 46/27/$500 → 24/5/$900; carro noche 21/28/$1.150 → 16/12/$1.400; moto día 67/15/$400 → 56/11/$400; moto noche 33/21/$900 → 18/12/$1.100</td><td>Baja "pierde" a 5–12 %, pero sube la típica. Le gana a "subir a todos" en 3 de 4 casos (carro noche: −$336 de típica al mismo "pierde"). Se graba a ciegas.</td></tr>
+      <tr><td><b>CENTRO</b><br><code>candidatas/centro.js</code></td><td>Menos dispersión: trío de fórmulas con minutos con tráfico, hexágonos y todo el historial</td><td>Moto día 67/15/$400 → 72/13/$300; moto lunes mañana 51/38/$480 → 61/27/$360; moto noche: típica $720 → $575, pero sube "pierde" frente al PLAN B</td><td>Gana en la moto de día. Su hallazgo útil: la moto con minutos con tráfico ayuda los lunes (candidata RC8). El carro no mejora.</td></tr>
+      <tr><td><b>APILADO</b><br><code>nucleo/apilado.js</code></td><td>Combinar en línea todas las variantes grabadas</td><td>Carro día 40,5/38,9/$600 → 42,1/10,3/$700; el lunes baja la banda; moto y noche no ganan</td><td>No gana: los errores están muy correlacionados. Se graba a ciegas para confirmar el carro de día.</td></tr>
+      <tr><td><b>NOCHE 3</b><br><code>candidatas/noche3.js</code></td><td>Moto de noche: ancla de corredor + Kalman y memoria de zona que solo suben</td><td>Moto noche entre semana, nunca vista: 32/23/$800 → 40/20/$650. Carro (protección): 29,5/22,2 → 31,8/18,8 ($900)</td><td><b>La moto de noche gana.</b> Se decide con las carreras reales de esta noche.</td></tr>
+    </tbody>
+  </table>
+  <h3>La frontera honesta</h3>
+  <ul>
+    <li><b>De noche, "pierde" ≤ 10 % con la típica de hoy no es posible</b> con lo que Carby sabe: cuesta entre $1.000 y $1.550 de típica, y la banda baja a 12–23 %.</li>
+    <li><b>El límite de inDrive contra sí mismo</b> con "pierde" en 10 %: carro de día típica $900 (banda 29 %), carro de noche $800 (32 %), moto de día $200 (80 %), moto de noche $950 (25 %). Ni copiando a inDrive se logra a la vez poco "pierde" y poca típica en el carro.</li>
+    <li>El error propio de nuestra cotización de noche es de ~10 % en carro y ~12 % en moto. Con una banda de $800 de ancho, el máximo alcanzable moviendo solo el centro es de ~24 % (carro) y ~30 % (moto). <b>Solo se sube bajando la dispersión</b>, no corriendo el precio.</li>
+  </ul>
+</section>
+
+<!-- ============ 6. FÓRMULA PROPIA ============ -->
+<section class="cap">
+  <h1 class="cap"><span class="num">6</span>La fórmula propia (sin inDrive en vivo)</h1>
+  <div class="nota"><b>Decisión del dueño (5 oct, 7:45 p. m.).</b> Cuando Carby funcione de verdad, no tendrá el precio de inDrive de hace 10 minutos. Todo lo que hoy gana (el nivel de HN1/HN3, los vecinos, el Kalman de EN VIVO, el PLAN B) usa precios recientes de inDrive. La fórmula final debe ser <b>nuestra</b>: base por distancia y tiempo, <b>nuestras horas pico</b>, zona, tráfico y lluvia, explicable en una tabla ("lunes a viernes 6:00–6:59 a. m.: ×1,09").</div>
+
+  <h2><span class="num">6.1</span>PICO: tabla de recargos por tipo de día y hora</h2>
+  <div class="formula">precio = base(km, min) × hora(tipo de día, hora) × zona de recogida × zona de destino × tráfico × lluvia × (1 + margen)
+redondeado a $100, nunca por debajo de la mínima</div>
+  <ul>
+    <li><b>Carro:</b> arranque $5.537 + $750/km (0–3 km) + $664/km (3–12 km) + $683/km (más de 12 km) + $225/min (con tráfico); mínima $6.300; margen +2 %; zona de recogida ×0,83 a ×1,10.</li>
+    <li><b>Moto:</b> arranque $3.194 + $481/km + $128/min (con tráfico); mínima $3.700; margen +1 %; zona de recogida ×0,84 a ×1,05; lluvia ×1,009.</li>
+    <li><b>Tipos de día:</b> laboral (lunes a viernes no festivo), sábado, domingo o festivo (festivos de Colombia, por ejemplo el lunes 12 de octubre). La madrugada cuenta en el día del calendario.</li>
+    <li><b>Zonas:</b> hexágonos de 2,5 km (53 de recogida y 43 de destino), encogidos hacia sus 6 vecinos.</li>
+    <li>Cada celda tipo × hora se encoge hacia la hora sola, luego hacia ±3 h y ±6 h y luego hacia el promedio. Una hora nunca vista toma las horas vistas más cercanas.</li>
+    <li>El tráfico aprendió un exponente 0, porque los minutos con tráfico ya lo cargan. Cotizar tarda 0,013 ms.</li>
+  </ul>
+  <div class="dos"><div><table class="t compacta"><caption>Carro</caption><thead><tr><th>Hora</th><th>Lun–vie*</th><th>Sábado</th><th>Dom./festivo</th></tr></thead><tbody><tr><td>12 a. m.</td><td class="h2">×1,18 <span class="pp">(+18 %)</span></td><td class="h2">×1,17 <span class="pp">(+17 %)</span></td><td class="h2">×1,18 <span class="pp">(+18 %)</span></td></tr><tr><td>1 a. m.</td><td class="h2">×1,24 <span class="pp">(+24 %)</span></td><td class="h2">×1,24 <span class="pp">(+24 %)</span></td><td class="h2">×1,25 <span class="pp">(+25 %)</span></td></tr><tr><td>2 a. m.</td><td class="h3">×1,32 <span class="pp">(+32 %)</span></td><td class="h3">×1,31 <span class="pp">(+31 %)</span></td><td class="h3">×1,32 <span class="pp">(+32 %)</span></td></tr><tr><td>3 a. m.</td><td class="h3">×1,32 <span class="pp">(+32 %)</span></td><td class="h3">×1,34 <span class="pp">(+34 %)</span></td><td class="h3">×1,35 <span class="pp">(+35 %)</span></td></tr><tr><td>4 a. m.</td><td class="h2">×1,28 <span class="pp">(+28 %)</span></td><td class="h2">×1,28 <span class="pp">(+28 %)</span></td><td class="h2">×1,29 <span class="pp">(+29 %)</span></td></tr><tr><td>5 a. m.</td><td class="h2">×1,17 <span class="pp">(+17 %)</span></td><td class="h2">×1,17 <span class="pp">(+17 %)</span></td><td class="h2">×1,17 <span class="pp">(+17 %)</span></td></tr><tr><td>6 a. m.</td><td class="h1">×1,09 <span class="pp">(+9 %)</span></td><td class="h1">×1,09 <span class="pp">(+9 %)</span></td><td class="h1">×1,09 <span class="pp">(+9 %)</span></td></tr><tr><td>7 a. m.</td><td class="">×1,03 <span class="pp">(+3 %)</span></td><td class="">×1,03 <span class="pp">(+3 %)</span></td><td class="">×1,03 <span class="pp">(+3 %)</span></td></tr><tr><td>8 a. m.</td><td class="">×1,01 <span class="pp">(+1 %)</span></td><td class="">×1,00</td><td class="">×1,01 <span class="pp">(+1 %)</span></td></tr><tr><td>9 a. m.</td><td class="">×1,01 <span class="pp">(+1 %)</span></td><td class="">×1,00</td><td class="">×1,01 <span class="pp">(+1 %)</span></td></tr><tr><td>10 a. m.</td><td class="">×1,01 <span class="pp">(+1 %)</span></td><td class="">×1,00</td><td class="">×1,01 <span class="pp">(+1 %)</span></td></tr><tr><td>11 a. m.</td><td class="">×1,01 <span class="pp">(+1 %)</span></td><td class="">×1,00</td><td class="">×1,01 <span class="pp">(+1 %)</span></td></tr><tr><td>12 m.</td><td class="">×1,04 <span class="pp">(+4 %)</span></td><td class="">×1,04 <span class="pp">(+4 %)</span></td><td class="">×1,04 <span class="pp">(+4 %)</span></td></tr><tr><td>1 p. m.</td><td class="">×1,04 <span class="pp">(+4 %)</span></td><td class="">×1,04 <span class="pp">(+4 %)</span></td><td class="">×1,04 <span class="pp">(+4 %)</span></td></tr><tr><td>2 p. m.</td><td class="">×1,04 <span class="pp">(+4 %)</span></td><td class="">×1,04 <span class="pp">(+4 %)</span></td><td class="">×1,04 <span class="pp">(+4 %)</span></td></tr><tr><td>3 p. m.</td><td class="">×1,01 <span class="pp">(+1 %)</span></td><td class="">×1,01 <span class="pp">(+1 %)</span></td><td class="">×1,00</td></tr><tr><td>4 p. m.</td><td class="">×1,01 <span class="pp">(+1 %)</span></td><td class="">×1,01 <span class="pp">(+1 %)</span></td><td class="">×1,00</td></tr><tr><td>5 p. m.</td><td class="h1">×1,07 <span class="pp">(+7 %)</span></td><td class="h1">×1,07 <span class="pp">(+7 %)</span></td><td class="h1">×1,06 <span class="pp">(+6 %)</span></td></tr><tr><td>6 p. m.</td><td class="h1">×1,14 <span class="pp">(+14 %)</span></td><td class="h1">×1,13 <span class="pp">(+13 %)</span></td><td class="h1">×1,14 <span class="pp">(+14 %)</span></td></tr><tr><td>7 p. m.</td><td class="h1">×1,14 <span class="pp">(+14 %)</span></td><td class="h1">×1,13 <span class="pp">(+13 %)</span></td><td class="h1">×1,14 <span class="pp">(+14 %)</span></td></tr><tr><td>8 p. m.</td><td class="h1">×1,14 <span class="pp">(+14 %)</span></td><td class="h1">×1,13 <span class="pp">(+13 %)</span></td><td class="h1">×1,14 <span class="pp">(+14 %)</span></td></tr><tr><td>9 p. m.</td><td class="h1">×1,14 <span class="pp">(+14 %)</span></td><td class="h1">×1,13 <span class="pp">(+13 %)</span></td><td class="h1">×1,14 <span class="pp">(+14 %)</span></td></tr><tr><td>10 p. m.</td><td class="h1">×1,14 <span class="pp">(+14 %)</span></td><td class="h1">×1,13 <span class="pp">(+13 %)</span></td><td class="h1">×1,14 <span class="pp">(+14 %)</span></td></tr><tr><td>11 p. m.</td><td class="h1">×1,14 <span class="pp">(+14 %)</span></td><td class="h1">×1,13 <span class="pp">(+13 %)</span></td><td class="h1">×1,14 <span class="pp">(+14 %)</span></td></tr></tbody></table></div><div><table class="t compacta"><caption>Moto</caption><thead><tr><th>Hora</th><th>Lun–vie*</th><th>Sábado</th><th>Dom./festivo</th></tr></thead><tbody><tr><td>12 a. m.</td><td class="h2">×1,24 <span class="pp">(+24 %)</span></td><td class="h2">×1,23 <span class="pp">(+23 %)</span></td><td class="h2">×1,26 <span class="pp">(+26 %)</span></td></tr><tr><td>1 a. m.</td><td class="h2">×1,28 <span class="pp">(+28 %)</span></td><td class="h2">×1,28 <span class="pp">(+28 %)</span></td><td class="h2">×1,29 <span class="pp">(+29 %)</span></td></tr><tr><td>2 a. m.</td><td class="h3">×1,32 <span class="pp">(+32 %)</span></td><td class="h3">×1,32 <span class="pp">(+32 %)</span></td><td class="h3">×1,33 <span class="pp">(+33 %)</span></td></tr><tr><td>3 a. m.</td><td class="h3">×1,32 <span class="pp">(+32 %)</span></td><td class="h3">×1,32 <span class="pp">(+32 %)</span></td><td class="h3">×1,33 <span class="pp">(+33 %)</span></td></tr><tr><td>4 a. m.</td><td class="h2">×1,28 <span class="pp">(+28 %)</span></td><td class="h2">×1,28 <span class="pp">(+28 %)</span></td><td class="h2">×1,29 <span class="pp">(+29 %)</span></td></tr><tr><td>5 a. m.</td><td class="h2">×1,19 <span class="pp">(+19 %)</span></td><td class="h2">×1,19 <span class="pp">(+19 %)</span></td><td class="h2">×1,19 <span class="pp">(+19 %)</span></td></tr><tr><td>6 a. m.</td><td class="h1">×1,10 <span class="pp">(+10 %)</span></td><td class="h1">×1,10 <span class="pp">(+10 %)</span></td><td class="h1">×1,10 <span class="pp">(+10 %)</span></td></tr><tr><td>7 a. m.</td><td class="h1">×1,05 <span class="pp">(+5 %)</span></td><td class="h1">×1,05 <span class="pp">(+5 %)</span></td><td class="h1">×1,05 <span class="pp">(+5 %)</span></td></tr><tr><td>8 a. m.</td><td class="h1">×1,05 <span class="pp">(+5 %)</span></td><td class="h1">×1,05 <span class="pp">(+5 %)</span></td><td class="h1">×1,05 <span class="pp">(+5 %)</span></td></tr><tr><td>9 a. m.</td><td class="h1">×1,05 <span class="pp">(+5 %)</span></td><td class="h1">×1,05 <span class="pp">(+5 %)</span></td><td class="h1">×1,05 <span class="pp">(+5 %)</span></td></tr><tr><td>10 a. m.</td><td class="h1">×1,05 <span class="pp">(+5 %)</span></td><td class="h1">×1,05 <span class="pp">(+5 %)</span></td><td class="h1">×1,05 <span class="pp">(+5 %)</span></td></tr><tr><td>11 a. m.</td><td class="h1">×1,05 <span class="pp">(+5 %)</span></td><td class="h1">×1,05 <span class="pp">(+5 %)</span></td><td class="h1">×1,05 <span class="pp">(+5 %)</span></td></tr><tr><td>12 m.</td><td class="">×1,01 <span class="pp">(+1 %)</span></td><td class="">×1,01 <span class="pp">(+1 %)</span></td><td class="">×1,01 <span class="pp">(+1 %)</span></td></tr><tr><td>1 p. m.</td><td class="">×1,01 <span class="pp">(+1 %)</span></td><td class="">×1,01 <span class="pp">(+1 %)</span></td><td class="">×1,01 <span class="pp">(+1 %)</span></td></tr><tr><td>2 p. m.</td><td class="">×1,01 <span class="pp">(+1 %)</span></td><td class="">×1,01 <span class="pp">(+1 %)</span></td><td class="">×1,01 <span class="pp">(+1 %)</span></td></tr><tr><td>3 p. m.</td><td class="">×1,01 <span class="pp">(+1 %)</span></td><td class="">×1,01 <span class="pp">(+1 %)</span></td><td class="">×1,01 <span class="pp">(+1 %)</span></td></tr><tr><td>4 p. m.</td><td class="">×1,01 <span class="pp">(+1 %)</span></td><td class="">×1,01 <span class="pp">(+1 %)</span></td><td class="">×1,01 <span class="pp">(+1 %)</span></td></tr><tr><td>5 p. m.</td><td class="h1">×1,05 <span class="pp">(+5 %)</span></td><td class="h1">×1,05 <span class="pp">(+5 %)</span></td><td class="h1">×1,05 <span class="pp">(+5 %)</span></td></tr><tr><td>6 p. m.</td><td class="h1">×1,05 <span class="pp">(+5 %)</span></td><td class="h1">×1,05 <span class="pp">(+5 %)</span></td><td class="h1">×1,05 <span class="pp">(+5 %)</span></td></tr><tr><td>7 p. m.</td><td class="h1">×1,05 <span class="pp">(+5 %)</span></td><td class="h1">×1,05 <span class="pp">(+5 %)</span></td><td class="h1">×1,05 <span class="pp">(+5 %)</span></td></tr><tr><td>8 p. m.</td><td class="h1">×1,05 <span class="pp">(+5 %)</span></td><td class="h1">×1,05 <span class="pp">(+5 %)</span></td><td class="h1">×1,08 <span class="pp">(+8 %)</span></td></tr><tr><td>9 p. m.</td><td class="h1">×1,12 <span class="pp">(+12 %)</span></td><td class="h1">×1,09 <span class="pp">(+9 %)</span></td><td class="h2">×1,16 <span class="pp">(+16 %)</span></td></tr><tr><td>10 p. m.</td><td class="h2">×1,18 <span class="pp">(+18 %)</span></td><td class="h1">×1,14 <span class="pp">(+14 %)</span></td><td class="h2">×1,23 <span class="pp">(+23 %)</span></td></tr><tr><td>11 p. m.</td><td class="h2">×1,21 <span class="pp">(+21 %)</span></td><td class="h2">×1,18 <span class="pp">(+18 %)</span></td><td class="h2">×1,23 <span class="pp">(+23 %)</span></td></tr></tbody></table></div></div>
+  <p class="chico">Tabla 6.1. Horas pico de la fórmula PICO (<code>datos/modelo-pico.json</code>, entrenada con 839 lecturas anteriores al 5 oct a las 12:00 a. m.). ×1,00 = tarifa base (la hora más barata). *Lunes a viernes aún sin lecturas propias en esta versión: usa la hora de todos los días; se corrige sola desde el reentreno de esta madrugada, que ya incluye el lunes.</p>
+
+  <h2><span class="num">6.2</span>CURVA: horas pico como curva continua</h2>
+  <div class="formula">precio = (fijo + $/km·km + $/min·min) × recargo(tipo de jornada, hora) × (km/5)^e_km(hora) × tráfico^e_tr(hora)
+        × zona de recogida (hexágonos de 4 km + 1,5 km) × lluvia × colchón (día / noche)</div>
+  <ul>
+    <li><b>Carro:</b> $5.536 + $677/km + $205/min (con tráfico); mínima $6.300; colchón de protección al conductor: día ×1,015, noche ×1,005.</li>
+    <li><b>Moto:</b> $3.043 + $422/km + $139/min (con tráfico); mínima $3.700; colchón: día ×1,015, noche ×1,010.</li>
+    <li>El recargo es una tabla <b>cada 30 minutos</b>, con interpolación en línea recta: el precio cambia de forma continua con el reloj, sin escalones. La <b>jornada empieza a las 6 a. m.</b>: la madrugada pertenece a la noche que empezó el día anterior (el domingo a las 2 a. m. es "noche del sábado").</li>
+    <li>Cada tipo de jornada = curva común + desviación encogida. La forma de la curva quedó fija y suave a propósito: las curvas "nerviosas" bajaban el carro de día del lunes de 45 % a 33 %.</li>
+  </ul>
+  <figure><svg viewBox="0 0 680 270" class="graf" role="img" aria-label="Recargo por hora, lunes a viernes, fórmula CURVA"><line x1="46" x2="610" y1="232" y2="232" class="grid"/><text x="40" y="236" class="ax" text-anchor="end">×1,00</text><line x1="46" x2="610" y1="188.79999999999995" y2="188.79999999999995" class="grid"/><text x="40" y="192.79999999999995" class="ax" text-anchor="end">×1,10</text><line x1="46" x2="610" y1="145.5999999999999" y2="145.5999999999999" class="grid"/><text x="40" y="149.5999999999999" class="ax" text-anchor="end">×1,20</text><line x1="46" x2="610" y1="102.39999999999989" y2="102.39999999999989" class="grid"/><text x="40" y="106.39999999999989" class="ax" text-anchor="end">×1,30</text><line x1="46" x2="610" y1="59.19999999999985" y2="59.19999999999985" class="grid"/><text x="40" y="63.19999999999985" class="ax" text-anchor="end">×1,40</text><line x1="46" x2="610" y1="15.999999999999801" y2="15.999999999999801" class="grid"/><text x="40" y="19.9999999999998" class="ax" text-anchor="end">×1,50</text><text x="46" y="248" class="ax" text-anchor="middle">06:00</text><text x="93" y="248" class="ax" text-anchor="middle">08:00</text><text x="140" y="248" class="ax" text-anchor="middle">10:00</text><text x="187" y="248" class="ax" text-anchor="middle">12:00</text><text x="234" y="248" class="ax" text-anchor="middle">14:00</text><text x="281" y="248" class="ax" text-anchor="middle">16:00</text><text x="328" y="248" class="ax" text-anchor="middle">18:00</text><text x="375" y="248" class="ax" text-anchor="middle">20:00</text><text x="422" y="248" class="ax" text-anchor="middle">22:00</text><text x="469" y="248" class="ax" text-anchor="middle">00:00</text><text x="516" y="248" class="ax" text-anchor="middle">02:00</text><text x="563" y="248" class="ax" text-anchor="middle">04:00</text><text x="610" y="248" class="ax" text-anchor="middle">06:00</text><text x="328" y="266" class="ax" text-anchor="middle">hora del día (la jornada empieza a las 6:00 a. m.)</text><rect x="375" y="16" width="235" height="216" class="nocheBg"/><text x="492.5" y="226" class="ax" text-anchor="middle">noche (8 p. m.–6 a. m.)</text><polyline class="lCarro" fill="none" points="46.0,188.8 57.8,201.8 69.5,210.4 81.3,219.0 93.0,227.7 104.8,227.7 116.5,227.7 128.3,227.7 140.0,227.7 151.8,223.4 163.5,223.4 175.3,219.0 187.0,219.0 198.8,214.7 210.5,210.4 222.3,210.4 234.0,210.4 245.8,214.7 257.5,219.0 269.3,223.4 281.0,219.0 292.8,219.0 304.5,210.4 316.3,206.1 328.0,193.1 339.8,184.5 351.5,175.8 363.3,171.5 375.0,167.2 386.8,162.9 398.5,162.9 410.3,167.2 422.0,167.2 433.8,167.2 445.5,167.2 457.3,167.2 469.0,158.6 480.8,145.6 492.5,132.6 504.3,115.4 516.0,98.1 527.8,85.1 539.5,72.2 551.3,72.2 563.0,76.5 574.8,89.4 586.5,111.0 598.3,132.6 610.0,154.2"/><polyline class="lMoto" fill="none" points="46.0,201.8 57.8,206.1 69.5,210.4 81.3,210.4 93.0,210.4 104.8,214.7 116.5,210.4 128.3,210.4 140.0,206.1 151.8,206.1 163.5,206.1 175.3,210.4 187.0,219.0 198.8,223.4 210.5,223.4 222.3,223.4 234.0,227.7 245.8,227.7 257.5,232.0 269.3,232.0 281.0,232.0 292.8,232.0 304.5,232.0 316.3,227.7 328.0,223.4 339.8,219.0 351.5,214.7 363.3,210.4 375.0,201.8 386.8,188.8 398.5,175.8 410.3,162.9 422.0,145.6 433.8,128.3 445.5,111.0 457.3,102.4 469.0,89.4 480.8,80.8 492.5,72.2 504.3,63.5 516.0,50.6 527.8,46.2 539.5,41.9 551.3,46.2 563.0,54.9 574.8,67.8 586.5,89.4 598.3,115.4 610.0,141.3"/><text x="616" y="158.24" class="lbl">Carro</text><text x="616" y="145.28000000000003" class="lbl">Moto</text><circle cx="539.5" cy="72.15999999999997" r="4" class="pCarro"/><circle cx="539.5" cy="41.920000000000016" r="4" class="pMoto"/><text x="539.5" y="32.920000000000016" class="ax" text-anchor="middle">moto ×1,44 · carro ×1,37 (3:00 a. m.)</text></svg><figcaption>Figura 6.1. Recargo de la fórmula CURVA para lunes a viernes (×1,00 = media hora más barata del día). El carro sube desde las 5 p. m. y llega al máximo en la madrugada. La moto es casi plana de día y se dispara de noche. La tabla completa cada 30 minutos y por tipo de día está en el Anexo A.</figcaption></figure>
+
+  <h2><span class="num">6.3</span>Examen congelado de los agentes</h2>
+  <p>Método: entrenar <b>solo con días anteriores</b> (corte a las 12:00 a. m.) y cotizar el día siguiente completo, sin ningún precio de inDrive de ese día. Banda / pierde / se pasa / típica:</p>
+  <table class="t">
+    <thead><tr><th>Lunes 5 (entrenada con sáb + dom)</th><th>PICO</th><th>CURVA</th><th>Mejor fórmula congelada anterior</th><th>EN VIVO (con inDrive reciente)</th></tr></thead>
+    <tbody>
+      <tr><td>Carro, todo el lunes</td><td>27 / 15 / 59 / $1.100</td><td>30 / 22 / 48 / $1.000</td><td>Y7: 29 / 20 / 51 / $900</td><td>22–27 / 32–36 / — / $900–1.200</td></tr>
+      <tr><td>Carro 6–10 a. m.</td><td>30 / 4 / — / $800</td><td>54 / 11 / — / $500</td><td>Y7: 52 / 17 / — / $500</td><td>52 / 33</td></tr>
+      <tr><td>Moto, todo el lunes</td><td>27 / 38 / 36 / $900</td><td>30 / 38 / 32 / $900</td><td>EX4: 37 / 36–37 / 26 / $700</td><td>27–41 / 23–39</td></tr>
+      <tr><td>Domingo (entrenada solo con sábado), carro</td><td>17 / 39 / — / $1.300</td><td>20 / 37 / — / $1.400</td><td>Y7: 17 / 47 / — / $1.400</td><td>20 / 45</td></tr>
+      <tr><td>Domingo, moto</td><td>22 / 36 / — / $1.100</td><td>36 / 20 / — / $700</td><td>EX4: 16 / 27 / — / $1.300</td><td>24 / 31</td></tr>
+    </tbody>
+  </table>
+  <ul>
+    <li><b>El carro congelado ya compite</b> con el precio en vivo y tiene mucho menos "pierde". CURVA es la mejor de día el lunes (6–10 a. m.: 54 % en banda).</li>
+    <li><b>La moto congelada no gana el lunes</b>: falla el <b>nivel del día</b>, no la estructura. La madrugada laboral fue 10–20 % más barata que la de fiesta, y el lunes a las 7 p. m., con lluvia y partido, la moto subió +14 %.</li>
+    <li><b>Punto débil:</b> rutas largas nunca vistas (domingo, 52 rutas de 24–48 km). CURVA dejó el carro en 8 % en banda, frente a 21 % de Y7.</li>
+    <li>"Si tuviéramos otro lunes" (optimista): se espera +0–3 puntos de banda, +2–8 a ±10 % y −$100 a −$300 de típica de noche cuando haya varias noches entre semana. CURVA y PICO se equivocan casi igual (correlación 0,96), así que promediarlas no gana.</li>
+  </ul>
+
+  <h2><span class="num">6.4</span>Ejemplo: la misma carrera de Caldas con la fórmula propia</h2>
+  <table class="t">
+    <thead><tr><th>Paso</th><th class="n">PICO carro</th><th class="n">CURVA carro</th><th class="n">PICO moto</th><th class="n">CURVA moto</th></tr></thead>
+    <tbody>
+      <tr><td>Base (km + min)</td><td class="n">$15.229</td><td class="n">$14.797</td><td class="n">$9.405</td><td class="n">$8.855</td></tr>
+      <tr><td>× Hora (lunes, 7:59 p. m.)</td><td class="n">×1,133</td><td class="n">×1,152</td><td class="n">×1,057</td><td class="n">×1,072</td></tr>
+      <tr><td>× Zona de recogida / destino</td><td class="n">×0,965 / ×0,968</td><td class="n">×0,964 / ×1,00</td><td class="n">×0,945 / ×0,962</td><td class="n">×0,969 / ×1,00</td></tr>
+      <tr><td>× Lluvia · tráfico · margen o colchón</td><td class="n">×0,998 · ×1 · +2 %</td><td class="n">×1,003 · ×0,999 · ×1,015</td><td class="n">×1,009 · ×1 · +1 %</td><td class="n">×1 · ×1 · ×1,015</td></tr>
+      <tr class="dest"><td>Precio (inDrive: carro $15.000, moto $9.100)</td><td class="n">$16.400 (+$1.400)</td><td class="n">$16.700 (+$1.700)</td><td class="n">$9.200 (+$100)</td><td class="n">$9.300 (+$200)</td></tr>
+    </tbody>
+  </table>
+
+  <h2><span class="num">6.5</span>Prueba independiente de la fórmula propia</h2>
+  <p><b>Método</b> (guion <code>scratchpad/prueba-propia.mjs</code>): modelos PICO y CURVA congelados, entrenados <b>solo con el sábado 3 y el domingo 4</b>, cotizan las <b>192 carreras del lunes 5</b> sin ningún precio de inDrive del lunes. 56 de esas carreras se midieron entre las 7:11 y las 7:55 p. m. y ningún agente las había visto. Referencias: EN VIVO (el precio recomendado, que sí usa inDrive reciente) y la fórmula oficial sola.</p>
+  <table class="t">
+    <thead><tr><th>Carro, lunes</th><th class="n">n</th><th class="n">Banda</th><th class="n">Pierde</th><th class="n">Se pasa</th><th class="n">Típica</th><th class="n">Promedio d</th><th class="n">±10 %</th></tr></thead>
+    <tbody>
+      <tr><td>PICO</td><td class="n">192</td><td class="n">27 %</td><td class="n">15 %</td><td class="n">58 %</td><td class="n">$1.100</td><td class="n">+$1.935</td><td class="n">59 %</td></tr>
+      <tr class="dest"><td>CURVA</td><td class="n">192</td><td class="n">29 %</td><td class="n">23 %</td><td class="n">48 %</td><td class="n">$1.000</td><td class="n">+$1.640</td><td class="n">60 %</td></tr>
+      <tr><td>EN VIVO (con inDrive reciente)</td><td class="n">192</td><td class="n">20 %</td><td class="n">33 %</td><td class="n">47 %</td><td class="n">$1.200</td><td class="n">+$542</td><td class="n">57 %</td></tr>
+      <tr><td>Oficial sola</td><td class="n">192</td><td class="n">20 %</td><td class="n">34 %</td><td class="n">46 %</td><td class="n">$1.400</td><td class="n">+$638</td><td class="n">—</td></tr>
+    </tbody>
+  </table>
+  <table class="t compacta">
+    <thead><tr><th>Carro por franja (banda / pierde / se pasa / típica)</th><th>PICO</th><th>CURVA</th><th>EN VIVO</th></tr></thead>
+    <tbody>
+      <tr><td>Madrugada 0–6 h (37)</td><td>27 / 27 / 46 / $900</td><td>24 / 30 / 46 / $1.000</td><td>14 / 30 / 57 / $1.300</td></tr>
+      <tr><td>Mañana 6–10 h (62)</td><td>31 / 6 / 63 / $800</td><td>42 / 13 / 45 / $800</td><td>31 / 53 / 16 / $800</td></tr>
+      <tr><td>Tarde 17–20 h (93)</td><td>24 / 16 / 60 / $1.500</td><td>23 / 27 / 51 / $1.400</td><td>15 / 22 / 63 / $1.600</td></tr>
+      <tr><td>Solo esta noche, 7:11–7:55 p. m. (56)</td><td>21 / 18 / 61 / $1.500</td><td>29 / 21 / 50 / $1.400</td><td>9 / 25 / 66 / $1.800</td></tr>
+    </tbody>
+  </table>
+  <table class="t">
+    <thead><tr><th>Moto, lunes</th><th class="n">n</th><th class="n">Banda</th><th class="n">Pierde</th><th class="n">Se pasa</th><th class="n">Típica</th><th class="n">Promedio d</th><th class="n">±10 %</th></tr></thead>
+    <tbody>
+      <tr><td>PICO</td><td class="n">192</td><td class="n">26 %</td><td class="n">38 %</td><td class="n">36 %</td><td class="n">$900</td><td class="n">+$170</td><td class="n">51 %</td></tr>
+      <tr class="dest"><td>CURVA</td><td class="n">192</td><td class="n">31 %</td><td class="n">39 %</td><td class="n">31 %</td><td class="n">$900</td><td class="n">+$280</td><td class="n">52 %</td></tr>
+      <tr><td>EN VIVO (con inDrive reciente)</td><td class="n">192</td><td class="n">28 %</td><td class="n">37 %</td><td class="n">35 %</td><td class="n">$900</td><td class="n">−$49</td><td class="n">52 %</td></tr>
+      <tr><td>Oficial sola</td><td class="n">192</td><td class="n">28 %</td><td class="n">48 %</td><td class="n">24 %</td><td class="n">$1.100</td><td class="n">−$529</td><td class="n">—</td></tr>
+    </tbody>
+  </table>
+  <table class="t compacta">
+    <thead><tr><th>Moto por franja (banda / pierde / se pasa / típica)</th><th>PICO</th><th>CURVA</th><th>EN VIVO</th></tr></thead>
+    <tbody>
+      <tr><td>Madrugada 0–6 h (37)</td><td>19 / 57 / 24 / $1.200</td><td>30 / 43 / 27 / $1.300</td><td>22 / 32 / 46 / $900</td></tr>
+      <tr><td>Mañana 6–10 h (62)</td><td>44 / 24 / 32 / $600</td><td>44 / 31 / 26 / $500</td><td>37 / 48 / 15 / $800</td></tr>
+      <tr><td>Tarde 17–20 h (93)</td><td>17 / 39 / 44 / $1.000</td><td>23 / 42 / 35 / $1.100</td><td>24 / 31 / 45 / $900</td></tr>
+      <tr><td>Solo esta noche, 7:11–7:55 p. m. (56)</td><td>16 / 36 / 48 / $1.200</td><td>29 / 38 / 34 / $1.100</td><td>20 / 29 / 52 / $1.000</td></tr>
+    </tbody>
+  </table>
+  <div class="nota"><b>Conclusión.</b> Sin ver a inDrive en todo el lunes, la fórmula propia, sobre todo CURVA, <b>iguala o supera al precio EN VIVO</b>. En carro tiene más banda (29 % contra 20 %), mucho menos "pierde" (15–23 % contra 33 %) y ±10 % igual o mejor (60 % contra 57 %). En moto queda empatada (±10 %: 52 % contra 52 %). <b>Su defecto:</b> el carro queda caro en promedio (+$1.600 a +$1.900, sobre todo de 5 a 8 p. m.), porque solo aprendió noches de fin de semana, y la madrugada de la moto queda baja (PICO: 57 % "pierde"). Se corrige con más días laborales; desde hoy la tabla se reentrena cada día a las 12:05 a. m. El lunes no hubo carreras de 10 a. m. a 5 p. m., porque la medición estuvo pausada de 9:12 a. m. a 7:11 p. m.</div>
+</section>
+
+<!-- ============ 7. ZONAS CALIENTES ============ -->
+<section class="cap">
+  <h1 class="cap"><span class="num">7</span>Zonas calientes: cómo compensarlas sin ver a inDrive</h1>
+  <p>Una zona caliente es un lugar y un momento donde hay más pedidos que conductores libres, como la salida de un estadio, una zona de rumba a las 2 a. m. o una lluvia en hora punta. inDrive lo marca con "alta demanda". Carby no verá ese aviso; lo que sí tendrá son <b>sus propias solicitudes y sus propios conductores conectados</b>. Esta es la propuesta, en tres capas, de lo seguro a lo dinámico.</p>
+
+  <div class="nota gris"><b>Qué dicen los datos antes de diseñar.</b> (1) De noche el 91 % de las lecturas trae alta demanda: es sobre todo un nivel nocturno de toda la ciudad, y eso ya lo cubre la tabla de horas pico. (2) El estado de alta demanda se puede prever con lo que pasó cerca (81–89 % de acierto), pero cobrar según ese estado subió poco la banda (+4,5 puntos en carro aun conociéndolo de verdad). (3) La zona sí pesa, sobre todo de madrugada (centro ×1,8–2,2 contra Girardota ×0,73–0,95 un sábado a las 4 a. m.). Conclusión: <b>recargos por zona moderados y con tope</b>, no multiplicadores agresivos.</div>
+
+  <h2><span class="num">7.1</span>Capa 1 (desde el primer día): recargo aprendido por hexágono × hora</h2>
+  <ul>
+    <li>La tabla propia (PICO o CURVA) ya trae un factor por <b>hexágono de recogida</b> (y de destino en PICO). Propuesta: ampliarlo a <b>hexágono × franja</b> (día, noche y madrugada) y <b>tipo de día</b>, encogido hacia los 6 vecinos y luego hacia 1. Así una zona con pocas lecturas no se dispara.</li>
+    <li>Se aprende en el laboratorio con los precios de inDrive medidos y queda <b>congelado</b> en un archivo que la app solo lee. Se reentrena una vez al día, de madrugada, con los días anteriores (como hoy hace el supervisor a las 12:05 a. m.).</li>
+    <li>Es la base para que Carby cobre distinto en el centro a las 2 a. m. y en Girardota a la misma hora, sin mirar a nadie en vivo.</li>
+  </ul>
+
+  <h2><span class="num">7.2</span>Capa 2 (cuando Carby opere): presión de demanda propia por hexágono</h2>
+  <ul>
+    <li><b>Índice de presión</b> por hexágono (radio 1,5–2,5 km, sumando sus 6 vecinos con medio peso): <b>P = solicitudes abiertas o sin asignar en los últimos 10 minutos ÷ conductores disponibles en esa zona</b>. Los conductores se cuentan por la zona donde están conectados y disponibles, agregada por hexágono. No es seguimiento de viajes: la regla de Carby limita el GPS en tiempo real al botón S.O.S., así que la forma exacta de ubicar al conductor disponible debe validarse con producto y legal.</li>
+    <li><b>Señales de respaldo</b> que no dependen de ubicaciones: tiempo hasta que un aliado acepta, tasa de solicitudes sin aceptar y cancelaciones por espera en el hexágono.</li>
+    <li>El laboratorio ya dejó el gancho: <code>nucleo/vivo.js</code> acepta <code>demandaHex</code> (pedidos ÷ conductores libres del hexágono), hoy vacío.</li>
+    <li><b>Escalera inicial propuesta, a calibrar con datos reales de Carby</b> (no medida todavía): P ≤ 1 → sin recargo; 1–1,5 → hasta +5 %; 1,5–2 → hasta +10 %; más de 2 → hasta el tope. Se exige un mínimo de datos (por ejemplo, 5 solicitudes en la ventana) para activar cualquier recargo.</li>
+  </ul>
+
+  <h2><span class="num">7.3</span>Tope, piso y estabilidad</h2>
+  <table class="t">
+    <thead><tr><th>Regla</th><th>Propuesta</th><th>Por qué</th></tr></thead>
+    <tbody>
+      <tr><td>Piso</td><td>Nunca por debajo de la tabla propia (capa 1) ni de la mínima</td><td>Quedar por debajo es lo peor: el aliado pierde plata. La capa dinámica solo sube.</td></tr>
+      <tr><td>Tope</td><td>Recargo dinámico máximo de +25 % sobre la tabla</td><td>Es el mismo tope que se probó en el PLAN B laboral, que nunca subió "pierde" en 14 pruebas de estrés.</td></tr>
+      <tr><td>Suavizado</td><td>Cambios de máximo ±5 puntos cada 5 minutos, con histéresis (sube rápido y baja despacio)</td><td>Evita precios que saltan entre dos consultas seguidas.</td></tr>
+      <tr><td>Precio fijo al aceptar</td><td>El precio que ve el usuario es el que paga</td><td>Transparencia y cero sorpresas (regla de "cero falsas promesas").</td></tr>
+      <tr><td>Auditoría</td><td>Guardar por cada cotización: tabla, factor de zona, P, recargo aplicado y precio final</td><td>Igual que la cotización a ciegas: permite comprobar después si el recargo fue justo.</td></tr>
+    </tbody>
+  </table>
+
+  <h2><span class="num">7.4</span>Transparencia con el usuario y el aliado</h2>
+  <ul>
+    <li>Antes de pedir, mostrar el desglose: <b>"Tarifa base + recargo de hora (noche) + recargo de zona por alta demanda (+X %)"</b>, con el porcentaje exacto.</li>
+    <li>Ofrecer "esperar unos minutos" cuando haya recargo dinámico, mostrando la tarifa sin recargo como referencia, nunca como promesa.</li>
+    <li>El aliado ve el mismo desglose. Con el modelo de paquetes de tarifa plana, el recargo completo es ingreso del aliado.</li>
+    <li>No hablar de seguimiento GPS ni "en tiempo real" del viaje: el recargo se basa en solicitudes y disponibilidad por zona.</li>
+  </ul>
+
+  <h2><span class="num">7.5</span>Cómo saber si funciona</h2>
+  <ul>
+    <li>Mientras el laboratorio siga midiendo, cada fórmula nueva se graba a ciegas y se juzga con banda, pierde y típica, como hoy.</li>
+    <li>Con Carby operando: tiempo hasta asignación y tasa de solicitudes sin aceptar por hexágono y hora, antes y después del recargo; reclamos por precio; ingreso por hora del aliado.</li>
+    <li>Una regla de adopción igual a la del laboratorio: un cambio entra solo si mejora en una prueba hacia adelante por 3 puntos o más, sin subir "pierde".</li>
+  </ul>
+</section>
+
+<!-- ============ 8. MEJORAS ============ -->
+<section class="cap">
+  <h1 class="cap"><span class="num">8</span>Qué se puede mejorar (priorizado)</h1>
+  <table class="t">
+    <thead><tr><th>#</th><th>Mejora</th><th>Por qué</th><th>Qué se espera ganar (según las pruebas)</th></tr></thead>
+    <tbody>
+      <tr><td>1</td><td><b>Medir días laborales completos</b> (mar–vie, de 6 a. m. a 6 a. m.)</td><td>Solo hay un lunes, y sin las horas de 10 a. m. a 5 p. m. Las horas de 4 a 7 p. m. tienen muy pocas lecturas (4, 7 y 5 en las de 4, 5 y 6 p. m.). El error del lunes fue de nivel del día.</td><td>Un lunes más: +0–3 puntos de banda y +2–8 a ±10 %. Con varias noches entre semana, −$100 a −$300 de típica de noche. El mayor efecto esperado es corregir el carro caro de 5–8 p. m. (+$1.600 a +$1.900 de promedio).</td></tr>
+      <tr><td>2</td><td><b>Dejar correr el supervisor</b> y el reentreno diario de PICO y CURVA</td><td>Las 10 horas perdidas del lunes vinieron de no relanzar.</td><td>Cobertura de todas las horas sin depender de la sesión de Claude.</td></tr>
+      <tr><td>3</td><td><b>Festivo del lunes 12 de octubre</b></td><td>La fórmula asume que un festivo cobra como un domingo; nunca se ha comprobado.</td><td>Confirmar o corregir la fila "domingo o festivo" de la tabla.</td></tr>
+      <tr><td>4</td><td><b>Tráfico ≥ 1,2</b>: ~30 carreras de moto (hoy 8)</td><td>Las largas de hora punta quedan por debajo: inDrive +10–16 % en la moto con tráfico de 1,38–1,46.</td><td>Moto con minutos con tráfico (RC8): el agente CENTRO bajó el error central del lunes de 6,4 % a 4,1 %, y la moto del lunes por la mañana pasó de 51 % a 61 % en banda.</td></tr>
+      <tr><td>5</td><td><b>Noche del carro</b></td><td>23 % en banda a ciegas; inDrive contra sí mismo, 45 %.</td><td>Protección con ancla de corredor: entre semana, "pierde" de 22 % a 19 %. Más noches entre semana para la tabla propia.</td></tr>
+      <tr><td>6</td><td><b>Moto de noche: decidir NOCHE 3</b> con las carreras reales de esta noche</td><td>Ganó en la noche nunca vista: banda de 32 % a 40 %, "pierde" de 23 % a 20 %, típica de $800 a $650.</td><td>Si se confirma, pasa a precio recomendado de noche.</td></tr>
+      <tr><td>7</td><td><b>Lluvia y eventos</b>: medir a propósito días de partido o concierto y aguaceros</td><td>Lunes 7 p. m. con lluvia y partido: moto +14 % de mediana. Hay 12 lecturas con evento.</td><td>Factores de lluvia y evento con datos suficientes (hoy casi neutros por falta de casos).</td></tr>
+      <tr><td>8</td><td><b>Rutas largas nuevas</b></td><td>Con rutas de 24–48 km nunca vistas, CURVA dejó el carro en 8 % en banda.</td><td>Más rutas largas en los lotes y revisar el término de distancia × hora.</td></tr>
+      <tr><td>9</td><td><b>Quincena y fin de mes</b></td><td>El factor existe pero nunca se ha medido (15–16 y fin de mes).</td><td>Saber si hay que tener una tabla distinta esos días.</td></tr>
+      <tr><td>10</td><td><b>Para la app:</b> unificar hexágonos en un solo módulo; llevar PICO o CURVA + la capa de zona del capítulo 7</td><td><code>hexId</code> está repetido en <code>exacto.js</code>, <code>vivo.js</code> y <code>pico.js</code>.</td><td>Un solo cálculo de precio, igual en la app, el panel de aliados y el laboratorio.</td></tr>
+      <tr><td>11</td><td><b>Seguridad del laboratorio</b></td><td>La llave de Google no tiene restricciones; el celular quedó con la pantalla siempre encendida.</td><td>Restringir la llave y, al terminar, quitar la pantalla siempre encendida.</td></tr>
+    </tbody>
+  </table>
+  <div class="nota"><b>Lo que NO hay que esperar.</b> Por mejor que sea la fórmula, la variación propia de inDrive pone un techo. En moto de día ya estamos a 14 puntos del límite (63 % contra 77 %). En carro de noche, ni copiando a inDrive se pasa de 45 % en banda. Las mejoras grandes que quedan son la noche y los días laborales; el resto son puntos sueltos.</div>
+</section>
+
+<!-- ============ 9. GLOSARIO ============ -->
+<section class="cap">
+  <h1 class="cap"><span class="num">9</span>Glosario</h1>
+  <table class="t">
+    <tbody>
+      <tr><td><b>d</b></td><td>Precio Carby − precio inDrive en la misma carrera. Negativo = Carby cobró menos.</td></tr>
+      <tr><td><b>Banda</b></td><td>El rango aceptado: d entre −$300 y +$500. "% en banda" = cuántas carreras cayeron ahí.</td></tr>
+      <tr><td><b>Pierde</b></td><td>d menor que −$300: Carby cobró más de $300 menos que inDrive y el conductor pierde plata. Es lo peor.</td></tr>
+      <tr><td><b>Se pasa</b></td><td>d mayor que +$500: el pasajero paga de más.</td></tr>
+      <tr><td><b>Típica</b></td><td>La diferencia "normal" en pesos: la mediana de |d|. La mitad de las carreras se equivoca menos que eso.</td></tr>
+      <tr><td><b>Exacto, ±$100, ±10 %</b></td><td>Carreras con d = 0, con |d| ≤ $100, o con |d| ≤ 10 % del precio de inDrive.</td></tr>
+      <tr><td><b>A ciegas</b></td><td>Carby calcula y guarda su precio antes de abrir inDrive. Así nadie puede ajustarlo después.</td></tr>
+      <tr><td><b>Hacia adelante / walk-forward</b></td><td>Probar cada carrera con una fórmula entrenada solo con lo medido antes de ella, como pasaría en la vida real.</td></tr>
+      <tr><td><b>Ruta fuera / prueba honesta</b></td><td>Probar cada ruta con una fórmula que nunca vio esa ruta, porque con pasajeros reales las rutas son nuevas.</td></tr>
+      <tr><td><b>Congelada</b></td><td>Fórmula entrenada con días anteriores que no se toca durante el día que cotiza. Es como funcionaría en la app.</td></tr>
+      <tr><td><b>Ruido</b></td><td>Diferencias que pueden ser casualidad. Aquí, menos de 3 puntos.</td></tr>
+      <tr><td><b>Techo / límite físico</b></td><td>Lo mejor posible: qué tan bien acierta inDrive su propio precio en la misma ruta menos de una hora después.</td></tr>
+      <tr><td><b>Hexágono</b></td><td>Celda de seis lados en que se divide la ciudad (radio de 0,5 a 4 km). Cada hexágono puede tener su propio recargo.</td></tr>
+      <tr><td><b>Recargo / factor</b></td><td>Un multiplicador sobre la tarifa base: ×1,15 = 15 % más caro.</td></tr>
+      <tr><td><b>Encogimiento</b></td><td>Con pocos datos, un factor se acerca a 1 (o al valor de sus vecinos), para no creerle a 2 lecturas raras. Fórmula típica: peso = n ÷ (n + k).</td></tr>
+      <tr><td><b>Nivel</b></td><td>Cuánto está cobrando inDrive en este momento frente a la fórmula (por ejemplo, ×1,08 = 8 % por encima).</td></tr>
+      <tr><td><b>Kalman (filtro de)</b></td><td>Método para seguir un valor que cambia (el nivel) con mediciones ruidosas: cada dato nuevo lo corrige un poco, según qué tan confiable es.</td></tr>
+      <tr><td><b>Sesgo aprendido</b></td><td>Corrimiento hacia arriba que la corrección en vivo aprende para dejar más carreras dentro de la banda.</td></tr>
+      <tr><td><b>Residuo</b></td><td>Lo que la fórmula no explicó: ln(precio real ÷ precio fórmula).</td></tr>
+      <tr><td><b>Huber</b></td><td>Forma de ajustar la fórmula que no se deja arrastrar por unos pocos precios rarísimos.</td></tr>
+      <tr><td><b>Media geométrica / trío</b></td><td>Promedio multiplicativo de varias fórmulas. El "trío" del carro es EN4·HN1·RC5.</td></tr>
+      <tr><td><b>Cuantil (percentil 90)</b></td><td>El valor que queda por encima del 90 % de los casos. RIESGO sube el precio hasta ahí solo donde hay riesgo.</td></tr>
+      <tr><td><b>Frontera</b></td><td>La tabla de "cuánto pierde" contra "cuánta típica" al subir el precio: muestra qué se puede y qué no.</td></tr>
+      <tr><td><b>Alta demanda</b></td><td>Aviso de inDrive cuando hay más pedidos que conductores. Carby no lo tendrá; solo sirve para entender.</td></tr>
+      <tr><td><b>Torneo</b></td><td>Competencia automática entre ~70 fórmulas al cerrar cada versión. Gana la que mejor cobró en carreras reales hacia adelante.</td></tr>
+      <tr><td><b>Versión</b></td><td>Tanda de 50 carreras medidas (v001 … v018).</td></tr>
+      <tr><td><b>Reentreno</b></td><td>Recalcular los coeficientes con todas las lecturas: cada 10 carreras (oficial) o cada día a las 12:05 a. m. (fórmula propia).</td></tr>
+      <tr><td><b>Vigía</b></td><td>Revisión automática de las últimas carreras: de día pausa, de noche pasa a modo aprendizaje.</td></tr>
+      <tr><td><b>Supervisor</b></td><td>Programa aparte que relanza la medición tras pausas y paradas, aunque la sesión de Claude se cierre.</td></tr>
+      <tr><td><b>Ruta de control / sensor</b></td><td>Rutas fijas (RC1–RC19) que se repiten cada 5 carreras para medir el nivel de cada zona.</td></tr>
+      <tr><td><b>Ancla de corredor</b></td><td>El último precio medido con origen y destino en los mismos hexágonos de 2,5 km, ajustado por km y minutos.</td></tr>
+      <tr><td><b>PLAN B laboral</b></td><td>Capa de seguridad que solo sube el precio (máximo +25 %) cuando las carreras del mismo día quedan por debajo.</td></tr>
+      <tr><td><b>Tráfico (índice)</b></td><td>Minutos de Google con tráfico ÷ minutos sin tráfico. 1,0 = vía libre; 1,4 = 40 % más lento.</td></tr>
+      <tr><td><b>Jornada</b></td><td>En CURVA, el día va de 6 a. m. a 6 a. m.: la madrugada es parte de la noche anterior.</td></tr>
+      <tr><td><b>Mínima</b></td><td>Precio mínimo de una carrera (PICO y CURVA: carro $6.300, moto $3.700).</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<!-- ============ ANEXOS ============ -->
+<section class="cap">
+  <h1 class="cap"><span class="num">A</span>Anexo: curva de horas pico completa (CURVA)</h1>
+  <p class="chico">Recargo sobre la tarifa base cada 30 minutos (<code>datos/modelo-curva.md</code>, entrenada con 839 lecturas anteriores al 5 oct a las 12:00 a. m.). Entre dos filas el precio cambia en línea recta. Lunes a viernes no tenía lecturas propias en esta versión y usa la curva común. Sombreado: más claro desde ×1,05, medio desde ×1,15 y fuerte desde ×1,30.</p>
+  <div class="dos"><div><table class="t compacta"><caption>Carro: recargo sobre la tarifa base, cada 30 minutos</caption><thead><tr><th>Hora</th><th>Lun–vie</th><th>Sábado</th><th>Dom./festivo</th></tr></thead><tbody><tr><td>06:00</td><td class="h1">×1,10</td><td class="h1">×1,10</td><td class="h1">×1,11</td></tr><tr><td>06:30</td><td class="h1">×1,07</td><td class="h1">×1,07</td><td class="h1">×1,08</td></tr><tr><td>07:00</td><td class="h1">×1,05</td><td class="h1">×1,05</td><td class="h1">×1,05</td></tr><tr><td>07:30</td><td class="">×1,03</td><td class="">×1,03</td><td class="">×1,02</td></tr><tr><td>08:00</td><td class="">×1,01</td><td class="">×1,01</td><td class="">×1,01</td></tr><tr><td>08:30</td><td class="">×1,01</td><td class="">×1,01</td><td class="">×1,00</td></tr><tr><td>09:00</td><td class="">×1,01</td><td class="">×1,00</td><td class="">×1,00</td></tr><tr><td>09:30</td><td class="">×1,01</td><td class="">×1,01</td><td class="">×1,01</td></tr><tr><td>10:00</td><td class="">×1,01</td><td class="">×1,01</td><td class="">×1,02</td></tr><tr><td>10:30</td><td class="">×1,02</td><td class="">×1,02</td><td class="">×1,02</td></tr><tr><td>11:00</td><td class="">×1,02</td><td class="">×1,02</td><td class="">×1,03</td></tr><tr><td>11:30</td><td class="">×1,03</td><td class="">×1,03</td><td class="">×1,03</td></tr><tr><td>12:00</td><td class="">×1,03</td><td class="">×1,03</td><td class="">×1,04</td></tr><tr><td>12:30</td><td class="">×1,04</td><td class="">×1,04</td><td class="h1">×1,05</td></tr><tr><td>13:00</td><td class="h1">×1,05</td><td class="h1">×1,05</td><td class="h1">×1,06</td></tr><tr><td>13:30</td><td class="h1">×1,05</td><td class="h1">×1,05</td><td class="h1">×1,06</td></tr><tr><td>14:00</td><td class="h1">×1,05</td><td class="h1">×1,05</td><td class="h1">×1,05</td></tr><tr><td>14:30</td><td class="">×1,04</td><td class="">×1,04</td><td class="">×1,04</td></tr><tr><td>15:00</td><td class="">×1,03</td><td class="">×1,03</td><td class="">×1,03</td></tr><tr><td>15:30</td><td class="">×1,02</td><td class="">×1,02</td><td class="">×1,02</td></tr><tr><td>16:00</td><td class="">×1,03</td><td class="">×1,03</td><td class="">×1,02</td></tr><tr><td>16:30</td><td class="">×1,03</td><td class="">×1,03</td><td class="">×1,03</td></tr><tr><td>17:00</td><td class="h1">×1,05</td><td class="h1">×1,05</td><td class="">×1,04</td></tr><tr><td>17:30</td><td class="h1">×1,06</td><td class="h1">×1,06</td><td class="h1">×1,06</td></tr><tr><td>18:00</td><td class="h1">×1,09</td><td class="h1">×1,09</td><td class="h1">×1,08</td></tr><tr><td>18:30</td><td class="h1">×1,11</td><td class="h1">×1,11</td><td class="h1">×1,11</td></tr><tr><td>19:00</td><td class="h1">×1,13</td><td class="h1">×1,13</td><td class="h1">×1,13</td></tr><tr><td>19:30</td><td class="h1">×1,14</td><td class="h2">×1,15</td><td class="h2">×1,15</td></tr><tr><td>20:00</td><td class="h2">×1,15</td><td class="h2">×1,16</td><td class="h2">×1,16</td></tr><tr><td>20:30</td><td class="h2">×1,16</td><td class="h2">×1,16</td><td class="h2">×1,16</td></tr><tr><td>21:00</td><td class="h2">×1,16</td><td class="h2">×1,15</td><td class="h2">×1,16</td></tr><tr><td>21:30</td><td class="h2">×1,15</td><td class="h2">×1,15</td><td class="h2">×1,16</td></tr><tr><td>22:00</td><td class="h2">×1,15</td><td class="h1">×1,14</td><td class="h2">×1,16</td></tr><tr><td>22:30</td><td class="h2">×1,15</td><td class="h1">×1,14</td><td class="h2">×1,15</td></tr><tr><td>23:00</td><td class="h2">×1,15</td><td class="h1">×1,14</td><td class="h1">×1,14</td></tr><tr><td>23:30</td><td class="h2">×1,15</td><td class="h2">×1,15</td><td class="h1">×1,14</td></tr><tr><td>00:00</td><td class="h2">×1,17</td><td class="h2">×1,17</td><td class="h2">×1,16</td></tr><tr><td>00:30</td><td class="h2">×1,20</td><td class="h2">×1,20</td><td class="h2">×1,19</td></tr><tr><td>01:00</td><td class="h2">×1,23</td><td class="h2">×1,23</td><td class="h2">×1,22</td></tr><tr><td>01:30</td><td class="h2">×1,27</td><td class="h2">×1,27</td><td class="h2">×1,26</td></tr><tr><td>02:00</td><td class="h3">×1,31</td><td class="h3">×1,31</td><td class="h3">×1,31</td></tr><tr><td>02:30</td><td class="h3">×1,34</td><td class="h3">×1,36</td><td class="h3">×1,34</td></tr><tr><td>03:00</td><td class="h3">×1,37</td><td class="h3">×1,39</td><td class="h3">×1,37</td></tr><tr><td>03:30</td><td class="h3">×1,37</td><td class="h3">×1,39</td><td class="h3">×1,37</td></tr><tr><td>04:00</td><td class="h3">×1,36</td><td class="h3">×1,38</td><td class="h3">×1,36</td></tr><tr><td>04:30</td><td class="h3">×1,33</td><td class="h3">×1,34</td><td class="h3">×1,33</td></tr><tr><td>05:00</td><td class="h2">×1,28</td><td class="h2">×1,28</td><td class="h2">×1,28</td></tr><tr><td>05:30</td><td class="h2">×1,23</td><td class="h2">×1,22</td><td class="h2">×1,23</td></tr><tr><td>06:00+</td><td class="h2">×1,18</td><td class="h2">×1,16</td><td class="h2">×1,18</td></tr></tbody></table></div><div><table class="t compacta"><caption>Moto: recargo sobre la tarifa base, cada 30 minutos</caption><thead><tr><th>Hora</th><th>Lun–vie</th><th>Sábado</th><th>Dom./festivo</th></tr></thead><tbody><tr><td>06:00</td><td class="h1">×1,07</td><td class="h1">×1,07</td><td class="h1">×1,08</td></tr><tr><td>06:30</td><td class="h1">×1,06</td><td class="h1">×1,06</td><td class="h1">×1,06</td></tr><tr><td>07:00</td><td class="h1">×1,05</td><td class="h1">×1,05</td><td class="h1">×1,05</td></tr><tr><td>07:30</td><td class="h1">×1,05</td><td class="h1">×1,05</td><td class="h1">×1,05</td></tr><tr><td>08:00</td><td class="h1">×1,05</td><td class="h1">×1,05</td><td class="">×1,04</td></tr><tr><td>08:30</td><td class="">×1,04</td><td class="h1">×1,05</td><td class="">×1,04</td></tr><tr><td>09:00</td><td class="h1">×1,05</td><td class="h1">×1,05</td><td class="">×1,04</td></tr><tr><td>09:30</td><td class="h1">×1,05</td><td class="h1">×1,06</td><td class="h1">×1,05</td></tr><tr><td>10:00</td><td class="h1">×1,06</td><td class="h1">×1,06</td><td class="h1">×1,06</td></tr><tr><td>10:30</td><td class="h1">×1,06</td><td class="h1">×1,07</td><td class="h1">×1,07</td></tr><tr><td>11:00</td><td class="h1">×1,06</td><td class="h1">×1,06</td><td class="h1">×1,06</td></tr><tr><td>11:30</td><td class="h1">×1,05</td><td class="h1">×1,05</td><td class="h1">×1,05</td></tr><tr><td>12:00</td><td class="">×1,03</td><td class="">×1,04</td><td class="">×1,03</td></tr><tr><td>12:30</td><td class="">×1,02</td><td class="">×1,03</td><td class="">×1,02</td></tr><tr><td>13:00</td><td class="">×1,02</td><td class="">×1,02</td><td class="">×1,02</td></tr><tr><td>13:30</td><td class="">×1,02</td><td class="">×1,02</td><td class="">×1,02</td></tr><tr><td>14:00</td><td class="">×1,01</td><td class="">×1,01</td><td class="">×1,01</td></tr><tr><td>14:30</td><td class="">×1,01</td><td class="">×1,01</td><td class="">×1,01</td></tr><tr><td>15:00</td><td class="">×1,00</td><td class="">×1,00</td><td class="">×1,00</td></tr><tr><td>15:30</td><td class="">×1,00</td><td class="">×1,00</td><td class="">×1,00</td></tr><tr><td>16:00</td><td class="">×1,00</td><td class="">×1,00</td><td class="">×1,00</td></tr><tr><td>16:30</td><td class="">×1,00</td><td class="">×1,00</td><td class="">×1,00</td></tr><tr><td>17:00</td><td class="">×1,00</td><td class="">×1,00</td><td class="">×1,00</td></tr><tr><td>17:30</td><td class="">×1,01</td><td class="">×1,01</td><td class="">×1,01</td></tr><tr><td>18:00</td><td class="">×1,02</td><td class="">×1,02</td><td class="">×1,02</td></tr><tr><td>18:30</td><td class="">×1,03</td><td class="">×1,03</td><td class="">×1,03</td></tr><tr><td>19:00</td><td class="">×1,04</td><td class="">×1,04</td><td class="">×1,04</td></tr><tr><td>19:30</td><td class="h1">×1,05</td><td class="h1">×1,05</td><td class="h1">×1,05</td></tr><tr><td>20:00</td><td class="h1">×1,07</td><td class="h1">×1,06</td><td class="h1">×1,08</td></tr><tr><td>20:30</td><td class="h1">×1,10</td><td class="h1">×1,08</td><td class="h1">×1,10</td></tr><tr><td>21:00</td><td class="h1">×1,13</td><td class="h1">×1,11</td><td class="h1">×1,14</td></tr><tr><td>21:30</td><td class="h2">×1,16</td><td class="h2">×1,15</td><td class="h2">×1,18</td></tr><tr><td>22:00</td><td class="h2">×1,20</td><td class="h2">×1,18</td><td class="h2">×1,22</td></tr><tr><td>22:30</td><td class="h2">×1,24</td><td class="h2">×1,22</td><td class="h2">×1,26</td></tr><tr><td>23:00</td><td class="h2">×1,28</td><td class="h2">×1,26</td><td class="h3">×1,30</td></tr><tr><td>23:30</td><td class="h3">×1,30</td><td class="h2">×1,29</td><td class="h3">×1,32</td></tr><tr><td>00:00</td><td class="h3">×1,33</td><td class="h3">×1,32</td><td class="h3">×1,34</td></tr><tr><td>00:30</td><td class="h3">×1,35</td><td class="h3">×1,34</td><td class="h3">×1,35</td></tr><tr><td>01:00</td><td class="h3">×1,37</td><td class="h3">×1,36</td><td class="h3">×1,37</td></tr><tr><td>01:30</td><td class="h3">×1,39</td><td class="h3">×1,39</td><td class="h3">×1,39</td></tr><tr><td>02:00</td><td class="h3">×1,42</td><td class="h3">×1,42</td><td class="h3">×1,42</td></tr><tr><td>02:30</td><td class="h3">×1,43</td><td class="h3">×1,44</td><td class="h3">×1,43</td></tr><tr><td>03:00</td><td class="h3">×1,44</td><td class="h3">×1,45</td><td class="h3">×1,44</td></tr><tr><td>03:30</td><td class="h3">×1,43</td><td class="h3">×1,44</td><td class="h3">×1,43</td></tr><tr><td>04:00</td><td class="h3">×1,41</td><td class="h3">×1,43</td><td class="h3">×1,41</td></tr><tr><td>04:30</td><td class="h3">×1,38</td><td class="h3">×1,39</td><td class="h3">×1,38</td></tr><tr><td>05:00</td><td class="h3">×1,33</td><td class="h3">×1,33</td><td class="h3">×1,33</td></tr><tr><td>05:30</td><td class="h2">×1,27</td><td class="h2">×1,26</td><td class="h2">×1,27</td></tr><tr><td>06:00+</td><td class="h2">×1,21</td><td class="h2">×1,19</td><td class="h2">×1,21</td></tr></tbody></table></div></div>
+</section>
+<section class="cap">
+  <h1 class="cap"><span class="num">B</span>Anexo: archivos del laboratorio</h1>
+  <table class="t compacta">
+    <thead><tr><th>Archivo</th><th>Para qué</th></tr></thead>
+    <tbody>
+      <tr><td><code>orquestador/orquestador.mjs</code></td><td>Mide en versiones de 50, reentreno cada 10, torneo, vigía, modo noche</td></tr>
+      <tr><td><code>orquestador/supervisor.mjs</code></td><td>Relanza tras pausas; reentreno diario de la fórmula propia</td></tr>
+      <tr><td><code>colector/colector.mjs</code>, <code>colector/cotizar.mjs</code></td><td>Lectura de inDrive por USB; cotización a ciegas con todas las variantes</td></tr>
+      <tr><td><code>nucleo/formulas.js</code></td><td>Catálogo de fórmulas, ajuste, <code>predecir()</code> y pruebas honestas</td></tr>
+      <tr><td><code>nucleo/candidatas/horas.js</code></td><td>HN1, HN2 y HN3 (oficiales: HN1 carro, HN3 moto)</td></tr>
+      <tr><td><code>nucleo/vivo.js</code>, <code>carro.js</code>, <code>laboral.js</code>, <code>noche.js</code></td><td>Capas en vivo: EN VIVO, trío / carro de noche, PLAN B, noche</td></tr>
+      <tr><td><code>nucleo/riesgo.js</code>, <code>apilado.js</code>, <code>candidatas/centro.js</code>, <code>candidatas/noche3.js</code></td><td>Agentes del reto "pierde ≤ 10 %"</td></tr>
+      <tr><td><code>nucleo/pico.js</code>, <code>nucleo/curva.js</code> + <code>analisis/pico.mjs</code>, <code>analisis/curva.mjs</code></td><td>Fórmula propia y su entrenamiento diario</td></tr>
+      <tr><td><code>datos/mediciones.jsonl</code></td><td>Todas las lecturas (con el campo <code>carby</code> de la cotización a ciegas)</td></tr>
+      <tr><td><code>datos/bitacora.md</code>, <code>PENDIENTES.md</code></td><td>Historial completo de hipótesis y decisiones; pendientes</td></tr>
+      <tr><td><code>datos/modelo-oficial.json</code>, <code>modelo-pico.json</code>, <code>modelo-curva.json</code></td><td>Fórmulas entrenadas vigentes</td></tr>
+      <tr><td><code>datos/torneo.md</code>, <code>estado.md</code>, <code>diagnostico-vigia.md</code>, <code>tarifas-noche.md</code></td><td>Informes automáticos</td></tr>
+    </tbody>
+  </table>
+</section>
+
+</body>
+</html>

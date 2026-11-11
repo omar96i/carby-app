@@ -40,6 +40,7 @@ import SearchModal from "../Transport/components/SearchModal";
 
 import PeekSummary from "../Transport/components/PeekSummary";
 import { useAlturaTecladoAndroid } from "../../hooks/useAlturaTecladoAndroid";
+import { cotizarServicio, detectarRama, hayRuta } from "../../utils/tarifas";
 
 const screenH = Dimensions.get("window").height;
 const screenW = Dimensions.get("window").width;
@@ -217,6 +218,8 @@ export default function StepUno() {
   };
   const [suggestedPrice, setSuggestedPrice] = useState("");
   const [displayPrice, setDisplayPrice] = useState("");
+  const [envioVehiculo, setEnvioVehiculo] = useState("moto");
+  const tarifaDetalleRef = useRef(null);
   const priceAnim = useRef(new Animated.Value(1)).current;
   const markerPulse = useRef(new Animated.Value(0)).current;
   const dragHandleAnim = useRef(new Animated.Value(0)).current;
@@ -255,6 +258,7 @@ export default function StepUno() {
     setRouteCoords([]);
     setTotalPrice("");
     totalPriceRaw.current = 0;
+    tarifaDetalleRef.current = null;
     setDisplayPrice("");
     setSuggestedPrice("");
     setBidOffset(0);
@@ -286,6 +290,8 @@ export default function StepUno() {
     setIsSearchingDelivery(false);
     setShowPickupSuggestions(false);
     setShowDeliverySuggestions(false);
+    setEnvioVehiculo("moto");
+    envioNotaRef.current = null;
     setMapRegion({
       latitude: 4.60971,
       longitude: -74.08175,
@@ -873,24 +879,65 @@ export default function StepUno() {
 
   const computeSuggestedPrice = (distKm) => {
     const selectedService = availableServices.find((s) => s.id.toString() === selectedServiceId);
-    if (!selectedService) return 0;
-    const tarifa = selectedService.tarifa_vigente || null;
-    const base = parseFloat(selectedService.precio_base_efectivo ?? tarifa?.precio_base ?? selectedService.precio_base) || 0;
-    const perKm = parseFloat(selectedService.precio_km_efectivo ?? tarifa?.precio_km ?? selectedService.precio_km) || 0;
-    const additional = parseFloat(selectedService.precio_adicional_efectivo ?? tarifa?.precio_adicional ?? selectedService.precio_adicional) || 0;
+    if (!selectedService) {
+      tarifaDetalleRef.current = null;
+      return 0;
+    }
     const dist = distKm && distKm > 0 ? distKm : 0;
-    let calculated = base + dist * perKm + additional;
+    if (!dist || !pickupCoord || !deliveryCoord) {
+      tarifaDetalleRef.current = null;
+      return 0;
+    }
+    const cot = cotizarServicio({
+      service: selectedService,
+      km: dist,
+      minCon: routeDurationInTraffic,
+      minSin: routeDuration,
+      o: pickupCoord ? [pickupCoord.latitude, pickupCoord.longitude] : null,
+      d: deliveryCoord ? [deliveryCoord.latitude, deliveryCoord.longitude] : null,
+      envioVehiculo,
+    });
+    if (!cot) {
+      tarifaDetalleRef.current = null;
+      return 0;
+    }
+    tarifaDetalleRef.current = { rama: cot.rama, ...cot.detalle };
+    let calculated = cot.precio;
     const pct = demandaPctRef.current || 0;
     if (pct > 0) {
       calculated = calculated * (1 + pct / 100);
       console.log("[StepUno] DEMANDA APLICA +", pct, "% ->", calculated);
     }
-    calculated = Math.max(calculated, 5.0);
-    return parseFloat(calculated.toFixed(0));
+    calculated = Math.max(Math.round(calculated / 100) * 100, cot.rama === "actual" ? 5 : cot.precio);
+    return calculated;
   };
 
   const updatePriceDisplay = (distKm = distanceInKm) => {
+    if (
+      !hayRuta({
+        pickupAddress,
+        deliveryAddress,
+        pickupCoord,
+        deliveryCoord,
+        distanceInKm: distKm,
+      })
+    ) {
+      tarifaDetalleRef.current = null;
+      setSuggestedPrice("");
+      setDisplayPrice("");
+      setTotalPrice("");
+      totalPriceRaw.current = 0;
+      return;
+    }
     const suggestedRaw = computeSuggestedPrice(distKm);
+    if (!suggestedRaw) {
+      tarifaDetalleRef.current = null;
+      setSuggestedPrice("");
+      setDisplayPrice("");
+      setTotalPrice("");
+      totalPriceRaw.current = 0;
+      return;
+    }
     setSuggestedPrice(formatPrice(suggestedRaw));
     const finalRaw = Math.max(suggestedRaw + bidOffset, 5);
     totalPriceRaw.current = finalRaw;
@@ -1095,6 +1142,9 @@ export default function StepUno() {
           vehicle_type_id: selectedVehicleTypeId,
           schedule_id: serviceDetails.schedule_id_vigente ?? serviceDetails.tarifa_vigente?.id ?? null,
           tarifa_vigente: serviceDetails.tarifa_vigente ?? null,
+          tarifa_formula: tarifaDetalleRef.current?.formula || "BASE",
+          tarifa_rama: tarifaDetalleRef.current?.rama || null,
+          tarifa_detalle: tarifaDetalleRef.current || null,
           demanda_nivel: demandaInfo.nivel,
           demanda_aumento_pct: demandaInfo.aumento,
           demanda_carreras_cercanas: demandaInfo.carreras,
@@ -1209,6 +1259,7 @@ export default function StepUno() {
       tarifa_vigente: tarifa,
     });
     setBidOffset(0);
+    setEnvioVehiculo("moto");
     AsyncStorage.setItem("selectedServiceId", service.id.toString());
     if (service.nombre) AsyncStorage.setItem("serviceName", service.nombre);
   };
@@ -1304,7 +1355,7 @@ export default function StepUno() {
     if (distanceInKm && selectedServiceId && availableServices.length > 0) {
       updatePriceDisplay(distanceInKm);
     }
-  }, [distanceInKm, selectedServiceId, demandaInfo, bidOffset, availableServices]);
+  }, [distanceInKm, selectedServiceId, demandaInfo, bidOffset, availableServices, envioVehiculo]);
 
   // Auto-seleccionar primer servicio al cargar
   useEffect(() => {
@@ -1395,6 +1446,21 @@ export default function StepUno() {
   };
 
   const currentService = availableServices.find((s) => s.id.toString() === selectedServiceId);
+  const selectedRama = currentService ? detectarRama(currentService) : null;
+  const envioNotaRef = useRef(null);
+
+  useEffect(() => {
+    const autoRe = /^Solicitud de env[ií]o - (moto|carro)$/i;
+    if (selectedRama === "envios") {
+      const auto = `Solicitud de envio - ${envioVehiculo}`;
+      setObservations((prev) => (prev === "" || autoRe.test(prev) ? auto : prev));
+      envioNotaRef.current = auto;
+    } else if (envioNotaRef.current) {
+      const auto = envioNotaRef.current;
+      setObservations((prev) => (prev === auto ? "" : prev));
+      envioNotaRef.current = null;
+    }
+  }, [selectedRama, envioVehiculo]);
 
   const getServiceIconUrl = (service) => {
     if (!service || !service.icono) return null;
@@ -1621,27 +1687,31 @@ export default function StepUno() {
                 keyboardShouldPersistTaps="handled"
               >
                 {vehicleTypes.length > 0 && (
-                  <ScrollView
-                    horizontal
-                    showsHorizontalScrollIndicator={false}
-                    contentContainerStyle={styles.vtChips}
-                  >
-                    {vehicleTypes.map((vt) => {
-                      const active = selectedVehicleTypeId === vt.id;
-                      return (
-                        <TouchableOpacity
-                          key={vt.id}
-                          onPress={() => handleVehicleTypeSelect(vt.id)}
-                          activeOpacity={0.85}
-                          style={[styles.vtChip, active && styles.vtChipActive]}
-                        >
-                          <Text style={[styles.vtChipText, active && styles.vtChipTextActive]}>
-                            {vt.nombre}
-                          </Text>
-                        </TouchableOpacity>
-                      );
-                    })}
-                  </ScrollView>
+                  <View style={styles.vtBlock}>
+                    <Text style={styles.vtLabel}>Tipo de vehículo</Text>
+                    <Text style={styles.vtHint}>Toca uno para filtrar los servicios</Text>
+                    <ScrollView
+                      horizontal
+                      showsHorizontalScrollIndicator={false}
+                      contentContainerStyle={styles.vtChips}
+                    >
+                      {vehicleTypes.map((vt) => {
+                        const active = selectedVehicleTypeId === vt.id;
+                        return (
+                          <TouchableOpacity
+                            key={vt.id}
+                            onPress={() => handleVehicleTypeSelect(vt.id)}
+                            activeOpacity={0.85}
+                            style={[styles.vtChip, active && styles.vtChipActive]}
+                          >
+                            <Text style={[styles.vtChipText, active && styles.vtChipTextActive]}>
+                              {vt.nombre}
+                            </Text>
+                          </TouchableOpacity>
+                        );
+                      })}
+                    </ScrollView>
+                  </View>
                 )}
                 <VehicleCarousel
                   services={availableServices}
@@ -1649,7 +1719,44 @@ export default function StepUno() {
                   onSelect={handleServiceSelect}
                   distanceKm={distanceInKm}
                   surgePct={demandaInfo.aumento}
+                  hasRoute={Boolean(
+                    pickupAddress &&
+                      deliveryAddress &&
+                      pickupCoord &&
+                      deliveryCoord &&
+                      distanceInKm &&
+                      distanceInKm > 0
+                  )}
+                  route={{
+                    km: distanceInKm,
+                    minCon: routeDurationInTraffic,
+                    minSin: routeDuration,
+                    o: pickupCoord ? [pickupCoord.latitude, pickupCoord.longitude] : null,
+                    d: deliveryCoord ? [deliveryCoord.latitude, deliveryCoord.longitude] : null,
+                  }}
                 />
+
+                {selectedRama === "envios" && (
+                  <View style={styles.vtBlock}>
+                    <View style={styles.envioRow}>
+                      {[
+                        { id: "moto", label: "Moto" },
+                        { id: "carro", label: "Carro" },
+                      ].map((v) => (
+                        <TouchableOpacity
+                          key={v.id}
+                          onPress={() => setEnvioVehiculo(v.id)}
+                          activeOpacity={0.85}
+                          style={[styles.vtChip, styles.envioChip, envioVehiculo === v.id && styles.vtChipActive]}
+                        >
+                          <Text style={[styles.vtChipText, envioVehiculo === v.id && styles.vtChipTextActive]}>
+                            {v.label}
+                          </Text>
+                        </TouchableOpacity>
+                      ))}
+                    </View>
+                  </View>
+                )}
 
                 {demandaInfo.aumento > 0 && (
                   <View style={styles.demanda}>
@@ -1663,7 +1770,7 @@ export default function StepUno() {
                   </View>
                 )}
 
-                <View>
+                {deliveryAddress ? (
                   <BidPanel
                     displayPrice={displayPrice}
                     suggestedPrice={suggestedPrice}
@@ -1675,19 +1782,22 @@ export default function StepUno() {
                     bidOffset={bidOffset}
                     hasPrice={!!displayPrice}
                   />
-                  {!deliveryAddress && (
-                    <TouchableOpacity
-                      onPress={openSearchForDestination}
-                      activeOpacity={0.9}
-                      style={styles.sinDestino}
-                    >
-                      <View style={styles.sinDestinoPill}>
-                        <Ionicons name="search" size={15} color="#fa6205" />
-                        <Text style={styles.sinDestinoText}>Selecciona a dónde vamos</Text>
-                      </View>
-                    </TouchableOpacity>
-                  )}
-                </View>
+                ) : (
+                  <TouchableOpacity
+                    onPress={openSearchForDestination}
+                    activeOpacity={0.9}
+                    style={styles.destCta}
+                  >
+                    <View style={styles.destCtaIcon}>
+                      <Ionicons name="search" size={20} color="#fa6205" />
+                    </View>
+                    <View style={{ flex: 1 }}>
+                      <Text style={styles.destCtaTitle}>¿A dónde vamos?</Text>
+                      <Text style={styles.destCtaSub}>Elige tu destino para ver el precio</Text>
+                    </View>
+                    <Ionicons name="chevron-forward" size={20} color="#fa6205" />
+                  </TouchableOpacity>
+                )}
 
                 <NoteInput
                   value={observations}
@@ -1695,27 +1805,29 @@ export default function StepUno() {
                   onFocus={() => setTimeout(() => sheetScrollRef.current?.scrollToEnd({ animated: true }), 250)}
                 />
 
-                <View style={styles.actionsRow}>
-                  <PaymentSelector paymentMethod={paymentMethod} onPress={() => setPaymentModalVisible(true)} />
-                  <TouchableOpacity
-                    style={[
-                      styles.goBtn,
-                      (!pickupAddress || !deliveryAddress || !selectedServiceId || !paymentMethod || !displayPrice || isCalculatingPrice || isCreatingRide) &&
-                        styles.goBtnDisabled,
-                    ]}
-                    disabled={!pickupAddress || !deliveryAddress || !selectedServiceId || !paymentMethod || !displayPrice || isCalculatingPrice || isCreatingRide}
-                    onPress={handleContinue}
-                    activeOpacity={0.8}
-                  >
-                    {isCreatingRide ? (
-                      <ActivityIndicator size="small" color="#FFF" />
-                    ) : (
-                      <Text style={styles.goBtnText}>
-                        Ofrecer ${displayPrice || "--"}
-                      </Text>
-                    )}
-                  </TouchableOpacity>
-                </View>
+                {deliveryAddress ? (
+                  <View style={styles.actionsRow}>
+                    <PaymentSelector paymentMethod={paymentMethod} onPress={() => setPaymentModalVisible(true)} />
+                    <TouchableOpacity
+                      style={[
+                        styles.goBtn,
+                        (!pickupAddress || !deliveryAddress || !selectedServiceId || !paymentMethod || !displayPrice || isCalculatingPrice || isCreatingRide) &&
+                          styles.goBtnDisabled,
+                      ]}
+                      disabled={!pickupAddress || !deliveryAddress || !selectedServiceId || !paymentMethod || !displayPrice || isCalculatingPrice || isCreatingRide}
+                      onPress={handleContinue}
+                      activeOpacity={0.8}
+                    >
+                      {isCreatingRide ? (
+                        <ActivityIndicator size="small" color="#FFF" />
+                      ) : (
+                        <Text style={styles.goBtnText}>
+                          Ofrecer ${displayPrice || "--"}
+                        </Text>
+                      )}
+                    </TouchableOpacity>
+                  </View>
+                ) : null}
               </ScrollView>
             </>
           )}
@@ -2157,7 +2269,12 @@ const styles = StyleSheet.create({
   },
   sheetScroll: { flex: 1 },
   sheetContent: { paddingHorizontal: 16, paddingBottom: 24 },
+  vtBlock: { marginTop: 4 },
+  vtLabel: { fontSize: 13, fontFamily: "Montserrat_700Bold", color: "#1C1C1E", marginLeft: 2 },
+  vtHint: { fontSize: 11.5, fontFamily: "Montserrat_400Regular", color: "#71717A", marginLeft: 2, marginTop: 1, marginBottom: 6 },
   vtChips: { gap: 8, paddingVertical: 2, paddingHorizontal: 2 },
+  envioRow: { flexDirection: "row", gap: 8, paddingHorizontal: 2 },
+  envioChip: { flex: 1, alignItems: "center" },
   vtChip: { paddingVertical: 8, paddingHorizontal: 16, borderRadius: 999, backgroundColor: "#F4F4F5" },
   vtChipActive: { backgroundColor: "#1C1C1E" },
   vtChipText: { fontSize: 13, fontFamily: "Montserrat_700Bold", color: "#71717A" },
@@ -2166,12 +2283,16 @@ const styles = StyleSheet.create({
   demandaIcon: { width: 32, height: 32, borderRadius: 16, backgroundColor: "rgba(250,98,5,0.18)", justifyContent: "center", alignItems: "center" },
   demandaTitle: { fontSize: 13, fontFamily: "Montserrat_700Bold", color: "#FFF" },
   demandaSub: { fontSize: 11.5, fontFamily: "Montserrat_400Regular", color: "rgba(255,255,255,0.7)", marginTop: 1 },
-  sinDestino: { ...StyleSheet.absoluteFillObject, top: 14, backgroundColor: "rgba(255,255,255,0.75)", borderRadius: 22, justifyContent: "center", alignItems: "center" },
-  sinDestinoPill: {
-    flexDirection: "row", alignItems: "center", gap: 8, backgroundColor: "#FFF", borderRadius: 999, height: 44, paddingHorizontal: 18,
-    shadowColor: "#000", shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.1, shadowRadius: 10, elevation: 4,
+  destCta: {
+    flexDirection: "row", alignItems: "center", gap: 12, backgroundColor: "#FFF0E5", borderRadius: 22,
+    paddingVertical: 14, paddingHorizontal: 14, marginTop: 12, borderWidth: 1.5, borderColor: "#fa6205",
   },
-  sinDestinoText: { fontSize: 13.5, fontFamily: "Montserrat_700Bold", color: "#1C1C1E" },
+  destCtaIcon: {
+    width: 42, height: 42, borderRadius: 21, backgroundColor: "#FFF",
+    justifyContent: "center", alignItems: "center",
+  },
+  destCtaTitle: { fontSize: 15, fontFamily: "Montserrat_700Bold", color: "#1C1C1E" },
+  destCtaSub: { fontSize: 12, fontFamily: "Montserrat_400Regular", color: "#71717A", marginTop: 2 },
   sheetHeader: {
     flexDirection: "row",
     alignItems: "center",

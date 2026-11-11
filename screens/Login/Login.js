@@ -33,6 +33,17 @@ import { fetchActiveCarrera } from "../../utils/activeRide";
 
 const API_URL = "https://back.carbycol.com/api/";
 
+// Timeout para evitar spinner infinito si el backend no responde
+const fetchConTimeout = async (url, options = {}, ms = 15000) => {
+  const controller = new AbortController();
+  const id = setTimeout(() => controller.abort(), ms);
+  try {
+    return await fetch(url, { ...options, signal: controller.signal });
+  } finally {
+    clearTimeout(id);
+  }
+};
+
 export default function LoginScreen() {
   const navigation = useNavigation();
   const insets = useSafeAreaInsets();
@@ -178,12 +189,12 @@ export default function LoginScreen() {
     });
 
     try {
-      const res = await fetch(`${API_URL}login`, {
+      const res = await fetchConTimeout(`${API_URL}login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: loginBody,
       });
-      const data = await res.json();
+      const data = await res.json().catch(() => ({}));
 
       if (res.status === 200 && data.token) {
         console.log("🚀 Ingreso exitoso como", preferencia);
@@ -195,12 +206,12 @@ export default function LoginScreen() {
       const isRoleError = data.razon === "estado_inexistente" || data.razon === "estado_no_activo";
       if (isRoleError && preferencia !== "usuario") {
         console.log("⚠️ Rol no aprobado, reintentando como usuario...");
-        const retryRes = await fetch(`${API_URL}login`, {
+        const retryRes = await fetchConTimeout(`${API_URL}login`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ email: email.trim(), password: password.trim(), tipo_usuario: "usuario" }),
         });
-        const retryData = await retryRes.json();
+        const retryData = await retryRes.json().catch(() => ({}));
         if (retryRes.status === 200 && retryData.token) {
           await AsyncStorage.setItem("preferencia_rol", "usuario");
           await finalizarLogin(retryData);
@@ -212,21 +223,20 @@ export default function LoginScreen() {
         return;
       }
 
-      if (isRoleError && preferencia !== "usuario") {
-        await AsyncStorage.setItem("preferencia_rol", "usuario");
-      }
-
       setIsLoading(false);
       manejarErrorNegocio(data, API_URL);
     } catch (error) {
       console.error("Error handleLogin:", error);
       setIsLoading(false);
-      showAlert({ title: "Error", message: "Ocurrió un error inesperado. Intenta nuevamente.", type: "error" });
+      if (error?.name === "AbortError") {
+        showAlert({ title: "Sin respuesta", message: "El servidor tardó demasiado. Revisa tu conexión e intenta de nuevo.", type: "error" });
+      } else {
+        showAlert({ title: "Error", message: "Ocurrió un error inesperado. Intenta nuevamente.", type: "error" });
+      }
     }
   };
 
   const finalizarLogin = async (data) => {
-    setIsLoading(true);
     try {
       await Promise.all([
         AsyncStorage.setItem("userToken", data.token),
@@ -236,22 +246,20 @@ export default function LoginScreen() {
         AsyncStorage.setItem("pais_seleccionado", "CO")
       ]);
 
-      // Registrar Token Push
+      // Registrar Token Push sin bloquear la navegación (con timeout propio)
       if (expoPushToken) {
-        await fetch(`${API_URL}notification-token/assign-user`, {
+        fetchConTimeout(`${API_URL}notification-token/assign-user`, {
           method: "POST", headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ user_id: data.user.id, token: expoPushToken })
-        }).catch(e => console.log("Push error", e));
+        }, 8000).catch(e => console.log("Push error", e?.message || e));
       }
 
-      setTimeout(async () => {
-        setIsLoading(false);
-        await redirectUser(data.user.tipo_usuario);
-      }, 500);
+      await redirectUser(data.user.tipo_usuario);
     } catch (e) {
       console.error(e);
-      setIsLoading(false);
       showAlert({ title: "Error", message: "No se pudo guardar la sesión.", type: "error" });
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -281,10 +289,10 @@ export default function LoginScreen() {
   const asignarTokenFallo = async (userId) => {
     if (!expoPushToken) return;
     try {
-      await fetch(`${API_URL}notification-token/assign-user`, {
+      await fetchConTimeout(`${API_URL}notification-token/assign-user`, {
         method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ user_id: userId, token: expoPushToken }),
-      });
+      }, 8000);
     } catch (e) { }
   };
 
@@ -374,18 +382,24 @@ export default function LoginScreen() {
   // ==========================================
 
   const procesarCorreccion = (data) => {
-    const observacion = JSON.parse(data.user_role_estado?.observacion);
-    if (observacion) {
-      const labels = Object.keys(labelsCampos);
-      const campos = observacion.campos || [];
-      setCamposTexto(campos.filter(c => !labels.includes(c)));
-      setCamposArchivos(campos.filter(c => labels.includes(c)));
-      setInputsTexto({});
-      setTextoObservacion(observacion.observacion || "");
-      setEstadoId(data.user_role_estado.id);
-      setModalVisible(true);
-    } else {
+    try {
+      const raw = data.user_role_estado?.observacion;
+      const observacion = typeof raw === "string" ? JSON.parse(raw) : raw;
+      if (observacion) {
+        const labels = Object.keys(labelsCampos);
+        const campos = observacion.campos || [];
+        setCamposTexto(campos.filter(c => !labels.includes(c)));
+        setCamposArchivos(campos.filter(c => labels.includes(c)));
+        setInputsTexto({});
+        setTextoObservacion(observacion.observacion || "");
+        setEstadoId(data.user_role_estado.id);
+        setModalVisible(true);
+      } else {
         showAlert({ title: "Atención", message: "Tu cuenta requiere correcciones.", type: "info" });
+      }
+    } catch (e) {
+      console.error("Error procesando corrección:", e);
+      showAlert({ title: "Atención", message: "Tu cuenta requiere correcciones.", type: "info" });
     }
   };
 

@@ -17,7 +17,7 @@
 - When formalizing flow states, expects a companion .md doc in repo docs/ with terminology table plus exact API consumption (endpoints, params/bodies for state changes), focused on driver side. Confidence: 0.85
 - Prefers driver action buttons to perform real backend state transitions rather than notify-only side effects (e.g., replace manual "notificar" button with a state change that also triggers the push). Confidence: 0.8
 - Prefers separate state vocabularies per business flow (e.g., individual carrera vs pedido/delivery) even when they share the same API resource, because backend push notifications must differ by flow. Confidence: 0.8
-- Insists on preserving established domain/user-facing terminology (e.g., \"arrendamiento\" not \"carrera\") — explicitly forbids removing/renaming existing terms and prefers leaving wording as-is when in doubt. Confidence: 0.9
+- Insists on preserving established domain/user-facing terminology (e.g., \"arrendamiento\" not \"carrera\"/\"viaje\") — explicitly forbids removing/renaming existing terms and prefers leaving wording as-is when in doubt. Confidence: 0.9
 - Prefers analysis-first scoping for new features: asks for panorama of current state + implementation plan (what already exists, what needs building, how to display it) before authorizing implementation. Confidence: 0.8
 - Prefers reusing existing backend endpoints over adding new APIs: asks explicitly whether a new API is needed and expects assistant to cross-check both frontend and backend repos (code + endpoint docs) when scoping. Confidence: 0.8
 - Prefers collection GET endpoints to return 200 with empty array instead of 404 when there are no results (e.g., empty chat should return vacio). Confidence: 0.8
@@ -81,3 +81,4 @@
 - Prefers centralized reusable header design consolidated in a single shared component (e.g., components/ScreenHeader.js) over per-screen duplicated header styles, to keep design compact and maintainable. Confidence: 0.9
 - Prefers bottom panels/sheets to be visually complementary with the floating nav design (matching radius, shadows, floating treatment with gap) rather than full-bleed sheets hidden behind the nav. Confidence: 0.75
 - Prefers minimal-scope fixes that preserve existing design: when requesting a small layout adjustment (e.g., safe-area padding), wants only that change with no extra redesign/refactor, and if prior edits over-modified expects full revert to original plus the single requested patch. Confidence: 0.85
+- Prefers background checks/polling to run silently without extra status/alert text when that text would compress primary content (e.g., WebView) — wants checking to continue invisibly to preserve maximum space for main content. Confidence: 0.8

@@ -1,0 +1,30 @@
+{
+    "keep": {
+        "days": true,
+        "amount": 14
+    },
+    "auditLog": "C:\\YaRidersAPP\\logs\\.61bb3f4bbddbf40e03ee1cc80dd334c5970b0f58-audit.json",
+    "files": [
+        {
+            "date": 1793973126683,
+            "name": "C:\\YaRidersAPP\\logs\\mcp-puppeteer-2026-11-06.log",
+            "hash": "1baa8765239532549b197d9eb0bd9a8dc577ce180cece7ebd6562f37a68dbd47"
+        },
+        {
+            "date": 1794065886958,
+            "name": "C:\\YaRidersAPP\\logs\\mcp-puppeteer-2026-11-07.log",
+            "hash": "84c20e9b0d074a4746589d8638c6d5f1549c699a2c1a281acc20dc2ca1ed584a"
+        },
+        {
+            "date": 1794168556825,
+            "name": "C:\\YaRidersAPP\\logs\\mcp-puppeteer-2026-11-08.log",
+            "hash": "49d8e2aaabbc81d382783534e995e9a79eff88f78337ce21d6d2b453bdefc462"
+        },
+        {
+            "date": 1794358940052,
+            "name": "C:\\YaRidersAPP\\logs\\mcp-puppeteer-2026-11-10.log",
+            "hash": "f8abe21e5c4728e54d05b2e29c3c70522a280e39e7cd24ba05a67b98aae068b0"
+        }
+    ],
+    "hashType": "sha256"
+}
