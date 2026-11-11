@@ -36,10 +36,12 @@ import NearbyBestSellers from "../components/NearbyBestSellers";
 import FloatingActionMenu from '../components/FloatingActionMenu';
 import AlertaModal from "../components/ErrorModal";
 import FocusAwareStatusBar from "../components/FocusAwareStatusBar";
+import SociasSeguridadSheet from "../components/usuario/SociasSeguridadSheet";
 
 const hamburguesaImg = require("../assets/images/hamburguesa-restaurantes.jpg");
 const serviciosImg = require("../assets/images/servicios-herramientas.jpg");
 const viajeImg = require("../assets/images/carro-pedir-viaje.jpg");
+const sociasImg = require("../assets/images/socias-emblema.png");
 
 const saludoPorHora = () => {
   const h = new Date().getHours();
@@ -162,27 +164,30 @@ const FavoritosRow = memo(({ onPress }) => {
   };
 
   return (
-    <TouchableOpacity style={styles.favRow} onPress={onPress} activeOpacity={0.8}>
-      <View style={styles.favRowIcon}>
-        <Ionicons name="heart" size={16} color="#FB7185" />
-      </View>
-      <View style={styles.favRowText}>
-        <Text style={styles.favRowTitle}>Mis favoritos</Text>
-        <Text style={styles.favRowSub}>Tus frecuentes</Text>
-      </View>
-      {cats.map((c, i) => (
-        <View key={c.id} style={[styles.favCat, i > 0 && { marginLeft: -12 }]}>
-          {catImg(c.icono) ? (
-            <Image source={{ uri: catImg(c.icono) }} style={styles.favCatImg} />
-          ) : (
-            <View style={[styles.favCatImg, styles.favCatFallback]}>
-              <Text style={styles.favCatInitial}>{(c.nombre?.[0] || "?").toUpperCase()}</Text>
-            </View>
-          )}
+    <TouchableOpacity style={styles.duoTile} onPress={onPress} activeOpacity={0.8}>
+      <View style={styles.duoTop}>
+        <View style={styles.favRowIcon}>
+          <Ionicons name="heart" size={17} color="#FB7185" />
         </View>
-      ))}
-      <View style={styles.favFlecha}>
-        <Ionicons name="chevron-forward" size={15} color="#FFF" />
+        {/* En media tarjeta solo caben 2 burbujas de categoría */}
+        {cats.slice(0, 2).map((c, i) => (
+          <View key={c.id} style={[styles.favCat, { marginLeft: i === 0 ? 8 : -8 }]}>
+            {catImg(c.icono) ? (
+              <Image source={{ uri: catImg(c.icono) }} style={styles.favCatImg} />
+            ) : (
+              <View style={[styles.favCatImg, styles.favCatFallback]}>
+                <Text style={styles.favCatInitial}>{(c.nombre?.[0] || "?").toUpperCase()}</Text>
+              </View>
+            )}
+          </View>
+        ))}
+        <View style={styles.duoFlecha}>
+          <Ionicons name="chevron-forward" size={14} color="#FFF" />
+        </View>
+      </View>
+      <View>
+        <Text style={styles.duoTitulo} numberOfLines={1}>Mis favoritos</Text>
+        <Text style={styles.favRowSub} numberOfLines={1}>Tus frecuentes</Text>
       </View>
     </TouchableOpacity>
   );
@@ -207,6 +212,7 @@ export default function HomeScreen() {
   const [markerCoordinates, setMarkerCoordinates] = useState(null);
   const [mapRegion, setMapRegion] = useState(null);
   const [profileImageUrl, setProfileImageUrl] = useState(null);
+  const [sociasSheetVisible, setSociasSheetVisible] = useState(false);
 
   // Estados para demo
   const [isDemoModalVisible, setIsDemoModalVisible] = useState(false);
@@ -1005,7 +1011,25 @@ export default function HomeScreen() {
               </View>
             </View>
 
-            <FavoritosRow onPress={() => navigation.navigate("Favoritos", {})} />
+            {/* Fila dividida: Mis favoritos | Socias emprendedoras */}
+            <View style={styles.duoRow}>
+              <FavoritosRow onPress={() => navigation.navigate("Favoritos", {})} />
+
+              <TouchableOpacity style={styles.duoTile} activeOpacity={0.8}>
+                <View style={styles.duoTop}>
+                  <View style={styles.sociasLogo}>
+                    <Image source={sociasImg} style={styles.sociasLogoImg} />
+                  </View>
+                  <View style={styles.duoFlecha}>
+                    <Ionicons name="chevron-forward" size={14} color="#FFF" />
+                  </View>
+                </View>
+                <View>
+                  <Text style={styles.duoTitulo} numberOfLines={1}>Socias</Text>
+                  <Text style={styles.favRowSub} numberOfLines={1}>Emprendedoras</Text>
+                </View>
+              </TouchableOpacity>
+            </View>
           </View>
 
           <View style={styles.container}>
@@ -1027,6 +1051,30 @@ export default function HomeScreen() {
           </View>
         </ScrollView>
       )}
+
+      {/* Botón flotante Socias (solo en el inicio). Mismo patrón que el botón central "Viaje"
+          de la barra: círculo de color con aro oscuro #131315. Se ubica sobre la esquina derecha
+          de la barra flotante (barra ≈ 74 de alto, a max(insets.bottom, 8) + 8 del borde). */}
+      {fontsLoaded && !loading && (
+        <TouchableOpacity
+          style={[styles.sociasFab, { bottom: Math.max(insets.bottom, 8) + 8 + 74 + 14 }]}
+          activeOpacity={0.8}
+          accessibilityRole="button"
+          accessibilityLabel="Seguridad para mujeres"
+          onPress={() => setSociasSheetVisible(true)}
+        >
+          <Ionicons name="woman" size={26} color="#FFF" />
+        </TouchableOpacity>
+      )}
+
+      <SociasSeguridadSheet
+        visible={sociasSheetVisible}
+        onClose={() => setSociasSheetVisible(false)}
+        onConfigurar={() => {
+          setSociasSheetVisible(false);
+          navigation.navigate("ConfigurarPalabraSeguridad");
+        }}
+      />
 
       {/* Modal con el mapa para seleccionar ubicación */}
       <Modal
@@ -1408,9 +1456,9 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   favRowIcon: {
-    width: 34,
-    height: 34,
-    borderRadius: 17,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
     backgroundColor: "rgba(251,113,133,0.15)",
     justifyContent: "center",
     alignItems: "center",
@@ -1453,6 +1501,73 @@ const styles = StyleSheet.create({
     backgroundColor: "#3A3A3C",
     alignItems: "center",
     justifyContent: "center",
+  },
+  // Rosado tomado de las abejas del logo SOSIAS, un tono más sobrio para que no "chille"
+  sociasFab: {
+    position: "absolute",
+    right: 16,
+    width: 58,
+    height: 58,
+    borderRadius: 29,
+    backgroundColor: "#E23A8F",
+    borderWidth: 4,
+    borderColor: "#131315",
+    justifyContent: "center",
+    alignItems: "center",
+    shadowColor: "#E23A8F",
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.4,
+    shadowRadius: 14,
+    elevation: 10,
+  },
+
+  // Fila dividida Mis favoritos | Socias (mismo lenguaje que accesoChico)
+  duoRow: {
+    flexDirection: "row",
+    gap: 10,
+    marginTop: 10,
+  },
+  duoTile: {
+    flex: 1,
+    flexBasis: 0,
+    minWidth: 0,
+    height: 96,
+    borderRadius: 24,
+    backgroundColor: "#2C2C2E",
+    padding: 12,
+    justifyContent: "space-between",
+  },
+  duoTop: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  duoFlecha: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: "#3A3A3C",
+    alignItems: "center",
+    justifyContent: "center",
+    marginLeft: "auto",
+  },
+  duoTitulo: {
+    fontSize: 14,
+    fontFamily: "Montserrat_800ExtraBold",
+    color: "#FFF",
+  },
+  sociasLogo: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: "#FFFFFF",
+    justifyContent: "center",
+    alignItems: "center",
+    overflow: "hidden",
+  },
+  sociasLogoImg: {
+    width: 34,
+    height: 34,
+    resizeMode: "contain",
   },
 
   // Modal con mapa
