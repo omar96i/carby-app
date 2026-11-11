@@ -1011,7 +1011,7 @@ export default function HomeScreen() {
               </View>
             </View>
 
-            {/* Fila dividida: Mis favoritos | Socias emprendedoras */}
+            {/* Fila dividida: Mis favoritos | Sosias emprendedoras */}
             <View style={styles.duoRow}>
               <FavoritosRow onPress={() => navigation.navigate("Favoritos", {})} />
 
@@ -1025,7 +1025,7 @@ export default function HomeScreen() {
                   </View>
                 </View>
                 <View>
-                  <Text style={styles.duoTitulo} numberOfLines={1}>Socias</Text>
+                  <Text style={styles.duoTitulo} numberOfLines={1}>Sosias</Text>
                   <Text style={styles.favRowSub} numberOfLines={1}>Emprendedoras</Text>
                 </View>
               </TouchableOpacity>
